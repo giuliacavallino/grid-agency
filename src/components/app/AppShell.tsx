@@ -5,13 +5,24 @@ import { TopBar } from "./TopBar";
 import { TabBar } from "./TabBar";
 import { BootIntro } from "./BootIntro";
 
-export type ViewId = "profil" | "feed" | "reels" | "dm";
+export type ViewId = "home" | "team" | "prozess" | "feed" | "dm";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const [activeView, setActiveView] = useState<ViewId>("profil");
+  const [activeView, setActiveView] = useState<ViewId>("home");
+
+  // Always start at the top: no browser scroll restoration, no stale #hash.
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    if (window.location.hash) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
-    const sections = ["profil", "feed", "reels", "dm"]
+    const sections = ["home", "team", "prozess", "feed", "dm"]
       .map((id) => document.getElementById(id))
       .filter(Boolean) as HTMLElement[];
 
