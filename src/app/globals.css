@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --color-sky: #2b2926;
+  --color-snow: #e4e2e7;
+  --color-dune: #afaaa0;
+  --color-earth: #676159;
+  --color-dawn: #d8d9d7;
+
+  --background: var(--color-sky);
+  --foreground: var(--color-snow);
+}
+
+@theme inline {
+  --color-sky: var(--color-sky);
+  --color-snow: var(--color-snow);
+  --color-dune: var(--color-dune);
+  --color-earth: var(--color-earth);
+  --color-dawn: var(--color-dawn);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: var(--font-readex);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+::selection {
+  background: var(--color-dune);
+  color: var(--color-sky);
+}
+
+.grid-pattern-bg {
+  background-image: url("/brand/grid_pattern_snow-subtle.png");
+  background-repeat: repeat;
+  background-size: 420px auto;
+}
