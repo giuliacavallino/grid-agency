@@ -89,6 +89,19 @@ html {
   );
 }
 
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee {
+  animation: marquee 30s linear infinite;
+}
+
 @keyframes shimmer {
   0% {
     background-position: -400px 0;

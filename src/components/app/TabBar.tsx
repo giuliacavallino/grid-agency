@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Home, LayoutGrid, Clapperboard, MessageCircle } from "lucide-react";
+import { Home, Users, Zap, LayoutGrid, MessageCircle } from "lucide-react";
 import { animate, motion, useMotionValue } from "framer-motion";
 import type { ViewId } from "./AppShell";
 
-const tabs: { id: ViewId; label: string; icon: typeof Home }[] = [
-  { id: "profil", label: "Profil", icon: Home },
-  { id: "feed", label: "Feed", icon: LayoutGrid },
-  { id: "reels", label: "Reels", icon: Clapperboard },
+const tabs: { id: ViewId; label: string; icon: typeof Home; live?: boolean }[] = [
+  { id: "home", label: "Home", icon: Home },
+  { id: "team", label: "Team", icon: Users },
+  { id: "prozess", label: "Prozess", icon: Zap },
+  { id: "feed", label: "Live", icon: LayoutGrid, live: true },
   { id: "dm", label: "DM", icon: MessageCircle },
 ];
 
@@ -102,7 +103,7 @@ export function TabBar({ active }: { active: ViewId }) {
       className="pointer-events-none fixed bottom-0 z-40 w-full max-w-[560px] px-5 pb-[calc(env(safe-area-inset-bottom)+16px)]"
       aria-label="Hauptnavigation"
     >
-      <div className="glass pointer-events-auto relative mx-auto h-[68px] max-w-[400px] overflow-hidden rounded-full">
+      <div className="glass pointer-events-auto relative mx-auto h-[68px] overflow-hidden rounded-full">
         <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 
         <div className="absolute inset-0 flex items-stretch justify-around px-2">
@@ -113,13 +114,20 @@ export function TabBar({ active }: { active: ViewId }) {
               <a
                 key={tab.id}
                 href={`#${tab.id}`}
-                onClick={() => haptic(8)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  haptic(8);
+                  document
+                    .getElementById(tab.id)
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
                 className="relative flex flex-1 flex-col items-center justify-center gap-0.5"
                 aria-current={active === tab.id ? "page" : undefined}
               >
                 <motion.span
                   animate={{ scale: isLit ? 1.18 : 1, y: isLit ? -1 : 0 }}
                   transition={LENS_SPRING}
+                  className="relative"
                 >
                   <Icon
                     className={`h-6 w-6 transition-colors duration-300 ${
@@ -127,6 +135,12 @@ export function TabBar({ active }: { active: ViewId }) {
                     }`}
                     strokeWidth={isLit ? 2.2 : 1.8}
                   />
+                  {tab.live && (
+                    <span className="absolute -right-1 -top-0.5 flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-dune opacity-60" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-dune" />
+                    </span>
+                  )}
                 </motion.span>
                 <motion.span
                   animate={{ opacity: isLit ? 1 : 0.45 }}
@@ -140,8 +154,9 @@ export function TabBar({ active }: { active: ViewId }) {
           })}
         </div>
 
-        {/* Draggable lens track */}
-        <div ref={trackRef} className="absolute inset-x-2 inset-y-2">
+        {/* Draggable lens track — pointer-events only on the lens itself,
+            so taps on the other tabs reach the links underneath */}
+        <div ref={trackRef} className="pointer-events-none absolute inset-x-2 inset-y-2">
           {slotW > 0 && (
             <motion.div
               drag="x"
@@ -156,7 +171,7 @@ export function TabBar({ active }: { active: ViewId }) {
               onDragEnd={onDragEnd}
               whileDrag={{ scale: 1.08 }}
               style={{ x, width: lensW }}
-              className="glass-lens absolute inset-y-0 z-10 cursor-grab touch-none rounded-full active:cursor-grabbing"
+              className="glass-lens pointer-events-auto absolute inset-y-0 z-10 cursor-grab touch-none rounded-full active:cursor-grabbing"
               aria-hidden
             />
           )}

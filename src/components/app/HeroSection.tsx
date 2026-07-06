@@ -1,0 +1,136 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { animate, motion, useInView } from "framer-motion";
+import { clients, heroStats } from "@/lib/content";
+import { scrollToId } from "@/lib/scroll";
+
+function CountUp({ value, suffix }: { value: number; suffix: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const controls = animate(0, value, {
+      duration: 1.4,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
+  }, [inView, value]);
+
+  return (
+    <span ref={ref}>
+      {display.toLocaleString("de-DE")}
+      {suffix}
+    </span>
+  );
+}
+
+export function HeroSection() {
+  return (
+    <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center px-4 pb-6">
+      <motion.p
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="text-xs font-medium uppercase tracking-[0.25em] text-dune"
+      >
+        Social Media Agentur — Berlin &amp; Frankfurt
+      </motion.p>
+
+      <motion.h1
+        initial={{ opacity: 0, y: 22 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="mt-4 text-[2.9rem] font-medium leading-[1.02] tracking-tight text-snow"
+      >
+        Marken, die man
+        <br />
+        nicht <span className="italic text-dune">wegscrollen</span>
+        <br />
+        kann.
+      </motion.h1>
+
+      <motion.p
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="mt-5 max-w-[24rem] text-base font-light leading-relaxed text-snow/70"
+      >
+        Wir sind dein unfairer Vorteil im Feed. Strategie, Content, Editing —
+        und ein Gespür für Trends, bevor sie welche sind. Dein Feed wird das
+        Problem deiner Konkurrenz.
+      </motion.p>
+
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.55 }}
+        className="mt-7 flex gap-2"
+      >
+        <a
+          href="#dm"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToId("dm");
+          }}
+          className="flex-1 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky transition-all active:scale-[0.97]"
+        >
+          Lass uns reden
+        </a>
+        <a
+          href="#feed"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToId("feed");
+          }}
+          className="glass flex-1 rounded-full py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
+        >
+          Live-Arbeit ansehen
+        </a>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.7 }}
+        className="mt-10 flex justify-between border-y border-snow/10 py-5"
+      >
+        {heroStats.map((stat) => (
+          <div key={stat.label} className="text-center">
+            <p className="text-xl font-medium text-snow">
+              <CountUp value={stat.value} suffix={stat.suffix} />
+            </p>
+            <p className="mt-0.5 text-[11px] font-light text-snow/50">
+              {stat.label}
+            </p>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* Client marquee */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.85 }}
+        className="relative mt-8 overflow-hidden"
+        aria-label="Unsere Kunden"
+      >
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-sky to-transparent" />
+        <div className="marquee flex w-max gap-8">
+          {[...clients, ...clients].map((client, i) => (
+            <span
+              key={`${client}-${i}`}
+              className="whitespace-nowrap text-sm font-light uppercase tracking-[0.15em] text-snow/40"
+            >
+              {client}
+            </span>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+}

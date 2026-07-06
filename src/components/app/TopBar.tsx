@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Heart, Send } from "lucide-react";
 import { motion } from "framer-motion";
+import { scrollToId } from "@/lib/scroll";
 
 export function TopBar() {
   return (
@@ -12,9 +13,17 @@ export function TopBar() {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="pointer-events-none fixed top-0 z-40 w-full max-w-[560px] px-5 pt-[calc(env(safe-area-inset-top)+12px)]"
     >
-      <div className="glass pointer-events-auto relative mx-auto flex h-12 max-w-[400px] items-center justify-between overflow-hidden rounded-full px-5">
+      <div className="glass pointer-events-auto relative mx-auto flex h-12 items-center justify-between overflow-hidden rounded-full px-5">
         <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
-        <a href="#profil" aria-label="Nach oben" className="relative">
+        <a
+          href="#home"
+          aria-label="Nach oben"
+          className="relative"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToId("home");
+          }}
+        >
           <Image
             src="/brand/grid_logo_snow.png"
             alt="GRID"
@@ -35,6 +44,10 @@ export function TopBar() {
             href="#dm"
             aria-label="Nachricht schreiben"
             className="text-snow transition-transform active:scale-90"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToId("dm");
+            }}
           >
             <Send className="h-[22px] w-[22px]" strokeWidth={1.8} />
           </a>

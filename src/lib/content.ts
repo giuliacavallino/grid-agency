@@ -1,185 +1,76 @@
-export type StorySlide = {
-  title: string;
-  text: string;
-};
-
-export type ServiceStory = {
-  id: string;
-  label: string;
-  emoji: string;
-  slides: StorySlide[];
-};
-
-export const serviceStories: ServiceStory[] = [
-  {
-    id: "strategy",
-    label: "Strategy",
-    emoji: "🧭",
-    slides: [
-      {
-        title: "Strategie, die 2030 denkt.",
-        text: "Zieldefinition, Content-Pillars, Tonalität — wir bauen das Fundament, bevor andere überhaupt posten.",
-      },
-      {
-        title: "Set-up aller Kanäle.",
-        text: "Instagram, TikTok, LinkedIn — eingerichtet, verzahnt und messbar von Tag eins.",
-      },
-      {
-        title: "Analyse-Tools inklusive.",
-        text: "Was nicht gemessen wird, existiert nicht. Performance-Tracking gehört zum Set-up.",
-      },
-    ],
-  },
-  {
-    id: "content-days",
-    label: "Content Days",
-    emoji: "🎬",
-    slides: [
-      {
-        title: "Ein Tag. Ein Monat Content.",
-        text: "Koordination, Shotlist, Regie vor Ort — mit Videograf:innen oder eurem eigenen Team.",
-      },
-      {
-        title: "Hooks, die halten.",
-        text: "Wir konzipieren jede Aufnahme auf die ersten 1,5 Sekunden hin. Der Rest ist Handwerk.",
-      },
-    ],
-  },
-  {
-    id: "editing",
-    label: "Editing",
-    emoji: "✂️",
-    slides: [
-      {
-        title: "Rohmaterial rein. Reels raus.",
-        text: "Schnitt, Untertitel, Musik, Hook-Editing — fertig für Instagram, TikTok und LinkedIn.",
-      },
-      {
-        title: "Euer Material reicht.",
-        text: "Atelier-Aufnahmen, Prozess-Content, Handy-Videos — wir machen daraus Feed-Gold.",
-      },
-    ],
-  },
-  {
-    id: "trends",
-    label: "Trends 2030",
-    emoji: "🛰️",
-    slides: [
-      {
-        title: "Zwei Schritte voraus.",
-        text: "Trend- & Benchmark-Scanning als Dauerzustand. Wir testen Formate, bevor sie Mainstream heißen.",
-      },
-      {
-        title: "Wöchentliche Strategie-Calls.",
-        text: "Performance, Kampagnen, saisonale Peaks — jede Woche neu justiert.",
-      },
-      {
-        title: "Willkommen in 2030.",
-        text: "Wenn der Trend bei allen ankommt, sind wir schon beim nächsten.",
-      },
-    ],
-  },
+export const clients = [
+  "Friendly Fish",
+  "Frittenwerk",
+  "Goldies",
+  "the dawn",
+  "lovebirds",
+  "yousthetics",
+  "nuva pizza",
+  "capvin",
+  "480 gradi",
+  "charly & ben bagels",
+  "mare",
+  "smash hauptstadt burger",
+  "Tokyo Mylk",
+  "Casa Beef",
+  "Bäckerei Huck",
+  "Shiso Burger",
 ];
 
-export const profileStats = [
+export const heroStats = [
+  { value: 16, suffix: "+", label: "Marken im Feed" },
   { value: 6098, suffix: "+", label: "Reichweite/Monat" },
-  { value: 15, suffix: "+", label: "Marken" },
   { value: 2, suffix: "", label: "Städte" },
 ];
 
-export type FeedPost = {
-  id: string;
-  brand: string;
-  handle: string;
-  caption: string;
-  hashtags: string[];
-  likes: number;
-  emoji: string;
-  accent: string;
+export type ProcessStep = {
+  number: string;
+  title: string;
+  claim: string;
+  text: string;
 };
 
-export const feedPosts: FeedPost[] = [
+export const processSteps: ProcessStep[] = [
   {
-    id: "casa-beef",
-    brand: "Casa Beef",
-    handle: "casabeefberlin",
-    caption:
-      "Eine kulturelle Erfahrung rund um Fleisch und Handwerkskunst — inszeniert als Feed, der Hunger macht.",
-    hashtags: ["berlin", "finedining", "socialmedia"],
-    likes: 2841,
-    emoji: "🥩",
-    accent: "#37255B",
+    number: "01",
+    title: "Setup",
+    claim: "Erst das Fundament. Dann die Show.",
+    text: "Zugänge, Ziele, Analytics — wir verkabeln alle Plattformen und definieren, was Erfolg für dich überhaupt heißt. Messbar. Nicht gefühlt.",
   },
   {
-    id: "huck",
-    brand: "Bäckerei Huck",
-    handle: "baeckerei.huck",
-    caption:
-      "Handwerk seit Generationen, erzählt in Reels: WE WILL WAGYU wurde zum Hook, der Frankfurt ins Schaufenster zog.",
-    hashtags: ["frankfurt", "bakery", "reels"],
-    likes: 1976,
-    emoji: "🥐",
-    accent: "#F2AF02",
+    number: "02",
+    title: "Strategie",
+    claim: "Kein Bauchgefühl. Ein System.",
+    text: "Content-Pillars, Tonalität, Roadmap. Deine Marke bekommt eine Stimme, die man im Feed sofort erkennt — und einen Plan, der sie trägt.",
   },
   {
-    id: "green-protein",
-    brand: "Green & Protein",
-    handle: "greenandprotein",
-    caption:
-      "Healthy Living, bold photography. Ein Grid, das so frisch aussieht wie die Bowls.",
-    hashtags: ["healthyfood", "berlin", "contentday"],
-    likes: 3204,
-    emoji: "🥗",
-    accent: "#00864A",
+    number: "03",
+    title: "Content Days",
+    claim: "Ein Tag Dreh. Ein Monat Content.",
+    text: "Shotlist, Regie, Hook-Mechaniken — wir konzipieren jede Aufnahme auf die ersten 1,5 Sekunden. Der Rest ist Handwerk.",
   },
   {
-    id: "shiso",
-    brand: "Shiso Burger",
-    handle: "shisoburger",
-    caption:
-      "Asian Fusion trifft Street Food — DE & INT parallel bespielt, ein Look, zwei Sprachen.",
-    hashtags: ["burger", "fusion", "socialfirst"],
-    likes: 2588,
-    emoji: "🍔",
-    accent: "#C4402A",
+    number: "04",
+    title: "Editing",
+    claim: "Rohmaterial rein. Scrollstopper raus.",
+    text: "Schnitt, Untertitel, Sound, Timing. Aus deinem Material werden Reels, die man nicht wegwischen kann.",
+  },
+  {
+    number: "05",
+    title: "Scale",
+    claim: "Zwei Schritte voraus. Immer.",
+    text: "Wöchentliche Strategie-Calls, Trend-Scanning, Benchmarks. Wenn der Trend bei allen ankommt, sind wir schon beim nächsten.",
   },
 ];
 
-export type Reel = {
-  id: string;
-  line1: string;
-  line2: string;
-  sub: string;
-  tag: string;
+export const team = {
+  name: "Giulia Cavallino",
+  initials: "GC",
+  role: "Founder & Head of Everything",
+  bio: "Glaubt an gute Hooks mehr als an Horoskope. Baut seit 2021 Marken, die man nicht wegscrollen kann — von Berlin bis Frankfurt.",
+  facts: [
+    { value: "∞", label: "Ideen pro Tag" },
+    { value: "24/7", label: "online (leider)" },
+    { value: "1", label: "Ziel: dein Wachstum" },
+  ],
 };
-
-export const reels: Reel[] = [
-  {
-    id: "r1",
-    line1: "Andere planen",
-    line2: "Quartale.",
-    sub: "Wir denken in Trendzyklen von 48 Stunden.",
-    tag: "SPEED",
-  },
-  {
-    id: "r2",
-    line1: "Der Feed ist",
-    line2: "tot.",
-    sub: "Es lebe der Moment. Content, der passiert — nicht produziert wirkt.",
-    tag: "RAW",
-  },
-  {
-    id: "r3",
-    line1: "Reichweite",
-    line2: "ist Handwerk.",
-    sub: "Kein Zufall, kein Glück. Ein System, das wir seit 2021 verfeinern.",
-    tag: "CRAFT",
-  },
-  {
-    id: "r4",
-    line1: "Willkommen",
-    line2: "in 2030.",
-    sub: "Wenn der Trend bei allen ankommt, sind wir schon zwei Schritte weiter.",
-    tag: "FUTURE",
-  },
-];
