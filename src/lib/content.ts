@@ -86,3 +86,100 @@ export const profileStats = [
   { value: 15, suffix: "+", label: "Marken" },
   { value: 2, suffix: "", label: "Städte" },
 ];
+
+export type FeedPost = {
+  id: string;
+  brand: string;
+  handle: string;
+  caption: string;
+  hashtags: string[];
+  likes: number;
+  emoji: string;
+  accent: string;
+};
+
+export const feedPosts: FeedPost[] = [
+  {
+    id: "casa-beef",
+    brand: "Casa Beef",
+    handle: "casabeefberlin",
+    caption:
+      "Eine kulturelle Erfahrung rund um Fleisch und Handwerkskunst — inszeniert als Feed, der Hunger macht.",
+    hashtags: ["berlin", "finedining", "socialmedia"],
+    likes: 2841,
+    emoji: "🥩",
+    accent: "#37255B",
+  },
+  {
+    id: "huck",
+    brand: "Bäckerei Huck",
+    handle: "baeckerei.huck",
+    caption:
+      "Handwerk seit Generationen, erzählt in Reels: WE WILL WAGYU wurde zum Hook, der Frankfurt ins Schaufenster zog.",
+    hashtags: ["frankfurt", "bakery", "reels"],
+    likes: 1976,
+    emoji: "🥐",
+    accent: "#F2AF02",
+  },
+  {
+    id: "green-protein",
+    brand: "Green & Protein",
+    handle: "greenandprotein",
+    caption:
+      "Healthy Living, bold photography. Ein Grid, das so frisch aussieht wie die Bowls.",
+    hashtags: ["healthyfood", "berlin", "contentday"],
+    likes: 3204,
+    emoji: "🥗",
+    accent: "#00864A",
+  },
+  {
+    id: "shiso",
+    brand: "Shiso Burger",
+    handle: "shisoburger",
+    caption:
+      "Asian Fusion trifft Street Food — DE & INT parallel bespielt, ein Look, zwei Sprachen.",
+    hashtags: ["burger", "fusion", "socialfirst"],
+    likes: 2588,
+    emoji: "🍔",
+    accent: "#C4402A",
+  },
+];
+
+export type Reel = {
+  id: string;
+  line1: string;
+  line2: string;
+  sub: string;
+  tag: string;
+};
+
+export const reels: Reel[] = [
+  {
+    id: "r1",
+    line1: "Andere planen",
+    line2: "Quartale.",
+    sub: "Wir denken in Trendzyklen von 48 Stunden.",
+    tag: "SPEED",
+  },
+  {
+    id: "r2",
+    line1: "Der Feed ist",
+    line2: "tot.",
+    sub: "Es lebe der Moment. Content, der passiert — nicht produziert wirkt.",
+    tag: "RAW",
+  },
+  {
+    id: "r3",
+    line1: "Reichweite",
+    line2: "ist Handwerk.",
+    sub: "Kein Zufall, kein Glück. Ein System, das wir seit 2021 verfeinern.",
+    tag: "CRAFT",
+  },
+  {
+    id: "r4",
+    line1: "Willkommen",
+    line2: "in 2030.",
+    sub: "Wenn der Trend bei allen ankommt, sind wir schon zwei Schritte weiter.",
+    tag: "FUTURE",
+  },
+];

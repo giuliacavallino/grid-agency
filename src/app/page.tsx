@@ -1,7 +1,8 @@
 import { AppShell } from "@/components/app/AppShell";
 import { ProfileHeader } from "@/components/app/ProfileHeader";
 import { StoriesBar } from "@/components/app/StoriesBar";
-import { SectionPlaceholder } from "@/components/app/SectionPlaceholder";
+import { FeedSection } from "@/components/app/FeedSection";
+import { ReelsSection } from "@/components/app/ReelsSection";
 import { DmSection } from "@/components/app/DmSection";
 
 export default function Home() {
@@ -13,19 +14,11 @@ export default function Home() {
       </section>
 
       <section id="feed" className="mt-6 scroll-mt-14 border-t border-snow/10">
-        <SectionPlaceholder
-          kicker="Feed"
-          title="Serving the coolest brands."
-          variant="feed"
-        />
+        <FeedSection />
       </section>
 
       <section id="reels" className="scroll-mt-14 border-t border-snow/10">
-        <SectionPlaceholder
-          kicker="Reels"
-          title="Vision 2030."
-          variant="reels"
-        />
+        <ReelsSection />
       </section>
 
       <section id="dm" className="scroll-mt-14 border-t border-snow/10">
