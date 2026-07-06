@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { LegalShell } from "@/components/app/LegalShell";
 
 export const metadata: Metadata = {
   title: "Impressum — GRID Agency",
@@ -8,14 +7,8 @@ export const metadata: Metadata = {
 
 export default function ImpressumPage() {
   return (
-    <>
-      <Navbar />
-      <main className="mx-auto max-w-3xl px-6 pb-24 pt-40">
-        <h1 className="text-4xl font-medium tracking-tight text-snow">
-          Impressum
-        </h1>
-
-        <div className="mt-12 space-y-8 text-sm font-light leading-relaxed text-snow/70">
+    <LegalShell title="Impressum">
+      <div className="space-y-8 text-sm font-light leading-relaxed text-snow/70">
           <section>
             <h2 className="mb-2 text-base font-medium text-snow">
               Angaben gemäß § 5 TMG
@@ -99,9 +92,7 @@ export default function ImpressumPage() {
               Verbraucherschlichtungsstelle teilzunehmen.
             </p>
           </section>
-        </div>
-      </main>
-      <Footer />
-    </>
+      </div>
+    </LegalShell>
   );
 }

@@ -39,3 +39,45 @@ body {
   background-repeat: repeat;
   background-size: 420px auto;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.story-ring {
+  background: conic-gradient(
+    from 0deg,
+    var(--color-dune),
+    var(--color-earth),
+    var(--color-snow),
+    var(--color-dawn),
+    var(--color-dune)
+  );
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-snow) 6%, transparent) 25%,
+    color-mix(in srgb, var(--color-snow) 12%, transparent) 37%,
+    color-mix(in srgb, var(--color-snow) 6%, transparent) 63%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}

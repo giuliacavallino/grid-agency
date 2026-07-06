@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { LegalShell } from "@/components/app/LegalShell";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung — GRID Agency",
@@ -8,14 +7,8 @@ export const metadata: Metadata = {
 
 export default function DatenschutzPage() {
   return (
-    <>
-      <Navbar />
-      <main className="mx-auto max-w-3xl px-6 pb-24 pt-40">
-        <h1 className="text-4xl font-medium tracking-tight text-snow">
-          Datenschutzerklärung
-        </h1>
-
-        <div className="mt-12 space-y-8 text-sm font-light leading-relaxed text-snow/70">
+    <LegalShell title="Datenschutz">
+      <div className="space-y-8 text-sm font-light leading-relaxed text-snow/70">
           <section>
             <h2 className="mb-2 text-base font-medium text-snow">
               1. Verantwortlicher
@@ -87,9 +80,7 @@ export default function DatenschutzPage() {
               zu beschweren.
             </p>
           </section>
-        </div>
-      </main>
-      <Footer />
-    </>
+      </div>
+    </LegalShell>
   );
 }
