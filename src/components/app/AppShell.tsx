@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { TopBar } from "./TopBar";
 import { TabBar } from "./TabBar";
+import { BootIntro } from "./BootIntro";
 
 export type ViewId = "profil" | "feed" | "reels" | "dm";
 
@@ -30,6 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative mx-auto min-h-dvh w-full max-w-[560px]">
+      <BootIntro />
       <TopBar />
       <main className="pb-24 pt-14">{children}</main>
       <TabBar active={activeView} />
