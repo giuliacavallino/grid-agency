@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="relative mx-auto min-h-dvh w-full max-w-[560px]">
       <BootIntro />
       <TopBar />
-      <main className="pb-24 pt-14">{children}</main>
+      <main className="pb-32 pt-20">{children}</main>
       <TabBar active={activeView} />
     </div>
   );

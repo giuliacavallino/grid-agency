@@ -95,17 +95,15 @@ export function ProfileHeader() {
       >
         <button
           onClick={() => setFollowing(!following)}
-          className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all active:scale-[0.97] ${
-            following
-              ? "border border-snow/20 text-snow"
-              : "bg-snow text-sky"
+          className={`flex-1 rounded-full py-2 text-sm font-medium transition-all active:scale-[0.97] ${
+            following ? "glass text-snow" : "bg-snow text-sky"
           }`}
         >
           {following ? "Gefolgt ✓" : "Folgen"}
         </button>
         <a
           href="#dm"
-          className="flex-1 rounded-lg border border-snow/20 py-2 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
+          className="glass flex-1 rounded-full py-2 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
         >
           Nachricht
         </a>
