@@ -94,7 +94,7 @@ export const clients: Client[] = [
     name: "Marré",
     logo: "/clients/marre.png",
     height: 29,
-    instagram: "marre.berlin",
+    instagram: "marrejewelry",
   },
   {
     name: "Smash by Hauptstadtburger",
