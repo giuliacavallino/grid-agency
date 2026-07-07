@@ -25,7 +25,12 @@ export const clients: Client[] = [
   {
     name: "Smash by Hauptstadtburger",
     logo: "/clients/smash.png",
-    height: 34,
+    height: 36,
+  },
+  {
+    name: "Hauptstadtburger",
+    logo: "/clients/hauptstadtburger.png",
+    height: 44,
   },
   { name: "Tokyo Mylk", logo: "/clients/tokyo-mylk.png", height: 44 },
   { name: "Casa Beef", logo: "/clients/casa-beef.png", height: 30 },
@@ -51,9 +56,9 @@ export const clients: Client[] = [
     height: 26,
   },
   { name: "Lipstick", logo: "/clients/lipstick.png", height: 30 },
-  { name: "Coffi" },
+  { name: "Coffi", logo: "/clients/coffi.png", height: 28 },
   { name: "Reshape" },
-  { name: "YNG" },
+  { name: "YNG", logo: "/clients/yng.png", height: 26 },
 ];
 
 export const heroStats = [
