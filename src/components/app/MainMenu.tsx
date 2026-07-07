@@ -98,7 +98,7 @@ export function MainMenu({
                   {item.kind === "section" ? (
                     <button
                       onClick={() => goToSection(item.id)}
-                      className="py-2.5 text-left text-3xl font-medium tracking-tight text-snow transition-colors hover:text-dune"
+                      className="nav-rainbow py-2.5 text-left text-3xl font-medium tracking-tight text-snow"
                     >
                       {item.label}
                     </button>
@@ -106,7 +106,7 @@ export function MainMenu({
                     <Link
                       href={item.href}
                       onClick={onClose}
-                      className="block py-2.5 text-3xl font-medium tracking-tight text-snow transition-colors hover:text-dune"
+                      className="nav-rainbow block py-2.5 text-3xl font-medium tracking-tight text-snow"
                     >
                       {item.label}
                     </Link>
