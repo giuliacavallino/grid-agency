@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { BadgeCheck, Camera, X } from "lucide-react";
 import { clients, type Client } from "@/lib/content";
+import { stashScrollTarget } from "@/lib/scroll";
 
 /** lucide dropped brand icons, so the Instagram glyph lives here. */
 function InstagramIcon({ className }: { className?: string }) {
@@ -204,7 +205,8 @@ export function ReferenzenView() {
       <p className="mt-10 text-center text-sm font-light text-snow/50">
         Deine Marke fehlt hier noch?{" "}
         <Link
-          href="/#dm"
+          href="/"
+          onClick={() => stashScrollTarget("dm")}
           className="font-medium text-dune underline-offset-4 hover:underline"
         >
           Lass uns reden →

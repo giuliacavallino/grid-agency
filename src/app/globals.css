@@ -98,10 +98,11 @@ html {
   }
 }
 
+/* No negative delay: the strip must visibly start with the most
+   important brands, so position 2 onward is what loads on screen
+   (position 1 sits half under the left fade). */
 .marquee {
   animation: marquee 60s linear infinite;
-  /* Start mid-stream so the first logo never pops in at the fade edge. */
-  animation-delay: -20s;
 }
 
 @keyframes shimmer {
