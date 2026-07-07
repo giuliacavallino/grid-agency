@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { BadgeCheck, Camera, Heart, MessageCircle, X } from "lucide-react";
-import { clients, clientSlug, type Client } from "@/lib/content";
+import { clients, type Client } from "@/lib/content";
 import { stashScrollTarget } from "@/lib/scroll";
 import { supabase } from "@/lib/supabase";
 import { EventTeaser } from "./EventTeaser";
@@ -229,11 +229,11 @@ function ClientSheet({
 
         <div className="mt-7">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-            Galerie
+            Jetzt Galerie durchscrollen
           </p>
           {client.gallery && client.gallery.length > 0 ? (
             <div className="mt-3 grid grid-cols-3 gap-1.5">
-              {client.gallery.slice(0, 6).map((src) => (
+              {client.gallery.map((src) => (
                 <div
                   key={src}
                   className="relative aspect-square overflow-hidden rounded-xl"
@@ -258,19 +258,6 @@ function ClientSheet({
           )}
         </div>
 
-        {(Boolean(client.gallery?.length) ||
-          Boolean(client.sections?.length) ||
-          Boolean(client.caseStudy)) && (
-          <Link
-            href={`/referenzen/${clientSlug(client.name)}`}
-            className="mt-6 flex items-center justify-center gap-2 rounded-full border border-snow/15 bg-snow/5 py-3 text-sm font-medium text-snow transition-all active:scale-[0.97]"
-          >
-            {client.gallery && client.gallery.length > 6
-              ? `Alle ${client.gallery.length} Bilder ansehen`
-              : "Ganzen Case ansehen"}
-            →
-          </Link>
-        )}
       </motion.div>
     </>
   );
