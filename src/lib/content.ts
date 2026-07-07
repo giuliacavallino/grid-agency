@@ -12,22 +12,37 @@ export type Client = {
 
 export const clients: Client[] = [
   {
-    name: "Friendly Fish",
-    logo: "/clients/friendly-fish.png",
-    height: 20,
-    instagram: "friendlyfish.berlin",
-  },
-  {
     name: "Frittenwerk",
     logo: "/clients/frittenwerk.png",
     height: 22,
     instagram: "frittenwerk",
   },
   {
+    name: "Shiso Burger",
+    logo: "/clients/shiso.png",
+    height: 36,
+    instagram: "shisoburger",
+  },
+  {
     name: "Goldies",
     logo: "/clients/goldies.png",
     height: 30,
     instagram: "goldies.berlin",
+  },
+  { name: "Ditsch", logo: "/clients/ditsch.png", height: 34, instagram: "ditsch" },
+  { name: "YNG", logo: "/clients/yng.png", height: 26 },
+  { name: "Reshape", logo: "/clients/reshape.png", height: 28 },
+  {
+    name: "charly & ben bagels",
+    logo: "/clients/charly-ben.png",
+    height: 48,
+    instagram: "charlyandben",
+  },
+  {
+    name: "Tokyo Mylk",
+    logo: "/clients/tokyo-mylk.png",
+    height: 44,
+    instagram: "tokyomylk",
   },
   {
     name: "The Dawn",
@@ -48,12 +63,6 @@ export const clients: Client[] = [
     instagram: "yousthetics",
   },
   {
-    name: "nuva pizza",
-    logo: "/clients/nuva.png",
-    height: 36,
-    instagram: "nuvapizza",
-  },
-  {
     name: "capvin",
     logo: "/clients/capvin.png",
     height: 26,
@@ -66,10 +75,10 @@ export const clients: Client[] = [
     instagram: "480gradi",
   },
   {
-    name: "charly & ben bagels",
-    logo: "/clients/charly-ben.png",
-    height: 48,
-    instagram: "charlyandben",
+    name: "Friendly Fish",
+    logo: "/clients/friendly-fish.png",
+    height: 20,
+    instagram: "friendlyfish.berlin",
   },
   {
     name: "Marré",
@@ -90,12 +99,6 @@ export const clients: Client[] = [
     instagram: "hauptstadtburger",
   },
   {
-    name: "Tokyo Mylk",
-    logo: "/clients/tokyo-mylk.png",
-    height: 44,
-    instagram: "tokyomylk",
-  },
-  {
     name: "Casa Beef",
     logo: "/clients/casa-beef.png",
     height: 30,
@@ -107,15 +110,8 @@ export const clients: Client[] = [
     height: 36,
     instagram: "baeckerei.huck",
   },
-  {
-    name: "Shiso Burger",
-    logo: "/clients/shiso.png",
-    height: 36,
-    instagram: "shisoburger",
-  },
   { name: "eDrixx", logo: "/clients/edrixx.png", height: 34 },
-  { name: "Vault", logo: "/clients/vault.png", height: 34 },
-  { name: "Ditsch", logo: "/clients/ditsch.png", height: 34, instagram: "ditsch" },
+  { name: "Vault", logo: "/clients/vault.png", height: 26 },
   { name: "BOLD", logo: "/clients/bold.png", height: 24 },
   { name: "Nippli", logo: "/clients/nippli.png", height: 30 },
   {
@@ -124,7 +120,7 @@ export const clients: Client[] = [
     height: 44,
   },
   { name: "Kindly", logo: "/clients/kindly.png", height: 26 },
-  { name: "Hasir", logo: "/clients/hasir.png", height: 30 },
+  { name: "Hasir", logo: "/clients/hasir.png", height: 22 },
   { name: "StoneX", logo: "/clients/stonex.png", height: 24 },
   { name: "heycar", logo: "/clients/heycar.png", height: 28 },
   {
@@ -134,8 +130,12 @@ export const clients: Client[] = [
   },
   { name: "Lipstick", logo: "/clients/lipstick.png", height: 30 },
   { name: "Coffi", logo: "/clients/coffi.png", height: 28 },
-  { name: "Reshape", logo: "/clients/reshape.png", height: 28 },
-  { name: "YNG", logo: "/clients/yng.png", height: 26 },
+  {
+    name: "nuva pizza",
+    logo: "/clients/nuva.png",
+    height: 36,
+    instagram: "nuvapizza",
+  },
 ];
 
 export const heroStats = [
