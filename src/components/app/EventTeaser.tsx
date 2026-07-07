@@ -9,8 +9,10 @@ import { supabase } from "@/lib/supabase";
 type TeaserEvent = { id: string; title: string; starts_at: string };
 
 /** "GRID News" block below the logo band: black card pointing at the
- * next upcoming event. Renders nothing while no event is scheduled. */
-export function EventTeaser() {
+ * next upcoming event. Renders nothing while no event is scheduled.
+ * With `match`, it only shows events whose title mentions that brand
+ * (used on client pages: "Event nicht verpassen"). */
+export function EventTeaser({ match }: { match?: string } = {}) {
   const [event, setEvent] = useState<TeaserEvent | null>(null);
 
   useEffect(() => {
@@ -20,14 +22,20 @@ export function EventTeaser() {
       .select("id,title,starts_at")
       .gte("starts_at", new Date().toISOString())
       .order("starts_at", { ascending: true })
-      .limit(1)
+      .limit(10)
       .then(({ data }) => {
-        if (!cancelled && data && data.length > 0) setEvent(data[0]);
+        if (cancelled || !data) return;
+        const hit = match
+          ? data.find((e) =>
+              e.title.toLowerCase().includes(match.toLowerCase()),
+            )
+          : data[0];
+        if (hit) setEvent(hit);
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [match]);
 
   return (
     <AnimatePresence>
@@ -40,7 +48,7 @@ export function EventTeaser() {
           className="mt-12"
         >
           <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
-            GRID News
+            {match ? "Nicht verpassen" : "GRID News"}
           </p>
           <Link
             href="/events"
@@ -63,7 +71,7 @@ export function EventTeaser() {
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-dune">
                 <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
-                Anstehendes Event
+                {match ? "Jetzt Event nicht verpassen" : "Anstehendes Event"}
               </span>
               <span className="mt-0.5 block truncate text-base font-medium text-snow">
                 {event.title}

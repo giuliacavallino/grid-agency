@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LegalShell } from "@/components/app/LegalShell";
 import { GalleryViewer } from "@/components/app/GalleryViewer";
+import { EventTeaser } from "@/components/app/EventTeaser";
 import { clients, clientSlug } from "@/lib/content";
 
 export function generateStaticParams() {
@@ -69,6 +70,8 @@ export default async function ClientPage({
             </a>
           </p>
         )}
+
+        <EventTeaser match={client.name} />
 
         {client.caseStudy && (
           <section className="mt-10">
