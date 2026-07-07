@@ -57,7 +57,7 @@ export const clients: Client[] = [
   },
   { name: "Lipstick", logo: "/clients/lipstick.png", height: 30 },
   { name: "Coffi", logo: "/clients/coffi.png", height: 28 },
-  { name: "Reshape" },
+  { name: "Reshape", logo: "/clients/reshape.png", height: 28 },
   { name: "YNG", logo: "/clients/yng.png", height: 26 },
 ];
 
