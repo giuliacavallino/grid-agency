@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { animate, motion, useInView } from "framer-motion";
 import { clients, heroStats } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
@@ -122,11 +123,14 @@ export function HeroSection() {
       >
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-sky to-transparent" />
-        <div className="marquee flex w-max items-center gap-10">
+        {/* No flex gap here: each item carries its own trailing margin so
+            both halves are exactly the same width and the -50% loop point
+            lands seamlessly on the start of the second copy. */}
+        <div className="marquee flex w-max items-center">
           {[...clients, ...clients].map((client, i) => (
             <span
               key={`${client.name}-${i}`}
-              className="flex shrink-0 items-center"
+              className="mr-10 flex shrink-0 items-center"
             >
               {client.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -146,6 +150,20 @@ export function HeroSection() {
           ))}
         </div>
       </motion.div>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 1 }}
+        className="mt-4 text-center"
+      >
+        <Link
+          href="/referenzen"
+          className="text-sm font-medium text-dune underline-offset-4 hover:underline"
+        >
+          Alle Referenzen ansehen →
+        </Link>
+      </motion.p>
     </div>
   );
 }
