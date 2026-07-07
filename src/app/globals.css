@@ -124,3 +124,18 @@ html {
   background-size: 400px 100%;
   animation: shimmer 1.6s ease-in-out infinite;
 }
+
+/* Sky-tinted glass that stays legible over light and dark surfaces. */
+.glass-dark {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-sky) 82%, transparent),
+    color-mix(in srgb, var(--color-sky) 70%, transparent)
+  );
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, var(--color-snow) 14%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-snow) 14%, transparent),
+    0 8px 32px rgb(0 0 0 / 0.35);
+}

@@ -49,10 +49,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="relative mx-auto min-h-dvh w-full max-w-[560px]">
+    <div className="relative min-h-dvh w-full overflow-x-clip">
       <BootIntro />
       <TopBar />
-      <main className="pb-32 pt-20">{children}</main>
+      <main className="mx-auto w-full max-w-[560px] pb-32 pt-20 lg:max-w-[760px] lg:pb-20">
+        {children}
+      </main>
       <TabBar active={activeView} />
     </div>
   );

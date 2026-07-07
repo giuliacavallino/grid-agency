@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Heart, Menu, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { scrollToId } from "@/lib/scroll";
 import { MainMenu } from "./MainMenu";
+
+const desktopSections = [
+  { id: "team", label: "Team" },
+  { id: "prozess", label: "Prozess" },
+  { id: "feed", label: "Live-Feed" },
+] as const;
 
 export function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -16,9 +23,12 @@ export function TopBar() {
         initial={{ y: -72, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="pointer-events-none fixed top-0 z-40 w-full max-w-[560px] px-5 pt-[calc(env(safe-area-inset-top)+12px)]"
+        className="pointer-events-none fixed inset-x-0 top-0 z-40 px-5 pt-[calc(env(safe-area-inset-top)+12px)]"
       >
-        <div className="glass pointer-events-auto relative mx-auto flex h-12 items-center justify-between overflow-hidden rounded-full px-5">
+        {/* glass-dark keeps the bar legible over the white hero and the
+            dark sections alike; on desktop it widens into a real header
+            with the GRID mark on the far left. */}
+        <div className="glass-dark pointer-events-auto relative mx-auto flex h-12 w-full max-w-[520px] items-center justify-between overflow-hidden rounded-full px-5 lg:max-w-5xl lg:px-7">
           <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
           <a
             href="#home"
@@ -37,10 +47,43 @@ export function TopBar() {
               priority
             />
           </a>
+
+          <nav className="relative hidden items-center gap-7 text-sm font-light text-snow/80 lg:flex">
+            {desktopSections.map((s) => (
+              <a
+                key={s.id}
+                href={`#${s.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToId(s.id);
+                }}
+                className="transition-colors hover:text-snow"
+              >
+                {s.label}
+              </a>
+            ))}
+            <Link href="/referenzen" className="transition-colors hover:text-snow">
+              Referenzen
+            </Link>
+            <Link href="/events" className="transition-colors hover:text-snow">
+              Events
+            </Link>
+            <a
+              href="#dm"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToId("dm");
+              }}
+              className="rounded-full bg-snow px-4 py-1.5 font-medium text-sky transition-all active:scale-95"
+            >
+              Kontakt
+            </a>
+          </nav>
+
           <div className="relative flex items-center gap-5">
             <button
               aria-label="Aktivität"
-              className="relative text-snow transition-transform active:scale-90"
+              className="relative text-snow transition-transform active:scale-90 lg:hidden"
             >
               <Heart className="h-[22px] w-[22px]" strokeWidth={1.8} />
               <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-dune" />
@@ -48,7 +91,7 @@ export function TopBar() {
             <a
               href="#dm"
               aria-label="Nachricht schreiben"
-              className="text-snow transition-transform active:scale-90"
+              className="text-snow transition-transform active:scale-90 lg:hidden"
               onClick={(e) => {
                 e.preventDefault();
                 scrollToId("dm");
