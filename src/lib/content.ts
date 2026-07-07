@@ -55,7 +55,7 @@ export const clients: Client[] = [
     name: "Tokyo Mylk",
     logo: "/clients/tokyo-mylk.png",
     height: 54,
-    instagram: "tokyomylk",
+    instagram: "tokyo_mylk",
   },
   { name: "Ditsch", logo: "/clients/ditsch.png", height: 36, instagram: "ditsch_brezel" },
   {
