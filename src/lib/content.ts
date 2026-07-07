@@ -8,13 +8,13 @@ export type Client = {
 
 export const clients: Client[] = [
   { name: "Friendly Fish" },
-  { name: "Frittenwerk" },
+  { name: "Frittenwerk", logo: "/clients/frittenwerk.png", height: 22 },
   { name: "Goldies", logo: "/clients/goldies.png", height: 30 },
   { name: "the dawn" },
-  { name: "lovebirds", logo: "/clients/lovebirds.png", height: 44 },
-  { name: "yousthetics" },
-  { name: "nuva pizza" },
-  { name: "capvin" },
+  { name: "lovebirds", logo: "/clients/lovebirds.png", height: 30 },
+  { name: "yousthetics", logo: "/clients/yousthetics.png", height: 40 },
+  { name: "nuva pizza", logo: "/clients/nuva.png", height: 36 },
+  { name: "capvin", logo: "/clients/capvin.png", height: 26 },
   { name: "480 gradi" },
   {
     name: "charly & ben bagels",
@@ -27,6 +27,8 @@ export const clients: Client[] = [
   { name: "Casa Beef" },
   { name: "Bäckerei Huck", logo: "/clients/huck.png", height: 36 },
   { name: "Shiso Burger", logo: "/clients/shiso.png", height: 36 },
+  { name: "eDrixx", logo: "/clients/edrixx.png", height: 34 },
+  { name: "Vault", logo: "/clients/vault.png", height: 34 },
 ];
 
 export const heroStats = [
