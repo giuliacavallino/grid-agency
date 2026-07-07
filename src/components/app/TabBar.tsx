@@ -100,7 +100,7 @@ export function TabBar({ active }: { active: ViewId }) {
       initial={{ y: 96, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-      className="pointer-events-none fixed bottom-0 z-40 w-full max-w-[560px] px-5 pb-[calc(env(safe-area-inset-bottom)+16px)]"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[560px] px-5 pb-[calc(env(safe-area-inset-bottom)+16px)] lg:hidden"
       aria-label="Hauptnavigation"
     >
       <div className="glass pointer-events-auto relative mx-auto h-[68px] overflow-hidden rounded-full">
