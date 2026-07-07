@@ -8,8 +8,9 @@ import { supabase } from "@/lib/supabase";
 
 type TeaserEvent = { id: string; title: string; starts_at: string };
 
-/** Glass banner under the hero CTAs pointing at the next upcoming event. */
-export function EventTeaser() {
+/** Banner under the hero CTAs pointing at the next upcoming event.
+ * `light` renders it for the bright hero card instead of dark glass. */
+export function EventTeaser({ light = false }: { light?: boolean }) {
   const [event, setEvent] = useState<TeaserEvent | null>(null);
 
   useEffect(() => {
@@ -40,9 +41,16 @@ export function EventTeaser() {
         >
           <Link
             href="/events"
-            className="glass flex items-center gap-2.5 rounded-full px-4 py-2.5 text-sm text-snow transition-all active:scale-[0.98]"
+            className={
+              light
+                ? "flex items-center gap-2.5 rounded-full border border-sky/15 bg-sky/5 px-4 py-2.5 text-sm text-sky transition-all active:scale-[0.98]"
+                : "glass flex items-center gap-2.5 rounded-full px-4 py-2.5 text-sm text-snow transition-all active:scale-[0.98]"
+            }
           >
-            <Sparkles className="h-4 w-4 shrink-0 text-dune" strokeWidth={1.8} />
+            <Sparkles
+              className={`h-4 w-4 shrink-0 ${light ? "text-earth" : "text-dune"}`}
+              strokeWidth={1.8}
+            />
             <span className="min-w-0 flex-1 truncate font-light">
               <span className="font-medium">
                 {new Date(event.starts_at).toLocaleDateString("de-DE", {
@@ -53,7 +61,10 @@ export function EventTeaser() {
               </span>{" "}
               — {event.title} · Sei dabei
             </span>
-            <ArrowRight className="h-4 w-4 shrink-0 text-dune" strokeWidth={1.8} />
+            <ArrowRight
+              className={`h-4 w-4 shrink-0 ${light ? "text-earth" : "text-dune"}`}
+              strokeWidth={1.8}
+            />
           </Link>
         </motion.p>
       )}
