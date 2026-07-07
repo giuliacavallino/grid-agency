@@ -10,6 +10,8 @@ export type Client = {
   gallery?: string[];
   /** Short agency-voice introduction shown in the client sheet. */
   intro?: string;
+  /** What GRID actually did for this brand — shown as "Der Case". */
+  caseStudy?: string;
 };
 
 export const clients: Client[] = [
@@ -157,6 +159,8 @@ export const clients: Client[] = [
     instagram: "480gradi_",
     intro:
       "Pizzeria Napoletana — life is too short for bad pizza. Frisch auf der Berger Straße, frisch in deinem Feed.",
+    caseStudy:
+      "Der Wunsch: ein dunkler Flash-Photography-Feed, der sich von jeder anderen Pizzeria abhebt. Die Besonderheit: 480 GRADI ist ein Halal-Konzept — statt Drinks arbeiten wir mit Softdrinks und setzen den Fokus auf coole Models und echte Berliner Coolness. Das Ergebnis: ein Feed, der nach Nacht, Blitzlicht und neapolitanischer Pizza schmeckt — und genau deshalb hängen bleibt.",
   },
   {
     name: "heycar", logo: "/clients/heycar.png", height: 31,

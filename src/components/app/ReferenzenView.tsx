@@ -194,6 +194,17 @@ function ClientSheet({
           </a>
         )}
 
+        {client.caseStudy && (
+          <div className="mt-7">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
+              Der Case
+            </p>
+            <p className="mt-3 rounded-2xl bg-black p-4 text-sm font-light leading-relaxed text-snow/85">
+              {client.caseStudy}
+            </p>
+          </div>
+        )}
+
         <div className="mt-7">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
             Live-Feed
