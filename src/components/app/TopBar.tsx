@@ -22,12 +22,12 @@ export function TopBar() {
         initial={{ y: -72, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="pointer-events-none fixed inset-x-0 top-0 z-40 px-5 pt-[calc(env(safe-area-inset-top)+12px)]"
+        className="pointer-events-none fixed inset-x-0 top-0 z-40 px-5 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-7"
       >
         {/* glass-dark keeps the bar legible over the white hero and the
             dark sections alike; on desktop it widens into a real header
             with the GRID mark on the far left. */}
-        <div className="glass-dark pointer-events-auto relative mx-auto flex h-12 w-full max-w-[520px] items-center justify-between overflow-hidden rounded-full px-5 lg:max-w-5xl lg:px-7">
+        <div className="glass-dark pointer-events-auto relative mx-auto flex h-12 w-full max-w-[520px] items-center justify-between overflow-hidden rounded-full px-5 lg:w-fit lg:max-w-none lg:gap-9 lg:px-7">
           <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
           <a
             href="#home"
@@ -83,16 +83,17 @@ export function TopBar() {
                 e.preventDefault();
                 scrollToId("dm");
               }}
-              className="btn-rainbow rounded-full bg-snow px-4 py-1.5 font-medium text-sky active:scale-95"
+              className="btn-rainbow flex items-center gap-1.5 rounded-full bg-snow px-4 py-1.5 font-medium text-sky active:scale-95"
             >
+              <Send className="h-4 w-4" strokeWidth={2} />
               Slide in die DMs
             </a>
           </nav>
 
-          <div className="relative flex items-center gap-5">
+          <div className="relative flex items-center gap-5 lg:hidden">
             <button
               aria-label="Aktivität"
-              className="relative text-snow transition-transform active:scale-90 lg:hidden"
+              className="relative text-snow transition-transform active:scale-90"
             >
               <Heart className="h-[22px] w-[22px]" strokeWidth={1.8} />
               <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-dune" />
@@ -100,7 +101,7 @@ export function TopBar() {
             <a
               href="#dm"
               aria-label="Nachricht schreiben"
-              className="text-snow transition-transform active:scale-90 lg:hidden"
+              className="text-snow transition-transform active:scale-90"
               onClick={(e) => {
                 e.preventDefault();
                 scrollToId("dm");
@@ -111,7 +112,7 @@ export function TopBar() {
             <button
               aria-label="Menü öffnen"
               onClick={() => setMenuOpen(true)}
-              className="text-snow transition-transform active:scale-90 lg:hidden"
+              className="text-snow transition-transform active:scale-90"
             >
               <Menu className="h-[22px] w-[22px]" strokeWidth={1.8} />
             </button>

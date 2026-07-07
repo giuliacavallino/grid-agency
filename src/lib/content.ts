@@ -8,6 +8,8 @@ export type Client = {
   instagram?: string;
   /** Gallery image paths under /public; empty shows a placeholder. */
   gallery?: string[];
+  /** Short agency-voice introduction shown in the client sheet. */
+  intro?: string;
 };
 
 export const clients: Client[] = [
@@ -16,139 +18,229 @@ export const clients: Client[] = [
     logo: "/clients/charly-ben.png",
     height: 54,
     instagram: "charlyandbenbagels",
+    intro:
+      "Handgerollte Bagels, die aussehen, als hätte New York in Berlin geparkt. Wir sorgen dafür, dass man sie schon im Feed schmeckt.",
   },
   {
     name: "Shiso Burger",
     logo: "/clients/shiso.png",
     height: 36,
     instagram: "shisoburger.de",
+    intro:
+      "Asian Fusion trifft Burger-Kultur — Wasabi statt Ketchup. Ein Klassiker, den wir im Feed so frisch halten wie das Tatar.",
   },
   {
     name: "Goldies",
     logo: "/clients/goldies.png",
     height: 34,
     instagram: "goldies_smashburger",
+    intro:
+      "Kreuzberger Kult: Smashburger und goldene Fritten, für die man ansteht. Unser Job: dass der Feed genauso knuspert.",
   },
   {
     name: "Frittenwerk",
     logo: "/clients/frittenwerk.png",
     height: 22,
     instagram: "frittenwerk",
+    intro:
+      "Die Pommesmanufaktur, die Poutine nach Deutschland geholt hat. Deutschlandweit gesnackt, von uns ins Scrollen gebracht.",
   },
-  { name: "Lipstick", logo: "/clients/lipstick.png", height: 16,
-    instagram: "lipstick.film" },
+  {
+    name: "Lipstick", logo: "/clients/lipstick.png", height: 16,
+    instagram: "lipstick.film",
+    intro:
+      "All-in-One-Studio für Film, VFX & AI — gebucht von Marken wie Cartier und Moët. High-End-Content, den wir laut machen.",
+  },
   {
     name: "Casa Beef",
     logo: "/clients/casa-beef.png",
     height: 34,
     instagram: "casa.beef",
+    intro:
+      "Beef in seiner schönsten Form. Wir bringen das Sizzling vom Grill direkt auf den Bildschirm.",
   },
   {
     name: "lovebirds",
     logo: "/clients/lovebirds.png",
     height: 30,
     instagram: "lovebirds.berlin",
+    intro:
+      "Contemporary Pizza mit Charakter — knusprig, verliebt, fotogen. Genau unser Beuteschema.",
   },
-  { name: "Coffi", logo: "/clients/coffi.png", height: 34,
-    instagram: "coffi.app" },
-  { name: "Ditsch", logo: "/clients/ditsch.png", height: 36, instagram: "ditsch_brezel" },
-  { name: "Hasir", logo: "/clients/hasir.png", height: 26,
-    instagram: "hasir.wilmersdorf" },
+  {
+    name: "Coffi", logo: "/clients/coffi.png", height: 34,
+    instagram: "coffi.app",
+    intro:
+      "Die App, die Kaffee scannt, trackt und versteht — mit Stories von über 500 Röstereien. Wir geben dem Ganzen die Reichweite.",
+  },
+  {
+    name: "Ditsch", logo: "/clients/ditsch.png", height: 36, instagram: "ditsch_brezel",
+    intro:
+      "Die Brezel-Institution, die jeder aus der Fußgängerzone kennt. Tradition, die wir für den Feed neu aufbacken.",
+  },
+  {
+    name: "Hasir", logo: "/clients/hasir.png", height: 26,
+    instagram: "hasir.wilmersdorf",
+    intro:
+      "Berliner Institution für Turkish Cuisine — seit Jahrzehnten eine Legende. Wir erzählen sie weiter, Post für Post.",
+  },
   {
     name: "Tokyo Mylk",
     logo: "/clients/tokyo-mylk.png",
-    height: 54,
+    height: 60,
     instagram: "tokyo_mylk",
+    intro:
+      "Japanisch inspirierte Desserts und Drinks aus Frankfurt — süß, fotogen, viral-verdächtig. Wir liefern den letzten Schubs.",
   },
-  { name: "Kindly", logo: "/clients/kindly.png", height: 31,
-    instagram: "kindlyberlin" },
+  {
+    name: "Kindly", logo: "/clients/kindly.png", height: 31,
+    instagram: "kindlyberlin",
+    intro:
+      "Specialty Coffee, Matcha und Healthy Bites in Charlottenburg. So ästhetisch, dass der Feed sich fast von selbst füllt — fast.",
+  },
   {
     name: "Friendly Fish",
     logo: "/clients/friendly-fish.png",
     height: 16,
     instagram: "friendlyfish.berlin",
+    intro:
+      "Fisch, aber freundlich: frisch, ehrlich, ohne Chichi. Wir machen daraus Content mit Biss.",
   },
   {
     name: "Marré",
     logo: "/clients/marre.png",
     height: 29,
     instagram: "marrejewelry",
+    intro:
+      "Schmuck, der bleibt, wenn Trends gehen. Wir setzen die Pieces so in Szene, wie sie es verdienen.",
   },
   {
     name: "yousthetics",
     logo: "/clients/yousthetics.png",
     height: 36,
     instagram: "yousthetics",
+    intro:
+      "Ästhetik-Treatments mit Ergebnis statt Versprechen. Wir übersetzen Vorher-Nachher in Scrollstopper.",
   },
   {
     name: "The Dawn",
     logo: "/clients/the-dawn.png",
     height: 48,
     instagram: "thedawn.berlin",
+    intro:
+      "Der Ort, an dem gute Abende anfangen. Wir sorgen dafür, dass sie im Feed weitergehen.",
   },
   {
     name: "capvin",
     logo: "/clients/capvin.png",
     height: 31,
     instagram: "capvin.berlin",
+    intro:
+      "Neapolitanische Pizza von Weltmeister Vincenzo Capuano — mitten in Berlin. Champions-League-Teig, Champions-League-Content.",
   },
-  { name: "StoneX", logo: "/clients/stonex.png", height: 22,
-    instagram: "stonexbullion" },
-  { name: "Nippli", logo: "/clients/nippli.png", height: 34,
-    instagram: "nippli.de" },
+  {
+    name: "StoneX", logo: "/clients/stonex.png", height: 22,
+    instagram: "stonexbullion",
+    intro:
+      "Gold und Silber, online gehandelt. Wir machen aus Edelmetall Edelcontent.",
+  },
+  {
+    name: "Nippli", logo: "/clients/nippli.png", height: 34,
+    instagram: "nippli.de",
+    intro:
+      "Das freche Accessoire-Label, über das man zweimal scrollt. Perfektes Match für unsere Sprache.",
+  },
   {
     name: "480 GRADI",
     logo: "/clients/480gradi.png",
     height: 31,
     instagram: "480gradi_",
+    intro:
+      "Pizzeria Napoletana — life is too short for bad pizza. Frisch auf der Berger Straße, frisch in deinem Feed.",
   },
-  { name: "heycar", logo: "/clients/heycar.png", height: 31,
-    instagram: "heycar_deutschland" },
-  { name: "Vault", logo: "/clients/vault.png", height: 31,
-    instagram: "vault.berlin" },
-  { name: "eDrixx", logo: "/clients/edrixx.png", height: 36,
-    instagram: "edrixx_digital_tipping" },
+  {
+    name: "heycar", logo: "/clients/heycar.png", height: 31,
+    instagram: "heycar_deutschland",
+    intro:
+      "Geprüfte Gebrauchtwagen, online und ohne Kopfschmerzen. Wir bringen PS in die Timeline.",
+  },
+  {
+    name: "Vault", logo: "/clients/vault.png", height: 31,
+    instagram: "vault.berlin",
+    intro:
+      "Berlins Speakeasy hinter der unscheinbaren Tür: Signature Cocktails, Live-Shows, Hidden Beats. Psst — wir erzählen es trotzdem allen.",
+  },
+  {
+    name: "eDrixx", logo: "/clients/edrixx.png", height: 36,
+    instagram: "edrixx_digital_tipping",
+    intro:
+      "Digitales Trinkgeld, ganz ohne Kleingeld. Eine Idee, die wir gerne groß machen.",
+  },
   {
     name: "Bäckerei Huck",
     logo: "/clients/huck.png",
     height: 36,
     instagram: "baeckerei.huck",
+    intro:
+      "Frankfurter Traditionsbäckerei mit echtem Handwerk. Wir holen den Ofenduft in den Feed.",
   },
   {
     name: "Green & Protein",
     logo: "/clients/green-protein.png",
     height: 26,
     instagram: "greenandprotein.de",
+    intro:
+      "Bowls, die gesund aussehen und noch besser performen. Meal-Prep fürs Auge, von uns angerichtet.",
   },
-  { name: "BOLD", logo: "/clients/bold.png", height: 24,
-    instagram: "boldberlin" },
+  {
+    name: "BOLD", logo: "/clients/bold.png", height: 24,
+    instagram: "boldberlin",
+    intro:
+      "PR- und Kommunikationsagentur zwischen Berlin und L.A. — Kultur-Marketing at its finest. Game recognizes game.",
+  },
   {
     name: "Smash by Hauptstadtburger",
     logo: "/clients/smash.png",
     height: 31,
     instagram: "smash.hauptstadtburger",
+    intro:
+      "Die Smash-Linie von Hauptstadtburger: dünn gepresst, laut gecrunches, schneller weg als fotografiert. Wir sind trotzdem schneller.",
   },
-  { name: "YNG", logo: "/clients/yng.png", height: 32,
-    instagram: "yng.life.official" },
+  {
+    name: "YNG", logo: "/clients/yng.png", height: 32,
+    instagram: "yng.life.official",
+    intro:
+      "Longevity- und Beauty-Supplements für alle, die jung bleiben statt jung tun. Wir liefern den Glow im Feed dazu.",
+  },
   {
     name: "Hauptstadtburger",
     logo: "/clients/hauptstadtburger.png",
-    height: 48,
+    height: 56,
     instagram: "hauptstadtburger",
+    intro:
+      "Burger mit Hauptstadt-Attitüde — saftig, direkt, kein Blabla. So machen wir auch den Content.",
   },
   {
     name: "What Do You Fancy Love",
     logo: "/clients/wdyfl.png",
-    height: 48,
+    height: 56,
     instagram: "whatdoyoufancylove",
+    intro:
+      "Das Café, dessen Name schon ein Caption ist. Kult-Spot mit Herz — wir halten den Hype warm.",
   },
-  { name: "Reshape", logo: "/clients/reshape.png", height: 30,
-    instagram: "reshape_berlin" },
+  {
+    name: "Reshape", logo: "/clients/reshape.png", height: 30,
+    instagram: "reshape_berlin",
+    intro:
+      "Brasilianische Lymphdrainage in Berlin — der Instant-Glow-Up unter den Treatments. Vorher-Nachher, das niemand wegscrollt.",
+  },
   {
     name: "nuva pizza",
     logo: "/clients/nuva.png",
     height: 34,
     instagram: "nuvapizza",
+    intro:
+      "Neapels ambitionierteste Pizza — steht so im Logo, stimmt auch. Wir liefern die Ambition fürs Digitale.",
   },
 ];
 

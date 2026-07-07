@@ -176,6 +176,12 @@ function ClientSheet({
           <BadgeCheck className="h-4 w-4 text-dune" strokeWidth={2} />
         </p>
 
+        {client.intro && (
+          <p className="mx-auto mt-3 max-w-[26rem] text-center text-sm font-light leading-relaxed text-snow/70">
+            {client.intro}
+          </p>
+        )}
+
         {client.instagram && (
           <a
             href={`https://www.instagram.com/${client.instagram}/`}

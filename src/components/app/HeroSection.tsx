@@ -48,7 +48,7 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-xs font-medium uppercase tracking-[0.25em] text-dune"
           >
-            Social Media Agentur — Berlin &amp; Frankfurt
+            Deine #1 Social Media Agentur in Berlin &amp; Frankfurt
           </motion.p>
 
           <motion.h1
@@ -103,10 +103,6 @@ export function HeroSection() {
               Live-Arbeit ansehen
             </a>
           </motion.div>
-
-          <div className="lg:mx-auto lg:max-w-md">
-            <EventTeaser />
-          </div>
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -181,6 +177,10 @@ export function HeroSection() {
           Alle Referenzen ansehen →
         </Link>
       </motion.p>
+
+      <div className="lg:mx-auto lg:w-full lg:max-w-2xl">
+        <EventTeaser />
+      </div>
     </div>
   );
 }
