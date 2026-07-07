@@ -4,41 +4,118 @@ export type Client = {
   logo?: string;
   /** Rendered logo height in px (defaults to 32). */
   height?: number;
+  /** Instagram handle without the @. Button is hidden while missing. */
+  instagram?: string;
+  /** Gallery image paths under /public; empty shows a placeholder. */
+  gallery?: string[];
 };
 
 export const clients: Client[] = [
-  { name: "Friendly Fish", logo: "/clients/friendly-fish.png", height: 20 },
-  { name: "Frittenwerk", logo: "/clients/frittenwerk.png", height: 22 },
-  { name: "Goldies", logo: "/clients/goldies.png", height: 30 },
-  { name: "The Dawn", logo: "/clients/the-dawn.png", height: 40 },
-  { name: "lovebirds", logo: "/clients/lovebirds.png", height: 30 },
-  { name: "yousthetics", logo: "/clients/yousthetics.png", height: 40 },
-  { name: "nuva pizza", logo: "/clients/nuva.png", height: 36 },
-  { name: "capvin", logo: "/clients/capvin.png", height: 26 },
-  { name: "480 GRADI", logo: "/clients/480gradi.png", height: 26 },
+  {
+    name: "Friendly Fish",
+    logo: "/clients/friendly-fish.png",
+    height: 20,
+    instagram: "friendlyfish.berlin",
+  },
+  {
+    name: "Frittenwerk",
+    logo: "/clients/frittenwerk.png",
+    height: 22,
+    instagram: "frittenwerk",
+  },
+  {
+    name: "Goldies",
+    logo: "/clients/goldies.png",
+    height: 30,
+    instagram: "goldies.berlin",
+  },
+  {
+    name: "The Dawn",
+    logo: "/clients/the-dawn.png",
+    height: 40,
+    instagram: "thedawn.berlin",
+  },
+  {
+    name: "lovebirds",
+    logo: "/clients/lovebirds.png",
+    height: 30,
+    instagram: "lovebirds.berlin",
+  },
+  {
+    name: "yousthetics",
+    logo: "/clients/yousthetics.png",
+    height: 40,
+    instagram: "yousthetics",
+  },
+  {
+    name: "nuva pizza",
+    logo: "/clients/nuva.png",
+    height: 36,
+    instagram: "nuvapizza",
+  },
+  {
+    name: "capvin",
+    logo: "/clients/capvin.png",
+    height: 26,
+    instagram: "capvin.berlin",
+  },
+  {
+    name: "480 GRADI",
+    logo: "/clients/480gradi.png",
+    height: 26,
+    instagram: "480gradi",
+  },
   {
     name: "charly & ben bagels",
     logo: "/clients/charly-ben.png",
     height: 48,
+    instagram: "charlyandben",
   },
-  { name: "Marré", logo: "/clients/marre.png", height: 24 },
+  {
+    name: "Marré",
+    logo: "/clients/marre.png",
+    height: 24,
+    instagram: "marre.berlin",
+  },
   {
     name: "Smash by Hauptstadtburger",
     logo: "/clients/smash.png",
     height: 36,
+    instagram: "smash.hauptstadtburger",
   },
   {
     name: "Hauptstadtburger",
     logo: "/clients/hauptstadtburger.png",
     height: 44,
+    instagram: "hauptstadtburger",
   },
-  { name: "Tokyo Mylk", logo: "/clients/tokyo-mylk.png", height: 44 },
-  { name: "Casa Beef", logo: "/clients/casa-beef.png", height: 30 },
-  { name: "Bäckerei Huck", logo: "/clients/huck.png", height: 36 },
-  { name: "Shiso Burger", logo: "/clients/shiso.png", height: 36 },
+  {
+    name: "Tokyo Mylk",
+    logo: "/clients/tokyo-mylk.png",
+    height: 44,
+    instagram: "tokyomylk",
+  },
+  {
+    name: "Casa Beef",
+    logo: "/clients/casa-beef.png",
+    height: 30,
+    instagram: "casabeefberlin",
+  },
+  {
+    name: "Bäckerei Huck",
+    logo: "/clients/huck.png",
+    height: 36,
+    instagram: "baeckerei.huck",
+  },
+  {
+    name: "Shiso Burger",
+    logo: "/clients/shiso.png",
+    height: 36,
+    instagram: "shisoburger",
+  },
   { name: "eDrixx", logo: "/clients/edrixx.png", height: 34 },
   { name: "Vault", logo: "/clients/vault.png", height: 34 },
-  { name: "Ditsch", logo: "/clients/ditsch.png", height: 34 },
+  { name: "Ditsch", logo: "/clients/ditsch.png", height: 34, instagram: "ditsch" },
   { name: "BOLD", logo: "/clients/bold.png", height: 24 },
   { name: "Nippli", logo: "/clients/nippli.png", height: 30 },
   {
