@@ -102,7 +102,7 @@ html {
    important brands, so position 2 onward is what loads on screen
    (position 1 sits half under the left fade). */
 .marquee {
-  animation: marquee 60s linear infinite;
+  animation: marquee var(--marquee-duration, 60s) linear infinite;
 }
 
 @keyframes shimmer {
