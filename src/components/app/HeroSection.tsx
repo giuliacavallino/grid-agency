@@ -33,7 +33,7 @@ function CountUp({ value, suffix }: { value: number; suffix: string }) {
 
 export function HeroSection() {
   return (
-    <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center px-4 pb-6">
+    <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center px-4 pb-28">
       <motion.p
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -133,13 +133,15 @@ export function HeroSection() {
               className="mr-10 flex shrink-0 items-center"
             >
               {client.logo ? (
+                // Every copy loads eagerly: a lazy second half would grow
+                // the strip mid-animation and make the loop visibly jump.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={client.logo}
                   alt={client.name}
                   style={{ height: client.height ?? 32 }}
                   className="w-auto opacity-90"
-                  loading={i < clients.length ? "eager" : "lazy"}
+                  loading="eager"
                 />
               ) : (
                 <span className="whitespace-nowrap text-sm font-light uppercase tracking-[0.15em] text-snow/40">
