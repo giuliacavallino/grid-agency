@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { BadgeCheck, Camera, Heart, MessageCircle, X } from "lucide-react";
-import { clients, type Client } from "@/lib/content";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Camera,
+  Heart,
+  MessageCircle,
+  X,
+} from "lucide-react";
+import { clients, clientSlug, type Client } from "@/lib/content";
 import { stashScrollTarget } from "@/lib/scroll";
 import { supabase } from "@/lib/supabase";
 import { EventTeaser } from "./EventTeaser";
+import { GalleryViewer } from "./GalleryViewer";
 
 /** lucide dropped brand icons, so the Instagram glyph lives here. */
 function InstagramIcon({ className }: { className?: string }) {
@@ -232,22 +239,20 @@ function ClientSheet({
             Jetzt Galerie durchscrollen
           </p>
           {client.gallery && client.gallery.length > 0 ? (
-            <div className="mt-3 grid grid-cols-3 gap-1.5">
-              {client.gallery.map((src) => (
-                <div
-                  key={src}
-                  className="relative aspect-square overflow-hidden rounded-xl"
-                >
-                  <Image
-                    src={src}
-                    alt={client.name}
-                    fill
-                    sizes="(max-width: 560px) 33vw, 180px"
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            <>
+              <GalleryViewer
+                images={client.gallery.slice(0, 9)}
+                alt={client.name}
+                variant="grid"
+              />
+              <Link
+                href={`/referenzen/${clientSlug(client.name)}#galerie`}
+                className="btn-rainbow mt-4 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97]"
+              >
+                Komplette Galerie ansehen
+                <ArrowRight className="h-4 w-4" strokeWidth={2} />
+              </Link>
+            </>
           ) : (
             <div className="mt-3 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-snow/15 py-8">
               <Camera className="h-5 w-5 text-snow/30" strokeWidth={1.6} />

@@ -1,18 +1,77 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { clients, clientSlug, newestCollab } from "@/lib/content";
 
-/** "Newest Collaboration" strip on the homepage: a few gallery shots
- * of the freshest client plus a CTA to the full case page. */
+const TILE_VISIBILITY = ["", "hidden sm:block", "hidden lg:block"];
+
+/** One auto-cycling tile of the slideshow: crossfades to the next
+ * image whenever its `src` changes. */
+function SlideTile({
+  src,
+  href,
+  alt,
+  order,
+}: {
+  src: string;
+  href: string;
+  alt: string;
+  order: number;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`relative aspect-[4/5] overflow-hidden rounded-2xl ${TILE_VISIBILITY[order]}`}
+    >
+      <AnimatePresence initial={false}>
+        <motion.img
+          key={src}
+          src={src}
+          alt={alt}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.9, ease: "easeOut", delay: order * 0.15 }}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </AnimatePresence>
+    </Link>
+  );
+}
+
+/** "Newest Collaboration" strip on the homepage: an automatically
+ * cycling slideshow through the freshest client's whole gallery plus
+ * a CTA to the full case page. */
 export function NewestCollab() {
   const client = clients.find((c) => c.name === newestCollab);
-  if (!client || !client.gallery || client.gallery.length === 0) return null;
+  const gallery = client?.gallery;
+  const [tick, setTick] = useState(0);
 
-  const preview = client.gallery.slice(0, 5);
+  useEffect(() => {
+    if (!gallery || gallery.length < 2) return;
+    const timer = setInterval(() => setTick((n) => n + 1), 3800);
+    return () => clearInterval(timer);
+  }, [gallery]);
+
+  // Warm the cache for the upcoming slides so the crossfade never
+  // fades into a still-loading image.
+  useEffect(() => {
+    if (!gallery || gallery.length < 2) return;
+    const step = Math.ceil(gallery.length / 3);
+    for (let k = 0; k < 3; k++) {
+      const img = new window.Image();
+      img.src = gallery[(tick + 1 + k * step) % gallery.length];
+    }
+  }, [tick, gallery]);
+
+  if (!client || !gallery || gallery.length === 0) return null;
+  const images = gallery;
+
   const href = `/referenzen/${clientSlug(client.name)}`;
+  const step = Math.ceil(images.length / 3);
 
   return (
     <div className="px-4 py-12">
@@ -43,28 +102,23 @@ export function NewestCollab() {
         )}
       </motion.div>
 
-      {/* IG-carousel feel: horizontal snap scroll, edges peeking. */}
+      {/* Hands-free slideshow: each tile crossfades through its own
+       * third of the gallery, so together they cycle every image. */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "0px 0px -60px 0px" }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="-mx-4 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none]"
+        className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
       >
-        {preview.map((src, i) => (
-          <Link
-            key={src}
+        {[0, 1, 2].map((k) => (
+          <SlideTile
+            key={k}
+            src={images[(tick + k * step) % images.length]}
             href={href}
-            className="relative aspect-[4/5] w-[68%] shrink-0 snap-center overflow-hidden rounded-2xl sm:w-[42%] lg:w-[30%]"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt={`${client.name} — Einblick ${i + 1}`}
-              loading={i < 2 ? "eager" : "lazy"}
-              className="h-full w-full object-cover transition-transform duration-300 ease-out hover:scale-[1.04]"
-            />
-          </Link>
+            alt={`${client.name} — Einblick`}
+            order={k}
+          />
         ))}
       </motion.div>
 

@@ -5,14 +5,18 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-/** Picdrop-style gallery: large images at their natural aspect ratio,
- * click opens a fullscreen lightbox with arrow/keyboard navigation. */
+/** Picdrop-style gallery: click opens a fullscreen lightbox with
+ * arrow/keyboard navigation. `masonry` (default) shows large images at
+ * their natural aspect ratio; `grid` shows compact square thumbnails
+ * (used inside the client sheet). */
 export function GalleryViewer({
   images,
   alt,
+  variant = "masonry",
 }: {
   images: string[];
   alt: string;
+  variant?: "masonry" | "grid";
 }) {
   const [index, setIndex] = useState<number | null>(null);
   const mounted = useSyncExternalStore(
@@ -48,25 +52,47 @@ export function GalleryViewer({
 
   return (
     <>
-      {/* Large masonry columns keep each photo's own aspect ratio. */}
-      <div className="mt-4 columns-1 gap-3 sm:columns-2 [&>button]:mb-3">
-        {images.map((src, i) => (
-          <button
-            key={src}
-            onClick={() => setIndex(i)}
-            aria-label={`Bild ${i + 1} ansehen`}
-            className="block w-full overflow-hidden rounded-2xl"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt={`${alt} — Bild ${i + 1}`}
-              loading={i < 4 ? "eager" : "lazy"}
-              className="w-full transition-transform duration-300 ease-out hover:scale-[1.03]"
-            />
-          </button>
-        ))}
-      </div>
+      {variant === "masonry" ? (
+        /* Large masonry columns keep each photo's own aspect ratio. */
+        <div className="mt-4 columns-1 gap-3 sm:columns-2 [&>button]:mb-3">
+          {images.map((src, i) => (
+            <button
+              key={src}
+              onClick={() => setIndex(i)}
+              aria-label={`Bild ${i + 1} ansehen`}
+              className="block w-full overflow-hidden rounded-2xl"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt={`${alt} — Bild ${i + 1}`}
+                loading={i < 4 ? "eager" : "lazy"}
+                className="w-full transition-transform duration-300 ease-out hover:scale-[1.03]"
+              />
+            </button>
+          ))}
+        </div>
+      ) : (
+        /* Compact square thumbnails for tight spaces like the sheet. */
+        <div className="mt-3 grid grid-cols-3 gap-1.5">
+          {images.map((src, i) => (
+            <button
+              key={src}
+              onClick={() => setIndex(i)}
+              aria-label={`Bild ${i + 1} ansehen`}
+              className="aspect-square overflow-hidden rounded-xl"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt={`${alt} — Bild ${i + 1}`}
+                loading={i < 9 ? "eager" : "lazy"}
+                className="h-full w-full object-cover transition-transform duration-300 ease-out hover:scale-[1.05]"
+              />
+            </button>
+          ))}
+        </div>
+      )}
 
       {mounted &&
         createPortal(

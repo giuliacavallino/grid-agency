@@ -104,7 +104,7 @@ export default async function ClientPage({
           </section>
         ))}
 
-        <section className="mt-10">
+        <section id="galerie" className="mt-10 scroll-mt-24">
           <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
             Galerie
           </h2>
