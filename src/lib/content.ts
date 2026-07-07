@@ -1,20 +1,32 @@
-export const clients = [
-  "Friendly Fish",
-  "Frittenwerk",
-  "Goldies",
-  "the dawn",
-  "lovebirds",
-  "yousthetics",
-  "nuva pizza",
-  "capvin",
-  "480 gradi",
-  "charly & ben bagels",
-  "mare",
-  "smash hauptstadt burger",
-  "Tokyo Mylk",
-  "Casa Beef",
-  "Bäckerei Huck",
-  "Shiso Burger",
+export type Client = {
+  name: string;
+  /** Path under /public; falls back to a text wordmark when missing. */
+  logo?: string;
+  /** Rendered logo height in px (defaults to 32). */
+  height?: number;
+};
+
+export const clients: Client[] = [
+  { name: "Friendly Fish" },
+  { name: "Frittenwerk" },
+  { name: "Goldies", logo: "/clients/goldies.png", height: 30 },
+  { name: "the dawn" },
+  { name: "lovebirds", logo: "/clients/lovebirds.png", height: 44 },
+  { name: "yousthetics" },
+  { name: "nuva pizza" },
+  { name: "capvin" },
+  { name: "480 gradi" },
+  {
+    name: "charly & ben bagels",
+    logo: "/clients/charly-ben.png",
+    height: 48,
+  },
+  { name: "mare" },
+  { name: "smash hauptstadt burger" },
+  { name: "Tokyo Mylk", logo: "/clients/tokyo-mylk.png", height: 44 },
+  { name: "Casa Beef" },
+  { name: "Bäckerei Huck", logo: "/clients/huck.png", height: 36 },
+  { name: "Shiso Burger", logo: "/clients/shiso.png", height: 36 },
 ];
 
 export const heroStats = [
