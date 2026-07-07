@@ -7,7 +7,7 @@ export type Client = {
 };
 
 export const clients: Client[] = [
-  { name: "Friendly Fish" },
+  { name: "Friendly Fish", logo: "/clients/friendly-fish.png", height: 20 },
   { name: "Frittenwerk", logo: "/clients/frittenwerk.png", height: 22 },
   { name: "Goldies", logo: "/clients/goldies.png", height: 30 },
   { name: "The Dawn", logo: "/clients/the-dawn.png", height: 40 },
