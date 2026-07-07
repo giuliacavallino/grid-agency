@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { TopBar } from "./TopBar";
 import { TabBar } from "./TabBar";
 import { BootIntro } from "./BootIntro";
+import { popScrollTarget, scrollToId } from "@/lib/scroll";
 
 export type ViewId = "home" | "team" | "prozess" | "feed" | "dm";
 
@@ -19,6 +20,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       window.history.replaceState(null, "", window.location.pathname);
     }
     window.scrollTo(0, 0);
+
+    // Subpages (menu, Referenzen, Events) stash a section id before
+    // navigating home; honor it once the sections are on screen.
+    const target = popScrollTarget();
+    if (target) {
+      requestAnimationFrame(() => scrollToId(target));
+    }
   }, []);
 
   useEffect(() => {

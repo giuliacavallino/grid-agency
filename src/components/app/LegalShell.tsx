@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { MenuButton } from "./MenuButton";
 
 export function LegalShell({
   title,
@@ -27,6 +28,7 @@ export function LegalShell({
             height={17}
             className="relative ml-auto"
           />
+          <MenuButton />
         </div>
       </header>
       <main className="px-4 pb-16 pt-28">{children}</main>

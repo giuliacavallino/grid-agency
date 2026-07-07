@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Calendar, Camera, Clapperboard, MapPin, Ticket } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { stashScrollTarget } from "@/lib/scroll";
 
 export type GridEvent = {
   id: string;
@@ -268,7 +269,8 @@ export function EventsView() {
       <p className="mt-10 text-center text-sm font-light text-snow/50">
         Du willst ein Event mit uns machen?{" "}
         <Link
-          href="/#dm"
+          href="/"
+          onClick={() => stashScrollTarget("dm")}
           className="font-medium text-dune underline-offset-4 hover:underline"
         >
           Schreib uns →
