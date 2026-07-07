@@ -1,77 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { clients, clientSlug, newestCollab } from "@/lib/content";
 
-const TILE_VISIBILITY = ["", "hidden sm:block", "hidden lg:block"];
-
-/** One auto-cycling tile of the slideshow: crossfades to the next
- * image whenever its `src` changes. */
-function SlideTile({
-  src,
-  href,
-  alt,
-  order,
-}: {
-  src: string;
-  href: string;
-  alt: string;
-  order: number;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`relative aspect-[4/5] overflow-hidden rounded-2xl ${TILE_VISIBILITY[order]}`}
-    >
-      <AnimatePresence initial={false}>
-        <motion.img
-          key={src}
-          src={src}
-          alt={alt}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.9, ease: "easeOut", delay: order * 0.15 }}
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      </AnimatePresence>
-    </Link>
-  );
-}
-
-/** "Newest Collaboration" strip on the homepage: an automatically
- * cycling slideshow through the freshest client's whole gallery plus
- * a CTA to the full case page. */
+/** "Newest Collaboration" strip on the homepage: the freshest client's
+ * whole gallery drifts by as a full-bleed marquee (same mechanic as the
+ * logo band) plus a CTA to the full case page. */
 export function NewestCollab() {
   const client = clients.find((c) => c.name === newestCollab);
-  const gallery = client?.gallery;
-  const [tick, setTick] = useState(0);
+  if (!client || !client.gallery || client.gallery.length === 0) return null;
 
-  useEffect(() => {
-    if (!gallery || gallery.length < 2) return;
-    const timer = setInterval(() => setTick((n) => n + 1), 3800);
-    return () => clearInterval(timer);
-  }, [gallery]);
-
-  // Warm the cache for the upcoming slides so the crossfade never
-  // fades into a still-loading image.
-  useEffect(() => {
-    if (!gallery || gallery.length < 2) return;
-    const step = Math.ceil(gallery.length / 3);
-    for (let k = 0; k < 3; k++) {
-      const img = new window.Image();
-      img.src = gallery[(tick + 1 + k * step) % gallery.length];
-    }
-  }, [tick, gallery]);
-
-  if (!client || !gallery || gallery.length === 0) return null;
-  const images = gallery;
-
+  const images = client.gallery;
   const href = `/referenzen/${clientSlug(client.name)}`;
-  const step = Math.ceil(images.length / 3);
 
   return (
     <div className="px-4 py-12">
@@ -102,24 +44,38 @@ export function NewestCollab() {
         )}
       </motion.div>
 
-      {/* Hands-free slideshow: each tile crossfades through its own
-       * third of the gallery, so together they cycle every image. */}
+      {/* Full-bleed image band, drifting like the logo marquee. Tiles
+          have a fixed width so lazily loading images can never change
+          the strip width and jolt the loop. */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "0px 0px -60px 0px" }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
+        className="relative left-1/2 mt-6 w-screen -translate-x-1/2 overflow-hidden"
       >
-        {[0, 1, 2].map((k) => (
-          <SlideTile
-            key={k}
-            src={images[(tick + k * step) % images.length]}
-            href={href}
-            alt={`${client.name} — Einblick`}
-            order={k}
-          />
-        ))}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-sky to-transparent" />
+        <div
+          className="marquee flex w-max"
+          style={{ "--marquee-duration": `${images.length * 3.2}s` } as React.CSSProperties}
+        >
+          {[...images, ...images].map((src, i) => (
+            <Link
+              key={`${src}-${i}`}
+              href={href}
+              className="mr-3 block aspect-[4/5] w-52 shrink-0 overflow-hidden rounded-2xl sm:w-60"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt={`${client.name} — Einblick`}
+                loading={i % images.length < 4 ? "eager" : "lazy"}
+                className="h-full w-full object-cover"
+              />
+            </Link>
+          ))}
+        </div>
       </motion.div>
 
       <motion.div
