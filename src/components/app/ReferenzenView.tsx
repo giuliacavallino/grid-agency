@@ -8,6 +8,7 @@ import { BadgeCheck, Camera, Heart, MessageCircle, X } from "lucide-react";
 import { clients, clientSlug, type Client } from "@/lib/content";
 import { stashScrollTarget } from "@/lib/scroll";
 import { supabase } from "@/lib/supabase";
+import { EventTeaser } from "./EventTeaser";
 
 /** lucide dropped brand icons, so the Instagram glyph lives here. */
 function InstagramIcon({ className }: { className?: string }) {
@@ -193,6 +194,8 @@ function ClientSheet({
             @{client.instagram}
           </a>
         )}
+
+        <EventTeaser match={client.name} />
 
         {client.caseStudy && (
           <div className="mt-7">

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { LegalShell } from "@/components/app/LegalShell";
+import { GalleryViewer } from "@/components/app/GalleryViewer";
+import { EventTeaser } from "@/components/app/EventTeaser";
 import { clients, clientSlug } from "@/lib/content";
 
 export function generateStaticParams() {
@@ -21,27 +22,6 @@ export async function generateMetadata({
       : "Referenz — GRID Agency",
     description: client?.intro,
   };
-}
-
-function Gallery({ images, alt }: { images: string[]; alt: string }) {
-  return (
-    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-      {images.map((src) => (
-        <div
-          key={src}
-          className="relative aspect-square overflow-hidden rounded-xl"
-        >
-          <Image
-            src={src}
-            alt={alt}
-            fill
-            sizes="(max-width: 560px) 50vw, 180px"
-            className="object-cover"
-          />
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export default async function ClientPage({
@@ -91,6 +71,8 @@ export default async function ClientPage({
           </p>
         )}
 
+        <EventTeaser match={client.name} />
+
         {client.caseStudy && (
           <section className="mt-10">
             <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
@@ -113,7 +95,7 @@ export default async function ClientPage({
               </p>
             )}
             {section.images && section.images.length > 0 ? (
-              <Gallery images={section.images} alt={client.name} />
+              <GalleryViewer images={section.images} alt={client.name} />
             ) : (
               <p className="mt-3 rounded-2xl border border-dashed border-snow/15 px-4 py-6 text-center text-xs font-light text-snow/40">
                 Material folgt in Kürze.
@@ -127,7 +109,7 @@ export default async function ClientPage({
             Galerie
           </h2>
           {client.gallery && client.gallery.length > 0 ? (
-            <Gallery images={client.gallery} alt={client.name} />
+            <GalleryViewer images={client.gallery} alt={client.name} />
           ) : (
             <p className="mt-3 rounded-2xl border border-dashed border-snow/15 px-4 py-6 text-center text-xs font-light text-snow/40">
               Einblicke folgen in Kürze.
