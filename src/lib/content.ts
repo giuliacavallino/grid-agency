@@ -221,7 +221,6 @@ export const clients: Client[] = [
       "/referenzen/480-gradi/61.webp",
       "/referenzen/480-gradi/62.webp",
       "/referenzen/480-gradi/63.webp",
-      "/referenzen/480-gradi/65.webp",
       "/referenzen/480-gradi/66.webp",
       "/referenzen/480-gradi/67.webp",
       "/referenzen/480-gradi/70.webp",
@@ -334,6 +333,9 @@ export const clients: Client[] = [
       "Neapels ambitionierteste Pizza — steht so im Logo, stimmt auch. Wir liefern die Ambition fürs Digitale.",
   },
 ];
+
+/** Name of the client shown as "Newest Collaboration" on the homepage. */
+export const newestCollab = "480 GRADI";
 
 export const heroStats = [
   { value: 30, suffix: "+", label: "Marken" },

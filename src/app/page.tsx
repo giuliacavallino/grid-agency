@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app/AppShell";
 import { HeroSection } from "@/components/app/HeroSection";
+import { NewestCollab } from "@/components/app/NewestCollab";
 import { TeamSection } from "@/components/app/TeamSection";
 import { ProcessSection } from "@/components/app/ProcessSection";
 import { LiveFeedSection } from "@/components/app/LiveFeedSection";
@@ -10,6 +11,10 @@ export default function Home() {
     <AppShell>
       <section id="home" className="scroll-mt-20">
         <HeroSection />
+      </section>
+
+      <section className="border-t border-snow/10">
+        <NewestCollab />
       </section>
 
       <section id="team" className="scroll-mt-20 border-t border-snow/10">
