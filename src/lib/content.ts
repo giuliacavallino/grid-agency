@@ -12,7 +12,30 @@ export type Client = {
   intro?: string;
   /** What GRID actually did for this brand — shown as "Der Case". */
   caseStudy?: string;
+  /** Extra per-client sections (Events, Behind the Scenes, Rebranding …). */
+  sections?: ClientSection[];
 };
+
+export type ClientSection = {
+  title: string;
+  text?: string;
+  /** Image paths under /public. */
+  images?: string[];
+};
+
+/** URL slug for the per-client page, e.g. "480 GRADI" -> "480-gradi". */
+export function clientSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
+    .replace(/é|è/g, "e")
+    .replace(/&/g, "und")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 export const clients: Client[] = [
   {
@@ -60,6 +83,18 @@ export const clients: Client[] = [
     instagram: "casa.beef",
     intro:
       "Beef in seiner schönsten Form. Wir bringen das Sizzling vom Grill direkt auf den Bildschirm.",
+    caseStudy:
+      "Bei Casa Beef war der Feed nur der Anfang: Wir haben das Opening-Event geplant und umgesetzt und das komplette Rebranding-Konzept mitentwickelt — vom Look bis zur Tonalität. Full Service heißt bei uns wirklich full.",
+    sections: [
+      {
+        title: "Events",
+        text: "Das Opening-Event: von uns geplant, orchestriert und dokumentiert.",
+      },
+      {
+        title: "Behind the Scenes",
+        text: "Wie ein Casa-Beef-Content-Day wirklich aussieht.",
+      },
+    ],
   },
   {
     name: "lovebirds",
