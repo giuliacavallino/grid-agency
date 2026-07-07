@@ -190,7 +190,7 @@ export const clients: Client[] = [
   {
     name: "480 GRADI",
     logo: "/clients/480gradi.png",
-    height: 31,
+    height: 44,
     instagram: "480gradi_",
     intro:
       "Pizzeria Napoletana — life is too short for bad pizza. Frisch auf der Berger Straße, frisch in deinem Feed.",
