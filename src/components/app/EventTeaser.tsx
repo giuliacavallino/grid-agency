@@ -8,9 +8,9 @@ import { supabase } from "@/lib/supabase";
 
 type TeaserEvent = { id: string; title: string; starts_at: string };
 
-/** Banner under the hero CTAs pointing at the next upcoming event.
- * `light` renders it for the bright hero card instead of dark glass. */
-export function EventTeaser({ light = false }: { light?: boolean }) {
+/** "GRID News" block below the logo band: black card pointing at the
+ * next upcoming event. Renders nothing while no event is scheduled. */
+export function EventTeaser() {
   const [event, setEvent] = useState<TeaserEvent | null>(null);
 
   useEffect(() => {
@@ -32,41 +32,49 @@ export function EventTeaser({ light = false }: { light?: boolean }) {
   return (
     <AnimatePresence>
       {event && (
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="mt-3"
+          className="mt-12"
         >
+          <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
+            GRID News
+          </p>
           <Link
             href="/events"
-            className={
-              light
-                ? "flex items-center gap-2.5 rounded-full border border-sky/15 bg-sky/5 px-4 py-2.5 text-sm text-sky transition-all active:scale-[0.98]"
-                : "glass flex items-center gap-2.5 rounded-full px-4 py-2.5 text-sm text-snow transition-all active:scale-[0.98]"
-            }
+            className="mt-3 flex items-center gap-4 rounded-2xl bg-black p-4 transition-all hover:scale-[1.01] active:scale-[0.99]"
           >
-            <Sparkles
-              className={`h-4 w-4 shrink-0 ${light ? "text-earth" : "text-dune"}`}
-              strokeWidth={1.8}
-            />
-            <span className="min-w-0 flex-1 truncate font-light">
-              <span className="font-medium">
+            <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-snow text-sky">
+              <span className="text-base font-semibold leading-none">
                 {new Date(event.starts_at).toLocaleDateString("de-DE", {
                   day: "2-digit",
-                  month: "2-digit",
                   timeZone: "Europe/Berlin",
                 })}
-              </span>{" "}
-              — {event.title} · Sei dabei
+              </span>
+              <span className="text-[9px] font-medium uppercase tracking-widest">
+                {new Date(event.starts_at).toLocaleDateString("de-DE", {
+                  month: "short",
+                  timeZone: "Europe/Berlin",
+                })}
+              </span>
             </span>
-            <ArrowRight
-              className={`h-4 w-4 shrink-0 ${light ? "text-earth" : "text-dune"}`}
-              strokeWidth={1.8}
-            />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-dune">
+                <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
+                Anstehendes Event
+              </span>
+              <span className="mt-0.5 block truncate text-base font-medium text-snow">
+                {event.title}
+              </span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-scroll-gradient">
+              Sei dabei
+              <ArrowRight className="h-4 w-4 text-dune" strokeWidth={2} />
+            </span>
           </Link>
-        </motion.p>
+        </motion.section>
       )}
     </AnimatePresence>
   );
