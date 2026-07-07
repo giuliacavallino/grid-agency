@@ -81,11 +81,11 @@ html {
 .story-ring {
   background: conic-gradient(
     from 0deg,
-    var(--color-dune),
-    var(--color-earth),
-    var(--color-snow),
-    var(--color-dawn),
-    var(--color-dune)
+    #ffd400,
+    #f7b790,
+    #e02e38,
+    #4d9fff,
+    #ffd400
   );
 }
 

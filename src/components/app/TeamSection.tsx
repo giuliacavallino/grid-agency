@@ -21,7 +21,7 @@ export function TeamSection() {
         <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow">
           Die Person hinter
           <br />
-          deinem Wachstum.
+          deinem <span className="text-scroll-gradient">Wachstum</span>.
         </h2>
       </motion.div>
 

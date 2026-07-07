@@ -18,7 +18,7 @@ export function ProcessSection() {
         <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow">
           So bauen wir deinen
           <br />
-          unfairen Vorteil.
+          <span className="text-scroll-gradient">unfairen Vorteil</span>.
         </h2>
       </motion.div>
 
