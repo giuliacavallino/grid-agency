@@ -5,6 +5,7 @@ import Link from "next/link";
 import { animate, motion, useInView } from "framer-motion";
 import { clients, heroStats } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
+import { EventTeaser } from "./EventTeaser";
 
 function CountUp({ value, suffix }: { value: number; suffix: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -94,6 +95,8 @@ export function HeroSection() {
           Live-Arbeit ansehen
         </a>
       </motion.div>
+
+      <EventTeaser />
 
       <motion.div
         initial={{ opacity: 0 }}
