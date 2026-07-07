@@ -78,7 +78,9 @@ function UpcomingCard({ event }: { event: GridEvent }) {
         </span>
       </div>
 
-      <div className="p-5">
+      {/* Black info panel continues the invitation's bottom bar; Snow text
+          keeps it crisp instead of sinking into the Sky gray. */}
+      <div className="bg-black p-5">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
           Nächstes Event
         </p>
@@ -86,7 +88,7 @@ function UpcomingCard({ event }: { event: GridEvent }) {
           {event.title}
         </h2>
 
-        <div className="mt-3 space-y-1.5 text-sm font-light text-snow/70">
+        <div className="mt-3 space-y-1.5 text-sm font-light text-snow/90">
           <p className="flex items-center gap-2">
             <Calendar className="h-4 w-4 shrink-0 text-dune" strokeWidth={1.8} />
             {dateFmt.format(date)} · {timeFmt.format(date)} Uhr
@@ -100,7 +102,7 @@ function UpcomingCard({ event }: { event: GridEvent }) {
         </div>
 
         {event.description && (
-          <p className="mt-4 text-sm font-light leading-relaxed text-snow/75">
+          <p className="mt-4 text-sm font-light leading-relaxed text-snow/90">
             {event.description}
           </p>
         )}
