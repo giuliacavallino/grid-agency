@@ -7,7 +7,9 @@ import { scrollToId } from "@/lib/scroll";
 
 function CountUp({ value, suffix }: { value: number; suffix: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
+  // Only shrink the viewport vertically — a horizontal margin would keep
+  // stats near the screen edge from ever intersecting.
+  const inView = useInView(ref, { once: true, margin: "0px 0px -40px 0px" });
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
@@ -120,13 +122,26 @@ export function HeroSection() {
       >
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-sky to-transparent" />
-        <div className="marquee flex w-max gap-8">
+        <div className="marquee flex w-max items-center gap-10">
           {[...clients, ...clients].map((client, i) => (
             <span
-              key={`${client}-${i}`}
-              className="whitespace-nowrap text-sm font-light uppercase tracking-[0.15em] text-snow/40"
+              key={`${client.name}-${i}`}
+              className="flex shrink-0 items-center"
             >
-              {client}
+              {client.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={client.logo}
+                  alt={client.name}
+                  style={{ height: client.height ?? 32 }}
+                  className="w-auto opacity-90"
+                  loading={i < clients.length ? "eager" : "lazy"}
+                />
+              ) : (
+                <span className="whitespace-nowrap text-sm font-light uppercase tracking-[0.15em] text-snow/40">
+                  {client.name}
+                </span>
+              )}
             </span>
           ))}
         </div>
