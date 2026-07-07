@@ -17,7 +17,7 @@ export function DmSection() {
           Direct Message
         </p>
         <h2 className="mt-2 text-2xl font-medium tracking-tight text-snow">
-          Slide in unsere DMs.
+          Slide in unsere <span className="text-scroll-gradient">DMs</span>.
         </h2>
       </motion.div>
 

@@ -113,7 +113,7 @@ function UpcomingCard({ event }: { event: GridEvent }) {
             href={event.luma_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-5 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky transition-all active:scale-[0.97]"
+            className="mt-5 flex items-center justify-center gap-2 btn-rainbow rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97]"
           >
             <Ticket className="h-4 w-4" strokeWidth={2} />
             Sei mit dabei
@@ -230,7 +230,7 @@ export function EventsView() {
         <h1 className="mt-2 text-3xl font-medium tracking-tight text-snow">
           Offline genauso
           <br />
-          unskippable wie online.
+          <span className="text-scroll-gradient">unskippable</span> wie online.
         </h1>
         <p className="mt-3 max-w-[26rem] text-sm font-light leading-relaxed text-snow/60">
           Wir bringen Feeds ins echte Leben — mit unseren Brands, guter Musik

@@ -233,7 +233,7 @@ export function LiveFeedSection() {
         <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow">
           Unsere Arbeit.
           <br />
-          In Echtzeit.
+          <span className="text-scroll-gradient">In Echtzeit</span>.
         </h2>
         <p className="mt-2 text-sm font-light text-snow/55">
           Neue Posts unserer Kunden erscheinen hier automatisch — ungefiltert,

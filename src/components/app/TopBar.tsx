@@ -32,7 +32,7 @@ export function TopBar() {
           <a
             href="#home"
             aria-label="Nach oben"
-            className="relative"
+            className="logo-rainbow relative"
             onClick={(e) => {
               e.preventDefault();
               scrollToId("home");
@@ -56,15 +56,15 @@ export function TopBar() {
                   e.preventDefault();
                   scrollToId(s.id);
                 }}
-                className="transition-colors hover:text-snow"
+                className="nav-rainbow"
               >
                 {s.label}
               </a>
             ))}
-            <Link href="/referenzen" className="transition-colors hover:text-snow">
+            <Link href="/referenzen" className="nav-rainbow">
               Referenzen
             </Link>
-            <Link href="/events" className="transition-colors hover:text-snow">
+            <Link href="/events" className="nav-rainbow">
               Events
             </Link>
             <a
@@ -73,7 +73,7 @@ export function TopBar() {
                 e.preventDefault();
                 scrollToId("team");
               }}
-              className="transition-colors hover:text-snow"
+              className="nav-rainbow"
             >
               Jobs
             </a>
@@ -83,7 +83,7 @@ export function TopBar() {
                 e.preventDefault();
                 scrollToId("dm");
               }}
-              className="rounded-full bg-snow px-4 py-1.5 font-medium text-sky transition-all active:scale-95"
+              className="btn-rainbow rounded-full bg-snow px-4 py-1.5 font-medium text-sky active:scale-95"
             >
               Slide in die DMs
             </a>

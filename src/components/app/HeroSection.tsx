@@ -88,7 +88,7 @@ export function HeroSection() {
                 e.preventDefault();
                 scrollToId("dm");
               }}
-              className="flex-1 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky transition-all active:scale-[0.97]"
+              className="btn-rainbow flex-1 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
             >
               Lass uns reden
             </a>

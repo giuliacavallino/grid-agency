@@ -181,7 +181,7 @@ function ClientSheet({
             href={`https://www.instagram.com/${client.instagram}/`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky transition-all active:scale-[0.97]"
+            className="mt-4 flex items-center justify-center gap-2 btn-rainbow rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97]"
           >
             <InstagramIcon className="h-4 w-4" />
             @{client.instagram}
@@ -263,7 +263,7 @@ export function ReferenzenView() {
         <h1 className="mt-2 text-3xl font-medium tracking-tight text-snow">
           Marken, die uns
           <br />
-          ihren Feed anvertrauen.
+          ihren <span className="text-scroll-gradient">Feed</span> anvertrauen.
         </h1>
         <p className="mt-3 max-w-[26rem] text-sm font-light leading-relaxed text-snow/60">
           {clients.length} Brands aus Berlin, Frankfurt und darüber hinaus.

@@ -81,11 +81,11 @@ html {
 .story-ring {
   background: conic-gradient(
     from 0deg,
-    var(--color-dune),
-    var(--color-earth),
-    var(--color-snow),
-    var(--color-dawn),
-    var(--color-dune)
+    #ffd400,
+    #f7b790,
+    #e02e38,
+    #4d9fff,
+    #ffd400
   );
 }
 
@@ -161,4 +161,78 @@ html {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Hover effects in the aurora palette. */
+@keyframes rainbow-slide {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* Nav links: letters fill with a moving color gradient on hover. */
+.nav-rainbow {
+  transition: opacity 0.2s ease;
+}
+.nav-rainbow:hover {
+  background-image: linear-gradient(
+    92deg,
+    #ffd400,
+    #f7b790,
+    #4d9fff,
+    #ffd400
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow-slide 1.4s linear infinite;
+}
+
+/* Primary buttons: pop into the animated gradient on hover. */
+.btn-rainbow {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.25s ease;
+}
+.btn-rainbow:hover {
+  background-image: linear-gradient(
+    92deg,
+    #ffd400,
+    #f7b790,
+    #4d9fff,
+    #ffd400
+  );
+  background-size: 200% 100%;
+  color: var(--color-sky);
+  animation: rainbow-slide 1.6s linear infinite;
+  transform: scale(1.04);
+  box-shadow: 0 10px 34px rgb(247 183 144 / 0.35);
+}
+
+/* GRID mark: on hover the aurora gradient runs through the letters
+   (gradient masked by the logo artwork) and the mark zooms slightly. */
+.logo-rainbow {
+  position: relative;
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+.logo-rainbow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(92deg, #ffd400, #f7b790, #4d9fff, #ffd400);
+  background-size: 200% 100%;
+  -webkit-mask: url("/brand/grid_logo_snow.png") center / contain no-repeat;
+  mask: url("/brand/grid_logo_snow.png") center / contain no-repeat;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  animation: rainbow-slide 1.4s linear infinite;
+  pointer-events: none;
+}
+.logo-rainbow:hover {
+  transform: scale(1.08);
+}
+.logo-rainbow:hover::after {
+  opacity: 1;
 }
