@@ -9,9 +9,8 @@ import { scrollToId } from "@/lib/scroll";
 import { MainMenu } from "./MainMenu";
 
 const desktopSections = [
-  { id: "team", label: "Team" },
-  { id: "prozess", label: "Prozess" },
-  { id: "feed", label: "Live-Feed" },
+  { id: "prozess", label: "Leistungen" },
+  { id: "team", label: "Über uns" },
 ] as const;
 
 export function TopBar() {
@@ -69,6 +68,16 @@ export function TopBar() {
               Events
             </Link>
             <a
+              href="#team"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToId("team");
+              }}
+              className="transition-colors hover:text-snow"
+            >
+              Jobs
+            </a>
+            <a
               href="#dm"
               onClick={(e) => {
                 e.preventDefault();
@@ -76,7 +85,7 @@ export function TopBar() {
               }}
               className="rounded-full bg-snow px-4 py-1.5 font-medium text-sky transition-all active:scale-95"
             >
-              Kontakt
+              Slide in die DMs
             </a>
           </nav>
 
@@ -102,7 +111,7 @@ export function TopBar() {
             <button
               aria-label="Menü öffnen"
               onClick={() => setMenuOpen(true)}
-              className="text-snow transition-transform active:scale-90"
+              className="text-snow transition-transform active:scale-90 lg:hidden"
             >
               <Menu className="h-[22px] w-[22px]" strokeWidth={1.8} />
             </button>

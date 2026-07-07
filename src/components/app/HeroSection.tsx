@@ -35,17 +35,18 @@ function CountUp({ value, suffix }: { value: number; suffix: string }) {
 export function HeroSection() {
   return (
     <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center px-4 pb-28 lg:pb-12">
-      {/* Full-bleed white opening act (no card frame): the backdrop breaks
-          out of the content column and reaches up behind the top bar. */}
+      {/* Dark opening act with an aurora glow in client-brand colors:
+          the backdrop breaks out of the content column and reaches up
+          behind the top bar. */}
       <div className="relative">
-        <div className="absolute -top-24 bottom-0 left-1/2 w-screen -translate-x-1/2 bg-white" />
+        <div className="aurora absolute -top-24 bottom-0 left-1/2 w-screen -translate-x-1/2" />
 
-        <div className="relative py-8 lg:py-14">
+        <div className="relative py-8 lg:py-16 lg:text-center">
           <motion.p
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-xs font-medium uppercase tracking-[0.25em] text-earth"
+            className="text-xs font-medium uppercase tracking-[0.25em] text-dune"
           >
             Social Media Agentur — Berlin &amp; Frankfurt
           </motion.p>
@@ -54,12 +55,13 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-4 text-[2.35rem] font-medium leading-[1.05] tracking-tight text-sky lg:text-6xl"
+            className="mt-4 text-[2.35rem] font-medium leading-[1.05] tracking-tight text-snow lg:mx-auto lg:text-7xl lg:leading-[1.04]"
           >
             Marken, die man
             <br />
-            nicht <span className="italic text-earth">wegscrollen</span>
-            <br />
+            nicht{" "}
+            <span className="text-scroll-gradient italic">wegscrollen</span>
+            <br className="lg:hidden" />{" "}
             kann.
           </motion.h1>
 
@@ -67,7 +69,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-5 max-w-[24rem] text-base font-light leading-relaxed text-sky/75 lg:max-w-[32rem] lg:text-lg"
+            className="mt-5 max-w-[24rem] text-base font-light leading-relaxed text-snow/70 lg:mx-auto lg:max-w-[36rem] lg:text-lg"
           >
             Wir sind dein unfairer Vorteil im Feed. Strategie, Content, Editing —
             und ein Gespür für Trends, bevor sie welche sind. Dein Feed wird das
@@ -78,7 +80,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.55 }}
-            className="mt-7 flex gap-2 lg:max-w-md"
+            className="mt-7 flex gap-2 lg:mx-auto lg:max-w-md"
           >
             <a
               href="#dm"
@@ -86,7 +88,7 @@ export function HeroSection() {
                 e.preventDefault();
                 scrollToId("dm");
               }}
-              className="flex-1 rounded-full bg-sky py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
+              className="flex-1 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky transition-all active:scale-[0.97]"
             >
               Lass uns reden
             </a>
@@ -96,28 +98,28 @@ export function HeroSection() {
                 e.preventDefault();
                 scrollToId("feed");
               }}
-              className="flex-1 rounded-full border border-sky/15 bg-sky/5 py-3 text-center text-sm font-medium text-sky transition-all active:scale-[0.97]"
+              className="glass flex-1 rounded-full py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
             >
               Live-Arbeit ansehen
             </a>
           </motion.div>
 
-          <div className="lg:max-w-md">
-            <EventTeaser light />
+          <div className="lg:mx-auto lg:max-w-md">
+            <EventTeaser />
           </div>
 
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.7 }}
-            className="mt-9 flex justify-between border-t border-sky/10 pt-5 lg:max-w-lg"
+            className="mt-9 flex justify-between border-t border-snow/10 pt-5 lg:mx-auto lg:max-w-lg"
           >
             {heroStats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <p className="text-xl font-medium text-sky lg:text-2xl">
+                <p className="text-xl font-medium text-snow lg:text-2xl">
                   <CountUp value={stat.value} suffix={stat.suffix} />
                 </p>
-                <p className="mt-0.5 text-[11px] font-light text-earth">
+                <p className="mt-0.5 text-[11px] font-light text-snow/50">
                   {stat.label}
                 </p>
               </div>
@@ -126,7 +128,7 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Dark reference band: full-bleed against the Sky background. */}
+      {/* Client logo band, full-bleed. */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
