@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { animate, motion, useInView } from "framer-motion";
-import { clients, heroStats } from "@/lib/content";
+import { clients, clientSlug, heroStats } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
 import { EventTeaser } from "./EventTeaser";
 
@@ -137,11 +137,15 @@ export function HeroSection() {
         {/* No flex gap here: each item carries its own trailing margin so
             both halves are exactly the same width and the -50% loop point
             lands seamlessly on the start of the second copy. */}
-        <div className="marquee flex w-max items-center">
+        {/* Hovering pauses the drift so the logos are easy to hit —
+            each one links straight to its client page. */}
+        <div className="marquee flex w-max items-center [&:hover]:[animation-play-state:paused]">
           {[...clients, ...clients].map((client, i) => (
-            <span
+            <Link
               key={`${client.name}-${i}`}
-              className="mr-10 flex shrink-0 items-center"
+              href={`/referenzen/${clientSlug(client.name)}`}
+              aria-label={`${client.name} — Referenz ansehen`}
+              className="mr-10 flex shrink-0 items-center transition-transform duration-200 hover:scale-110"
             >
               {client.logo ? (
                 // Every copy loads eagerly: a lazy second half would grow
@@ -159,7 +163,7 @@ export function HeroSection() {
                   {client.name}
                 </span>
               )}
-            </span>
+            </Link>
           ))}
         </div>
       </motion.div>
