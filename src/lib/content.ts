@@ -90,7 +90,7 @@ export const clients: Client[] = [
     caseStudy:
       "Über den Dächern Berlin-Charlottenburgs, im KaDeWe die Sechste, haben wir aus dem ehemaligen Beef Grill Club das Casa Beef gemacht: Wir haben das komplette Rebranding umgesetzt — vom Look bis zur Tonalität — und die Opening-Party auf die Beine gestellt. Full Service heißt bei uns wirklich full.",
     gallery: Array.from(
-      { length: 60 },
+      { length: 58 },
       (_, i) => `/referenzen/casa-beef/${i + 1}.webp`,
     ),
     sections: [
