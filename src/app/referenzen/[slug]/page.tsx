@@ -36,7 +36,7 @@ export default async function ClientPage({
 
   return (
     <LegalShell title={client.name}>
-      <div className="px-4">
+      <div>
         <div className="flex min-h-24 items-center justify-center py-4">
           {client.logo ? (
             // eslint-disable-next-line @next/next/no-img-element

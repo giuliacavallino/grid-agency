@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="relative min-h-dvh w-full overflow-x-clip">
       <BootIntro />
       <TopBar />
-      <main className="mx-auto w-full max-w-[560px] pb-32 pt-20 lg:max-w-[760px] lg:pb-20">
+      <main className="mx-auto w-full max-w-frame pb-32 pt-20 lg:max-w-frame-lg lg:pb-20">
         {children}
       </main>
       <TabBar active={activeView} />

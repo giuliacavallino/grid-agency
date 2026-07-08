@@ -6,7 +6,7 @@ import { ContactForm } from "@/components/ContactForm";
 
 export function DmSection() {
   return (
-    <div className="px-4 py-10">
+    <div className="px-5 py-10">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}

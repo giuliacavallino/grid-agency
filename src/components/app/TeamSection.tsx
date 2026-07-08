@@ -8,7 +8,7 @@ import { scrollToId } from "@/lib/scroll";
 
 export function TeamSection() {
   return (
-    <div className="px-4 py-12">
+    <div className="px-5 py-12">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}

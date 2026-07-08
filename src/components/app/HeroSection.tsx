@@ -34,7 +34,7 @@ function CountUp({ value, suffix }: { value: number; suffix: string }) {
 
 export function HeroSection() {
   return (
-    <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center px-4 pb-28 lg:pb-12">
+    <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center px-5 pb-28 lg:pb-12">
       {/* Dark opening act with an aurora glow in client-brand colors:
           the backdrop breaks out of the content column and reaches up
           behind the top bar. */}
