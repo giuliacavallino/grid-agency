@@ -4,6 +4,9 @@ export type Client = {
   logo?: string;
   /** Rendered logo height in px (defaults to 32). */
   height?: number;
+  /** Alternative logo for the detail views (sheet + client page);
+   * the marquee and logo grid keep using `logo`. */
+  logoDetail?: string;
   /** Instagram handle without the @. Button is hidden while missing. */
   instagram?: string;
   /** Gallery image paths under /public; empty shows a placeholder. */
@@ -79,12 +82,17 @@ export const clients: Client[] = [
   {
     name: "Casa Beef",
     logo: "/clients/casa-beef.png",
+    logoDetail: "/clients/casa-beef-lila.png",
     height: 34,
     instagram: "casa.beef",
     intro:
       "Beef in seiner schönsten Form. Wir bringen das Sizzling vom Grill direkt auf den Bildschirm.",
     caseStudy:
-      "Bei Casa Beef war der Feed nur der Anfang: Wir haben das Opening-Event geplant und umgesetzt und das komplette Rebranding-Konzept mitentwickelt — vom Look bis zur Tonalität. Full Service heißt bei uns wirklich full.",
+      "Über den Dächern Berlin-Charlottenburgs, im KaDeWe die Sechste, haben wir aus dem ehemaligen Beef Grill Club das Casa Beef gemacht: Wir haben das komplette Rebranding umgesetzt — vom Look bis zur Tonalität — und die Opening-Party auf die Beine gestellt. Full Service heißt bei uns wirklich full.",
+    gallery: Array.from(
+      { length: 61 },
+      (_, i) => `/referenzen/casa-beef/${i + 1}.webp`,
+    ),
     sections: [
       {
         title: "Events",
@@ -93,6 +101,10 @@ export const clients: Client[] = [
       {
         title: "Behind the Scenes",
         text: "Wie ein Casa-Beef-Content-Day wirklich aussieht.",
+        images: [
+          "/referenzen/casa-beef/bts-1.webp",
+          "/referenzen/casa-beef/bts-2.webp",
+        ],
       },
     ],
   },

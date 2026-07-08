@@ -167,7 +167,7 @@ function ClientSheet({
           {client.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={client.logo}
+              src={client.logoDetail ?? client.logo}
               alt={client.name}
               style={{ height: Math.min((client.height ?? 32) * 1.5, 64) }}
               className="w-auto"

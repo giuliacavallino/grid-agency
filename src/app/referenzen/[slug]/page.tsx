@@ -40,7 +40,7 @@ export default async function ClientPage({
           {client.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={client.logo}
+              src={client.logoDetail ?? client.logo}
               alt={client.name}
               style={{ height: Math.min((client.height ?? 32) * 1.8, 80) }}
               className="w-auto"
