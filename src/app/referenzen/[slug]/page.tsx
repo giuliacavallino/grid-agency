@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { LegalShell } from "@/components/app/LegalShell";
 import { ClientMediaTabs } from "@/components/app/ClientMediaTabs";
 import { EventTeaser } from "@/components/app/EventTeaser";
+import { InstagramIcon } from "@/components/app/InstagramIcon";
 import { clients, clientSlug } from "@/lib/content";
 
 export function generateStaticParams() {
@@ -59,16 +60,15 @@ export default async function ClientPage({
         )}
 
         {client.instagram && (
-          <p className="mt-4 text-center">
-            <a
-              href={`https://www.instagram.com/${client.instagram}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-dune underline-offset-4 hover:underline"
-            >
-              @{client.instagram} auf Instagram →
-            </a>
-          </p>
+          <a
+            href={`https://www.instagram.com/${client.instagram}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-rainbow mx-auto mt-5 flex max-w-sm items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97]"
+          >
+            <InstagramIcon className="h-4 w-4" />
+            @{client.instagram}
+          </a>
         )}
 
         <EventTeaser match={client.name} />
