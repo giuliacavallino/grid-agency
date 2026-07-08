@@ -95,8 +95,12 @@ export const clients: Client[] = [
     ),
     sections: [
       {
-        title: "Events",
+        title: "Grand Opening Dezember 2025",
         text: "Das Opening-Event: von uns geplant, orchestriert und dokumentiert.",
+        images: Array.from(
+          { length: 43 },
+          (_, i) => `/referenzen/casa-beef/events-${i + 1}.webp`,
+        ),
       },
       {
         title: "Behind the Scenes",
