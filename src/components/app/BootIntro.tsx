@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-const DRAW = { duration: 1.4, ease: [0.16, 1, 0.3, 1] as const };
+const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function BootIntro() {
   const [dismissed, setDismissed] = useState(false);
@@ -30,7 +30,7 @@ export function BootIntro() {
 
   useEffect(() => {
     if (!show) return;
-    const total = reduce ? 900 : 3200;
+    const total = reduce ? 900 : 3400;
     const timer = window.setTimeout(dismiss, total);
     return () => window.clearTimeout(timer);
   }, [show, reduce]);
@@ -43,49 +43,57 @@ export function BootIntro() {
           onClick={dismiss}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.06 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[60] mx-auto flex max-w-[560px] cursor-pointer flex-col items-center justify-center bg-sky"
+          transition={{ duration: 0.6, ease: EASE }}
+          className="fixed inset-0 z-[60] flex cursor-pointer flex-col items-center justify-center bg-sky"
           aria-label="Intro — tippen zum Überspringen"
         >
-          <div className="grid-pattern-bg pointer-events-none absolute inset-0 opacity-10" />
+          {/* Snow pattern on Sky, breathing in softly behind the mark. */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.13 }}
+            transition={{ duration: 1.6, ease: "easeOut" }}
+            className="grid-pattern-bg pointer-events-none absolute inset-0"
+          />
 
-          <motion.svg
-            width="132"
-            height="132"
-            viewBox="0 0 100 100"
-            fill="none"
+          {/* Aurora glow in den Kundenfarben, wie im Hero. */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 2, ease: "easeOut" }}
+            className="aurora pointer-events-none absolute inset-0"
+          />
+
+          {/* The real GO monogram, wiping in left to right as if drawn;
+              danach läuft der Aurora-Verlauf durch die Ringe. */}
+          <motion.div
+            initial={{
+              clipPath: "inset(0 100% 0 0)",
+              opacity: 0.4,
+              scale: 0.94,
+            }}
+            animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, ease: EASE }}
             className="relative z-10"
           >
-            {/* Two interlocking rings approximating the GO monogram, drawing themselves */}
-            <motion.circle
-              cx="38"
-              cy="50"
-              r="26"
-              stroke="var(--color-snow)"
-              strokeWidth="4"
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0.2 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={DRAW}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/grid_monogram_snow.png"
+              alt=""
+              className="w-44 lg:w-60"
             />
-            <motion.circle
-              cx="62"
-              cy="50"
-              r="26"
-              stroke="var(--color-dune)"
-              strokeWidth="4"
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0.2 }}
-              animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ ...DRAW, delay: 0.25 }}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.5, duration: 0.8 }}
+              className="absolute inset-0 animate-[rainbow-slide_2.4s_linear_infinite] bg-[linear-gradient(92deg,#ffd400,#f7b790,#e02e38,#4d9fff,#ffd400)] bg-[length:200%_100%] [-webkit-mask:url('/brand/grid_monogram_snow.png')_center/contain_no-repeat] [mask:url('/brand/grid_monogram_snow.png')_center/contain_no-repeat]"
             />
-          </motion.svg>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 12, letterSpacing: "0.05em" }}
             animate={{ opacity: 1, y: 0, letterSpacing: "0.35em" }}
-            transition={{ delay: 1.5, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 mt-6 text-lg font-medium text-snow"
+            transition={{ delay: 1.4, duration: 0.7, ease: EASE }}
+            className="relative z-10 mt-8 text-lg font-medium text-snow lg:text-xl"
           >
             GRID
           </motion.div>
@@ -93,10 +101,10 @@ export function BootIntro() {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 2.1, duration: 0.6 }}
-            className="relative z-10 mt-2 text-[11px] font-light uppercase tracking-[0.3em] text-snow/45"
+            transition={{ delay: 2.0, duration: 0.6 }}
+            className="relative z-10 mt-3 max-w-[20rem] px-6 text-center text-[11px] font-light uppercase leading-relaxed tracking-[0.3em] text-snow/45 lg:max-w-none"
           >
-            Willkommen in 2030
+            Willkommen bei deiner Lieblings Social Media Agentur
           </motion.p>
         </motion.div>
       )}

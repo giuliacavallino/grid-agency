@@ -170,6 +170,25 @@ html {
   }
 }
 
+
+/* Intro wordmark: letters permanently filled with the moving
+   aurora gradient (same palette as the hover effects). */
+.text-rainbow-animated {
+  background-image: linear-gradient(
+    92deg,
+    #ffd400,
+    #f7b790,
+    #e02e38,
+    #4d9fff,
+    #ffd400
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow-slide 2.4s linear infinite;
+}
+
 /* Nav links: letters fill with a moving color gradient on hover. */
 .nav-rainbow {
   transition: opacity 0.2s ease;
