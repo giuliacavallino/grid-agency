@@ -54,7 +54,7 @@ export function GalleryViewer({
     <>
       {variant === "masonry" ? (
         /* Large masonry columns keep each photo's own aspect ratio. */
-        <div className="mt-4 columns-1 gap-3 sm:columns-2 [&>button]:mb-3">
+        <div className="mt-4 columns-1 gap-3 sm:columns-2 lg:columns-3 [&>button]:mb-3">
           {images.map((src, i) => (
             <button
               key={src}

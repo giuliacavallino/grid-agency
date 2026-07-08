@@ -90,13 +90,17 @@ export const clients: Client[] = [
     caseStudy:
       "Über den Dächern Berlin-Charlottenburgs, im KaDeWe die Sechste, haben wir aus dem ehemaligen Beef Grill Club das Casa Beef gemacht: Wir haben das komplette Rebranding umgesetzt — vom Look bis zur Tonalität — und die Opening-Party auf die Beine gestellt. Full Service heißt bei uns wirklich full.",
     gallery: Array.from(
-      { length: 61 },
+      { length: 53 },
       (_, i) => `/referenzen/casa-beef/${i + 1}.webp`,
     ),
     sections: [
       {
-        title: "Events",
+        title: "Grand Opening Dezember 2025",
         text: "Das Opening-Event: von uns geplant, orchestriert und dokumentiert.",
+        images: Array.from(
+          { length: 43 },
+          (_, i) => `/referenzen/casa-beef/events-${i + 1}.webp`,
+        ),
       },
       {
         title: "Behind the Scenes",
@@ -246,9 +250,7 @@ export const clients: Client[] = [
       "/referenzen/480-gradi/90.webp",
       "/referenzen/480-gradi/92.webp",
       "/referenzen/480-gradi/93.webp",
-      "/referenzen/480-gradi/94.webp",
       "/referenzen/480-gradi/95.webp",
-      "/referenzen/480-gradi/96.webp",
       "/referenzen/480-gradi/97.webp",
       "/referenzen/480-gradi/98.webp",
       "/referenzen/480-gradi/99.webp",

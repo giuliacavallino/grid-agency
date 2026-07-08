@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LegalShell } from "@/components/app/LegalShell";
-import { GalleryViewer } from "@/components/app/GalleryViewer";
+import { ClientMediaTabs } from "@/components/app/ClientMediaTabs";
 import { EventTeaser } from "@/components/app/EventTeaser";
 import { clients, clientSlug } from "@/lib/content";
 
@@ -84,38 +84,43 @@ export default async function ClientPage({
           </section>
         )}
 
-        {client.sections?.map((section) => (
-          <section key={section.title} className="mt-10">
-            <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-              {section.title}
-            </h2>
-            {section.text && (
-              <p className="mt-3 text-sm font-light leading-relaxed text-snow/70">
-                {section.text}
-              </p>
-            )}
-            {section.images && section.images.length > 0 ? (
-              <GalleryViewer images={section.images} alt={client.name} />
-            ) : (
+        {/* Image categories live in one tabbed block — no more endless
+            scrolling past a category to reach the next one. */}
+        <ClientMediaTabs
+          name={client.name}
+          gallery={client.gallery}
+          sections={client.sections}
+        />
+
+        {client.sections
+          ?.filter((s) => !s.images || s.images.length === 0)
+          .map((section) => (
+            <section key={section.title} className="mt-10">
+              <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
+                {section.title}
+              </h2>
+              {section.text && (
+                <p className="mt-3 text-sm font-light leading-relaxed text-snow/70">
+                  {section.text}
+                </p>
+              )}
               <p className="mt-3 rounded-2xl border border-dashed border-snow/15 px-4 py-6 text-center text-xs font-light text-snow/40">
                 Material folgt in Kürze.
               </p>
-            )}
-          </section>
-        ))}
+            </section>
+          ))}
 
-        <section id="galerie" className="mt-10 scroll-mt-24">
-          <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-            Galerie
-          </h2>
-          {client.gallery && client.gallery.length > 0 ? (
-            <GalleryViewer images={client.gallery} alt={client.name} />
-          ) : (
-            <p className="mt-3 rounded-2xl border border-dashed border-snow/15 px-4 py-6 text-center text-xs font-light text-snow/40">
-              Einblicke folgen in Kürze.
-            </p>
+        {(!client.gallery || client.gallery.length === 0) &&
+          !client.sections?.some((s) => s.images && s.images.length > 0) && (
+            <section id="galerie" className="mt-10 scroll-mt-24">
+              <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
+                Galerie
+              </h2>
+              <p className="mt-3 rounded-2xl border border-dashed border-snow/15 px-4 py-6 text-center text-xs font-light text-snow/40">
+                Einblicke folgen in Kürze.
+              </p>
+            </section>
           )}
-        </section>
       </div>
     </LegalShell>
   );
