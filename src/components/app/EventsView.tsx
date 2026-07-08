@@ -4,9 +4,17 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Calendar, Camera, Clapperboard, MapPin, Ticket } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  Calendar,
+  Camera,
+  Clapperboard,
+  MapPin,
+  Ticket,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { stashScrollTarget } from "@/lib/scroll";
+import { scrollToId, stashScrollTarget } from "@/lib/scroll";
 
 export type GridEvent = {
   id: string;
@@ -253,18 +261,59 @@ export function EventsView() {
         )}
       </div>
 
-      {past.length > 0 && (
-        <div className="mt-10">
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-            Vergangene Events
-          </p>
-          <div className="mt-4 space-y-4">
-            {past.map((e) => (
-              <PastCard key={e.id} event={e} />
-            ))}
-          </div>
+      {/* CTA down to the archive — the past events live further below. */}
+      <button
+        onClick={() => scrollToId("vergangene-events")}
+        className="btn-rainbow mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97] lg:mx-auto lg:max-w-sm"
+      >
+        Sieh dir vergangene Events an
+        <ArrowDown className="h-4 w-4" strokeWidth={2} />
+      </button>
+
+      <div id="vergangene-events" className="mt-10 scroll-mt-24">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
+          Vergangene Events
+        </p>
+        <div className="mt-4 space-y-4">
+          {/* Grand Opening Casa Beef: dokumentiert auf der Kundenseite. */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "0px 0px -40px 0px" }}
+            transition={{ duration: 0.5 }}
+            className="glass overflow-hidden rounded-3xl"
+          >
+            <div className="relative aspect-[16/9] w-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/referenzen/casa-beef/events-1.webp"
+                alt="Grand Opening Casa Beef"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </div>
+            <div className="p-5">
+              <p className="text-xs font-light text-snow/50">Dezember 2025</p>
+              <h3 className="mt-1 text-lg font-medium text-snow">
+                Grand Opening Casa Beef
+              </h3>
+              <p className="mt-0.5 text-sm font-light text-snow/60">
+                KaDeWe die Sechste, Berlin-Charlottenburg
+              </p>
+              <Link
+                href="/referenzen/casa-beef"
+                className="btn-rainbow mt-4 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97]"
+              >
+                Bilder &amp; Reel ansehen
+                <ArrowRight className="h-4 w-4" strokeWidth={2} />
+              </Link>
+            </div>
+          </motion.div>
+
+          {past.map((e) => (
+            <PastCard key={e.id} event={e} />
+          ))}
         </div>
-      )}
+      </div>
 
       <p className="mt-10 text-center text-sm font-light text-snow/50">
         Du willst ein Event mit uns machen?{" "}
