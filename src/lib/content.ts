@@ -24,6 +24,8 @@ export type ClientSection = {
   text?: string;
   /** Image paths under /public. */
   images?: string[];
+  /** Optional showreel (mp4 under /public), shown above the images. */
+  video?: string;
 };
 
 /** URL slug for the per-client page, e.g. "480 GRADI" -> "480-gradi". */
@@ -97,6 +99,7 @@ export const clients: Client[] = [
       {
         title: "Grand Opening Dezember 2025",
         text: "Das Opening-Event: von uns geplant, orchestriert und dokumentiert.",
+        video: "/referenzen/casa-beef/opening-reel.mp4",
         images: Array.from(
           { length: 43 },
           (_, i) => `/referenzen/casa-beef/events-${i + 1}.webp`,

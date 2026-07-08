@@ -4,7 +4,7 @@ import { useState } from "react";
 import { GalleryViewer } from "./GalleryViewer";
 import type { ClientSection } from "@/lib/content";
 
-type Tab = { title: string; text?: string; images: string[] };
+type Tab = { title: string; text?: string; images: string[]; video?: string };
 
 /** Category switcher for the client page: instead of stacking every
  * image section into one endless scroll, the categories (Galerie,
@@ -25,8 +25,13 @@ export function ClientMediaTabs({
     tabs.push({ title: "Galerie", images: gallery });
   }
   for (const s of sections ?? []) {
-    if (s.images && s.images.length > 0) {
-      tabs.push({ title: s.title, text: s.text, images: s.images });
+    if ((s.images && s.images.length > 0) || s.video) {
+      tabs.push({
+        title: s.title,
+        text: s.text,
+        images: s.images ?? [],
+        video: s.video,
+      });
     }
   }
 
@@ -69,11 +74,26 @@ export function ClientMediaTabs({
             {tab.text}
           </p>
         )}
-        <GalleryViewer
-          key={tab.title}
-          images={tab.images}
-          alt={`${name} — ${tab.title}`}
-        />
+        {tab.video && (
+          /* Hochformat-Reel: capped height, centered, poster from the
+             first photo so the 66-MB-Video erst beim Abspielen lädt. */
+          <video
+            key={tab.video}
+            src={tab.video}
+            poster={tab.images[0]}
+            controls
+            playsInline
+            preload="metadata"
+            className="mx-auto mt-5 max-h-[78dvh] w-auto max-w-full rounded-2xl"
+          />
+        )}
+        {tab.images.length > 0 && (
+          <GalleryViewer
+            key={tab.title}
+            images={tab.images}
+            alt={`${name} — ${tab.title}`}
+          />
+        )}
       </div>
     </section>
   );
