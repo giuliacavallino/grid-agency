@@ -30,7 +30,7 @@ export function BootIntro() {
 
   useEffect(() => {
     if (!show) return;
-    const total = reduce ? 900 : 3400;
+    const total = reduce ? 900 : 4900;
     const timer = window.setTimeout(dismiss, total);
     return () => window.clearTimeout(timer);
   }, [show, reduce]);
