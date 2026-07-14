@@ -226,7 +226,7 @@ export function EventsView() {
   const past = lists?.past ?? [];
 
   return (
-    <div className="px-4">
+    <div>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

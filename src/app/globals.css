@@ -24,6 +24,14 @@
   --font-sans: var(--font-readex);
 }
 
+@theme {
+  /* One frame for the whole app. Header, body, footer and bottom nav all
+     share this width so every surface lines up edge to edge — the single
+     source of truth for "wie breit ist die Seite". Change it here once. */
+  --container-frame: 35rem; /* 560px — mobile app frame */
+  --container-frame-lg: 47.5rem; /* 760px — desktop frame */
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

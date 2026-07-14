@@ -70,7 +70,7 @@ export function MainMenu({
           transition={{ duration: 0.25 }}
           className="fixed inset-0 z-[60] flex flex-col bg-sky/85 backdrop-blur-2xl"
         >
-          <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+28px)] pt-[calc(env(safe-area-inset-top)+12px)]">
+          <div className="mx-auto flex w-full max-w-frame flex-1 flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+28px)] pt-[calc(env(safe-area-inset-top)+12px)] lg:max-w-frame-lg">
             <div className="flex h-12 items-center justify-between">
               <Image
                 src="/brand/grid_logo_snow.png"

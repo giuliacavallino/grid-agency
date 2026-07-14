@@ -22,12 +22,13 @@ export function TopBar() {
         initial={{ y: -72, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="pointer-events-none fixed inset-x-0 top-0 z-40 px-5 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-7"
+        className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-7"
       >
         {/* glass-dark keeps the bar legible over the white hero and the
-            dark sections alike; on desktop it widens into a real header
-            with the GRID mark on the far left. */}
-        <div className="glass-dark pointer-events-auto relative mx-auto flex h-12 w-full max-w-[520px] items-center justify-between overflow-hidden rounded-full px-5 lg:w-fit lg:max-w-none lg:gap-9 lg:px-7">
+            dark sections alike. The header rides the shared frame column,
+            so its edges line up with the body and the bottom nav. */}
+        <div className="mx-auto w-full max-w-frame px-5 lg:max-w-frame-lg">
+        <div className="glass-dark pointer-events-auto relative flex h-12 w-full items-center justify-between overflow-hidden rounded-full px-5">
           <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
           <a
             href="#home"
@@ -117,6 +118,7 @@ export function TopBar() {
               <Menu className="h-[22px] w-[22px]" strokeWidth={1.8} />
             </button>
           </div>
+        </div>
         </div>
       </motion.header>
 

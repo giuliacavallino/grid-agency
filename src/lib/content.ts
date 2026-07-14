@@ -83,7 +83,9 @@ export const clients: Client[] = [
   },
   {
     name: "Casa Beef",
-    logo: "/clients/casa-beef.png",
+    /* Aufgehellte Lila-Variante: das dunkle Brand-Lila (#37255B) hätte
+       auf dem Sky-Hintergrund kaum Kontrast. */
+    logo: "/clients/casa-beef-lila-hell.png",
     logoDetail: "/clients/casa-beef-lila.png",
     height: 34,
     instagram: "casa.beef",
@@ -353,6 +355,11 @@ export const clients: Client[] = [
 
 /** Name of the client shown as "Newest Collaboration" on the homepage. */
 export const newestCollab = "480 GRADI";
+
+/** Calendly booking link, opened in a new tab (no embed, so no
+ * third-party scripts load and the Datenschutzerklärung stays as is). */
+export const calendlyUrl =
+  "https://calendly.com/giulia_cavallino/boost-your-socials";
 
 export const heroStats = [
   { value: 30, suffix: "+", label: "Marken" },
