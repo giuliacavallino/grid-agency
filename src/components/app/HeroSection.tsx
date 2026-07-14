@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { animate, motion, useInView } from "framer-motion";
-import { clients, clientSlug, heroStats } from "@/lib/content";
+import { CalendarClock } from "lucide-react";
+import { calendlyUrl, clients, clientSlug, heroStats } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
 import { EventTeaser } from "./EventTeaser";
 
@@ -82,15 +83,16 @@ export function HeroSection() {
             transition={{ duration: 0.6, delay: 0.55 }}
             className="mt-7 flex gap-2 lg:mx-auto lg:max-w-md"
           >
+            {/* Direkt zur Calendly-Buchung — unverbindliches Erstgespräch,
+                öffnet im neuen Tab statt zur DM-Sektion zu scrollen. */}
             <a
-              href="#dm"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToId("dm");
-              }}
-              className="btn-rainbow flex-1 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
+              href={calendlyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
             >
-              Lass uns reden
+              <CalendarClock className="h-4 w-4 shrink-0" strokeWidth={2} />
+              Erstgespräch buchen
             </a>
             <a
               href="#feed"
