@@ -7,8 +7,6 @@ export type Client = {
   /** Alternative logo for the detail views (sheet + client page);
    * the marquee and logo grid keep using `logo`. */
   logoDetail?: string;
-  /** Alternative logo for the homepage marquee only; falls back to `logo`. */
-  logoMarquee?: string;
   /** Instagram handle without the @. Button is hidden while missing. */
   instagram?: string;
   /** Gallery image paths under /public; empty shows a placeholder. */
@@ -85,11 +83,10 @@ export const clients: Client[] = [
   },
   {
     name: "Casa Beef",
-    logo: "/clients/casa-beef.png",
-    logoDetail: "/clients/casa-beef-lila.png",
     /* Aufgehellte Lila-Variante: das dunkle Brand-Lila (#37255B) hätte
        auf dem Sky-Hintergrund kaum Kontrast. */
-    logoMarquee: "/clients/casa-beef-lila-hell.png",
+    logo: "/clients/casa-beef-lila-hell.png",
+    logoDetail: "/clients/casa-beef-lila.png",
     height: 34,
     instagram: "casa.beef",
     intro:
