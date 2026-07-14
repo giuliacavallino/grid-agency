@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { CalendarClock } from "lucide-react";
 import { ContactForm } from "@/components/ContactForm";
+import { calendlyUrl } from "@/lib/content";
 
 export function DmSection() {
   return (
@@ -47,6 +49,33 @@ export function DmSection() {
           </div>
         </div>
         <ContactForm />
+      </motion.div>
+
+      {/* Calendly as a plain link in a new tab: booking without loading
+          any third-party script on the page itself. */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className="mt-6"
+      >
+        <div className="flex items-center gap-4">
+          <span className="h-px flex-1 bg-snow/10" />
+          <span className="text-[11px] font-light uppercase tracking-[0.25em] text-snow/40">
+            oder direkt
+          </span>
+          <span className="h-px flex-1 bg-snow/10" />
+        </div>
+        <a
+          href={calendlyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-rainbow mt-4 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97] lg:mx-auto lg:max-w-sm"
+        >
+          <CalendarClock className="h-4 w-4" strokeWidth={2} />
+          Termin buchen — Boost your Socials
+        </a>
       </motion.div>
 
       <div className="mt-10 space-y-1 text-center text-[11px] font-light text-snow/35">
