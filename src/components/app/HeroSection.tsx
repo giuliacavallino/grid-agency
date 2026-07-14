@@ -152,7 +152,7 @@ export function HeroSection() {
                 // the strip mid-animation and make the loop visibly jump.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={client.logo}
+                  src={client.logoMarquee ?? client.logo}
                   alt={client.name}
                   style={{ height: client.height ?? 32 }}
                   className="w-auto opacity-90"
