@@ -3,7 +3,7 @@ import { HeroSection } from "@/components/app/HeroSection";
 import { NewestCollab } from "@/components/app/NewestCollab";
 import { TeamSection } from "@/components/app/TeamSection";
 import { ServicesSection } from "@/components/app/ServicesSection";
-import { ProcessSection } from "@/components/app/ProcessSection";
+import { CaseStudiesSection } from "@/components/app/CaseStudiesSection";
 import { LiveFeedSection } from "@/components/app/LiveFeedSection";
 import { DmSection } from "@/components/app/DmSection";
 
@@ -26,8 +26,8 @@ export default function Home() {
         <ServicesSection />
       </section>
 
-      <section id="prozess" className="scroll-mt-20 border-t border-snow/10">
-        <ProcessSection />
+      <section id="cases" className="scroll-mt-20 border-t border-snow/10">
+        <CaseStudiesSection />
       </section>
 
       <section id="feed" className="scroll-mt-20 border-t border-snow/10">

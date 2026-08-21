@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Home, Users, Zap, LayoutGrid, MessageCircle } from "lucide-react";
+import { Home, Users, TrendingUp, LayoutGrid, MessageCircle } from "lucide-react";
 import { animate, motion, useMotionValue } from "framer-motion";
 import type { ViewId } from "./AppShell";
 
 const tabs: { id: ViewId; label: string; icon: typeof Home; live?: boolean }[] = [
   { id: "home", label: "Home", icon: Home },
   { id: "team", label: "Team", icon: Users },
-  { id: "prozess", label: "Prozess", icon: Zap },
+  { id: "cases", label: "Cases", icon: TrendingUp },
   { id: "feed", label: "Live", icon: LayoutGrid, live: true },
   { id: "dm", label: "DM", icon: MessageCircle },
 ];
