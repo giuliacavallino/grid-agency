@@ -40,11 +40,13 @@ export function ServicesSection() {
               delay: i * 0.06,
               ease: [0.16, 1, 0.3, 1],
             }}
-            className="rounded-2xl border border-snow/10 p-5"
+            className="card-rainbow rounded-2xl border border-snow/10 p-5"
           >
-            <h3 className="text-xl font-medium tracking-tight text-snow">
+            <h3 className="card-rainbow-title text-xl font-medium tracking-tight text-snow">
               {service.title}{" "}
-              <span className="text-scroll-gradient">{service.accent}</span>
+              <span className="card-rainbow-title text-scroll-gradient">
+                {service.accent}
+              </span>
             </h3>
             <p className="mt-2 text-sm font-light leading-relaxed text-snow/65">
               {service.text}

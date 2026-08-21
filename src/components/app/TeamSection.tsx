@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
-import { team } from "@/lib/content";
+import { team, vita } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
 
 export function TeamSection() {
@@ -70,12 +70,52 @@ export function TeamSection() {
         </div>
       </motion.div>
 
+      {/* Vita: die Stationen der Agentur seit 2021, aus dem Agentur-Deck. */}
+      <div className="mt-8">
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.5 }}
+          className="text-xs font-medium uppercase tracking-[0.2em] text-dune"
+        >
+          Vita
+        </motion.p>
+        <div className="mt-4 space-y-0">
+          {vita.map((station, i) => (
+            <motion.div
+              key={station.year}
+              initial={{ opacity: 0, x: -16 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className="relative flex gap-5 pb-6 last:pb-0"
+            >
+              <div className="flex flex-col items-center">
+                <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-dune" />
+                {i < vita.length - 1 && (
+                  <span className="mt-1 w-px flex-1 bg-snow/15" />
+                )}
+              </div>
+              <div className="pb-1">
+                <p className="text-lg font-medium tracking-tight text-snow">
+                  {station.year}
+                </p>
+                <p className="mt-1 max-w-xl text-sm font-light leading-relaxed text-snow/65">
+                  {station.text}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
       <motion.p
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5, delay: 0.25 }}
-        className="mt-6 text-center text-sm font-light text-snow/50"
+        className="mt-8 text-center text-sm font-light text-snow/50"
       >
         Das Team wächst.{" "}
         <a

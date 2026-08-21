@@ -445,6 +445,42 @@ export const services: Service[] = [
   },
 ];
 
+export type CaseStudyTeaser = {
+  /** Muss einem Eintrag in `clients` entsprechen (verlinkt auf dessen Seite). */
+  client: string;
+  /** Freigestelltes Mockup unter /public/cases. */
+  image: string;
+  /** Kurzfassung für die Startseite; der volle Case steht beim Kunden. */
+  teaser: string;
+  /** Kennzahl-Highlight, z. B. "6.000 → 49.000+ Follower". */
+  stat: string;
+};
+
+/** Die drei Case Studies aus der Agentur-Präsentation für die Startseite. */
+export const caseStudyTeasers: CaseStudyTeaser[] = [
+  {
+    client: "Goldies",
+    image: "/cases/goldies.webp",
+    stat: "6.000 → 49.000+ Follower",
+    teaser:
+      "Content-Revamp mit Food-Fotografie und Reels, Kooperationen in der Berliner und Frankfurter Gastro-Szene, Ausbau auf YouTube — aus einem unterschätzten Account wurde eine Community, die die Marke trägt.",
+  },
+  {
+    client: "Frittenwerk",
+    image: "/cases/frittenwerk.webp",
+    stat: "125.000+ Follower auf Instagram",
+    teaser:
+      "Die Energie aus über 40 Stores in den Feed übersetzt: Urban Vibe, Signature Loaded Fries, virale Hooks — plus TikTok als neue Bühne. Reels im Millionen-Reichweiten-Bereich inklusive.",
+  },
+  {
+    client: "Sajent Club",
+    image: "/cases/sajent-club.webp",
+    stat: "Von null auf Online-Identität",
+    teaser:
+      "App-Walkthroughs, Success-Stories und Lifestyle-Reels, kuratierte Influencer-Kooperationen und der Sprung auf TikTok und YouTube Shorts — interaktive Stories machen aus Reichweite Downloads.",
+  },
+];
+
 export type ProcessStep = {
   number: string;
   title: string;
@@ -496,3 +532,24 @@ export const team = {
     { value: "1", label: "Ziel: dein Wachstum" },
   ],
 };
+
+/** Agentur-Vita für die Über-uns-Sektion — Stationen aus der
+ * Agentur-Präsentation. */
+export const vita = [
+  {
+    year: "2021",
+    text: "Gründung in Berlin-Mitte. Giulia sammelt die ersten Erfahrungen mit unseren heutigen Kunden — damals noch vom WG-Schreibtisch aus, ganz ohne Büro.",
+  },
+  {
+    year: "2022",
+    text: "Die Agentur spezialisiert sich zunehmend auf Dienstleister, Gastronomie und Lifestyle-Brands.",
+  },
+  {
+    year: "2023",
+    text: "GRID wächst auf ein Team von sechs und bezieht das Büro in der Linienstraße. Die erste Welle an Anfragen bringt die Erkenntnis: Aus der Agentur muss ein Business werden.",
+  },
+  {
+    year: "2024",
+    text: "Die Agentur wächst weiter, hinterfragt Strukturen und definiert sie neu. Das Ziel: dein Social Media auf Autopilot.",
+  },
+];
