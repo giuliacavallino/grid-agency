@@ -66,6 +66,8 @@ export const clients: Client[] = [
     instagram: "goldies_smashburger",
     intro:
       "Kreuzberger Kult: Smashburger und goldene Fritten, für die man ansteht. Unser Job: dass der Feed genauso knuspert.",
+    caseStudy:
+      "Goldies kam mit rund 6.000 Followern und einem Account weit unter seinem Potenzial zu uns. Unser Dreiklang: ein visuell kompromissloser Content-Plan mit Food-Fotografie, Behind-the-Scenes und Reels, die auf Burger-Fans zugeschnitten sind; Kooperationen mit Foodbloggern und Brands aus der Berliner und Frankfurter Gastro-Szene; und der Ausbau auf YouTube mit Short- und Longform-Content rund um Brand-Story und Community-Events. Heute steht der Account bei über 49.000 Followern — mit einer Community, die die Marke wirklich trägt.",
   },
   {
     name: "Frittenwerk",
@@ -74,6 +76,8 @@ export const clients: Client[] = [
     instagram: "frittenwerk",
     intro:
       "Die Pommesmanufaktur, die Poutine nach Deutschland geholt hat. Deutschlandweit gesnackt, von uns ins Scrollen gebracht.",
+    caseStudy:
+      "Frittenwerks Mission: die Energie aus über 40 Stores in einen Online-Auftritt übersetzen, der die Community wirklich erreicht. Wir haben einen Content-Plan um Urban Vibe und Signature Loaded Fries gebaut — Food-Shots, Behind-the-Scenes, Reels mit viralen Hooks —, Kooperationen mit Foodbloggern und Lifestyle-Influencern aufgesetzt und TikTok als neue Bühne erschlossen. Das Ergebnis: 125.000+ Follower auf Instagram und Reels im Millionen-Reichweiten-Bereich — aus Followern wurden Fans.",
   },
   {
     name: "Lipstick", logo: "/clients/lipstick.png", height: 16,
@@ -351,6 +355,44 @@ export const clients: Client[] = [
     intro:
       "Neapels ambitionierteste Pizza — steht so im Logo, stimmt auch. Wir liefern die Ambition fürs Digitale.",
   },
+  {
+    name: "Clärchens",
+    logo: "/clients/claerchens.png",
+    height: 40,
+    intro:
+      "Original seit 1913 — eine Berliner Institution. Wir übersetzen über hundert Jahre Geschichte in einen Feed von heute.",
+  },
+  {
+    name: "The Pioneer",
+    logo: "/clients/the-pioneer.png",
+    height: 22,
+    intro:
+      "Journalismus, der vorausfährt. Wir sorgen dafür, dass die Inhalte auch im Feed Kurs halten.",
+  },
+  {
+    name: "BerlinCuisine",
+    logo: "/clients/berlincuisine.png",
+    height: 36,
+    intro:
+      "Contemporary Taste aus Berlin — Event-Catering auf höchstem Niveau. Wir richten es so an, dass es auch digital schmeckt.",
+  },
+  {
+    name: "Sajent Club",
+    logo: "/clients/sajent-club.png",
+    height: 48,
+    instagram: "sajentclub",
+    intro:
+      "Die Dating-App fürs Schmuck-Shopping — Match statt Suchen. Wir haben der App eine Online-Identität gebaut, die funkelt.",
+    caseStudy:
+      "Sajent Club kam mit einer Mission zu uns: die App als Must-have etablieren. Wir haben einen visuell markanten Content-Plan um Features und User-Benefits gebaut — App-Walkthroughs, Success-Stories, Lifestyle-Reels —, Kooperationen mit Tech-Influencern und Lifestyle-Bloggern kuratiert und die Marke per TikTok und YouTube Shorts auf neue Plattformen gebracht. Interaktive Stories mit Polls und Quizzes machen aus Reichweite Downloads.",
+  },
+  {
+    name: "Ultra OOH",
+    logo: "/clients/ultra-ooh.png",
+    height: 40,
+    intro:
+      "Out-of-Home, das man nicht übersehen kann. Wir verlängern die Plakatwand in den Feed.",
+  },
 ];
 
 /** Name of the client shown as "Newest Collaboration" on the homepage. */
@@ -365,6 +407,37 @@ export const heroStats = [
   { value: 30, suffix: "+", label: "Marken" },
   { value: 6098, suffix: "+", label: "Reichweite/Monat" },
   { value: 2, suffix: "", label: "Städte" },
+];
+
+export type Service = {
+  title: string;
+  /** Zweiter, farblich abgesetzter Teil des Titels. */
+  accent: string;
+  text: string;
+};
+
+/** Die vier Kernleistungen — Wortlaut nach der Agentur-Präsentation. */
+export const services: Service[] = [
+  {
+    title: "Social Media",
+    accent: "Management",
+    text: "Wir übernehmen deinen kompletten Social-Media-Flow — Posts, Stories, Interaktionen — und halten dabei immer im Fokus, wofür deine Marke steht.",
+  },
+  {
+    title: "Social Media",
+    accent: "Strategie",
+    text: "Wirklich effizient wird Social Media erst mit einer persönlichen Strategie. Wir entwickeln sie zum Start und passen sie laufend an die Entwicklung deiner Marke an.",
+  },
+  {
+    title: "Content",
+    accent: "Creation",
+    text: "Jedes Format braucht seinen Content. Auf Basis der Strategie produzieren wir Inhalte, die die Kommunikation deiner Marke visuell und verbal zum Leben bringen.",
+  },
+  {
+    title: "Social Media",
+    accent: "Advertising",
+    text: "Wir übersetzen deine Kommunikationsstrategie in ein strukturiertes, effizientes Media-Grid — damit deine Produkte mit den richtigen Ads echten Return erzielen.",
+  },
 ];
 
 export type ProcessStep = {

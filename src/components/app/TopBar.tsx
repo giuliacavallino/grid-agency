@@ -9,7 +9,7 @@ import { scrollToId } from "@/lib/scroll";
 import { MainMenu } from "./MainMenu";
 
 const desktopSections = [
-  { id: "prozess", label: "Leistungen" },
+  { id: "leistungen", label: "Leistungen" },
   { id: "team", label: "Über uns" },
 ] as const;
 
