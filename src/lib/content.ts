@@ -393,6 +393,11 @@ export const clients: Client[] = [
     intro:
       "Out-of-Home, das man nicht übersehen kann. Wir verlängern die Plakatwand in den Feed.",
   },
+  {
+    name: "Das kann auch nach vorne losgehen",
+    logo: "/clients/nach-vorne-losgehen.png",
+    height: 44,
+  },
 ];
 
 /** Name of the client shown as "Newest Collaboration" on the homepage. */
