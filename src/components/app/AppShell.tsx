@@ -6,7 +6,7 @@ import { TabBar } from "./TabBar";
 import { BootIntro } from "./BootIntro";
 import { popScrollTarget, scrollToId } from "@/lib/scroll";
 
-export type ViewId = "home" | "team" | "cases" | "feed" | "dm";
+export type ViewId = "home" | "cases" | "team" | "dm";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [activeView, setActiveView] = useState<ViewId>("home");
@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const sections = ["home", "team", "cases", "feed", "dm"]
+    const sections = ["home", "cases", "team", "dm"]
       .map((id) => document.getElementById(id))
       .filter(Boolean) as HTMLElement[];
 

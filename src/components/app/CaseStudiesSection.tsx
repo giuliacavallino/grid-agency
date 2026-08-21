@@ -21,9 +21,9 @@ export function CaseStudiesSection() {
           Case Studies
         </p>
         <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow">
-          Ergebnisse statt
+          Ergebnisse
           <br />
-          <span className="text-scroll-gradient">Versprechen</span>.
+          statt <span className="text-scroll-gradient">Versprechen</span>.
         </h2>
       </motion.div>
 

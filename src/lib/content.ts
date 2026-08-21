@@ -532,3 +532,24 @@ export const team = {
     { value: "1", label: "Ziel: dein Wachstum" },
   ],
 };
+
+/** Agentur-Vita für die Über-uns-Sektion — Stationen aus der
+ * Agentur-Präsentation. */
+export const vita = [
+  {
+    year: "2021",
+    text: "Gründung in Berlin-Mitte. Giulia sammelt die ersten Erfahrungen mit unseren heutigen Kunden — damals noch vom WG-Schreibtisch aus, ganz ohne Büro.",
+  },
+  {
+    year: "2022",
+    text: "Die Agentur spezialisiert sich zunehmend auf Dienstleister, Gastronomie und Lifestyle-Brands.",
+  },
+  {
+    year: "2023",
+    text: "GRID wächst auf ein Team von sechs und bezieht das Büro in der Linienstraße. Die erste Welle an Anfragen bringt die Erkenntnis: Aus der Agentur muss ein Business werden.",
+  },
+  {
+    year: "2024",
+    text: "Die Agentur wächst weiter, hinterfragt Strukturen und definiert sie neu. Das Ziel: dein Social Media auf Autopilot.",
+  },
+];

@@ -4,7 +4,6 @@ import { NewestCollab } from "@/components/app/NewestCollab";
 import { TeamSection } from "@/components/app/TeamSection";
 import { ServicesSection } from "@/components/app/ServicesSection";
 import { CaseStudiesSection } from "@/components/app/CaseStudiesSection";
-import { LiveFeedSection } from "@/components/app/LiveFeedSection";
 import { DmSection } from "@/components/app/DmSection";
 
 export default function Home() {
@@ -18,10 +17,6 @@ export default function Home() {
         <NewestCollab />
       </section>
 
-      <section id="team" className="scroll-mt-20 border-t border-snow/10">
-        <TeamSection />
-      </section>
-
       <section id="leistungen" className="scroll-mt-20 border-t border-snow/10">
         <ServicesSection />
       </section>
@@ -30,8 +25,8 @@ export default function Home() {
         <CaseStudiesSection />
       </section>
 
-      <section id="feed" className="scroll-mt-20 border-t border-snow/10">
-        <LiveFeedSection />
+      <section id="team" className="scroll-mt-20 border-t border-snow/10">
+        <TeamSection />
       </section>
 
       <section id="dm" className="scroll-mt-20 border-t border-snow/10">

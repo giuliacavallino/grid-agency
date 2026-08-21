@@ -15,9 +15,9 @@ type Item = SectionItem | PageItem;
 
 const items: Item[] = [
   { kind: "section", id: "home", label: "Start" },
-  { kind: "section", id: "team", label: "Über uns & Team" },
   { kind: "section", id: "leistungen", label: "Leistungen" },
-  { kind: "section", id: "feed", label: "Live-Feed" },
+  { kind: "section", id: "cases", label: "Case Studies" },
+  { kind: "section", id: "team", label: "Über uns & Team" },
   { kind: "page", href: "/referenzen", label: "Referenzen" },
   { kind: "page", href: "/events", label: "Events" },
   { kind: "section", id: "dm", label: "Kontakt" },
