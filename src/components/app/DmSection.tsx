@@ -16,10 +16,10 @@ export function DmSection() {
         transition={{ duration: 0.5 }}
       >
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-          Direct Message
+          Kontakt
         </p>
         <h2 className="mt-2 text-2xl font-medium tracking-tight text-snow">
-          Slide in unsere <span className="text-scroll-gradient">DMs</span>.
+          Lass uns <span className="text-scroll-gradient">reden</span>.
         </h2>
       </motion.div>
 
@@ -74,13 +74,21 @@ export function DmSection() {
           className="btn-rainbow mt-4 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97] lg:mx-auto lg:max-w-sm"
         >
           <CalendarClock className="h-4 w-4" strokeWidth={2} />
-          Termin buchen — Boost your Socials
+          Termin buchen: Boost your Socials
         </a>
       </motion.div>
 
       <div className="mt-10 space-y-1 text-center text-[11px] font-light text-snow/35">
-        <p>Berlin · Linienstrasse 214 — Frankfurt · Eichendorffstrasse 32</p>
-        <p>hello@grid-agency.de · +49 1512 2910161</p>
+        <p>Linienstrasse 214, Berlin · Eichendorffstrasse 32, Frankfurt</p>
+        <p>
+          <a href="mailto:hello@grid-agency.de" className="hover:text-snow/60">
+            hello@grid-agency.de
+          </a>
+          {" · "}
+          <a href="tel:+4915122910161" className="hover:text-snow/60">
+            +49 1512 2910161
+          </a>
+        </p>
         <p className="flex items-center justify-center gap-3 pt-1">
           <a href="/impressum" className="hover:text-snow/60">
             Impressum

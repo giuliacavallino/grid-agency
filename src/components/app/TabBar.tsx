@@ -9,7 +9,7 @@ const tabs: { id: ViewId; label: string; icon: typeof Home; live?: boolean }[] =
   { id: "home", label: "Home", icon: Home },
   { id: "cases", label: "Cases", icon: TrendingUp },
   { id: "team", label: "Team", icon: Users },
-  { id: "dm", label: "DM", icon: MessageCircle },
+  { id: "dm", label: "Kontakt", icon: MessageCircle },
 ];
 
 const LENS_SPRING = { type: "spring" as const, stiffness: 380, damping: 32 };

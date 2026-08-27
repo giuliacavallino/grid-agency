@@ -28,7 +28,7 @@ export function ReferenzenView() {
       </motion.div>
 
       {/* Standalone logos, no tiles: hover zooms, click goes straight
-          to the client page — no preview sheet in between. */}
+          to the client page, no preview sheet in between. */}
       <div className="mt-10 grid grid-cols-2 items-center gap-x-6 gap-y-10 sm:grid-cols-3">
         {clients.map((client, i) => (
           <motion.div

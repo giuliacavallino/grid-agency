@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalShell } from "@/components/app/LegalShell";
 
 export const metadata: Metadata = {
-  title: "Datenschutzerklärung — GRID Agency",
+  title: "Datenschutzerklärung | GRID Agency",
 };
 
 export default function DatenschutzPage() {

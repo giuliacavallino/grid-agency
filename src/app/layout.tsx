@@ -10,11 +10,11 @@ const readex = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://grid-agency.de"),
-  title: "GRID Agency — Social Media Agentur Berlin & Frankfurt",
+  title: "GRID Agency | Social Media Agentur Berlin & Frankfurt",
   description:
     "GRID ist eine Kommunikationsagentur mit Schwerpunkt auf sozialen Medien, digitalem Marketing und den neuen Trends im Verbraucherverhalten. Serving the coolest brands.",
   openGraph: {
-    title: "GRID Agency — Social Media Agentur Berlin & Frankfurt",
+    title: "GRID Agency | Social Media Agentur Berlin & Frankfurt",
     description:
       "Digitale Kommunikation im und außerhalb das Grid. Deine Nr. 1 Social Media Agentur in Berlin & Frankfurt.",
     url: "https://grid-agency.de",

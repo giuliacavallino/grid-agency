@@ -25,7 +25,10 @@ export function NewestCollab() {
   const client = clients.find((c) => c.name === newestCollab);
   if (!client || !client.gallery || client.gallery.length === 0) return null;
 
-  const images = spreadGallery(client.gallery);
+  // Mehr als 12 Bilder bringen im Band keinen Mehrwert, kosten auf
+  // Mobilfunk aber spürbar Ladezeit — die volle Galerie gibt es auf
+  // der Kundenseite.
+  const images = spreadGallery(client.gallery).slice(0, 12);
   const href = `/referenzen/${clientSlug(client.name)}`;
 
   return (
@@ -92,7 +95,7 @@ export function NewestCollab() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
-                alt={`${client.name} — Einblick`}
+                alt={`${client.name}, Einblick`}
                 loading={i % images.length < 4 ? "eager" : "lazy"}
                 className="h-full w-full object-cover"
               />

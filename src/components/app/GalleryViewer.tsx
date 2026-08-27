@@ -65,7 +65,7 @@ export function GalleryViewer({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
-                alt={`${alt} — Bild ${i + 1}`}
+                alt={`${alt}, Bild ${i + 1}`}
                 loading={i < 4 ? "eager" : "lazy"}
                 className="w-full transition-transform duration-300 ease-out hover:scale-[1.03]"
               />
@@ -85,7 +85,7 @@ export function GalleryViewer({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
-                alt={`${alt} — Bild ${i + 1}`}
+                alt={`${alt}, Bild ${i + 1}`}
                 loading={i < 9 ? "eager" : "lazy"}
                 className="h-full w-full object-cover transition-transform duration-300 ease-out hover:scale-[1.05]"
               />
@@ -135,7 +135,7 @@ export function GalleryViewer({
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.2 }}
                   src={images[index]}
-                  alt={`${alt} — Bild ${index + 1}`}
+                  alt={`${alt}, Bild ${index + 1}`}
                   onClick={(e) => e.stopPropagation()}
                   drag="x"
                   dragConstraints={{ left: 0, right: 0 }}

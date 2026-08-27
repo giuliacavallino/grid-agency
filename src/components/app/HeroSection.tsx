@@ -72,7 +72,7 @@ export function HeroSection() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-5 max-w-[24rem] text-base font-light leading-relaxed text-snow/70 lg:mx-auto lg:max-w-[36rem] lg:text-lg"
           >
-            Wir sind dein unfairer Vorteil im Feed. Strategie, Content, Editing —
+            Wir sind dein unfairer Vorteil im Feed. Strategie, Content, Editing,
             und ein Gespür für Trends, bevor sie welche sind. Dein Feed wird das
             Problem deiner Konkurrenz.
           </motion.p>
@@ -146,7 +146,7 @@ export function HeroSection() {
             <Link
               key={`${client.name}-${i}`}
               href={`/referenzen/${clientSlug(client.name)}`}
-              aria-label={`${client.name} — Referenz ansehen`}
+              aria-label={`${client.name}, Referenz ansehen`}
               className="mr-10 flex shrink-0 items-center transition-transform duration-200 hover:scale-110"
             >
               {client.logo ? (
