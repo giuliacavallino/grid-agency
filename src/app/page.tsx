@@ -17,7 +17,7 @@ export default function Home() {
         <NewestCollab />
       </section>
 
-      <section id="leistungen" className="scroll-mt-20 border-t border-snow/10">
+      <section id="leistungen" className="scroll-mt-20">
         <ServicesSection />
       </section>
 
