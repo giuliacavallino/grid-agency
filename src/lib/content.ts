@@ -456,9 +456,8 @@ export const services: Service[] = [
     tagline: "Die inhaltliche Grundlage, ausgelegt auf sechs Monate.",
     bullets: [
       "Analyse von Standorten und Konzepten, damit Inhalte und Ansprache passgenau darauf ausgerichtet sind",
-      "Employer Branding und Recruiting als strategischer Schwerpunkt, wenn die Kanäle vorrangig der Mitarbeitergewinnung dienen",
-      "Redaktionskalender mit allen relevanten Daten, Events und Anlässen, inklusive festem monatlichem Anteil an Recruiting-Inhalten",
-      "Markenspezifische visuelle Vorlagen für einen durchgängigen roten Faden, auch für Stellenanzeigen und Team-Formate",
+      "Redaktionskalender mit allen relevanten Daten, Events und Anlässen",
+      "Markenspezifische visuelle Vorlagen für einen durchgängigen roten Faden",
       "Storytelling rund um Marke, Produkte, Team und Gästeerfahrungen",
       "Auf Wunsch Influencer- und Kollaborationskampagnen mit lokalen Partnern, die authentisch zur Marke passen",
     ],
@@ -470,10 +469,9 @@ export const services: Service[] = [
     tagline: "Die laufende Arbeit am Kanal.",
     bullets: [
       "Regelmäßige Reels und Fotoposts, der Umfang wird individuell auf deine Marke und deine Ziele abgestimmt",
-      "Fester Anteil an Beiträgen mit Recruiting-Fokus, inklusive Call-to-Action zur Bewerbung",
       "Laufende Storys zuzüglich Reposts, neue Beiträge werden per Story beworben",
       "Texterstellung, Bildrecherche und Editing für jeden Post",
-      "Pflege der Highlights, inklusive eines dauerhaften Highlights für offene Stellen",
+      "Pflege der Story-Highlights",
       "Ausschließlich lizenzfreie Musik",
     ],
     highlight:
@@ -599,6 +597,42 @@ export const testimonials: Testimonial[] = [
 /** Link zu den Google-Bewertungen der Agentur. */
 export const googleReviewsUrl =
   "https://www.google.com/search?q=GRID+Agency+Social+Media+Bewertungen";
+
+export type RoadmapStep = {
+  number: string;
+  title: string;
+  text: string;
+};
+
+/** So ist eine Zusammenarbeit getimed, nach der Roadmap aus der
+ * Agentur-Präsentation. */
+export const roadmap: RoadmapStep[] = [
+  {
+    number: "01",
+    title: "Terminanfrage",
+    text: "Frage über unsere Homepage eine kostenlose Erstberatung an und beantworte uns einige kurze Fragen.",
+  },
+  {
+    number: "02",
+    title: "Beratungsgespräch",
+    text: "Giulia führt mit dir ein Vorgespräch und prüft, wie wir dir am besten helfen können.",
+  },
+  {
+    number: "03",
+    title: "Beauftragung",
+    text: "Wenn du ein gutes Gefühl hast, freuen wir uns über deine Beauftragung. Wir starten umgehend zum Beginn des nächsten Monats.",
+  },
+  {
+    number: "04",
+    title: "Set-up & Strategie",
+    text: "Wir beginnen damit, eine Strategie für dein Unternehmen zu erarbeiten. Im Anschluss benötigen wir von dir sämtliche Zugänge, Logos und vorhandenes Video- und Bildmaterial.",
+  },
+  {
+    number: "05",
+    title: "Zusammenarbeit",
+    text: "Wir betreuen dich mindestens 12 Monate, um an deiner Brand optimale Ergebnisse zu erzielen. So richtig spürbar wird es ab dem dritten Monat. Danach gibt es für deinen digitalen Fußabdruck kein Halten mehr.",
+  },
+];
 
 export type ProcessStep = {
   number: string;
