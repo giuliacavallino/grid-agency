@@ -13,6 +13,9 @@ export type Client = {
   gallery?: string[];
   /** Short agency-voice introduction shown in the client sheet. */
   intro?: string;
+  /** Was GRID für die Marke gemacht hat — als Chips in der
+   * Kundenansicht. Ohne Angabe greifen die Kernleistungen. */
+  tags?: string[];
   /** What GRID actually did for this brand — shown as "Der Case". */
   caseStudy?: string;
   /** Extra per-client sections (Events, Behind the Scenes, Rebranding …). */
@@ -57,36 +60,39 @@ export const clients: Client[] = [
     height: 36,
     instagram: "shisoburger.de",
     intro:
-      "Asian Fusion trifft Burger-Kultur — Wasabi statt Ketchup. Ein Klassiker, den wir im Feed so frisch halten wie das Tatar.",
+      "Asian Fusion trifft Burger-Kultur. Wasabi statt Ketchup. Ein Klassiker, den wir im Feed so frisch halten wie das Tatar.",
   },
   {
     name: "Goldies",
+    tags: ["Social Media Management", "Content Creation", "YouTube", "Brand-Kollaborationen"],
     logo: "/clients/goldies.png",
     height: 34,
     instagram: "goldies_smashburger",
     intro:
       "Kreuzberger Kult: Smashburger und goldene Fritten, für die man ansteht. Unser Job: dass der Feed genauso knuspert.",
     caseStudy:
-      "Goldies kam mit rund 6.000 Followern und einem Account weit unter seinem Potenzial zu uns. Unser Dreiklang: ein visuell kompromissloser Content-Plan mit Food-Fotografie, Behind-the-Scenes und Reels, die auf Burger-Fans zugeschnitten sind; Kooperationen mit Foodbloggern und Brands aus der Berliner und Frankfurter Gastro-Szene; und der Ausbau auf YouTube mit Short- und Longform-Content rund um Brand-Story und Community-Events. Heute steht der Account bei über 49.000 Followern — mit einer Community, die die Marke wirklich trägt.",
+      "Goldies kam mit rund 6.000 Followern und einem Account weit unter seinem Potenzial zu uns. Unser Dreiklang: ein visuell kompromissloser Content-Plan mit Food-Fotografie, Behind-the-Scenes und Reels, die auf Burger-Fans zugeschnitten sind; Kooperationen mit Foodbloggern und Brands aus der Berliner und Frankfurter Gastro-Szene; und der Ausbau auf YouTube mit Short- und Longform-Content rund um Brand-Story und Community-Events. Heute steht der Account bei über 49.000 Followern, mit einer Community, die die Marke wirklich trägt.",
   },
   {
     name: "Frittenwerk",
+    tags: ["Social Media Management", "Content Creation", "TikTok", "Brand-Kollaborationen"],
     logo: "/clients/frittenwerk.png",
     height: 22,
     instagram: "frittenwerk",
     intro:
       "Die Pommesmanufaktur, die Poutine nach Deutschland geholt hat. Deutschlandweit gesnackt, von uns ins Scrollen gebracht.",
     caseStudy:
-      "Frittenwerks Mission: die Energie aus über 40 Stores in einen Online-Auftritt übersetzen, der die Community wirklich erreicht. Wir haben einen Content-Plan um Urban Vibe und Signature Loaded Fries gebaut — Food-Shots, Behind-the-Scenes, Reels mit viralen Hooks —, Kooperationen mit Foodbloggern und Lifestyle-Influencern aufgesetzt und TikTok als neue Bühne erschlossen. Das Ergebnis: 125.000+ Follower auf Instagram und Reels im Millionen-Reichweiten-Bereich — aus Followern wurden Fans.",
+      "Frittenwerks Mission: die Energie aus über 40 Stores in einen Online-Auftritt übersetzen, der die Community wirklich erreicht. Wir haben einen Content-Plan um Urban Vibe und Signature Loaded Fries gebaut: Food-Shots, Behind-the-Scenes und Reels mit viralen Hooks. Dazu Kooperationen mit Foodbloggern und Lifestyle-Influencern und TikTok als neue Bühne. Das Ergebnis: 125.000+ Follower auf Instagram und Reels im Millionen-Reichweiten-Bereich. Aus Followern wurden Fans.",
   },
   {
     name: "Lipstick", logo: "/clients/lipstick.png", height: 16,
     instagram: "lipstick.film",
     intro:
-      "All-in-One-Studio für Film, VFX & AI — gebucht von Marken wie Cartier und Moët. High-End-Content, den wir laut machen.",
+      "All-in-One-Studio für Film, VFX & AI, gebucht von Marken wie Cartier und Moët. High-End-Content, den wir laut machen.",
   },
   {
     name: "Casa Beef",
+    tags: ["Social Media Management", "Content Creation", "Rebranding", "Opening-Event"],
     /* Aufgehellte Lila-Variante: das dunkle Brand-Lila (#37255B) hätte
        auf dem Sky-Hintergrund kaum Kontrast. */
     logo: "/clients/casa-beef-lila-hell.png",
@@ -96,7 +102,7 @@ export const clients: Client[] = [
     intro:
       "Beef in seiner schönsten Form. Wir bringen das Sizzling vom Grill direkt auf den Bildschirm.",
     caseStudy:
-      "Über den Dächern Berlin-Charlottenburgs, im KaDeWe die Sechste, haben wir aus dem ehemaligen Beef Grill Club das Casa Beef gemacht: Wir haben das komplette Rebranding umgesetzt — vom Look bis zur Tonalität — und die Opening-Party auf die Beine gestellt. Full Service heißt bei uns wirklich full.",
+      "Über den Dächern Berlin-Charlottenburgs, im KaDeWe die Sechste, haben wir aus dem ehemaligen Beef Grill Club das Casa Beef gemacht: Wir haben das komplette Rebranding umgesetzt, vom Look bis zur Tonalität, und die Opening-Party auf die Beine gestellt. Full Service heißt bei uns wirklich full.",
     gallery: Array.from(
       { length: 53 },
       (_, i) => `/referenzen/casa-beef/${i + 1}.webp`,
@@ -127,13 +133,13 @@ export const clients: Client[] = [
     height: 30,
     instagram: "lovebirds.berlin",
     intro:
-      "Contemporary Pizza mit Charakter — knusprig, verliebt, fotogen. Genau unser Beuteschema.",
+      "Contemporary Pizza mit Charakter, knusprig, verliebt, fotogen. Genau unser Beuteschema.",
   },
   {
     name: "Coffi", logo: "/clients/coffi.png", height: 34,
     instagram: "coffi.app",
     intro:
-      "Die App, die Kaffee scannt, trackt und versteht — mit Stories von über 500 Röstereien. Wir geben dem Ganzen die Reichweite.",
+      "Die App, die Kaffee scannt, trackt und versteht, mit Stories von über 500 Röstereien. Wir geben dem Ganzen die Reichweite.",
   },
   {
     name: "Ditsch", logo: "/clients/ditsch.png", height: 36, instagram: "ditsch_brezel",
@@ -144,7 +150,7 @@ export const clients: Client[] = [
     name: "Hasir", logo: "/clients/hasir.png", height: 26,
     instagram: "hasir.wilmersdorf",
     intro:
-      "Berliner Institution für Turkish Cuisine — seit Jahrzehnten eine Legende. Wir erzählen sie weiter, Post für Post.",
+      "Berliner Institution für Turkish Cuisine, seit Jahrzehnten eine Legende. Wir erzählen sie weiter, Post für Post.",
   },
   {
     name: "Tokyo Mylk",
@@ -152,13 +158,13 @@ export const clients: Client[] = [
     height: 60,
     instagram: "tokyo_mylk",
     intro:
-      "Japanisch inspirierte Desserts und Drinks aus Frankfurt — süß, fotogen, viral-verdächtig. Wir liefern den letzten Schubs.",
+      "Japanisch inspirierte Desserts und Drinks aus Frankfurt, süß, fotogen, viral-verdächtig. Wir liefern den letzten Schubs.",
   },
   {
     name: "Kindly", logo: "/clients/kindly.png", height: 31,
     instagram: "kindlyberlin",
     intro:
-      "Specialty Coffee, Matcha und Healthy Bites in Charlottenburg. So ästhetisch, dass der Feed sich fast von selbst füllt — fast.",
+      "Specialty Coffee, Matcha und Healthy Bites in Charlottenburg. So ästhetisch, dass der Feed sich fast von selbst füllt, fast.",
   },
   {
     name: "Friendly Fish",
@@ -198,7 +204,7 @@ export const clients: Client[] = [
     height: 31,
     instagram: "capvin.berlin",
     intro:
-      "Neapolitanische Pizza von Weltmeister Vincenzo Capuano — mitten in Berlin. Champions-League-Teig, Champions-League-Content.",
+      "Neapolitanische Pizza von Weltmeister Vincenzo Capuano, mitten in Berlin. Champions-League-Teig, Champions-League-Content.",
   },
   {
     name: "StoneX", logo: "/clients/stonex.png", height: 22,
@@ -214,13 +220,14 @@ export const clients: Client[] = [
   },
   {
     name: "480 GRADI",
+    tags: ["Social Media Management", "Content Creation", "Feed-Konzept", "Opening-Event"],
     logo: "/clients/480gradi.png",
     height: 44,
     instagram: "480gradi_",
     intro:
-      "Pizzeria Napoletana — life is too short for bad pizza. Frisch auf der Berger Straße, frisch in deinem Feed.",
+      "Pizzeria Napoletana, life is too short for bad pizza. Frisch auf der Berger Straße, frisch in deinem Feed.",
     caseStudy:
-      "Der Wunsch: ein dunkler Flash-Photography-Feed, der sich von jeder anderen Pizzeria abhebt. Die Besonderheit: 480 GRADI ist ein Halal-Konzept — statt Drinks arbeiten wir mit Softdrinks und setzen den Fokus auf coole Models und echte Berliner Coolness. Das Ergebnis: ein Feed, der nach Nacht, Blitzlicht und neapolitanischer Pizza schmeckt — und genau deshalb hängen bleibt.",
+      "Der Wunsch: ein dunkler Flash-Photography-Feed, der sich von jeder anderen Pizzeria abhebt. Die Besonderheit: 480 GRADI ist ein Halal-Konzept, statt Drinks arbeiten wir mit Softdrinks und setzen den Fokus auf coole Models und echte Berliner Coolness. Das Ergebnis: ein Feed, der nach Nacht, Blitzlicht und neapolitanischer Pizza schmeckt, und genau deshalb hängen bleibt.",
     gallery: [
       "/referenzen/480-gradi/4.webp",
       "/referenzen/480-gradi/9.webp",
@@ -281,7 +288,7 @@ export const clients: Client[] = [
     name: "Vault", logo: "/clients/vault.png", height: 31,
     instagram: "vault.berlin",
     intro:
-      "Berlins Speakeasy hinter der unscheinbaren Tür: Signature Cocktails, Live-Shows, Hidden Beats. Psst — wir erzählen es trotzdem allen.",
+      "Berlins Speakeasy hinter der unscheinbaren Tür: Signature Cocktails, Live-Shows, Hidden Beats. Psst, wir erzählen es trotzdem allen.",
   },
   {
     name: "eDrixx", logo: "/clients/edrixx.png", height: 36,
@@ -291,6 +298,7 @@ export const clients: Client[] = [
   },
   {
     name: "Bäckerei Huck",
+    tags: ["Social Media Management", "Content Creation", "Recruiting-System"],
     logo: "/clients/huck.png",
     height: 36,
     instagram: "baeckerei.huck",
@@ -309,7 +317,7 @@ export const clients: Client[] = [
     name: "BOLD", logo: "/clients/bold.png", height: 24,
     instagram: "boldberlin",
     intro:
-      "PR- und Kommunikationsagentur zwischen Berlin und L.A. — Kultur-Marketing at its finest. Game recognizes game.",
+      "PR- und Kommunikationsagentur zwischen Berlin und L.A.. Kultur-Marketing at its finest. Game recognizes game.",
   },
   {
     name: "Smash by Hauptstadtburger",
@@ -331,7 +339,7 @@ export const clients: Client[] = [
     height: 56,
     instagram: "hauptstadtburger",
     intro:
-      "Burger mit Hauptstadt-Attitüde — saftig, direkt, kein Blabla. So machen wir auch den Content.",
+      "Burger mit Hauptstadt-Attitüde, saftig, direkt, kein Blabla. So machen wir auch den Content.",
   },
   {
     name: "What Do You Fancy Love",
@@ -339,13 +347,13 @@ export const clients: Client[] = [
     height: 56,
     instagram: "whatdoyoufancylove",
     intro:
-      "Das Café, dessen Name schon ein Caption ist. Kult-Spot mit Herz — wir halten den Hype warm.",
+      "Das Café, dessen Name schon ein Caption ist. Kult-Spot mit Herz, wir halten den Hype warm.",
   },
   {
     name: "Reshape", logo: "/clients/reshape.png", height: 30,
     instagram: "reshape_berlin",
     intro:
-      "Brasilianische Lymphdrainage in Berlin — der Instant-Glow-Up unter den Treatments. Vorher-Nachher, das niemand wegscrollt.",
+      "Brasilianische Lymphdrainage in Berlin, der Instant-Glow-Up unter den Treatments. Vorher-Nachher, das niemand wegscrollt.",
   },
   {
     name: "nuva pizza",
@@ -353,14 +361,14 @@ export const clients: Client[] = [
     height: 34,
     instagram: "nuvapizza",
     intro:
-      "Neapels ambitionierteste Pizza — steht so im Logo, stimmt auch. Wir liefern die Ambition fürs Digitale.",
+      "Neapels ambitionierteste Pizza, steht so im Logo, stimmt auch. Wir liefern die Ambition fürs Digitale.",
   },
   {
     name: "Clärchens",
     logo: "/clients/claerchens.png",
     height: 40,
     intro:
-      "Original seit 1913 — eine Berliner Institution. Wir übersetzen über hundert Jahre Geschichte in einen Feed von heute.",
+      "Original seit 1913, eine Berliner Institution. Wir übersetzen über hundert Jahre Geschichte in einen Feed von heute.",
   },
   {
     name: "The Pioneer",
@@ -374,17 +382,18 @@ export const clients: Client[] = [
     logo: "/clients/berlincuisine.png",
     height: 36,
     intro:
-      "Contemporary Taste aus Berlin — Event-Catering auf höchstem Niveau. Wir richten es so an, dass es auch digital schmeckt.",
+      "Contemporary Taste aus Berlin. Event-Catering auf höchstem Niveau. Wir richten es so an, dass es auch digital schmeckt.",
   },
   {
     name: "Sajent Club",
+    tags: ["Social Media Management", "Content Creation", "TikTok & Shorts", "Influencer-Kampagnen"],
     logo: "/clients/sajent-club.png",
     height: 48,
     instagram: "sajentclub",
     intro:
-      "Die Dating-App fürs Schmuck-Shopping — Match statt Suchen. Wir haben der App eine Online-Identität gebaut, die funkelt.",
+      "Die Dating-App fürs Schmuck-Shopping. Match statt Suchen. Wir haben der App eine Online-Identität gebaut, die funkelt.",
     caseStudy:
-      "Sajent Club kam mit einer Mission zu uns: die App als Must-have etablieren. Wir haben einen visuell markanten Content-Plan um Features und User-Benefits gebaut — App-Walkthroughs, Success-Stories, Lifestyle-Reels —, Kooperationen mit Tech-Influencern und Lifestyle-Bloggern kuratiert und die Marke per TikTok und YouTube Shorts auf neue Plattformen gebracht. Interaktive Stories mit Polls und Quizzes machen aus Reichweite Downloads.",
+      "Sajent Club kam mit einer Mission zu uns: die App als Must-have etablieren. Wir haben einen visuell markanten Content-Plan um Features und User-Benefits gebaut. App-Walkthroughs, Success-Stories, Lifestyle-Reels, Kooperationen mit Tech-Influencern und Lifestyle-Bloggern kuratiert und die Marke per TikTok und YouTube Shorts auf neue Plattformen gebracht. Interaktive Stories mit Polls und Quizzes machen aus Reichweite Downloads.",
   },
   {
     name: "Ultra OOH",
@@ -415,33 +424,118 @@ export const heroStats = [
 ];
 
 export type Service = {
+  number: string;
   title: string;
-  /** Zweiter, farblich abgesetzter Teil des Titels. */
-  accent: string;
-  text: string;
+  /** Optionaler, farblich abgesetzter Teil des Titels. */
+  accent?: string;
+  /** Einordnender Satz unter dem Titel. */
+  tagline: string;
+  bullets: string[];
+  /** Hervorgehobenes Verkaufsargument unter den Bullets. */
+  highlight?: string;
 };
 
-/** Die vier Kernleistungen — Wortlaut nach der Agentur-Präsentation. */
+/** Die fünf Leistungsbereiche — Wortlaut nach dem Leistungsspektrum
+ * der Agentur (Stand 08/2026), fürs Web gekürzt. Bewusst ohne
+ * Gedankenstriche im Fließtext und ohne Preise. */
 export const services: Service[] = [
   {
-    title: "Social Media",
-    accent: "Management",
-    text: "Wir übernehmen deinen kompletten Social-Media-Flow — Posts, Stories, Interaktionen — und halten dabei immer im Fokus, wofür deine Marke steht.",
+    number: "01",
+    title: "Setup",
+    tagline: "Die technische Grundlage, einmalig zum Projektstart.",
+    bullets: [
+      "Einrichtung der Zugänge für Facebook und Instagram im Business Manager, inklusive Werbeanzeigenmanager",
+      "Identifikation der Geschäftsziele und Definition messbarer Ziele für die Social-Media-Präsenz",
+      "Definition von Themen, Tonalität und Stil für die Zielgruppenansprache",
+      "Implementierung von Analyse-Tools für die Auswertung der Performance",
+    ],
   },
   {
-    title: "Social Media",
-    accent: "Strategie",
-    text: "Wirklich effizient wird Social Media erst mit einer persönlichen Strategie. Wir entwickeln sie zum Start und passen sie laufend an die Entwicklung deiner Marke an.",
+    number: "02",
+    title: "Strategie",
+    tagline: "Die inhaltliche Grundlage, ausgelegt auf sechs Monate.",
+    bullets: [
+      "Analyse von Standorten und Konzepten, damit Inhalte und Ansprache passgenau darauf ausgerichtet sind",
+      "Employer Branding und Recruiting als strategischer Schwerpunkt, wenn die Kanäle vorrangig der Mitarbeitergewinnung dienen",
+      "Redaktionskalender mit allen relevanten Daten, Events und Anlässen, inklusive festem monatlichem Anteil an Recruiting-Inhalten",
+      "Markenspezifische visuelle Vorlagen für einen durchgängigen roten Faden, auch für Stellenanzeigen und Team-Formate",
+      "Storytelling rund um Marke, Produkte, Team und Gästeerfahrungen",
+      "Auf Wunsch Influencer- und Kollaborationskampagnen mit lokalen Partnern, die authentisch zur Marke passen",
+    ],
   },
   {
-    title: "Content",
-    accent: "Creation",
-    text: "Jedes Format braucht seinen Content. Auf Basis der Strategie produzieren wir Inhalte, die die Kommunikation deiner Marke visuell und verbal zum Leben bringen.",
+    number: "03",
+    title: "Content Creation",
+    accent: "und Kanalbetreuung",
+    tagline: "Die laufende Arbeit am Kanal.",
+    bullets: [
+      "Regelmäßige Reels und Fotoposts, der Umfang wird individuell auf deine Marke und deine Ziele abgestimmt",
+      "Fester Anteil an Beiträgen mit Recruiting-Fokus, inklusive Call-to-Action zur Bewerbung",
+      "Laufende Storys zuzüglich Reposts, neue Beiträge werden per Story beworben",
+      "Texterstellung, Bildrecherche und Editing für jeden Post",
+      "Pflege der Highlights, inklusive eines dauerhaften Highlights für offene Stellen",
+      "Ausschließlich lizenzfreie Musik",
+    ],
+    highlight:
+      "Produktion inklusive: Fotograf und Videograf sind Teil der Leistung, keine Zusatzposition.",
   },
   {
-    title: "Social Media",
-    accent: "Advertising",
-    text: "Wir übersetzen deine Kommunikationsstrategie in ein strukturiertes, effizientes Media-Grid — damit deine Produkte mit den richtigen Ads echten Return erzielen.",
+    number: "04",
+    title: "Performance",
+    accent: "Marketing",
+    tagline: "Bezahlte Reichweite auf Instagram und Facebook.",
+    bullets: [
+      "Planung und Einrichtung der Kampagnenstruktur, zwei Kampagnen pro Monat",
+      "Copy, Call-to-Action und Creatives für Meta Ads",
+      "Pflege und Monitoring der laufenden Kampagnen",
+      "Budgetverwaltung, das Werbebudget geht direkt an Meta und nicht über die Agentur",
+      "Monatliches Reporting",
+    ],
+  },
+  {
+    number: "05",
+    title: "Google",
+    accent: "Unternehmensprofil",
+    tagline: "Lokale Sichtbarkeit und Reputation.",
+    bullets: [
+      "Pflege und laufende Optimierung der Profile: Öffnungszeiten, Leistungen, Kategorien und Bildmaterial",
+      "Monatlich ein Google-Beitrag je Profil für Angebote, News und Aktionen",
+      "Bessere lokale Sichtbarkeit über Local-SEO-Grundlagen, Kategorien und Keywords im Profiltext",
+      "Bewertungsmanagement: Antworten auf eingehende Bewertungen innerhalb von 48 Stunden im abgestimmten Tone of Voice",
+      "Kritische Bewertungen inklusive Antwortvorschlag zur Freigabe, Prüfung auf Verstöße gegen die Google-Richtlinien und Meldung zur Entfernung",
+      "Monatliches Reporting zu Profilaufrufen, Suchanfragen, Anrufen, Routenanfragen und Bewertungsschnitt",
+    ],
+  },
+];
+
+export type ExtraService = {
+  title: string;
+  /** Referenz, z. B. der Kunde, für den die Leistung aufgebaut wurde. */
+  reference: string;
+  bullets: string[];
+  highlight?: string;
+};
+
+/** Zusatzleistungen jenseits des Standardpakets. */
+export const extraServices: ExtraService[] = [
+  {
+    title: "Recruiting-System",
+    reference: "Aufgebaut für Bäckerei Huck",
+    bullets: [
+      "Bewerbungen aus allen Kanälen laufen zentral in ein Dashboard: E-Mail, Social-Media-Funnel und Speed-Bewerbung per QR-Code direkt in der Filiale",
+      "Jede neue Bewerbung löst automatisch eine Rückmeldung aus, mit Formular und Lebenslauf-Upload",
+      "Am Ende liegt eine vollständige Bewerberakte vor, statt drei Zeilen aus einer Direktnachricht",
+      "Keine Dubletten, eine einzige Quelle der Wahrheit",
+    ],
+    highlight: "Kein Recruiting-Marketing, sondern ein Prozess.",
+  },
+  {
+    title: "Eventkommunikation",
+    reference: "Regelmäßig umgesetzt für das KaDeWe",
+    bullets: [
+      "Eröffnungen, Aktionen und Saisonhöhepunkte mit Vorbereitung, Begleitung und Nachbereitung statt eines einzelnen Posts am Veranstaltungstag",
+      "Besonders relevant bei Neueröffnungen, weil die Aufmerksamkeit dort nur einmal entsteht",
+    ],
   },
 ];
 
@@ -463,21 +557,21 @@ export const caseStudyTeasers: CaseStudyTeaser[] = [
     image: "/cases/goldies.webp",
     stat: "6.000 → 49.000+ Follower",
     teaser:
-      "Content-Revamp mit Food-Fotografie und Reels, Kooperationen in der Berliner und Frankfurter Gastro-Szene, Ausbau auf YouTube — aus einem unterschätzten Account wurde eine Community, die die Marke trägt.",
+      "Content-Revamp mit Food-Fotografie und Reels, Kooperationen in der Berliner und Frankfurter Gastro-Szene, Ausbau auf YouTube, aus einem unterschätzten Account wurde eine Community, die die Marke trägt.",
   },
   {
     client: "Frittenwerk",
     image: "/cases/frittenwerk.webp",
     stat: "125.000+ Follower auf Instagram",
     teaser:
-      "Die Energie aus über 40 Stores in den Feed übersetzt: Urban Vibe, Signature Loaded Fries, virale Hooks — plus TikTok als neue Bühne. Reels im Millionen-Reichweiten-Bereich inklusive.",
+      "Die Energie aus über 40 Stores in den Feed übersetzt: Urban Vibe, Signature Loaded Fries, virale Hooks, plus TikTok als neue Bühne. Reels im Millionen-Reichweiten-Bereich inklusive.",
   },
   {
     client: "Sajent Club",
     image: "/cases/sajent-club.webp",
     stat: "Von null auf Online-Identität",
     teaser:
-      "App-Walkthroughs, Success-Stories und Lifestyle-Reels, kuratierte Influencer-Kooperationen und der Sprung auf TikTok und YouTube Shorts — interaktive Stories machen aus Reichweite Downloads.",
+      "App-Walkthroughs, Success-Stories und Lifestyle-Reels, kuratierte Influencer-Kooperationen und der Sprung auf TikTok und YouTube Shorts, interaktive Stories machen aus Reichweite Downloads.",
   },
 ];
 
@@ -493,19 +587,19 @@ export const processSteps: ProcessStep[] = [
     number: "01",
     title: "Setup",
     claim: "Erst das Fundament. Dann die Show.",
-    text: "Zugänge, Ziele, Analytics — wir verkabeln alle Plattformen und definieren, was Erfolg für dich überhaupt heißt. Messbar. Nicht gefühlt.",
+    text: "Zugänge, Ziele, Analytics, wir verkabeln alle Plattformen und definieren, was Erfolg für dich überhaupt heißt. Messbar. Nicht gefühlt.",
   },
   {
     number: "02",
     title: "Strategie",
     claim: "Kein Bauchgefühl. Ein System.",
-    text: "Content-Pillars, Tonalität, Roadmap. Deine Marke bekommt eine Stimme, die man im Feed sofort erkennt — und einen Plan, der sie trägt.",
+    text: "Content-Pillars, Tonalität, Roadmap. Deine Marke bekommt eine Stimme, die man im Feed sofort erkennt, und einen Plan, der sie trägt.",
   },
   {
     number: "03",
     title: "Content Days",
     claim: "Ein Tag Dreh. Ein Monat Content.",
-    text: "Shotlist, Regie, Hook-Mechaniken — wir konzipieren jede Aufnahme auf die ersten 1,5 Sekunden. Der Rest ist Handwerk.",
+    text: "Shotlist, Regie, Hook-Mechaniken, wir konzipieren jede Aufnahme auf die ersten 1,5 Sekunden. Der Rest ist Handwerk.",
   },
   {
     number: "04",
@@ -525,7 +619,7 @@ export const team = {
   name: "Giulia Cavallino",
   initials: "GC",
   role: "Founder & Head of Everything",
-  bio: "Glaubt an gute Hooks mehr als an Horoskope. Baut seit 2021 Marken, die man nicht wegscrollen kann — von Berlin bis Frankfurt.",
+  bio: "Glaubt an gute Hooks mehr als an Horoskope. Baut seit 2021 Marken, die man nicht wegscrollen kann, von Berlin bis Frankfurt.",
   facts: [
     { value: "∞", label: "Ideen pro Tag" },
     { value: "24/7", label: "online (leider)" },
@@ -538,7 +632,7 @@ export const team = {
 export const vita = [
   {
     year: "2021",
-    text: "Gründung in Berlin-Mitte. Giulia sammelt die ersten Erfahrungen mit unseren heutigen Kunden — damals noch vom WG-Schreibtisch aus, ganz ohne Büro.",
+    text: "Gründung in Berlin-Mitte. Giulia sammelt die ersten Erfahrungen mit unseren heutigen Kunden, damals noch vom WG-Schreibtisch aus, ganz ohne Büro.",
   },
   {
     year: "2022",

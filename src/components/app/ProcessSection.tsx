@@ -40,7 +40,7 @@ export function ProcessSection() {
               {step.number}
             </span>
             <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-dune">
-              {step.number} — {step.title}
+              {step.number} · {step.title}
             </p>
             <h3 className="mt-2 text-xl font-medium tracking-tight text-snow">
               {step.claim}

@@ -25,7 +25,10 @@ export function NewestCollab() {
   const client = clients.find((c) => c.name === newestCollab);
   if (!client || !client.gallery || client.gallery.length === 0) return null;
 
-  const images = spreadGallery(client.gallery);
+  // Mehr als 12 Bilder bringen im Band keinen Mehrwert, kosten auf
+  // Mobilfunk aber spürbar Ladezeit — die volle Galerie gibt es auf
+  // der Kundenseite.
+  const images = spreadGallery(client.gallery).slice(0, 12);
   const href = `/referenzen/${clientSlug(client.name)}`;
 
   return (
@@ -75,7 +78,7 @@ export function NewestCollab() {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "0px 0px -60px 0px" }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="relative left-1/2 mt-6 w-screen -translate-x-1/2 overflow-hidden"
+        className="relative mt-6 overflow-hidden rounded-2xl"
       >
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-sky to-transparent" />
@@ -92,7 +95,7 @@ export function NewestCollab() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
-                alt={`${client.name} — Einblick`}
+                alt={`${client.name}, Einblick`}
                 loading={i % images.length < 4 ? "eager" : "lazy"}
                 className="h-full w-full object-cover"
               />

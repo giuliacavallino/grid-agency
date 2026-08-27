@@ -30,9 +30,20 @@ export function BootIntro() {
 
   useEffect(() => {
     if (!show) return;
-    const total = reduce ? 900 : 4900;
+    const total = reduce ? 900 : 2200;
     const timer = window.setTimeout(dismiss, total);
-    return () => window.clearTimeout(timer);
+    // Jede Interaktion überspringt das Intro sofort — Besucher, die
+    // loslegen wollen, sollen keine Sekunde warten müssen.
+    const skip = () => dismiss();
+    window.addEventListener("wheel", skip, { passive: true });
+    window.addEventListener("touchmove", skip, { passive: true });
+    window.addEventListener("keydown", skip);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("wheel", skip);
+      window.removeEventListener("touchmove", skip);
+      window.removeEventListener("keydown", skip);
+    };
   }, [show, reduce]);
 
   return (
@@ -45,7 +56,7 @@ export function BootIntro() {
           exit={{ opacity: 0, scale: 1.06 }}
           transition={{ duration: 0.6, ease: EASE }}
           className="fixed inset-0 z-[60] flex cursor-pointer flex-col items-center justify-center bg-sky"
-          aria-label="Intro — tippen zum Überspringen"
+          aria-label="Intro, tippen zum Überspringen"
         >
           {/* Snow pattern on Sky, breathing in softly behind the mark. */}
           <motion.div
@@ -72,7 +83,7 @@ export function BootIntro() {
               scale: 0.94,
             }}
             animate={{ clipPath: "inset(0 0% 0 0)", opacity: 1, scale: 1 }}
-            transition={{ duration: 1.5, ease: EASE }}
+            transition={{ duration: 1.0, ease: EASE }}
             className="relative z-10"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -84,15 +95,15 @@ export function BootIntro() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.5, duration: 0.8 }}
-              className="absolute inset-0 animate-[rainbow-slide_2.4s_linear_infinite] bg-[linear-gradient(92deg,#ffd400,#f7b790,#e02e38,#4d9fff,#ffd400)] bg-[length:200%_100%] [-webkit-mask:url('/brand/grid_monogram_snow.png')_center/contain_no-repeat] [mask:url('/brand/grid_monogram_snow.png')_center/contain_no-repeat]"
+              transition={{ delay: 1.0, duration: 0.6 }}
+              className="absolute inset-0 animate-[rainbow-slide_2.4s_linear_infinite] bg-[linear-gradient(92deg,#feda75,#fa7e1e,#d62976,#962fbf,#feda75)] bg-[length:200%_100%] [-webkit-mask:url('/brand/grid_monogram_snow.png')_center/contain_no-repeat] [mask:url('/brand/grid_monogram_snow.png')_center/contain_no-repeat]"
             />
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 12, letterSpacing: "0.05em" }}
             animate={{ opacity: 1, y: 0, letterSpacing: "0.35em" }}
-            transition={{ delay: 1.4, duration: 0.7, ease: EASE }}
+            transition={{ delay: 0.8, duration: 0.6, ease: EASE }}
             className="relative z-10 mt-8 text-lg font-medium text-snow lg:text-xl"
           >
             GRID
@@ -101,7 +112,7 @@ export function BootIntro() {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 2.0, duration: 0.6 }}
+            transition={{ delay: 1.1, duration: 0.5 }}
             className="relative z-10 mt-3 max-w-[20rem] px-6 text-center text-[11px] font-light uppercase leading-relaxed tracking-[0.3em] text-snow/45 lg:max-w-none"
           >
             Willkommen bei deiner Lieblings Social Media Agentur

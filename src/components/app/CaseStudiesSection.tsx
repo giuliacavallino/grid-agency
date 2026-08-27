@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
-import { caseStudyTeasers, clientSlug } from "@/lib/content";
+import { ArrowRight, CalendarClock } from "lucide-react";
+import { calendlyUrl, caseStudyTeasers, clientSlug } from "@/lib/content";
 
 /** Case Studies aus der Agentur-Präsentation auf der Startseite:
  * drei Karten mit den freigestellten Phone-Mockups aus dem Deck,
@@ -48,7 +48,7 @@ export function CaseStudiesSection() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={cs.image}
-                  alt={`${cs.client} — Case Study Mockup`}
+                  alt={`${cs.client}, Case Study Mockup`}
                   loading="lazy"
                   className="mx-auto h-64 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] sm:h-72"
                 />
@@ -75,6 +75,29 @@ export function CaseStudiesSection() {
           </motion.div>
         ))}
       </div>
+
+      {/* Zwischen-CTA: direkt nach den Ergebnissen ist der beste Moment
+          für die Terminbuchung, ohne bis ganz unten scrollen zu müssen. */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-60px" }}
+        transition={{ duration: 0.5 }}
+        className="mt-8 flex flex-col items-center gap-3 text-center"
+      >
+        <p className="text-sm font-light text-snow/65">
+          Ergebnisse wie diese für deine Marke?
+        </p>
+        <a
+          href={calendlyUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
+        >
+          <CalendarClock className="h-4 w-4" strokeWidth={2} />
+          Unverbindliches Erstgespräch buchen
+        </a>
+      </motion.div>
     </div>
   );
 }

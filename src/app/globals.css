@@ -89,11 +89,11 @@ html {
 .story-ring {
   background: conic-gradient(
     from 0deg,
-    #ffd400,
-    #f7b790,
-    #e02e38,
-    #4d9fff,
-    #ffd400
+    #feda75,
+    #fa7e1e,
+    #d62976,
+    #962fbf,
+    #feda75
   );
 }
 
@@ -153,18 +153,18 @@ html {
    red) over the Sky base — color without touching the GRID CI. */
 .aurora {
   background:
-    radial-gradient(60rem 40rem at 12% 8%, rgb(255 212 0 / 0.16), transparent 60%),
-    radial-gradient(70rem 46rem at 88% 12%, rgb(45 130 255 / 0.17), transparent 60%),
-    radial-gradient(62rem 44rem at 78% 88%, rgb(247 183 144 / 0.15), transparent 62%),
-    radial-gradient(52rem 38rem at 15% 92%, rgb(224 46 56 / 0.12), transparent 60%);
+    radial-gradient(60rem 40rem at 12% 8%, rgb(254 218 117 / 0.16), transparent 60%),
+    radial-gradient(70rem 46rem at 88% 12%, rgb(79 91 213 / 0.17), transparent 60%),
+    radial-gradient(62rem 44rem at 78% 88%, rgb(250 126 30 / 0.15), transparent 62%),
+    radial-gradient(52rem 38rem at 15% 92%, rgb(214 41 118 / 0.12), transparent 60%);
 }
 
 .text-scroll-gradient {
   background: linear-gradient(
     92deg,
-    #ffd400 0%,
-    #f7b790 45%,
-    #4d9fff 100%
+    #feda75 0%,
+    #fa7e1e 45%,
+    #962fbf 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -184,11 +184,11 @@ html {
 .text-rainbow-animated {
   background-image: linear-gradient(
     92deg,
-    #ffd400,
-    #f7b790,
-    #e02e38,
-    #4d9fff,
-    #ffd400
+    #feda75,
+    #fa7e1e,
+    #d62976,
+    #962fbf,
+    #feda75
   );
   background-size: 200% 100%;
   -webkit-background-clip: text;
@@ -204,10 +204,11 @@ html {
 .nav-rainbow:hover {
   background-image: linear-gradient(
     92deg,
-    #ffd400,
-    #f7b790,
-    #4d9fff,
-    #ffd400
+    #feda75,
+    #fa7e1e,
+    #d62976,
+    #962fbf,
+    #feda75
   );
   background-size: 200% 100%;
   -webkit-background-clip: text;
@@ -225,16 +226,17 @@ html {
 .btn-rainbow:hover {
   background-image: linear-gradient(
     92deg,
-    #ffd400,
-    #f7b790,
-    #4d9fff,
-    #ffd400
+    #feda75,
+    #fa7e1e,
+    #d62976,
+    #962fbf,
+    #feda75
   );
   background-size: 200% 100%;
   color: var(--color-sky);
   animation: rainbow-slide 1.6s linear infinite;
   transform: scale(1.04);
-  box-shadow: 0 10px 34px rgb(247 183 144 / 0.35);
+  box-shadow: 0 10px 34px rgb(250 126 30 / 0.35);
 }
 
 /* GRID mark: on hover the aurora gradient runs through the letters
@@ -248,7 +250,7 @@ html {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(92deg, #ffd400, #f7b790, #4d9fff, #ffd400);
+  background: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
   background-size: 200% 100%;
   -webkit-mask: url("/brand/grid_logo_snow.png") center / contain no-repeat;
   mask: url("/brand/grid_logo_snow.png") center / contain no-repeat;
@@ -278,7 +280,7 @@ html {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background-image: linear-gradient(92deg, #ffd400, #f7b790, #4d9fff, #ffd400);
+  background-image: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
   background-size: 200% 100%;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
@@ -295,9 +297,9 @@ html {
 .card-rainbow:hover {
   transform: translateY(-3px);
   box-shadow:
-    0 8px 40px rgba(255, 212, 0, 0.1),
-    0 4px 32px rgba(77, 159, 255, 0.12),
-    0 2px 24px rgba(247, 183, 144, 0.1);
+    0 8px 40px rgba(254, 218, 117, 0.1),
+    0 4px 32px rgba(150, 47, 191, 0.12),
+    0 2px 24px rgba(214, 41, 118, 0.1);
 }
 .card-rainbow:hover::before {
   opacity: 1;
@@ -305,7 +307,7 @@ html {
 }
 /* Titel der Karte läuft beim Hover im gleichen Farbverlauf mit. */
 .card-rainbow:hover .card-rainbow-title {
-  background-image: linear-gradient(92deg, #ffd400, #f7b790, #4d9fff, #ffd400);
+  background-image: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;

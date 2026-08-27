@@ -241,7 +241,7 @@ export function EventsView() {
           <span className="text-scroll-gradient">unskippable</span> wie online.
         </h1>
         <p className="mt-3 max-w-[26rem] text-sm font-light leading-relaxed text-snow/60">
-          Wir bringen Feeds ins echte Leben — mit unseren Brands, guter Musik
+          Wir bringen Feeds ins echte Leben, mit unseren Brands, guter Musik
           und Content, der sich selbst dreht.
         </p>
       </motion.div>
@@ -255,7 +255,7 @@ export function EventsView() {
           <div className="glass flex flex-col items-center gap-2 rounded-3xl py-12">
             <Clapperboard className="h-6 w-6 text-snow/30" strokeWidth={1.6} />
             <p className="text-sm font-light text-snow/50">
-              Gerade nichts geplant — aber nicht mehr lange.
+              Gerade nichts geplant, aber nicht mehr lange.
             </p>
           </div>
         )}

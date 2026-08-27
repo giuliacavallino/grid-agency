@@ -51,7 +51,7 @@ function InsightsPanel({ post }: { post: ClientPost }) {
     >
       <div className="glass mt-3 rounded-2xl p-4">
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-dune">
-          Insights — betreut von GRID
+          Insights, betreut von GRID
         </p>
         <div className="mt-3 flex justify-between">
           <div className="text-center">
@@ -236,7 +236,7 @@ export function LiveFeedSection() {
           <span className="text-scroll-gradient">In Echtzeit</span>.
         </h2>
         <p className="mt-2 text-sm font-light text-snow/55">
-          Neue Posts unserer Kunden erscheinen hier automatisch — ungefiltert,
+          Neue Posts unserer Kunden erscheinen hier automatisch, ungefiltert,
           direkt aus dem Feed. Tipp auf „Insights&ldquo; für echte Zahlen.
         </p>
       </motion.div>

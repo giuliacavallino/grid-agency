@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalShell } from "@/components/app/LegalShell";
 
 export const metadata: Metadata = {
-  title: "Impressum — GRID Agency",
+  title: "Impressum | GRID Agency",
 };
 
 export default function ImpressumPage() {
@@ -47,7 +47,7 @@ export default function ImpressumPage() {
               <br />
               Registergericht: Amtsgericht Frankfurt am Main
               <br />
-              Registernummer: HRB 140538
+              Registernummer: HRB 235987 B
             </p>
           </section>
 

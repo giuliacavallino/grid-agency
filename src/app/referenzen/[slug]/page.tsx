@@ -19,8 +19,8 @@ export async function generateMetadata({
   const client = clients.find((c) => clientSlug(c.name) === slug);
   return {
     title: client
-      ? `${client.name} — Referenz | GRID Agency`
-      : "Referenz — GRID Agency",
+      ? `${client.name} · Referenz | GRID Agency`
+      : "Referenz | GRID Agency",
     description: client?.intro,
   };
 }
@@ -50,6 +50,21 @@ export default async function ClientPage({
             <span className="text-2xl font-light uppercase tracking-[0.2em] text-snow/70">
               {client.name}
             </span>
+          )}
+        </div>
+
+        {/* Was GRID für die Marke gemacht hat — ohne eigene Angabe
+            greifen die Kernleistungen der Agentur. */}
+        <div className="mb-5 flex flex-wrap justify-center gap-2">
+          {(client.tags ?? ["Social Media Management", "Content Creation"]).map(
+            (tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-snow/15 px-3 py-1 text-[11px] font-light text-snow/70"
+              >
+                {tag}
+              </span>
+            ),
           )}
         </div>
 

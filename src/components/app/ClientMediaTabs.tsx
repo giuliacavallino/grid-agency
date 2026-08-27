@@ -91,7 +91,7 @@ export function ClientMediaTabs({
           <GalleryViewer
             key={tab.title}
             images={tab.images}
-            alt={`${name} — ${tab.title}`}
+            alt={`${name}, ${tab.title}`}
           />
         )}
       </div>
