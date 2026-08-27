@@ -75,9 +75,6 @@ export function ServicesSection() {
                 aria-expanded={open === i}
                 className="card-rainbow relative mb-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-sky/15 bg-white p-5 text-left sm:p-6"
               >
-                <span className="pointer-events-none absolute -right-3 -top-6 text-[5.5rem] font-medium leading-none text-sky/[0.05]">
-                  {service.number}
-                </span>
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h3 className="card-rainbow-title text-xl font-medium tracking-tight text-sky">
