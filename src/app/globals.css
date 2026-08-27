@@ -324,7 +324,14 @@ html {
   color: transparent;
 }
 
-/* Im hellen Block läuft auch der Hover-Titel im kräftigen Verlauf. */
-.bg-snow .card-rainbow:hover .card-rainbow-title {
+/* Heller Block: Hover-Titel im kräftigen Verlauf, und der Glow muss
+   auf Weiß deutlich stärker leuchten als auf dem dunklen Grund. */
+.section-light .card-rainbow:hover .card-rainbow-title {
   background-image: linear-gradient(92deg, #fa7e1e, #d62976, #962fbf, #fa7e1e);
+}
+.section-light .card-rainbow:hover {
+  box-shadow:
+    0 10px 44px rgba(250, 126, 30, 0.28),
+    0 6px 36px rgba(214, 41, 118, 0.26),
+    0 3px 28px rgba(150, 47, 191, 0.22);
 }

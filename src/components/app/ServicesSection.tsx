@@ -24,7 +24,7 @@ export function ServicesSection() {
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <div className="relative left-1/2 w-screen -translate-x-1/2 bg-snow text-sky">
+    <div className="section-light relative left-1/2 w-screen -translate-x-1/2 bg-white text-sky">
       <div className="mx-auto w-full max-w-frame px-5 py-12 lg:max-w-frame-lg">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -73,7 +73,7 @@ export function ServicesSection() {
                 type="button"
                 onClick={() => setOpen(open === i ? null : i)}
                 aria-expanded={open === i}
-                className="card-rainbow relative mb-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-sky/10 bg-white/50 p-5 text-left sm:p-6"
+                className="card-rainbow relative mb-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-sky/15 bg-white p-5 text-left sm:p-6"
               >
                 <span className="pointer-events-none absolute -right-3 -top-6 text-[5.5rem] font-medium leading-none text-sky/[0.05]">
                   {service.number}
@@ -149,7 +149,7 @@ export function ServicesSection() {
             <motion.div
               key={extra.title}
               {...cardMotion(i)}
-              className="card-rainbow flex flex-col rounded-2xl border border-sky/10 bg-white/50 p-5 sm:p-6"
+              className="card-rainbow flex flex-col rounded-2xl border border-sky/15 bg-white p-5 sm:p-6"
             >
               <h3 className="card-rainbow-title text-xl font-medium tracking-tight text-sky">
                 {extra.title}
