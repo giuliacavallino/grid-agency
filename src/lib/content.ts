@@ -575,6 +575,31 @@ export const caseStudyTeasers: CaseStudyTeaser[] = [
   },
 ];
 
+export type Testimonial = {
+  quote: string;
+  name: string;
+  /** Z. B. Rolle oder Unternehmen. */
+  meta?: string;
+  /** Sterne 1 bis 5, Standard 5. */
+  rating?: number;
+};
+
+/** Echte Kundenstimmen. Wortlaut 1:1 aus der Bewertung übernommen,
+ * nichts umformuliert. */
+export const testimonials: Testimonial[] = [
+  {
+    quote:
+      "Sehr angenehme und professionelle Zusammenarbeit. Giulia hat tolle Ergebnisse auf unseren Social Media Accounts erzielt. Wir können die Agentur definitiv weiterempfehlen",
+    name: "Simon Meinberg",
+    meta: "Inhaber & Geschäftsführer, Raumstation & Friends GmbH · via Sortlist",
+    rating: 5,
+  },
+];
+
+/** Link zu den Google-Bewertungen der Agentur. */
+export const googleReviewsUrl =
+  "https://www.google.com/search?q=GRID+Agency+Social+Media+Bewertungen";
+
 export type ProcessStep = {
   number: string;
   title: string;

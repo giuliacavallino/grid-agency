@@ -4,6 +4,7 @@ import { NewestCollab } from "@/components/app/NewestCollab";
 import { TeamSection } from "@/components/app/TeamSection";
 import { ServicesSection } from "@/components/app/ServicesSection";
 import { CaseStudiesSection } from "@/components/app/CaseStudiesSection";
+import { TestimonialsSection } from "@/components/app/TestimonialsSection";
 import { DmSection } from "@/components/app/DmSection";
 
 export default function Home() {
@@ -17,12 +18,16 @@ export default function Home() {
         <NewestCollab />
       </section>
 
-      <section id="leistungen" className="scroll-mt-20 border-t border-snow/10">
+      <section id="leistungen" className="scroll-mt-20">
         <ServicesSection />
       </section>
 
       <section id="cases" className="scroll-mt-20 border-t border-snow/10">
         <CaseStudiesSection />
+      </section>
+
+      <section id="kundenstimmen" className="scroll-mt-20 border-t border-snow/10">
+        <TestimonialsSection />
       </section>
 
       <section id="team" className="scroll-mt-20 border-t border-snow/10">
