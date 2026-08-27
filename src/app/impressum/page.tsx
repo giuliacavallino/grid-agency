@@ -47,7 +47,7 @@ export default function ImpressumPage() {
               <br />
               Registergericht: Amtsgericht Frankfurt am Main
               <br />
-              Registernummer: HRB 140538
+              Registernummer: HRB 235987 B
             </p>
           </section>
 

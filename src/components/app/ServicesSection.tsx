@@ -42,20 +42,28 @@ export function ServicesSection() {
         </p>
       </motion.div>
 
-      <div className="mt-8 space-y-4">
+      {/* Die fünf Bereiche als Timeline: erst Setup, dann Strategie usw. —
+          verbunden über eine Leiste mit nummerierten Stationen. */}
+      <div className="mt-8">
         {services.map((service, i) => (
           <motion.div
             key={service.number}
             {...cardMotion(i)}
-            className="card-rainbow relative overflow-hidden rounded-2xl border border-snow/10 p-5 sm:p-6"
+            className="relative flex gap-4 pb-4 last:pb-0 sm:gap-5"
           >
+            <div className="flex flex-col items-center">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-snow/20 bg-sky text-xs font-medium text-snow">
+                {service.number}
+              </span>
+              {i < services.length - 1 && (
+                <span className="mt-1 w-px flex-1 bg-snow/15" />
+              )}
+            </div>
+            <div className="card-rainbow relative mb-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-snow/10 p-5 sm:p-6">
             <span className="pointer-events-none absolute -right-3 -top-6 text-[5.5rem] font-medium leading-none text-snow/[0.06]">
               {service.number}
             </span>
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-dune">
-              {service.number}
-            </p>
-            <h3 className="card-rainbow-title mt-2 text-xl font-medium tracking-tight text-snow">
+            <h3 className="card-rainbow-title text-xl font-medium tracking-tight text-snow">
               {service.title}
               {service.accent && (
                 <>
@@ -85,6 +93,7 @@ export function ServicesSection() {
                 {service.highlight}
               </p>
             )}
+            </div>
           </motion.div>
         ))}
       </div>
