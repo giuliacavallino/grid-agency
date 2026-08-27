@@ -469,9 +469,9 @@ export const services: Service[] = [
     accent: "und Kanalbetreuung",
     tagline: "Die laufende Arbeit am Kanal.",
     bullets: [
-      "4 Posts pro Woche: monatlich 8 Reels bis 30 Sekunden und 8 Fotoposts",
-      "Davon mindestens 4 Beiträge im Monat mit Recruiting-Fokus, inklusive Call-to-Action zur Bewerbung",
-      "Rund 10 Storys pro Woche zuzüglich Reposts, neue Beiträge werden per Story beworben",
+      "Regelmäßige Reels und Fotoposts, der Umfang wird individuell auf deine Marke und deine Ziele abgestimmt",
+      "Fester Anteil an Beiträgen mit Recruiting-Fokus, inklusive Call-to-Action zur Bewerbung",
+      "Laufende Storys zuzüglich Reposts, neue Beiträge werden per Story beworben",
       "Texterstellung, Bildrecherche und Editing für jeden Post",
       "Pflege der Highlights, inklusive eines dauerhaften Highlights für offene Stellen",
       "Ausschließlich lizenzfreie Musik",
