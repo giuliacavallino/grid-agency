@@ -71,7 +71,15 @@ export function TestimonialsSection() {
       </motion.a>
 
       {testimonials.length > 0 && (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={`mt-4 grid gap-4 ${
+            testimonials.length >= 3
+              ? "sm:grid-cols-2 lg:grid-cols-3"
+              : testimonials.length === 2
+                ? "sm:grid-cols-2"
+                : "max-w-xl"
+          }`}
+        >
           {testimonials.map((t, i) => (
             <motion.figure
               key={t.name}

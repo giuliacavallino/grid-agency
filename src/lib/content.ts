@@ -584,9 +584,17 @@ export type Testimonial = {
   rating?: number;
 };
 
-/** Echte Kundenstimmen, z. B. aus den Google-Bewertungen. Wortlaut
- * bitte 1:1 aus der Bewertung übernehmen, nichts umformulieren. */
-export const testimonials: Testimonial[] = [];
+/** Echte Kundenstimmen. Wortlaut 1:1 aus der Bewertung übernommen,
+ * nichts umformuliert. */
+export const testimonials: Testimonial[] = [
+  {
+    quote:
+      "Sehr angenehme und professionelle Zusammenarbeit. Giulia hat tolle Ergebnisse auf unseren Social Media Accounts erzielt. Wir können die Agentur definitiv weiterempfehlen",
+    name: "Simon Meinberg",
+    meta: "Inhaber & Geschäftsführer, Raumstation & Friends GmbH · via Sortlist",
+    rating: 5,
+  },
+];
 
 /** Link zu den Google-Bewertungen der Agentur. */
 export const googleReviewsUrl =

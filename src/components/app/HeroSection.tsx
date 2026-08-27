@@ -92,7 +92,7 @@ export function HeroSection() {
               className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
             >
               <CalendarClock className="h-4 w-4 shrink-0" strokeWidth={2} />
-              Erstgespräch buchen
+              Jetzt Erstgespräch buchen!
             </a>
             <a
               href="#cases"
