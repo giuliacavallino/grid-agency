@@ -415,33 +415,118 @@ export const heroStats = [
 ];
 
 export type Service = {
+  number: string;
   title: string;
-  /** Zweiter, farblich abgesetzter Teil des Titels. */
-  accent: string;
-  text: string;
+  /** Optionaler, farblich abgesetzter Teil des Titels. */
+  accent?: string;
+  /** Einordnender Satz unter dem Titel. */
+  tagline: string;
+  bullets: string[];
+  /** Hervorgehobenes Verkaufsargument unter den Bullets. */
+  highlight?: string;
 };
 
-/** Die vier Kernleistungen — Wortlaut nach der Agentur-Präsentation. */
+/** Die fünf Leistungsbereiche — Wortlaut nach dem Leistungsspektrum
+ * der Agentur (Stand 08/2026), fürs Web gekürzt. Bewusst ohne
+ * Gedankenstriche im Fließtext und ohne Preise. */
 export const services: Service[] = [
   {
-    title: "Social Media",
-    accent: "Management",
-    text: "Wir übernehmen deinen kompletten Social-Media-Flow — Posts, Stories, Interaktionen — und halten dabei immer im Fokus, wofür deine Marke steht.",
+    number: "01",
+    title: "Setup",
+    tagline: "Die technische Grundlage, einmalig zum Projektstart.",
+    bullets: [
+      "Einrichtung der Zugänge für Facebook und Instagram im Business Manager, inklusive Werbeanzeigenmanager",
+      "Identifikation der Geschäftsziele und Definition messbarer Ziele für die Social-Media-Präsenz",
+      "Definition von Themen, Tonalität und Stil für die Zielgruppenansprache",
+      "Implementierung von Analyse-Tools für die Auswertung der Performance",
+    ],
   },
   {
-    title: "Social Media",
-    accent: "Strategie",
-    text: "Wirklich effizient wird Social Media erst mit einer persönlichen Strategie. Wir entwickeln sie zum Start und passen sie laufend an die Entwicklung deiner Marke an.",
+    number: "02",
+    title: "Strategie",
+    tagline: "Die inhaltliche Grundlage, ausgelegt auf sechs Monate.",
+    bullets: [
+      "Analyse von Standorten und Konzepten, damit Inhalte und Ansprache passgenau darauf ausgerichtet sind",
+      "Employer Branding und Recruiting als strategischer Schwerpunkt, wenn die Kanäle vorrangig der Mitarbeitergewinnung dienen",
+      "Redaktionskalender mit allen relevanten Daten, Events und Anlässen, inklusive festem monatlichem Anteil an Recruiting-Inhalten",
+      "Markenspezifische visuelle Vorlagen für einen durchgängigen roten Faden, auch für Stellenanzeigen und Team-Formate",
+      "Storytelling rund um Marke, Produkte, Team und Gästeerfahrungen",
+      "Auf Wunsch Influencer- und Kollaborationskampagnen mit lokalen Partnern, die authentisch zur Marke passen",
+    ],
   },
   {
-    title: "Content",
-    accent: "Creation",
-    text: "Jedes Format braucht seinen Content. Auf Basis der Strategie produzieren wir Inhalte, die die Kommunikation deiner Marke visuell und verbal zum Leben bringen.",
+    number: "03",
+    title: "Content Creation",
+    accent: "und Kanalbetreuung",
+    tagline: "Die laufende Arbeit am Kanal.",
+    bullets: [
+      "4 Posts pro Woche: monatlich 8 Reels bis 30 Sekunden und 8 Fotoposts",
+      "Davon mindestens 4 Beiträge im Monat mit Recruiting-Fokus, inklusive Call-to-Action zur Bewerbung",
+      "Rund 10 Storys pro Woche zuzüglich Reposts, neue Beiträge werden per Story beworben",
+      "Texterstellung, Bildrecherche und Editing für jeden Post",
+      "Pflege der Highlights, inklusive eines dauerhaften Highlights für offene Stellen",
+      "Ausschließlich lizenzfreie Musik",
+    ],
+    highlight:
+      "Produktion inklusive: Fotograf und Videograf sind Teil der Leistung, keine Zusatzposition.",
   },
   {
-    title: "Social Media",
-    accent: "Advertising",
-    text: "Wir übersetzen deine Kommunikationsstrategie in ein strukturiertes, effizientes Media-Grid — damit deine Produkte mit den richtigen Ads echten Return erzielen.",
+    number: "04",
+    title: "Performance",
+    accent: "Marketing",
+    tagline: "Bezahlte Reichweite auf Instagram und Facebook.",
+    bullets: [
+      "Planung und Einrichtung der Kampagnenstruktur, zwei Kampagnen pro Monat",
+      "Copy, Call-to-Action und Creatives für Meta Ads",
+      "Pflege und Monitoring der laufenden Kampagnen",
+      "Budgetverwaltung, das Werbebudget geht direkt an Meta und nicht über die Agentur",
+      "Monatliches Reporting",
+    ],
+  },
+  {
+    number: "05",
+    title: "Google",
+    accent: "Unternehmensprofil",
+    tagline: "Lokale Sichtbarkeit und Reputation.",
+    bullets: [
+      "Pflege und laufende Optimierung der Profile: Öffnungszeiten, Leistungen, Kategorien und Bildmaterial",
+      "Monatlich ein Google-Beitrag je Profil für Angebote, News und Aktionen",
+      "Bessere lokale Sichtbarkeit über Local-SEO-Grundlagen, Kategorien und Keywords im Profiltext",
+      "Bewertungsmanagement: Antworten auf eingehende Bewertungen innerhalb von 48 Stunden im abgestimmten Tone of Voice",
+      "Kritische Bewertungen inklusive Antwortvorschlag zur Freigabe, Prüfung auf Verstöße gegen die Google-Richtlinien und Meldung zur Entfernung",
+      "Monatliches Reporting zu Profilaufrufen, Suchanfragen, Anrufen, Routenanfragen und Bewertungsschnitt",
+    ],
+  },
+];
+
+export type ExtraService = {
+  title: string;
+  /** Referenz, z. B. der Kunde, für den die Leistung aufgebaut wurde. */
+  reference: string;
+  bullets: string[];
+  highlight?: string;
+};
+
+/** Zusatzleistungen jenseits des Standardpakets. */
+export const extraServices: ExtraService[] = [
+  {
+    title: "Recruiting-System",
+    reference: "Aufgebaut für Bäckerei Huck",
+    bullets: [
+      "Bewerbungen aus allen Kanälen laufen zentral in ein Dashboard: E-Mail, Social-Media-Funnel und Speed-Bewerbung per QR-Code direkt in der Filiale",
+      "Jede neue Bewerbung löst automatisch eine Rückmeldung aus, mit Formular und Lebenslauf-Upload",
+      "Am Ende liegt eine vollständige Bewerberakte vor, statt drei Zeilen aus einer Direktnachricht",
+      "Keine Dubletten, eine einzige Quelle der Wahrheit",
+    ],
+    highlight: "Kein Recruiting-Marketing, sondern ein Prozess.",
+  },
+  {
+    title: "Eventkommunikation",
+    reference: "Regelmäßig umgesetzt für das KaDeWe",
+    bullets: [
+      "Eröffnungen, Aktionen und Saisonhöhepunkte mit Vorbereitung, Begleitung und Nachbereitung statt eines einzelnen Posts am Veranstaltungstag",
+      "Besonders relevant bei Neueröffnungen, weil die Aufmerksamkeit dort nur einmal entsteht",
+    ],
   },
 ];
 
