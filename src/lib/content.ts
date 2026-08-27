@@ -444,66 +444,72 @@ export const services: Service[] = [
     title: "Setup",
     tagline: "Die technische Grundlage, einmalig zum Projektstart.",
     bullets: [
-      "Einrichtung der Zugänge für Facebook und Instagram im Business Manager, inklusive Werbeanzeigenmanager",
-      "Identifikation der Geschäftsziele und Definition messbarer Ziele für die Social-Media-Präsenz",
-      "Definition von Themen, Tonalität und Stil für die Zielgruppenansprache",
-      "Implementierung von Analyse-Tools für die Auswertung der Performance",
+      "Wir richten dir die Zugänge für Facebook und Instagram im Meta Business Manager ein, inklusive Werbeanzeigenmanager. Das bildet die technische Grundlage für alles Weitere.",
+      "Gemeinsam identifizieren wir deine Geschäftsziele und definieren, was deine Social-Media-Präsenz messbar erreichen soll.",
+      "Wir legen Themen, Tonalität und Stil fest, damit deine Zielgruppe genau die Ansprache bekommt, die zu deiner Marke passt.",
+      "Analyse-Tools richten wir direkt mit ein, damit wir die Performance von Anfang an auswerten können.",
     ],
   },
   {
     number: "02",
     title: "Strategie",
-    tagline: "Die inhaltliche Grundlage, ausgelegt auf sechs Monate.",
+    tagline: "Die inhaltliche Grundlage deiner Kanäle.",
     bullets: [
-      "Analyse von Standorten und Konzepten, damit Inhalte und Ansprache passgenau darauf ausgerichtet sind",
-      "Employer Branding und Recruiting als strategischer Schwerpunkt, wenn die Kanäle vorrangig der Mitarbeitergewinnung dienen",
-      "Redaktionskalender mit allen relevanten Daten, Events und Anlässen, inklusive festem monatlichem Anteil an Recruiting-Inhalten",
-      "Markenspezifische visuelle Vorlagen für einen durchgängigen roten Faden, auch für Stellenanzeigen und Team-Formate",
-      "Storytelling rund um Marke, Produkte, Team und Gästeerfahrungen",
-      "Auf Wunsch Influencer- und Kollaborationskampagnen mit lokalen Partnern, die authentisch zur Marke passen",
+      "Wir analysieren deine Standorte und Konzepte, damit Inhalte und Ansprache passgenau darauf ausgerichtet sind.",
+      "Dein Redaktionskalender bündelt alle relevanten Daten, Events und Anlässe, damit kein wichtiger Moment untergeht.",
+      "Wir entwickeln markenspezifische visuelle Vorlagen, die deinem Auftritt einen durchgängigen roten Faden geben.",
+      "Storytelling rund um deine Marke, deine Produkte, dein Team und die Erfahrungen deiner Gäste macht aus einzelnen Posts ein Gesamtbild.",
     ],
   },
   {
     number: "03",
     title: "Content Creation",
     accent: "und Kanalbetreuung",
-    tagline: "Die laufende Arbeit am Kanal.",
+    tagline: "Die laufende Arbeit an deinem Kanal.",
     bullets: [
-      "Regelmäßige Reels und Fotoposts, der Umfang wird individuell auf deine Marke und deine Ziele abgestimmt",
-      "Fester Anteil an Beiträgen mit Recruiting-Fokus, inklusive Call-to-Action zur Bewerbung",
-      "Laufende Storys zuzüglich Reposts, neue Beiträge werden per Story beworben",
-      "Texterstellung, Bildrecherche und Editing für jeden Post",
-      "Pflege der Highlights, inklusive eines dauerhaften Highlights für offene Stellen",
-      "Ausschließlich lizenzfreie Musik",
+      "Wir schnüren dir ein Paket, das festlegt, wie viele Fotos und Videos wir regelmäßig posten und vor allem auf welchen Kanälen.",
+      "Neue Beiträge bewerben wir zusätzlich in den Storys, dazu kommen laufende Storys und Reposts aus deinem Alltag.",
+      "Texte, Bildrecherche und Editing übernehmen wir für jeden einzelnen Post.",
+      "Wir pflegen deine Story-Highlights und nutzen ausschließlich lizenzfreie Musik.",
     ],
     highlight:
       "Produktion inklusive: Fotograf und Videograf sind Teil der Leistung, keine Zusatzposition.",
   },
   {
     number: "04",
-    title: "Performance",
-    accent: "Marketing",
-    tagline: "Bezahlte Reichweite auf Instagram und Facebook.",
+    title: "Influencer",
+    accent: "und Kooperationen",
+    tagline: "Reichweite über Partner, die wirklich zu dir passen.",
     bullets: [
-      "Planung und Einrichtung der Kampagnenstruktur, zwei Kampagnen pro Monat",
-      "Copy, Call-to-Action und Creatives für Meta Ads",
-      "Pflege und Monitoring der laufenden Kampagnen",
-      "Budgetverwaltung, das Werbebudget geht direkt an Meta und nicht über die Agentur",
-      "Monatliches Reporting",
+      "Wir arbeiten mit lokalen Influencern zusammen, die authentisch zu deiner Marke passen.",
+      "Kooperationskampagnen mit lokalen Partnern bringen deine Marke in neue Feeds und zu neuen Zielgruppen.",
     ],
   },
   {
     number: "05",
+    title: "Performance",
+    accent: "Marketing",
+    tagline: "Bezahlte Reichweite auf Instagram und Facebook.",
+    bullets: [
+      "Wir planen deine Kampagnenstruktur und setzen sie im Werbeanzeigenmanager auf.",
+      "Copy, Call-to-Action und Creatives für deine Meta Ads kommen bei uns aus einer Hand.",
+      "Laufende Kampagnen pflegen und überwachen wir kontinuierlich und steuern nach, wenn es nötig ist.",
+      "Dein Werbebudget verwalten wir transparent, bezahlt wird es direkt an Meta und nicht über die Agentur.",
+      "Über die Ergebnisse halten wir dich mit einem regelmäßigen Reporting auf dem Laufenden.",
+    ],
+  },
+  {
+    number: "06",
     title: "Google",
     accent: "Unternehmensprofil",
     tagline: "Lokale Sichtbarkeit und Reputation.",
     bullets: [
-      "Pflege und laufende Optimierung der Profile: Öffnungszeiten, Leistungen, Kategorien und Bildmaterial",
-      "Monatlich ein Google-Beitrag je Profil für Angebote, News und Aktionen",
-      "Bessere lokale Sichtbarkeit über Local-SEO-Grundlagen, Kategorien und Keywords im Profiltext",
-      "Bewertungsmanagement: Antworten auf eingehende Bewertungen innerhalb von 48 Stunden im abgestimmten Tone of Voice",
-      "Kritische Bewertungen inklusive Antwortvorschlag zur Freigabe, Prüfung auf Verstöße gegen die Google-Richtlinien und Meldung zur Entfernung",
-      "Monatliches Reporting zu Profilaufrufen, Suchanfragen, Anrufen, Routenanfragen und Bewertungsschnitt",
+      "Wir pflegen und optimieren deine Google-Profile laufend, von Öffnungszeiten über Leistungen und Kategorien bis zum Bildmaterial.",
+      "Regelmäßige Google-Beiträge machen deine Angebote, News und Aktionen direkt in der Suche sichtbar.",
+      "Mit Local-SEO-Grundlagen, den richtigen Kategorien und Keywords im Profiltext wirst du lokal besser gefunden.",
+      "Auf eingehende Bewertungen antworten wir zeitnah im abgestimmten Tone of Voice. Kritische Bewertungen bekommst du inklusive Antwortvorschlag zur Freigabe.",
+      "Bewertungen mit Verstößen gegen die Google-Richtlinien prüfen wir und melden sie zur Entfernung.",
+      "Ein regelmäßiges Reporting zeigt dir Profilaufrufe, Suchanfragen, Anrufe, Routenanfragen und deinen Bewertungsschnitt.",
     ],
   },
 ];
@@ -599,6 +605,42 @@ export const testimonials: Testimonial[] = [
 /** Link zu den Google-Bewertungen der Agentur. */
 export const googleReviewsUrl =
   "https://www.google.com/search?q=GRID+Agency+Social+Media+Bewertungen";
+
+export type RoadmapStep = {
+  number: string;
+  title: string;
+  text: string;
+};
+
+/** So ist eine Zusammenarbeit getimed, nach der Roadmap aus der
+ * Agentur-Präsentation. */
+export const roadmap: RoadmapStep[] = [
+  {
+    number: "01",
+    title: "Terminanfrage",
+    text: "Frage über unsere Homepage eine kostenlose Erstberatung an und beantworte uns einige kurze Fragen.",
+  },
+  {
+    number: "02",
+    title: "Beratungsgespräch",
+    text: "Giulia führt mit dir ein Vorgespräch und prüft, wie wir dir am besten helfen können.",
+  },
+  {
+    number: "03",
+    title: "Beauftragung",
+    text: "Wenn du ein gutes Gefühl hast, freuen wir uns über deine Beauftragung. Wir starten umgehend zum Beginn des nächsten Monats.",
+  },
+  {
+    number: "04",
+    title: "Set-up & Strategie",
+    text: "Wir beginnen damit, eine Strategie für dein Unternehmen zu erarbeiten. Im Anschluss benötigen wir von dir sämtliche Zugänge, Logos und vorhandenes Video- und Bildmaterial.",
+  },
+  {
+    number: "05",
+    title: "Zusammenarbeit",
+    text: "Wir betreuen dich mindestens 12 Monate, um an deiner Brand optimale Ergebnisse zu erzielen. So richtig spürbar wird es ab dem dritten Monat. Danach gibt es für deinen digitalen Fußabdruck kein Halten mehr.",
+  },
+];
 
 export type ProcessStep = {
   number: string;

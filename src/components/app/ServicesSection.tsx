@@ -44,8 +44,8 @@ export function ServicesSection() {
             Social Media für Gastronomie und Food. Unser Schwerpunkt sind
             Marken mit mehreren Standorten, die trotz ihrer Größe
             familiengeführt sind. Unsere Kanalarbeit endet nicht beim Posting,
-            sie ist an konkrete Geschäftsziele gekoppelt, vor allem an
-            Mitarbeitergewinnung und lokale Sichtbarkeit.
+            sie ist an konkrete Geschäftsziele gekoppelt, von lokaler
+            Sichtbarkeit bis zu echtem Wachstum.
           </p>
         </motion.div>
 

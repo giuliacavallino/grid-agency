@@ -168,6 +168,8 @@ html {
   );
   -webkit-background-clip: text;
   background-clip: text;
+  padding-right: 0.09em;
+  margin-right: -0.09em;
   color: transparent;
 }
 
@@ -321,6 +323,8 @@ html {
   background: linear-gradient(92deg, #fa7e1e 0%, #d62976 55%, #962fbf 100%);
   -webkit-background-clip: text;
   background-clip: text;
+  padding-right: 0.09em;
+  margin-right: -0.09em;
   color: transparent;
 }
 

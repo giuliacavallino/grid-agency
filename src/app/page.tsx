@@ -5,6 +5,7 @@ import { TeamSection } from "@/components/app/TeamSection";
 import { ServicesSection } from "@/components/app/ServicesSection";
 import { CaseStudiesSection } from "@/components/app/CaseStudiesSection";
 import { TestimonialsSection } from "@/components/app/TestimonialsSection";
+import { RoadmapSection } from "@/components/app/RoadmapSection";
 import { DmSection } from "@/components/app/DmSection";
 
 export default function Home() {
@@ -28,6 +29,10 @@ export default function Home() {
 
       <section id="kundenstimmen" className="scroll-mt-20 border-t border-snow/10">
         <TestimonialsSection />
+      </section>
+
+      <section id="roadmap" className="scroll-mt-20 border-t border-snow/10">
+        <RoadmapSection />
       </section>
 
       <section id="team" className="scroll-mt-20 border-t border-snow/10">
