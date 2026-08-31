@@ -54,7 +54,7 @@ export function ProjekteTeaser() {
           href="/projekte"
           className="glass flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-medium text-snow transition-all active:scale-[0.97]"
         >
-          Alle {clients.length} Projekte ansehen
+          Alle Projekte ansehen
           <ArrowRight className="h-4 w-4" strokeWidth={2} />
         </Link>
       </motion.div>

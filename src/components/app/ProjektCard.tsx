@@ -56,6 +56,24 @@ export function ProjektCard({
         </p>
       )}
 
+      {/* Content-Vorschau: Fotos füllen die Fläche, freigestellte
+          Mockups stehen frei auf dem Kartengrund. */}
+      {client.heroImage && (
+        <div className="mt-4 overflow-hidden rounded-xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={client.heroImage}
+            alt={`${client.name}, Einblick in den Content`}
+            loading="lazy"
+            className={
+              client.heroImageFit === "contain"
+                ? "mx-auto h-48 w-auto object-contain py-2 transition-transform duration-300 group-hover:scale-[1.03]"
+                : "aspect-[16/10] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            }
+          />
+        </div>
+      )}
+
       <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-snow/75 transition-colors group-hover:text-snow">
         Projekt ansehen
         <ArrowRight
