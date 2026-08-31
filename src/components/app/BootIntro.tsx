@@ -117,6 +117,20 @@ export function BootIntro() {
           >
             Willkommen bei deiner Lieblings Social Media Agentur
           </motion.p>
+
+          {/* Lade-Timeline: füllt sich über die Intro-Dauer und zeigt,
+              wann die Seite sich öffnet. */}
+          <div className="relative z-10 mt-8 h-0.5 w-44 overflow-hidden rounded-full bg-snow/15">
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{
+                duration: (reduce ? 900 : 2200) / 1000 - 0.15,
+                ease: "linear",
+              }}
+              className="h-full w-full origin-left bg-[linear-gradient(92deg,#feda75,#fa7e1e,#d62976,#962fbf)]"
+            />
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

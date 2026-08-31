@@ -4,6 +4,7 @@ import { NewestCollab } from "@/components/app/NewestCollab";
 import { TeamSection } from "@/components/app/TeamSection";
 import { ServicesSection } from "@/components/app/ServicesSection";
 import { CaseStudiesSection } from "@/components/app/CaseStudiesSection";
+import { ProjekteTeaser } from "@/components/app/ProjekteTeaser";
 import { TestimonialsSection } from "@/components/app/TestimonialsSection";
 import { RoadmapSection } from "@/components/app/RoadmapSection";
 import { DmSection } from "@/components/app/DmSection";
@@ -25,6 +26,10 @@ export default function Home() {
 
       <section id="cases" className="scroll-mt-20 border-t border-snow/10">
         <CaseStudiesSection />
+      </section>
+
+      <section id="projekte" className="scroll-mt-20 border-t border-snow/10">
+        <ProjekteTeaser />
       </section>
 
       <section id="kundenstimmen" className="scroll-mt-20 border-t border-snow/10">
