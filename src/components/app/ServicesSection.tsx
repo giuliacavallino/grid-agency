@@ -11,15 +11,16 @@ const cardMotion = (i: number) => ({
   viewport: { once: true, margin: "-70px" },
   transition: {
     duration: 0.55,
-    delay: i * 0.06,
+    delay: (i % 3) * 0.06,
     ease: [0.16, 1, 0.3, 1] as const,
   },
 });
 
-/** "Leistungen" auf der Homepage: die fünf Leistungsbereiche aus dem
- * Leistungsspektrum als Timeline mit Akkordeon, darunter die
- * Zusatzleistungen. Bewusst als heller Block (Snow auf voller Breite),
- * damit die Seite zwischen Dunkel und Hell atmet. */
+/** "Leistungen" auf der Homepage: die sechs Leistungsbereiche als
+ * kompaktes Karten-Grid nebeneinander, jede Karte mit einem Hero-Foto
+ * aus echten Produktionen. Details bleiben per Tap aufklappbar.
+ * Bewusst als heller Block (Weiß auf voller Breite), damit die Seite
+ * zwischen Dunkel und Hell atmet. */
 export function ServicesSection() {
   const [open, setOpen] = useState<number | null>(null);
 
@@ -49,84 +50,88 @@ export function ServicesSection() {
           </p>
         </motion.div>
 
-        {/* Die fünf Bereiche als Timeline: erst Setup, dann Strategie usw.,
-            verbunden über eine Leiste mit nummerierten Stationen. */}
-        <div className="mt-8">
+        {/* Die sechs Bereiche nebeneinander: Foto, Titel, Tagline. Die
+            Details klappen per Tap auf, so bleibt der Block kompakt. */}
+        <div className="mt-8 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service, i) => (
-            <motion.div
-              key={service.number}
-              {...cardMotion(i)}
-              className="relative flex gap-4 pb-4 last:pb-0 sm:gap-5"
-            >
-              <div className="flex flex-col items-center">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky text-xs font-medium text-snow">
-                  {service.number}
-                </span>
-                {i < services.length - 1 && (
-                  <span className="mt-1 w-px flex-1 bg-sky/15" />
-                )}
-              </div>
-              {/* Akkordeon: standardmäßig nur Titel + Tagline, Details per
-                  Tap. So bleibt die Startseite kurz, ohne Inhalte zu
-                  verlieren. */}
+            <motion.div key={service.number} {...cardMotion(i)}>
               <button
                 type="button"
                 onClick={() => setOpen(open === i ? null : i)}
                 aria-expanded={open === i}
-                className="card-rainbow relative mb-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-sky/15 bg-white p-5 text-left sm:p-6"
+                className="card-rainbow group w-full overflow-hidden rounded-2xl border border-sky/15 bg-white text-left"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="card-rainbow-title text-xl font-medium tracking-tight text-sky">
-                      {service.title}
-                      {service.accent && (
-                        <>
-                          {" "}
-                          <span className="card-rainbow-title text-scroll-gradient-strong">
-                            {service.accent}
-                          </span>
-                        </>
-                      )}
-                    </h3>
-                    <p className="mt-1 text-sm font-medium text-sky/85">
-                      {service.tagline}
-                    </p>
+                {service.image && (
+                  <div className="overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={service.image}
+                      alt={`${service.title}${service.accent ? ` ${service.accent}` : ""}, Einblick aus einer Produktion`}
+                      loading="lazy"
+                      className="aspect-[16/10] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
                   </div>
-                  <ChevronDown
-                    className={`mt-1.5 h-5 w-5 shrink-0 text-sky/50 transition-transform duration-300 ${
-                      open === i ? "rotate-180" : ""
-                    }`}
-                    strokeWidth={2}
-                  />
+                )}
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-earth">
+                        {service.number}
+                      </p>
+                      <h3 className="card-rainbow-title mt-1 text-xl font-medium tracking-tight text-sky">
+                        {service.title}
+                        {service.accent && (
+                          <>
+                            {" "}
+                            <span className="card-rainbow-title text-scroll-gradient-strong">
+                              {service.accent}
+                            </span>
+                          </>
+                        )}
+                      </h3>
+                      <p className="mt-1 text-sm font-light text-sky/70">
+                        {service.tagline}
+                      </p>
+                    </div>
+                    <ChevronDown
+                      className={`mt-1.5 h-5 w-5 shrink-0 text-sky/50 transition-transform duration-300 ${
+                        open === i ? "rotate-180" : ""
+                      }`}
+                      strokeWidth={2}
+                    />
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {open === i && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{
+                          duration: 0.35,
+                          ease: [0.16, 1, 0.3, 1],
+                        }}
+                        className="overflow-hidden"
+                      >
+                        <ul className="mt-3 space-y-2">
+                          {service.bullets.map((bullet) => (
+                            <li
+                              key={bullet}
+                              className="flex gap-2.5 text-sm font-light leading-relaxed text-sky/70"
+                            >
+                              <span className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-earth" />
+                              {bullet}
+                            </li>
+                          ))}
+                        </ul>
+                        {service.highlight && (
+                          <p className="mt-4 rounded-xl bg-sky/[0.06] px-4 py-3 text-sm font-medium leading-relaxed text-sky">
+                            {service.highlight}
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                <AnimatePresence initial={false}>
-                  {open === i && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                      className="overflow-hidden"
-                    >
-                      <ul className="mt-3 space-y-2">
-                        {service.bullets.map((bullet) => (
-                          <li
-                            key={bullet}
-                            className="flex gap-2.5 text-sm font-light leading-relaxed text-sky/70"
-                          >
-                            <span className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-earth" />
-                            {bullet}
-                          </li>
-                        ))}
-                      </ul>
-                      {service.highlight && (
-                        <p className="mt-4 rounded-xl bg-sky/[0.06] px-4 py-3 text-sm font-medium leading-relaxed text-sky">
-                          {service.highlight}
-                        </p>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </button>
             </motion.div>
           ))}

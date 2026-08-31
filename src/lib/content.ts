@@ -445,6 +445,8 @@ export type Service = {
   bullets: string[];
   /** Hervorgehobenes Verkaufsargument unter den Bullets. */
   highlight?: string;
+  /** Hero-Foto der Karte, aus echten Produktionen der Agentur. */
+  image?: string;
 };
 
 /** Die fünf Leistungsbereiche — Wortlaut nach dem Leistungsspektrum
@@ -453,6 +455,7 @@ export type Service = {
 export const services: Service[] = [
   {
     number: "01",
+    image: "/referenzen/casa-beef/9.webp",
     title: "Setup",
     tagline: "Die technische Grundlage, einmalig zum Projektstart.",
     bullets: [
@@ -464,6 +467,7 @@ export const services: Service[] = [
   },
   {
     number: "02",
+    image: "/referenzen/casa-beef/5.webp",
     title: "Strategie",
     tagline: "Die inhaltliche Grundlage deiner Kanäle.",
     bullets: [
@@ -475,6 +479,7 @@ export const services: Service[] = [
   },
   {
     number: "03",
+    image: "/referenzen/casa-beef/bts-1.webp",
     title: "Content Creation",
     accent: "und Kanalbetreuung",
     tagline: "Die laufende Arbeit an deinem Kanal.",
@@ -489,6 +494,7 @@ export const services: Service[] = [
   },
   {
     number: "04",
+    image: "/referenzen/casa-beef/events-20.webp",
     title: "Influencer",
     accent: "und Kooperationen",
     tagline: "Reichweite über Partner, die wirklich zu dir passen.",
@@ -499,6 +505,7 @@ export const services: Service[] = [
   },
   {
     number: "05",
+    image: "/referenzen/480-gradi/21.webp",
     title: "Performance",
     accent: "Marketing",
     tagline: "Bezahlte Reichweite auf Instagram und Facebook.",
@@ -512,6 +519,7 @@ export const services: Service[] = [
   },
   {
     number: "06",
+    image: "/referenzen/casa-beef/events-30.webp",
     title: "Google",
     accent: "Unternehmensprofil",
     tagline: "Lokale Sichtbarkeit und Reputation.",
