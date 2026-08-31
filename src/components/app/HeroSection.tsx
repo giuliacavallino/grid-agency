@@ -145,8 +145,8 @@ export function HeroSection() {
           {[...clients, ...clients].map((client, i) => (
             <Link
               key={`${client.name}-${i}`}
-              href={`/referenzen/${clientSlug(client.name)}`}
-              aria-label={`${client.name}, Referenz ansehen`}
+              href={`/projekte/${clientSlug(client.name)}`}
+              aria-label={`${client.name}, Projekt ansehen`}
               className="mr-10 flex shrink-0 items-center transition-transform duration-200 hover:scale-110"
             >
               {client.logo ? (
@@ -177,10 +177,10 @@ export function HeroSection() {
         className="mt-4 text-center"
       >
         <Link
-          href="/referenzen"
+          href="/projekte"
           className="text-sm font-medium text-dune underline-offset-4 hover:underline"
         >
-          Alle Referenzen ansehen →
+          Alle Projekte ansehen →
         </Link>
       </motion.p>
 

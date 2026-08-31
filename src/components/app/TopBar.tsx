@@ -62,8 +62,8 @@ export function TopBar() {
                 {s.label}
               </a>
             ))}
-            <Link href="/referenzen" className="nav-rainbow">
-              Referenzen
+            <Link href="/projekte" className="nav-rainbow">
+              Projekte
             </Link>
             <Link href="/events" className="nav-rainbow">
               Events

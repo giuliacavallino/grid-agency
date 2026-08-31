@@ -29,7 +29,7 @@ export function NewestCollab() {
   // Mobilfunk aber spürbar Ladezeit — die volle Galerie gibt es auf
   // der Kundenseite.
   const images = spreadGallery(client.gallery).slice(0, 12);
-  const href = `/referenzen/${clientSlug(client.name)}`;
+  const href = `/projekte/${clientSlug(client.name)}`;
 
   return (
     <div className="px-5 py-12">

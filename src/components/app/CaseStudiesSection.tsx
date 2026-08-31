@@ -41,7 +41,7 @@ export function CaseStudiesSection() {
             }}
           >
             <Link
-              href={`/referenzen/${clientSlug(cs.client)}`}
+              href={`/projekte/${clientSlug(cs.client)}`}
               className="card-rainbow group flex h-full flex-col overflow-hidden rounded-2xl border border-snow/10"
             >
               <div className="px-6 pt-6">
