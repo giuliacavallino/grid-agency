@@ -881,3 +881,245 @@ export const jobs: Job[] = [
       "Du hast erste Erfahrung im Social Media Management und in der Content Creation? Das Erstellen von Reels macht dir Spaß und du hast ein gutes Auge für den Feed?",
   },
 ];
+
+/* ------------------------------------------------------------------ */
+/* FAQ                                                                */
+/* ------------------------------------------------------------------ */
+
+export type FaqItem = {
+  slug: string;
+  question: string;
+  /** Fließtext vor den Punkten (oder die komplette Antwort). */
+  intro?: string;
+  /** Optionale Stichpunkte mit Stichwort und Erklärung. */
+  points?: { title: string; text: string }[];
+  /** Fließtext nach den Punkten. */
+  outro?: string;
+  /** Optionaler weiterführender Link (z. B. zur Roadmap). */
+  link?: { href: string; label: string };
+};
+
+/** Häufige Fragen aus dem Q&A-Dokument der Agentur, sprachlich auf die
+ * Website angepasst (du-Form, GRID, keine Gedankenstriche). */
+export const faq: FaqItem[] = [
+  {
+    slug: "erste-beitraege",
+    question: "Wann gehen die ersten Beiträge nach Vertragsschluss live?",
+    intro:
+      "Bei GRID legen wir großen Wert darauf, dass deine Social-Media-Präsenz so schnell wie möglich und in höchster Qualität aufgebaut wird. Nach dem Vertragsschluss beginnt unser Team unverzüglich mit der Planung und Erstellung deiner Inhalte. In der Regel gehen die ersten Beiträge innerhalb von drei Wochen nach Vertragsschluss live. Dieser Zeitrahmen ermöglicht es uns, den ersten Content Day sauber zu planen, maßgeschneiderte Inhalte zu erstellen, die genau auf deine Marke und deine Zielgruppe abgestimmt sind, und den ersten Feed (das sogenannte Grid) aufzubauen.",
+    link: { href: "/#roadmap", label: "Zur Roadmap" },
+  },
+  {
+    slug: "followerzuwachs",
+    question: "Mit wie viel Followerzuwachs kann ich rechnen?",
+    intro:
+      "Der Followerzuwachs hängt von verschiedenen Faktoren ab: Branche, Zielgruppe, Art der Inhalte und aktuelle Marktbedingungen. Generell streben wir mit unseren Strategien und Kampagnen einen stetigen und qualitativen Zuwachs an Followern an. Wir setzen auf organisches Wachstum durch Videoinhalte mit viralem Potenzial und echtes Engagement, um eine starke Community für deine Marke aufzubauen. Genaue Zahlen können wir im Voraus nicht garantieren. Wir versichern dir aber, dass sich unser Team voll und ganz darauf konzentriert, deine Sichtbarkeit und Reichweite zu maximieren.",
+  },
+  {
+    slug: "gastro",
+    question:
+      "Lohnt sich ein professioneller Social-Media-Auftritt für die Gastronomie?",
+    intro:
+      "Ein professioneller Social-Media-Auftritt ist für Gastronomiebetriebe heute von entscheidender Bedeutung. Social Media bietet eine einzigartige Plattform, um deinen Betrieb zu präsentieren, mit Gästen in Kontakt zu treten und deine Zielgruppe zu erweitern. Gerade in der Gastronomie, wo Erlebnis und Atmosphäre eine große Rolle spielen, lassen sich deine Speisen und dein Ambiente durch ansprechende Bilder und Storytelling hervorheben. Darüber hinaus kannst du Feedback sammeln, Kundenbeziehungen stärken und Angebote oder Events bewerben. Ein professioneller Auftritt erhöht so nicht nur die Sichtbarkeit deines Betriebs, sondern trägt zu einer stärkeren Kundenbindung und letztlich zu Umsatzwachstum bei.",
+  },
+  {
+    slug: "roi",
+    question: "Wie rentiert sich Social Media schnellstmöglich?",
+    intro:
+      "Bei GRID wissen wir, dass ein schneller Return on Investment im Social-Media-Bereich entscheidend für den Erfolg deines Unternehmens ist. Diese Strategien setzen wir um, damit sich Social Media möglichst schnell rechnet:",
+    points: [
+      {
+        title: "Zielgruppengerechte Inhalte",
+        text: "Wir kreieren Inhalte, die genau auf deine Zielgruppe abgestimmt sind, um Relevanz und Engagement zu maximieren.",
+      },
+      {
+        title: "Effizientes Budget-Management",
+        text: "Wir nutzen dein Werbebudget gezielt, um die größtmögliche Wirkung zu erzielen, insbesondere durch zielgerichtete Werbekampagnen.",
+      },
+      {
+        title: "Messbare Ziele",
+        text: "Wir setzen klare und messbare Ziele, etwa die Steigerung deiner Follower-Zahlen, höhere Engagement-Raten oder mehr Traffic auf deiner Seite.",
+      },
+      {
+        title: "Analyse und Anpassung",
+        text: "Durch regelmäßige Analysen passen wir unsere Strategie an, damit wir die besten Ergebnisse erzielen.",
+      },
+      {
+        title: "Interaktion und Community-Aufbau",
+        text: "Wir legen großen Wert auf aktive Interaktion und Engagement, um eine starke Bindung zu deiner Community aufzubauen.",
+      },
+      {
+        title: "Influencer-Marketing",
+        text: "Wir prüfen Influencer-Kooperationen, um Reichweite und Glaubwürdigkeit deiner Marke zu erhöhen.",
+      },
+    ],
+    outro:
+      "Unser Ziel bei GRID ist nicht nur ein schneller, sondern ein nachhaltiger und qualitativer ROI. Lass uns gemeinsam über deine Ziele sprechen und eine maßgeschneiderte Strategie entwickeln, die dein Unternehmen voranbringt.",
+  },
+  {
+    slug: "plattformen",
+    question: "Welche Plattformen deckt GRID ab?",
+    intro:
+      "Wir decken die wichtigsten Social-Media-Plattformen ab, damit deine Marke auf den relevanten Kanälen präsent ist:",
+    points: [
+      {
+        title: "Facebook",
+        text: "Wir erstellen und betreuen ansprechende Facebook-Seiten und Werbekampagnen, um deine Zielgruppe zu erreichen und zu aktivieren.",
+      },
+      {
+        title: "Instagram",
+        text: "Mit kreativen visuellen Inhalten und effektivem Community-Management sorgen wir dafür, dass deine Marke auf Instagram herausragt.",
+      },
+      {
+        title: "LinkedIn",
+        text: "Für B2B-Marken optimieren wir dein LinkedIn-Profil und setzen gezielte Kampagnen auf, um professionelle Netzwerke zu erreichen.",
+      },
+      {
+        title: "YouTube",
+        text: "Wir unterstützen dich bei Videoinhalten und betreuen deinen YouTube-Kanal, um ein breiteres Publikum anzusprechen.",
+      },
+      {
+        title: "TikTok",
+        text: "Für Marken, die eine jüngere Zielgruppe ansprechen möchten, entwickeln wir kreative TikTok-Kampagnen.",
+      },
+    ],
+    outro:
+      "Unser Ziel ist es, die richtigen Plattformen für deine Marke auszuwählen und Strategien zu entwickeln, die deine Ziele erreichen und dein Publikum effektiv ansprechen. Ob Markenbekanntheit, Lead-Generierung oder Verkauf: Wir optimieren deine Social-Media-Präsenz.",
+  },
+  {
+    slug: "content",
+    question: "Welche Art von Content erstellt ihr?",
+    intro:
+      "Wir produzieren und betreuen eine vielfältige Palette an Content-Formaten, damit deine Marke auf Social Media effektiv präsent ist. Ein paar Beispiele:",
+    points: [
+      {
+        title: "Bildinhalte",
+        text: "Ansprechende Bilder, Grafiken und Infografiken, die deine Botschaft visuell vermitteln.",
+      },
+      {
+        title: "Videoinhalte",
+        text: "Von kurzen Clips bis zu längeren Videos, um deine Zielgruppe zu unterhalten und zu informieren.",
+      },
+      {
+        title: "Textinhalte",
+        text: "Überzeugende Texte, von Social-Media-Beiträgen über Blog-Artikel bis zu Werbetexten.",
+      },
+      {
+        title: "Storys",
+        text: "Temporäre Inhalte für Instagram und Facebook Stories, die Interaktion und Engagement deiner Follower fördern.",
+      },
+      {
+        title: "Live-Streams",
+        text: "Wir unterstützen Live-Streaming-Events für die Echtzeit-Interaktion mit deiner Zielgruppe.",
+      },
+      {
+        title: "Umfragen und Abstimmungen",
+        text: "Interaktive Formate, um die Beteiligung deiner Follower zu steigern und Feedback zu bekommen.",
+      },
+      {
+        title: "User-Generated Content",
+        text: "Wir fördern die Beteiligung deiner Community und teilen ihre Inhalte, um die Bindung zwischen Marke und Kunden zu stärken.",
+      },
+      {
+        title: "Influencer-Marketing",
+        text: "Wir arbeiten mit Influencern zusammen, um authentische Empfehlungen für deine Produkte oder Dienstleistungen zu erhalten.",
+      },
+    ],
+    outro:
+      "Unsere Content-Strategie wird auf deine Ziele und die Bedürfnisse deiner Zielgruppe zugeschnitten, damit der Content wirkt und die gewünschten Ergebnisse erzielt.",
+  },
+  {
+    slug: "erfolgsmessung",
+    question: "Wie messt ihr den Erfolg auf Social Media?",
+    intro:
+      "Um den Erfolg auf Social Media zu messen, kombinieren wir verschiedene Kennzahlen und Analysen. Die wichtigsten Metriken:",
+    points: [
+      {
+        title: "Reichweite",
+        text: "Wie viele Personen deine Beiträge gesehen haben, damit deine Botschaft eine breite Zielgruppe erreicht.",
+      },
+      {
+        title: "Engagement",
+        text: "Likes, Kommentare, Shares und Klicks zeigen, wie gut deine Inhalte bei deinen Followern ankommen.",
+      },
+      {
+        title: "Follower-Wachstum",
+        text: "Die Zunahme der Follower-Zahlen ist ein Indikator für die Attraktivität deiner Inhalte und deiner Marke.",
+      },
+      {
+        title: "Conversion-Rate",
+        text: "Anmeldungen, Käufe oder Anfragen, die direkt aus deinen Social-Media-Aktivitäten entstehen.",
+      },
+      {
+        title: "Klickrate (CTR)",
+        text: "Wie viele Personen auf die Links in deinen Beiträgen geklickt haben.",
+      },
+      {
+        title: "Kosten pro Conversion",
+        text: "Was jede Conversion gekostet hat, um die Effizienz deiner Werbeausgaben zu bewerten.",
+      },
+      {
+        title: "ROI",
+        text: "Der finanzielle Erfolg deiner Kampagnen im Verhältnis zu den eingesetzten Ressourcen.",
+      },
+    ],
+    outro:
+      "Welche Metriken relevant sind, hängt von deinen Zielen und deiner Strategie ab. Wir analysieren diese Daten regelmäßig, nehmen Anpassungen vor und stellen sicher, dass deine Social-Media-Aktivitäten den gewünschten Erfolg bringen.",
+  },
+  {
+    slug: "community-management",
+    question: "Was ist Community Management und warum ist es wichtig?",
+    intro:
+      "Community Management ist ein entscheidender Teil des Social-Media-Marketings. Gemeint ist die professionelle Betreuung und Pflege der Online-Community eines Unternehmens oder einer Marke auf den verschiedenen Plattformen. Das Ziel: eine aktive und engagierte Community aufbauen und erhalten, indem wir auf die Bedürfnisse, Fragen und Anliegen der Mitglieder eingehen. Wer schnell und persönlich antwortet, baut Vertrauen auf, und Vertrauen ist die Basis für Empfehlungen, Wiederkehr und Wachstum.",
+  },
+  {
+    slug: "frequenz",
+    question: "Wie oft werden Beiträge veröffentlicht?",
+    intro:
+      "Wie häufig Beiträge erscheinen sollten, hängt von der Art des Unternehmens, der Zielgruppe und den Ressourcen ab. Ein paar bewährte Richtlinien:",
+    points: [
+      {
+        title: "Konsistenz",
+        text: "Eine regelmäßige, verlässliche Veröffentlichungsstrategie ist wichtig. Das kann täglich oder mehrmals pro Woche sein.",
+      },
+      {
+        title: "Qualität vor Quantität",
+        text: "Hochwertige, relevante Beiträge, die deine Zielgruppe ansprechen, zählen mehr als die reine Anzahl.",
+      },
+      {
+        title: "Plattformabhängigkeit",
+        text: "Unterschiedliche Plattformen haben unterschiedliche Anforderungen an die Frequenz.",
+      },
+    ],
+    outro:
+      "Eine Einheitslösung gibt es nicht, die richtige Frequenz hängt von deinen Zielen und deiner Zielgruppe ab. Wir bieten maßgeschneiderte Pakete an, die diese Richtlinien individuell berücksichtigen.",
+  },
+  {
+    slug: "ergebnisse",
+    question: "Wie lange dauert es, bis ich Ergebnisse sehe?",
+    intro:
+      "In der Regel siehst du innerhalb der ersten Monate erste Anzeichen von Erfolg: mehr Interaktionen, mehr Follower, mehr Reichweite. Wichtig sind realistische Erwartungen und eine langfristig geplante Strategie. Wie schnell Ergebnisse sichtbar werden, hängt von mehreren Faktoren ab:",
+    points: [
+      {
+        title: "Neuer oder bestehender Account",
+        text: "Ein bestehender Account bringt oft schon Reichweite, Vertrauen, historische Daten und eine etablierte Identität mit. Ein neuer Account muss das erst aufbauen, was Zeit und Aufwand erfordert.",
+      },
+      {
+        title: "Ziele und Strategie",
+        text: "Kurzfristige Ziele wie eine höhere Engagement-Rate liefern schneller sichtbare Ergebnisse, langfristige Ziele wie Markenbekanntheit oder Lead-Generierung brauchen mehr Zeit.",
+      },
+      {
+        title: "Plattform und Nische",
+        text: "Auf manchen Plattformen zeigen sich Ergebnisse schneller als auf anderen.",
+      },
+      {
+        title: "Konsistenz und Geduld",
+        text: "Social Media Marketing erfordert Geduld und Kontinuität: regelmäßige Aktivität, hochwertige Inhalte und Interaktion mit deiner Zielgruppe.",
+      },
+      {
+        title: "Analyse und Anpassung",
+        text: "Regelmäßige Analysen und Anpassungen unserer Strategie verbessern die Ergebnisse und beschleunigen den Erfolg.",
+      },
+    ],
+  },
+];
