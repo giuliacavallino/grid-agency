@@ -21,6 +21,16 @@ function Bullets({ items }: { items: string[] }) {
   );
 }
 
+const bts: (
+  | { kind: "video"; src: string; poster: string; alt: string }
+  | { kind: "image"; src: string; alt: string }
+)[] = [
+  { kind: "video", src: "/jobs/bts-burger.mp4", poster: "/jobs/bts-burger.jpg", alt: "Behind the Scenes beim Burger-Dreh" },
+  { kind: "image", src: "/referenzen/casa-beef/bts-1.webp", alt: "Behind the Scenes beim Content-Day im Casa Beef" },
+  { kind: "video", src: "/jobs/bts-michelle.mp4", poster: "/jobs/bts-michelle.jpg", alt: "Behind the Scenes: Content-Shooting am Pass" },
+  { kind: "video", src: "/jobs/bts-interview.mp4", poster: "/jobs/bts-interview.jpg", alt: "Behind the Scenes beim Interview-Dreh" },
+];
+
 function applyHref(job: Job): string {
   const subject = encodeURIComponent(`Bewerbung: ${job.title}`);
   const body = encodeURIComponent(
@@ -46,9 +56,7 @@ export function JobsView() {
           Jobs
         </p>
         <h1 className="mt-2 text-3xl font-medium tracking-tight text-snow">
-          Werde Teil von
-          <br />
-          <span className="text-scroll-gradient">GRID</span>.
+          Werde Teil von <span className="text-scroll-gradient">GRID</span>.
         </h1>
         <p className="mt-4 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
           {jobsIntro}
@@ -58,6 +66,50 @@ export function JobsView() {
           viel Freiheit und Selbstständigkeit. Das sind unsere offenen
           Stellen in Berlin-Mitte:
         </p>
+      </motion.div>
+
+      {/* Behind the Scenes: kurze Loops und Fotos von echten Drehs, damit
+          man sieht, wie die Arbeit bei GRID aussieht. Videos laden erst,
+          wenn sie im Viewport sind. */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className="mt-8"
+      >
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
+          Behind the Scenes
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {bts.map((item) => (
+            <div
+              key={item.src}
+              className="aspect-[4/5] overflow-hidden rounded-2xl border border-snow/10 bg-sky"
+            >
+              {item.kind === "video" ? (
+                <video
+                  src={item.src}
+                  poster={item.poster}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  aria-label={item.alt}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.src}
+                  alt={item.alt}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </motion.div>
 
       <div className="mt-8 space-y-4">
