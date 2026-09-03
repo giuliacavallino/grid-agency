@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { clients } from "@/lib/content";
 import { ProjektCard } from "./ProjektCard";
+import { SectionWatermark } from "./SectionWatermark";
 
 /** Projektübersicht auf der Startseite: die Vorzeigeprojekte (Kunden
  * mit eigenen Rubriken) als Karten, mit Link auf alle Projekte. */
@@ -12,7 +13,8 @@ export function ProjekteTeaser() {
   const featured = clients.filter((c) => c.tags).slice(0, 6);
 
   return (
-    <div className="px-5 py-12">
+    <div className="relative px-5 py-12">
+      <SectionWatermark word="Projekte" />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}

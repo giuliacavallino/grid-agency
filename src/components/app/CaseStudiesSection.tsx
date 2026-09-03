@@ -4,13 +4,15 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, CalendarClock } from "lucide-react";
 import { calendlyUrl, caseStudyTeasers, clientSlug } from "@/lib/content";
+import { SectionWatermark } from "./SectionWatermark";
 
 /** Case Studies aus der Agentur-Präsentation auf der Startseite:
  * drei Karten mit den freigestellten Phone-Mockups aus dem Deck,
  * verlinkt auf die vollständigen Cases der Kundenseiten. */
 export function CaseStudiesSection() {
   return (
-    <div className="px-5 py-12">
+    <div className="relative px-5 py-12">
+      <SectionWatermark word="Cases" />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}

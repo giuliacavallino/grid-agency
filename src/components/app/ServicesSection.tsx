@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { extraServices, services } from "@/lib/content";
+import { SectionWatermark } from "./SectionWatermark";
 
 const cardMotion = (i: number) => ({
   initial: { opacity: 0, y: 28, scale: 0.97 },
@@ -26,7 +27,8 @@ export function ServicesSection() {
 
   return (
     <div className="section-light relative left-1/2 w-screen -translate-x-1/2 bg-white text-sky">
-      <div className="mx-auto w-full max-w-frame px-5 py-12 lg:max-w-frame-lg">
+      <SectionWatermark word="Leistungen" tone="light" />
+      <div className="relative mx-auto w-full max-w-frame px-5 py-12 lg:max-w-frame-lg">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
