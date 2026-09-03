@@ -18,7 +18,7 @@ const items: Item[] = [
   { kind: "section", id: "leistungen", label: "Leistungen" },
   { kind: "section", id: "cases", label: "Case Studies" },
   { kind: "section", id: "team", label: "Über uns & Team" },
-  { kind: "page", href: "/referenzen", label: "Referenzen" },
+  { kind: "page", href: "/projekte", label: "Projekte" },
   { kind: "page", href: "/events", label: "Events" },
   { kind: "section", id: "dm", label: "Kontakt" },
 ];

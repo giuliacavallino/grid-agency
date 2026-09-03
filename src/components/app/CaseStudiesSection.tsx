@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarClock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { calendlyUrl, caseStudyTeasers, clientSlug } from "@/lib/content";
+import { SectionWatermark } from "./SectionWatermark";
 
 /** Case Studies aus der Agentur-Präsentation auf der Startseite:
  * drei Karten mit den freigestellten Phone-Mockups aus dem Deck,
  * verlinkt auf die vollständigen Cases der Kundenseiten. */
 export function CaseStudiesSection() {
   return (
-    <div className="px-5 py-12">
+    <div className="relative px-5 py-12">
+      <SectionWatermark word="Cases" />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -41,7 +43,7 @@ export function CaseStudiesSection() {
             }}
           >
             <Link
-              href={`/referenzen/${clientSlug(cs.client)}`}
+              href={`/projekte/${clientSlug(cs.client)}`}
               className="card-rainbow group flex h-full flex-col overflow-hidden rounded-2xl border border-snow/10"
             >
               <div className="px-6 pt-6">
@@ -94,7 +96,6 @@ export function CaseStudiesSection() {
           rel="noopener noreferrer"
           className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
         >
-          <CalendarClock className="h-4 w-4" strokeWidth={2} />
           Unverbindliches Erstgespräch buchen
         </a>
       </motion.div>

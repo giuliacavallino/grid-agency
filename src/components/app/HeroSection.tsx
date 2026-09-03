@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { animate, motion, useInView } from "framer-motion";
-import { CalendarClock } from "lucide-react";
 import { calendlyUrl, clients, clientSlug, heroStats } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
 import { EventTeaser } from "./EventTeaser";
+import { HeroVideo } from "./HeroVideo";
 
 function CountUp({ value, suffix }: { value: number; suffix: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -40,7 +40,8 @@ export function HeroSection() {
           the backdrop breaks out of the content column and reaches up
           behind the top bar. */}
       <div className="relative">
-        <div className="aurora absolute -top-24 bottom-0 left-1/2 w-screen -translate-x-1/2" />
+        <HeroVideo />
+        <div className="aurora absolute -top-24 bottom-0 left-1/2 w-screen -translate-x-1/2 opacity-80" />
 
         <div className="relative py-8 lg:py-16 lg:text-center">
           <motion.p
@@ -56,7 +57,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-4 text-[2.35rem] font-medium leading-[1.05] tracking-tight text-snow lg:mx-auto lg:text-7xl lg:leading-[1.04]"
+            className="mt-4 text-[2.6rem] font-medium leading-[1.05] tracking-tight text-snow drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] lg:mx-auto lg:text-[clamp(4.5rem,8vw,6.75rem)] lg:leading-[1.02]"
           >
             Marken, die man
             <br />
@@ -70,7 +71,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-5 max-w-[24rem] text-base font-light leading-relaxed text-snow/70 lg:mx-auto lg:max-w-[36rem] lg:text-lg"
+            className="mt-6 max-w-[24rem] text-base font-light leading-relaxed text-snow/80 lg:mx-auto lg:max-w-[40rem] lg:text-xl"
           >
             Wir sind dein unfairer Vorteil im Feed. Strategie, Content, Editing,
             und ein Gespür für Trends, bevor sie welche sind. Dein Feed wird das
@@ -91,8 +92,7 @@ export function HeroSection() {
               rel="noopener noreferrer"
               className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
             >
-              <CalendarClock className="h-4 w-4 shrink-0" strokeWidth={2} />
-              Jetzt Erstgespräch buchen!
+              Jetzt Erstgespräch buchen
             </a>
             <a
               href="#cases"
@@ -145,8 +145,8 @@ export function HeroSection() {
           {[...clients, ...clients].map((client, i) => (
             <Link
               key={`${client.name}-${i}`}
-              href={`/referenzen/${clientSlug(client.name)}`}
-              aria-label={`${client.name}, Referenz ansehen`}
+              href={`/projekte/${clientSlug(client.name)}`}
+              aria-label={`${client.name}, Projekt ansehen`}
               className="mr-10 flex shrink-0 items-center transition-transform duration-200 hover:scale-110"
             >
               {client.logo ? (
@@ -177,10 +177,10 @@ export function HeroSection() {
         className="mt-4 text-center"
       >
         <Link
-          href="/referenzen"
+          href="/projekte"
           className="text-sm font-medium text-dune underline-offset-4 hover:underline"
         >
-          Alle Referenzen ansehen →
+          Alle Projekte ansehen →
         </Link>
       </motion.p>
 

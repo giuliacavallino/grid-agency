@@ -16,6 +16,10 @@ export type Client = {
   /** Was GRID für die Marke gemacht hat — als Chips in der
    * Kundenansicht. Ohne Angabe greifen die Kernleistungen. */
   tags?: string[];
+  /** Content-Vorschau für die Projekt-Karte (Pfad unter /public). */
+  heroImage?: string;
+  /** "contain" für freigestellte Mockups, sonst füllt das Bild die Fläche. */
+  heroImageFit?: "cover" | "contain";
   /** What GRID actually did for this brand — shown as "Der Case". */
   caseStudy?: string;
   /** Extra per-client sections (Events, Behind the Scenes, Rebranding …). */
@@ -64,6 +68,8 @@ export const clients: Client[] = [
   },
   {
     name: "Goldies",
+    heroImage: "/cases/goldies.webp",
+    heroImageFit: "contain",
     tags: ["Social Media Management", "Content Creation", "YouTube", "Brand-Kollaborationen"],
     logo: "/clients/goldies.png",
     height: 34,
@@ -75,6 +81,8 @@ export const clients: Client[] = [
   },
   {
     name: "Frittenwerk",
+    heroImage: "/cases/frittenwerk.webp",
+    heroImageFit: "contain",
     tags: ["Social Media Management", "Content Creation", "TikTok", "Brand-Kollaborationen"],
     logo: "/clients/frittenwerk.png",
     height: 22,
@@ -92,6 +100,7 @@ export const clients: Client[] = [
   },
   {
     name: "Casa Beef",
+    heroImage: "/referenzen/casa-beef/1.webp",
     tags: ["Social Media Management", "Content Creation", "Rebranding", "Opening-Event"],
     /* Aufgehellte Lila-Variante: das dunkle Brand-Lila (#37255B) hätte
        auf dem Sky-Hintergrund kaum Kontrast. */
@@ -220,6 +229,7 @@ export const clients: Client[] = [
   },
   {
     name: "480 GRADI",
+    heroImage: "/referenzen/480-gradi/4.webp",
     tags: ["Social Media Management", "Content Creation", "Feed-Konzept", "Opening-Event"],
     logo: "/clients/480gradi.png",
     height: 44,
@@ -386,6 +396,8 @@ export const clients: Client[] = [
   },
   {
     name: "Sajent Club",
+    heroImage: "/cases/sajent-club.webp",
+    heroImageFit: "contain",
     tags: ["Social Media Management", "Content Creation", "TikTok & Shorts", "Influencer-Kampagnen"],
     logo: "/clients/sajent-club.png",
     height: 48,
@@ -433,6 +445,8 @@ export type Service = {
   bullets: string[];
   /** Hervorgehobenes Verkaufsargument unter den Bullets. */
   highlight?: string;
+  /** Hero-Foto der Karte, aus echten Produktionen der Agentur. */
+  image?: string;
 };
 
 /** Die fünf Leistungsbereiche — Wortlaut nach dem Leistungsspektrum
@@ -441,6 +455,7 @@ export type Service = {
 export const services: Service[] = [
   {
     number: "01",
+    image: "/referenzen/casa-beef/9.webp",
     title: "Setup",
     tagline: "Die technische Grundlage, einmalig zum Projektstart.",
     bullets: [
@@ -452,6 +467,7 @@ export const services: Service[] = [
   },
   {
     number: "02",
+    image: "/referenzen/casa-beef/5.webp",
     title: "Strategie",
     tagline: "Die inhaltliche Grundlage deiner Kanäle.",
     bullets: [
@@ -463,6 +479,7 @@ export const services: Service[] = [
   },
   {
     number: "03",
+    image: "/referenzen/casa-beef/bts-1.webp",
     title: "Content Creation",
     accent: "und Kanalbetreuung",
     tagline: "Die laufende Arbeit an deinem Kanal.",
@@ -477,6 +494,7 @@ export const services: Service[] = [
   },
   {
     number: "04",
+    image: "/referenzen/casa-beef/events-20.webp",
     title: "Influencer",
     accent: "und Kooperationen",
     tagline: "Reichweite über Partner, die wirklich zu dir passen.",
@@ -487,6 +505,7 @@ export const services: Service[] = [
   },
   {
     number: "05",
+    image: "/referenzen/480-gradi/21.webp",
     title: "Performance",
     accent: "Marketing",
     tagline: "Bezahlte Reichweite auf Instagram und Facebook.",
@@ -500,6 +519,7 @@ export const services: Service[] = [
   },
   {
     number: "06",
+    image: "/referenzen/casa-beef/events-30.webp",
     title: "Google",
     accent: "Unternehmensprofil",
     tagline: "Lokale Sichtbarkeit und Reputation.",

@@ -1,15 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarClock } from "lucide-react";
 import { calendlyUrl, roadmap } from "@/lib/content";
+import { SectionWatermark } from "./SectionWatermark";
 
 /** Roadmap einer Zusammenarbeit, nach der Agentur-Präsentation:
  * fünf Stationen von der Terminanfrage bis zur laufenden Betreuung.
  * Desktop als horizontale Timeline, mobil untereinander. */
 export function RoadmapSection() {
   return (
-    <div className="px-5 py-12">
+    <div className="relative px-5 py-12">
+      <SectionWatermark word="Roadmap" />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -99,8 +100,7 @@ export function RoadmapSection() {
           rel="noopener noreferrer"
           className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
         >
-          <CalendarClock className="h-4 w-4" strokeWidth={2} />
-          Jetzt Erstgespräch buchen!
+          Jetzt Erstgespräch buchen
         </a>
       </motion.div>
     </div>

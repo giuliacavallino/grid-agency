@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { LegalShell } from "@/components/app/LegalShell";
-import { ReferenzenView } from "@/components/app/ReferenzenView";
+import { ProjekteView } from "@/components/app/ProjekteView";
 
 export const metadata: Metadata = {
-  title: "Referenzen | GRID Agency",
+  title: "Projekte | GRID Agency",
   description:
     "Alle Marken, die GRID Agency auf Social Media betreut, mit direktem Draht zu ihren Instagram-Kanälen.",
 };
 
-export default function ReferenzenPage() {
+export default function ProjektePage() {
   return (
-    <LegalShell title="Referenzen">
-      <ReferenzenView />
+    <LegalShell title="Projekte">
+      <ProjekteView />
     </LegalShell>
   );
 }

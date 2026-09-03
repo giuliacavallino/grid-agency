@@ -19,8 +19,8 @@ export async function generateMetadata({
   const client = clients.find((c) => clientSlug(c.name) === slug);
   return {
     title: client
-      ? `${client.name} · Referenz | GRID Agency`
-      : "Referenz | GRID Agency",
+      ? `${client.name} · Projekt | GRID Agency`
+      : "Projekt | GRID Agency",
     description: client?.intro,
   };
 }

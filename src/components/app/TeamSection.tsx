@@ -5,10 +5,12 @@ import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { team, vita } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
+import { SectionWatermark } from "./SectionWatermark";
 
 export function TeamSection() {
   return (
-    <div className="px-5 py-12">
+    <div className="relative px-5 py-12">
+      <SectionWatermark word="Team" />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -25,6 +27,8 @@ export function TeamSection() {
         </h2>
       </motion.div>
 
+      {/* Desktop zweispaltig: Profil links, Vita rechts. */}
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -71,7 +75,7 @@ export function TeamSection() {
       </motion.div>
 
       {/* Vita: die Stationen der Agentur seit 2021, aus dem Agentur-Deck. */}
-      <div className="mt-8">
+      <div className="mt-8 lg:mt-8">
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -108,6 +112,7 @@ export function TeamSection() {
             </motion.div>
           ))}
         </div>
+      </div>
       </div>
 
       <motion.p
