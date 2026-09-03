@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { team, vita } from "@/lib/content";
-import { scrollToId } from "@/lib/scroll";
 import { SectionWatermark } from "./SectionWatermark";
 
 export function TeamSection() {
@@ -123,16 +123,12 @@ export function TeamSection() {
         className="mt-8 text-center text-sm font-light text-snow/50"
       >
         Das Team wächst.{" "}
-        <a
-          href="#dm"
-          onClick={(e) => {
-            e.preventDefault();
-            scrollToId("dm");
-          }}
+        <Link
+          href="/jobs"
           className="font-medium text-dune underline-offset-4 hover:underline"
         >
-          Bewirb dich per DM →
-        </a>
+          Offene Stellen ansehen →
+        </Link>
       </motion.p>
     </div>
   );

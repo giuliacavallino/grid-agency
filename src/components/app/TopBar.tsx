@@ -67,9 +67,9 @@ export function TopBar() {
               <Link href="/events" className="nav-rainbow">
                 Events
               </Link>
-              <a href="#team" onClick={jump("team")} className="nav-rainbow">
+              <Link href="/jobs" className="nav-rainbow">
                 Jobs
-              </a>
+              </Link>
               <a
                 href="#dm"
                 onClick={jump("dm")}
