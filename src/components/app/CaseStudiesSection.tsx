@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, CalendarClock } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { calendlyUrl, caseStudyTeasers, clientSlug } from "@/lib/content";
 import { SectionWatermark } from "./SectionWatermark";
 
@@ -96,7 +96,6 @@ export function CaseStudiesSection() {
           rel="noopener noreferrer"
           className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
         >
-          <CalendarClock className="h-4 w-4" strokeWidth={2} />
           Unverbindliches Erstgespräch buchen
         </a>
       </motion.div>

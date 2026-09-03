@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { animate, motion, useInView } from "framer-motion";
-import { CalendarClock } from "lucide-react";
 import { calendlyUrl, clients, clientSlug, heroStats } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
 import { EventTeaser } from "./EventTeaser";
@@ -93,8 +92,7 @@ export function HeroSection() {
               rel="noopener noreferrer"
               className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
             >
-              <CalendarClock className="h-4 w-4 shrink-0" strokeWidth={2} />
-              Jetzt Erstgespräch buchen!
+              Jetzt Erstgespräch buchen
             </a>
             <a
               href="#cases"

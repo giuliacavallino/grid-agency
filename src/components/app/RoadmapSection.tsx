@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CalendarClock } from "lucide-react";
 import { calendlyUrl, roadmap } from "@/lib/content";
 import { SectionWatermark } from "./SectionWatermark";
 
@@ -101,8 +100,7 @@ export function RoadmapSection() {
           rel="noopener noreferrer"
           className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
         >
-          <CalendarClock className="h-4 w-4" strokeWidth={2} />
-          Jetzt Erstgespräch buchen!
+          Jetzt Erstgespräch buchen
         </a>
       </motion.div>
     </div>
