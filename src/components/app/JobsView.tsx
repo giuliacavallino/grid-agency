@@ -39,12 +39,10 @@ const bts: BtsItem[] = [
   { kind: "video", src: "/jobs/bts-laptop.mp4", poster: "/jobs/bts-laptop.jpg", alt: "Behind the Scenes: Bildauswahl am Laptop" },
   { kind: "video", src: "/jobs/bts-sbahn.mp4", poster: "/jobs/bts-sbahn.jpg", alt: "Behind the Scenes beim S-Bahn-Shooting" },
   { kind: "video", src: "/jobs/bts-interview.mp4", poster: "/jobs/bts-interview.jpg", alt: "Behind the Scenes beim Interview-Dreh" },
-  { kind: "image", src: "/jobs/bts-zug.webp", alt: "Frittenwerk-Shoot am Bahnsteig" },
   { kind: "video", src: "/jobs/bts-fotograf.mp4", poster: "/jobs/bts-fotograf.jpg", alt: "Behind the Scenes: Blick über die Schulter des Fotografen" },
   { kind: "video", src: "/jobs/bts-laden.mp4", poster: "/jobs/bts-laden.jpg", alt: "Behind the Scenes: Filmen im Laden" },
   { kind: "video", src: "/jobs/bts-kueche.mp4", poster: "/jobs/bts-kueche.jpg", alt: "Behind the Scenes in der Smash-Küche" },
   { kind: "video", src: "/jobs/bts-cafe.mp4", poster: "/jobs/bts-cafe.jpg", alt: "Arbeiten im Café: Planung und Schnitt" },
-  { kind: "image", src: "/jobs/bts-bahnsteig.webp", alt: "Frittenwerk-Shoot vor der S-Bahn" },
 ];
 
 function applyHref(job: Job): string {
