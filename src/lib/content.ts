@@ -752,7 +752,7 @@ export type Job = {
   pitch: string;
 };
 
-export const jobsEmail = "giulia.cavallino@grid-agency.de";
+export const jobsEmail = "hello@grid-agency.de";
 
 /** Gemeinsamer Vorspann aller Stellen. */
 export const jobsIntro =
@@ -838,7 +838,7 @@ export const jobs: Job[] = [
   {
     slug: "werkstudent-social-media",
     title: "Werkstudent (w/m/d) Social Media Marketing",
-    scope: "Teilzeit, bis zu 20 Stunden pro Woche",
+    scope: "Teilzeit, maximal 20 Stunden pro Woche",
     location: "Berlin-Mitte",
     role:
       "Als Werkstudent bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
