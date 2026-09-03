@@ -58,7 +58,27 @@ export default function DatenschutzPage() {
 
           <section>
             <h2 className="mb-2 text-base font-medium text-snow">
-              4. Cookies &amp; Tracking
+              4. Terminbuchung über Calendly
+            </h2>
+            <p>
+              Für die Buchung eines Erstgesprächs nutzen wir den Dienst
+              Calendly der Calendly LLC, 115 E Main St, Ste A1B, Buford, GA
+              30518, USA. Der Buchungskalender wird erst geladen, wenn du auf
+              einen Buchungs-Button klickst. Dabei wird eine Verbindung zu
+              den Servern von Calendly hergestellt, und die von dir im
+              Kalender eingegebenen Daten (Name, E-Mail-Adresse, gewählter
+              Termin, optionale Angaben) werden von Calendly verarbeitet.
+              Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO
+              (Vertragsanbahnung). Calendly ist unter dem EU-US Data Privacy
+              Framework zertifiziert. Weitere Informationen findest du in der
+              Datenschutzerklärung von Calendly unter
+              calendly.com/privacy.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 text-base font-medium text-snow">
+              5. Cookies &amp; Tracking
             </h2>
             <p>
               Diese Website verwendet aktuell keine Cookies für Marketing-
@@ -69,7 +89,7 @@ export default function DatenschutzPage() {
 
           <section>
             <h2 className="mb-2 text-base font-medium text-snow">
-              5. Deine Rechte
+              6. Deine Rechte
             </h2>
             <p>
               Du hast das Recht auf Auskunft, Berichtigung, Löschung,

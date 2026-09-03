@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { calendlyUrl, caseStudyTeasers, clientSlug } from "@/lib/content";
+import { caseStudyTeasers, clientSlug } from "@/lib/content";
 import { SectionWatermark } from "./SectionWatermark";
+import { CalendlyLink } from "./CalendlyProvider";
 
 /** Case Studies aus der Agentur-Präsentation auf der Startseite:
  * drei Karten mit den freigestellten Phone-Mockups aus dem Deck,
@@ -90,14 +91,11 @@ export function CaseStudiesSection() {
         <p className="text-sm font-light text-snow/65">
           Ergebnisse wie diese für deine Marke?
         </p>
-        <a
-          href={calendlyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <CalendlyLink
           className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
         >
           Unverbindliches Erstgespräch buchen
-        </a>
+        </CalendlyLink>
       </motion.div>
     </div>
   );

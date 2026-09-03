@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { CalendarClock } from "lucide-react";
 import { ContactForm } from "@/components/ContactForm";
-import { calendlyUrl } from "@/lib/content";
+import { CalendlyLink } from "./CalendlyProvider";
 
 export function DmSection() {
   return (
@@ -73,15 +73,12 @@ export function DmSection() {
           </span>
           <span className="h-px flex-1 bg-snow/10" />
         </div>
-        <a
-          href={calendlyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <CalendlyLink
           className="btn-rainbow mt-4 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97] lg:mx-auto lg:max-w-sm"
         >
           <CalendarClock className="h-4 w-4" strokeWidth={2} />
           Termin buchen: Boost your Socials
-        </a>
+        </CalendlyLink>
       </motion.div>
       </div>
 

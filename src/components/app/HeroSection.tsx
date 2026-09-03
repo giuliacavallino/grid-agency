@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { animate, motion, useInView } from "framer-motion";
-import { calendlyUrl, clients, clientSlug, heroStats } from "@/lib/content";
+import { clients, clientSlug, heroStats } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
+import { CalendlyLink } from "./CalendlyProvider";
 import { EventTeaser } from "./EventTeaser";
 import { HeroVideo } from "./HeroVideo";
 
@@ -77,14 +78,11 @@ export function HeroSection() {
           >
             {/* Direkt zur Calendly-Buchung — unverbindliches Erstgespräch,
                 öffnet im neuen Tab statt zur DM-Sektion zu scrollen. */}
-            <a
-              href={calendlyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <CalendlyLink
               className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
             >
               Jetzt Erstgespräch buchen
-            </a>
+            </CalendlyLink>
             <a
               href="#cases"
               onClick={(e) => {

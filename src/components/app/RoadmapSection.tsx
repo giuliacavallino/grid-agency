@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { calendlyUrl, roadmap } from "@/lib/content";
+import { roadmap } from "@/lib/content";
 import { SectionWatermark } from "./SectionWatermark";
+import { CalendlyLink } from "./CalendlyProvider";
 
 /** Roadmap einer Zusammenarbeit, nach der Agentur-Präsentation:
  * fünf Stationen von der Terminanfrage bis zur laufenden Betreuung.
@@ -94,14 +95,11 @@ export function RoadmapSection() {
         transition={{ duration: 0.5 }}
         className="mt-10 flex justify-center"
       >
-        <a
-          href={calendlyUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <CalendlyLink
           className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
         >
           Jetzt Erstgespräch buchen
-        </a>
+        </CalendlyLink>
       </motion.div>
     </div>
   );
