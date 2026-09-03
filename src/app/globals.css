@@ -80,24 +80,6 @@ html {
     0 8px 32px rgb(0 0 0 / 0.35);
 }
 
-/* Kopfleiste: mobil die schwebende Glas-Pill, ab Desktop eine
-   durchgezogene Glas-Leiste über die volle Breite mit feiner Linie
-   unten (Playground-Stil, ohne dunkle Einfärbung). Liegt hinter
-   .glass, damit Radius und Rahmen hier gewinnen. */
-.topbar-shell {
-  border-radius: 9999px;
-}
-@media (min-width: 50rem) {
-  .topbar-shell {
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-    border-top: 0;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-snow) 22%, transparent);
-    box-shadow: 0 10px 40px rgb(0 0 0 / 0.22);
-  }
-}
-
 /* The sliding "lens" that magnifies the active tab */
 .glass-lens {
   background: color-mix(in srgb, var(--color-snow) 14%, transparent);
