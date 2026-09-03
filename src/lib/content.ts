@@ -734,3 +734,150 @@ export const vita = [
     text: "Die Agentur wächst weiter, hinterfragt Strukturen und definiert sie neu. Das Ziel: dein Social Media auf Autopilot.",
   },
 ];
+
+export type Job = {
+  slug: string;
+  title: string;
+  /** Umfang, z. B. "Teil- oder Vollzeit". */
+  scope: string;
+  location: string;
+  /** Optionale Dauer (Praktikum). */
+  duration?: string;
+  /** Ein Satz, der die Rolle einordnet. */
+  role: string;
+  tasks: string[];
+  profile: string[];
+  benefits: string[];
+  /** Ansprache im Bewerbungsblock. */
+  pitch: string;
+};
+
+export const jobsEmail = "hello@grid-agency.de";
+
+/** Gemeinsamer Vorspann aller Stellen. */
+export const jobsIntro =
+  "Wir sind Berlin-Mittes führende Social-Media-Marketing-Agentur und positionieren namhafte Marken mit innovativen Strategien im digitalen Raum. Als dynamisches, digital-affines Team der Generationen Y und Z begleiten wir ikonische Marken und ihre unverwechselbaren Markenidentitäten auf ihrem Social-Media-Auftritt.";
+
+const jobsBenefitsCore = [
+  "Trendiges und inspirierendes Agenturumfeld in Berlin-Mitte und Frankfurt",
+  "Die Möglichkeit, an spannenden Projekten mit namhaften Kunden zu arbeiten",
+  "Kleines Team, große Verantwortung",
+];
+
+const jobsProfileCore = [
+  "Du kennst dich mit Content-Erstellung auf den relevanten Social-Media-Kanälen sehr gut aus und hast ein Gespür für Trends.",
+  "Exzellente Kenntnisse der verschiedenen Social-Media-Plattformen und ihrer spezifischen Anforderungen.",
+  "Du hast Spaß daran, verschiedene Prozesse zusammenzuführen, und verfügst über ein außerordentliches Organisationstalent.",
+  "Du arbeitest eigenständig und proaktiv und bist ein kreativer Kopf mit einem guten Auge fürs Detail, der auch bei mehreren Projekten nicht den Überblick verliert.",
+  "Überdurchschnittlich kontaktfreudig, mit sehr guter Kommunikationsfähigkeit.",
+];
+
+const jobsTasksManagement = [
+  "Planung, Koordination und Durchführung von Social-Media-Kampagnen",
+  "Erstellung und Verwaltung von Content-Kalendern inklusive der Posts für die verschiedenen Social-Media-Plattformen",
+  "Identifizierung neuer Trends im Social-Media-Bereich und Anpassung der Strategien",
+  "Umsetzung des Influencer-Marketing-Prozesses, von Screening und Ansprache über Verhandlung bis zum Reporting",
+  "Fortlaufende Optimierung und Management der Social-Media-Kanäle unserer Kunden",
+  "Überwachung der KPIs und Erstellung von Reportings",
+];
+
+/** Offene Stellen, Wortlaut nach den Stellenausschreibungen der Agentur,
+ * sprachlich für die Website bereinigt. */
+export const jobs: Job[] = [
+  {
+    slug: "social-media-manager",
+    title: "Social Media Manager (w/m/d)",
+    scope: "Teil- oder Vollzeit",
+    location: "Berlin und Frankfurt",
+    role:
+      "Als Social Media Manager bei GRID bist du für die Entwicklung, Umsetzung und Überwachung der Social-Media-Strategien unserer Kunden verantwortlich und erstellst fesselnde Inhalte für die verschiedenen Plattformen.",
+    tasks: jobsTasksManagement,
+    profile: [
+      "Abgeschlossenes Studium, vorzugsweise mit Schwerpunkt BWL, Marketing oder Kommunikation",
+      "Erste Agentur- oder Praxiserfahrung ist von Vorteil",
+      ...jobsProfileCore,
+    ],
+    benefits: [
+      ...jobsBenefitsCore,
+      "4- oder 5-Tage-Woche (32 oder 40 Stunden)",
+      "Klare Aufstiegschancen und damit steigende Gehaltsaussichten",
+    ],
+    pitch:
+      "Du hast bereits Erfahrung im Social Media Management und in der Content Creation? Das Erstellen von Reels ist deine Stärke und du hast ein gutes Auge für den Feed?",
+  },
+  {
+    slug: "video-content-creator",
+    title: "Video Content Creator / Videographer (w/m/d)",
+    scope: "Teil- oder Vollzeit",
+    location: "Berlin und Frankfurt",
+    role:
+      "Als Content Creator bei GRID bist du für die Erstellung fesselnder Inhalte unserer Kunden verantwortlich, die auf den verschiedenen Social-Media-Plattformen geteilt werden.",
+    tasks: [
+      "Gemeinsam mit den Marketing-Kolleginnen und -Kollegen bist du mitverantwortlich für die Content-Produktion für Social Media",
+      "Du entwickelst und erstellst Foto- und Videoformate, von der Produktion bis zur Postproduktion",
+      "Mit deinem Video-Content bietest du der Community einen Mehrwert und gewinnst sie für die Marke",
+      "Du bist verantwortlich für den Videoschnitt",
+      "Mitentwicklung verschiedener Designs und Ideen",
+    ],
+    profile: [
+      "Erfahrung in der Erstellung visueller Inhalte, einschließlich Grafiken, Fotos und Videos",
+      "Du kennst dich mit Content-Erstellung auf den relevanten Social-Media-Kanälen sehr gut aus.",
+      "Du hast ein Auge für Details und den richtigen Blickwinkel.",
+      "Fundierte Kenntnisse in Videoschnittprogrammen",
+      "Kreativ, kompetent und belastbar",
+      "Du arbeitest eigenständig und proaktiv und bist ein kreativer Kopf mit einem guten Auge fürs Detail, der auch bei mehreren Projekten nicht den Überblick verliert.",
+    ],
+    benefits: [
+      ...jobsBenefitsCore,
+      "4- oder 5-Tage-Woche (32 oder 40 Stunden)",
+      "Klare Aufstiegschancen und damit steigende Gehaltsaussichten",
+    ],
+    pitch:
+      "Du hast bereits Erfahrung in der Content Creation? Das Erstellen von Reels ist deine Stärke und du hast ein gutes Auge für den Feed?",
+  },
+  {
+    slug: "werkstudent-social-media",
+    title: "Werkstudent (w/m/d) Social Media Marketing",
+    scope: "Teilzeit, maximal 20 Stunden pro Woche",
+    location: "Berlin und Frankfurt",
+    role:
+      "Als Werkstudent bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
+    tasks: [
+      "Mitarbeit bei der Planung, Koordination und Durchführung von Social-Media-Kampagnen",
+      "Assistenz im Tagesgeschäft",
+      ...jobsTasksManagement.slice(1),
+    ],
+    profile: [
+      "Laufendes Studium, vorzugsweise mit Schwerpunkt BWL, Marketing oder Kommunikation",
+      "Erste Agentur- oder Praxiserfahrung ist von Vorteil",
+      ...jobsProfileCore,
+      "Du bist strukturiert, motiviert, flexibel, lernbegierig und kreativ.",
+    ],
+    benefits: [...jobsBenefitsCore, "Schnelle Aufstiegschancen"],
+    pitch:
+      "Du hast erste Erfahrung im Social Media Management und in der Content Creation? Das Erstellen von Reels macht dir Spaß und du hast ein gutes Auge für den Feed?",
+  },
+  {
+    slug: "praktikum-social-media",
+    title: "Praktikum (w/m/d) Social Media Marketing",
+    scope: "Vollzeit, Pflichtpraktikum",
+    location: "Berlin und Frankfurt",
+    duration: "3 bis 6 Monate",
+    role:
+      "Als Pflichtpraktikant bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
+    tasks: [
+      "Mitarbeit bei der Planung, Koordination und Durchführung von Social-Media-Kampagnen",
+      "Assistenz im Tagesgeschäft",
+      ...jobsTasksManagement.slice(1),
+    ],
+    profile: [
+      "Laufendes Studium, vorzugsweise mit Schwerpunkt BWL, Marketing oder Kommunikation",
+      "Erste Agentur- oder Praxiserfahrung ist von Vorteil",
+      ...jobsProfileCore,
+      "Du bist strukturiert, motiviert, flexibel, lernbegierig und kreativ.",
+    ],
+    benefits: [...jobsBenefitsCore, "Schnelle Aufstiegschancen"],
+    pitch:
+      "Du hast erste Erfahrung im Social Media Management und in der Content Creation? Das Erstellen von Reels macht dir Spaß und du hast ein gutes Auge für den Feed?",
+  },
+];

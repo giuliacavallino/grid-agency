@@ -20,6 +20,7 @@ const items: Item[] = [
   { kind: "section", id: "team", label: "Über uns & Team" },
   { kind: "page", href: "/projekte", label: "Projekte" },
   { kind: "page", href: "/events", label: "Events" },
+  { kind: "page", href: "/jobs", label: "Jobs" },
   { kind: "section", id: "dm", label: "Kontakt" },
 ];
 
