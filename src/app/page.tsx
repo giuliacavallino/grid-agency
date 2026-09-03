@@ -5,7 +5,6 @@ import { TeamSection } from "@/components/app/TeamSection";
 import { ServicesSection } from "@/components/app/ServicesSection";
 import { CaseStudiesSection } from "@/components/app/CaseStudiesSection";
 import { ProjekteTeaser } from "@/components/app/ProjekteTeaser";
-import { TestimonialsSection } from "@/components/app/TestimonialsSection";
 import { RoadmapSection } from "@/components/app/RoadmapSection";
 import { DmSection } from "@/components/app/DmSection";
 import { TextMarquee } from "@/components/app/TextMarquee";
@@ -42,10 +41,6 @@ export default function Home() {
 
       <section className="border-t border-snow/10">
         <PhotoStrip />
-      </section>
-
-      <section id="kundenstimmen" className="scroll-mt-20 border-t border-snow/10">
-        <TestimonialsSection />
       </section>
 
       <section id="roadmap" className="scroll-mt-20 border-t border-snow/10">

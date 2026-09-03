@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { TopBar } from "./TopBar";
 import { TabBar } from "./TabBar";
 import { BootIntro } from "./BootIntro";
+import { CalendlyProvider } from "./CalendlyProvider";
 import { popScrollTarget, scrollToId } from "@/lib/scroll";
 
 export type ViewId = "home" | "cases" | "team" | "dm";
@@ -49,6 +50,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
+    <CalendlyProvider>
     <div className="relative min-h-dvh w-full overflow-x-clip">
       <BootIntro />
       <TopBar />
@@ -57,5 +59,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
       <TabBar active={activeView} />
     </div>
+    </CalendlyProvider>
   );
 }
