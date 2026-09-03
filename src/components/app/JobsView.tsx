@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ChevronDown, Clock, MapPin } from "lucide-react";
-import { jobs, jobsEmail, jobsIntro, type Job } from "@/lib/content";
+import { Check, ChevronDown, Clock, Copy, MapPin } from "lucide-react";
+import { jobs, jobsEmail, jobsIntro } from "@/lib/content";
 
 function Bullets({ items }: { items: string[] }) {
   return (
@@ -30,32 +30,73 @@ type BtsItem =
 const bts: BtsItem[] = [
   { kind: "video", src: "/jobs/bts-burger.mp4", poster: "/jobs/bts-burger.jpg", alt: "Behind the Scenes beim Burger-Dreh" },
   { kind: "image", src: "/jobs/bts-rolltreppe.webp", alt: "Frittenwerk-Shoot auf der Rolltreppe" },
+  { kind: "video", src: "/jobs/bts-monitor.mp4", poster: "/jobs/bts-monitor.jpg", alt: "Behind the Scenes: Blick auf den Kameramonitor im Showroom" },
   { kind: "video", src: "/jobs/bts-studio.mp4", poster: "/jobs/bts-studio.jpg", alt: "Behind the Scenes beim Fotoshooting im Studio" },
   { kind: "video", src: "/jobs/bts-picknick.mp4", poster: "/jobs/bts-picknick.jpg", alt: "Behind the Scenes: Aufbau fürs Picknick-Shooting" },
+  { kind: "video", src: "/jobs/bts-ringe.mp4", poster: "/jobs/bts-ringe.jpg", alt: "Behind the Scenes: Schmuck fürs Produkt-Shooting" },
   { kind: "image", src: "/referenzen/casa-beef/bts-1.webp", alt: "Behind the Scenes beim Content-Day im Casa Beef" },
   { kind: "video", src: "/jobs/bts-mikro.mp4", poster: "/jobs/bts-mikro.jpg", alt: "Behind the Scenes: Mikro anstecken vor dem Dreh" },
+  { kind: "video", src: "/jobs/bts-showroom.mp4", poster: "/jobs/bts-showroom.jpg", alt: "Behind the Scenes beim Showroom-Shooting" },
   { kind: "video", src: "/jobs/bts-michelle.mp4", poster: "/jobs/bts-michelle.jpg", alt: "Behind the Scenes: Content-Shooting am Pass" },
   { kind: "image", src: "/jobs/bts-bahn-tuer.webp", alt: "Frittenwerk-Shoot in der S-Bahn" },
+  { kind: "video", src: "/jobs/bts-tasche.mp4", poster: "/jobs/bts-tasche.jpg", alt: "Behind the Scenes: Set fürs Taschen-Shooting" },
   { kind: "video", src: "/jobs/bts-laptop.mp4", poster: "/jobs/bts-laptop.jpg", alt: "Behind the Scenes: Bildauswahl am Laptop" },
   { kind: "video", src: "/jobs/bts-sbahn.mp4", poster: "/jobs/bts-sbahn.jpg", alt: "Behind the Scenes beim S-Bahn-Shooting" },
+  { kind: "video", src: "/jobs/bts-model.mp4", poster: "/jobs/bts-model.jpg", alt: "Behind the Scenes: Model zwischen den Lichtern" },
   { kind: "video", src: "/jobs/bts-interview.mp4", poster: "/jobs/bts-interview.jpg", alt: "Behind the Scenes beim Interview-Dreh" },
   { kind: "video", src: "/jobs/bts-fotograf.mp4", poster: "/jobs/bts-fotograf.jpg", alt: "Behind the Scenes: Blick über die Schulter des Fotografen" },
+  { kind: "video", src: "/jobs/bts-armband.mp4", poster: "/jobs/bts-armband.jpg", alt: "Behind the Scenes: Armband auf dem Kameradisplay" },
   { kind: "video", src: "/jobs/bts-laden.mp4", poster: "/jobs/bts-laden.jpg", alt: "Behind the Scenes: Filmen im Laden" },
   { kind: "video", src: "/jobs/bts-kueche.mp4", poster: "/jobs/bts-kueche.jpg", alt: "Behind the Scenes in der Smash-Küche" },
+  { kind: "video", src: "/jobs/bts-team.mp4", poster: "/jobs/bts-team.jpg", alt: "Behind the Scenes: Team-Absprache im Showroom" },
   { kind: "video", src: "/jobs/bts-cafe.mp4", poster: "/jobs/bts-cafe.jpg", alt: "Arbeiten im Café: Planung und Schnitt" },
 ];
 
-function applyHref(job: Job): string {
-  const subject = encodeURIComponent(`Bewerbung: ${job.title}`);
-  const body = encodeURIComponent(
-    `Hallo Giulia,\n\nich bewerbe mich auf die Stelle „${job.title}“ bei GRID Agency.\n\nLebenslauf und Anschreiben findest du im Anhang.\n\nViele Grüße\n`,
+/** Die Bewerbungsadresse ausgeschrieben, bewusst kein mailto-Link: der
+ * würde auf dem Laptop das Mailprogramm öffnen. Stattdessen lässt sich die
+ * Adresse mit einem Klick kopieren. */
+function EmailCopy() {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(jobsEmail);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Ohne Clipboard-Zugriff bleibt die Adresse einfach markierbar.
+    }
+  };
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      <span className="select-all text-base font-medium text-snow">
+        {jobsEmail}
+      </span>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label="E-Mail-Adresse kopieren"
+        className="inline-flex items-center gap-1.5 rounded-full border border-snow/20 px-3 py-1 text-xs font-medium text-snow/80 transition-colors hover:bg-snow/10 active:scale-95"
+      >
+        {copied ? (
+          <>
+            <Check className="h-3.5 w-3.5 text-dune" strokeWidth={2.5} />
+            Kopiert
+          </>
+        ) : (
+          <>
+            <Copy className="h-3.5 w-3.5" strokeWidth={2} />
+            Kopieren
+          </>
+        )}
+      </button>
+    </span>
   );
-  return `mailto:${jobsEmail}?subject=${subject}&body=${body}`;
 }
 
 /** Offene Stellen: jede Stelle als aufklappbare Karte mit Rolle,
- * Aufgaben, Profil, Benefits und Bewerben-Button (Mail mit
- * vorausgefülltem Betreff). */
+ * Aufgaben, Profil, Benefits und ausgeschriebener Bewerbungsadresse. */
 export function JobsView() {
   const [open, setOpen] = useState<string | null>(jobs[0]?.slug ?? null);
 
@@ -78,7 +119,7 @@ export function JobsView() {
         <p className="mt-3 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
           Kleines Team, flache Hierarchien, ein lockeres Arbeitsumfeld mit
           viel Freiheit und Selbstständigkeit. Das sind unsere offenen
-          Stellen in Berlin-Mitte:
+          Stellen in Berlin und Frankfurt:
         </p>
       </motion.div>
 
@@ -225,16 +266,15 @@ export function JobsView() {
                         </p>
                         <p className="mt-2 text-sm font-light leading-relaxed text-snow/65">
                           Dann bewirb dich jetzt. Schick uns deinen Lebenslauf
-                          und ein Anschreiben, wir freuen uns darauf, mehr über
-                          dich zu erfahren.
+                          und ein Anschreiben mit dem Betreff „Bewerbung:{" "}
+                          {job.title}“ an
                         </p>
-                        <a
-                          href={applyHref(job)}
-                          className="btn-rainbow mt-4 inline-flex items-center gap-2 rounded-full bg-snow px-6 py-3 text-sm font-medium text-sky active:scale-[0.97]"
-                        >
-                          Jetzt bewerben
-                          <ArrowRight className="h-4 w-4" strokeWidth={2} />
-                        </a>
+                        <div className="mt-3">
+                          <EmailCopy />
+                        </div>
+                        <p className="mt-3 text-sm font-light leading-relaxed text-snow/65">
+                          Wir freuen uns darauf, mehr über dich zu erfahren.
+                        </p>
                       </div>
                     </div>
                   </motion.div>
@@ -245,15 +285,12 @@ export function JobsView() {
         })}
       </div>
 
-      <p className="mt-10 text-center text-sm font-light text-snow/50">
-        Nichts Passendes dabei?{" "}
-        <a
-          href={`mailto:${jobsEmail}?subject=${encodeURIComponent("Initiativbewerbung bei GRID Agency")}`}
-          className="font-medium text-dune underline-offset-4 hover:underline"
-        >
-          Initiativbewerbung schicken →
-        </a>
-      </p>
+      <div className="mt-10 text-center text-sm font-light text-snow/50">
+        <p>Nichts Passendes dabei? Schick uns deine Initiativbewerbung an</p>
+        <div className="mt-2 flex justify-center">
+          <EmailCopy />
+        </div>
+      </div>
     </div>
   );
 }

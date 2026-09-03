@@ -759,7 +759,7 @@ export const jobsIntro =
   "Wir sind Berlin-Mittes führende Social-Media-Marketing-Agentur und positionieren namhafte Marken mit innovativen Strategien im digitalen Raum. Als dynamisches, digital-affines Team der Generationen Y und Z begleiten wir ikonische Marken und ihre unverwechselbaren Markenidentitäten auf ihrem Social-Media-Auftritt.";
 
 const jobsBenefitsCore = [
-  "Trendiges und inspirierendes Agenturumfeld im Herzen von Berlin-Mitte",
+  "Trendiges und inspirierendes Agenturumfeld in Berlin-Mitte und Frankfurt",
   "Die Möglichkeit, an spannenden Projekten mit namhaften Kunden zu arbeiten",
   "Kleines Team, große Verantwortung",
 ];
@@ -788,7 +788,7 @@ export const jobs: Job[] = [
     slug: "social-media-manager",
     title: "Social Media Manager (w/m/d)",
     scope: "Teil- oder Vollzeit",
-    location: "Berlin-Mitte",
+    location: "Berlin und Frankfurt",
     role:
       "Als Social Media Manager bei GRID bist du für die Entwicklung, Umsetzung und Überwachung der Social-Media-Strategien unserer Kunden verantwortlich und erstellst fesselnde Inhalte für die verschiedenen Plattformen.",
     tasks: jobsTasksManagement,
@@ -809,7 +809,7 @@ export const jobs: Job[] = [
     slug: "video-content-creator",
     title: "Video Content Creator / Videographer (w/m/d)",
     scope: "Teil- oder Vollzeit",
-    location: "Berlin-Mitte",
+    location: "Berlin und Frankfurt",
     role:
       "Als Content Creator bei GRID bist du für die Erstellung fesselnder Inhalte unserer Kunden verantwortlich, die auf den verschiedenen Social-Media-Plattformen geteilt werden.",
     tasks: [
@@ -839,7 +839,7 @@ export const jobs: Job[] = [
     slug: "werkstudent-social-media",
     title: "Werkstudent (w/m/d) Social Media Marketing",
     scope: "Teilzeit, maximal 20 Stunden pro Woche",
-    location: "Berlin-Mitte",
+    location: "Berlin und Frankfurt",
     role:
       "Als Werkstudent bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
     tasks: [
@@ -861,7 +861,7 @@ export const jobs: Job[] = [
     slug: "praktikum-social-media",
     title: "Praktikum (w/m/d) Social Media Marketing",
     scope: "Vollzeit, Pflichtpraktikum",
-    location: "Berlin-Mitte",
+    location: "Berlin und Frankfurt",
     duration: "3 bis 6 Monate",
     role:
       "Als Pflichtpraktikant bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
