@@ -11,8 +11,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { calendlyUrl } from "@/lib/content";
 
-/** Calendly als Popup direkt auf der Seite: Der Kalender lädt erst nach
- * dem Klick in einem Overlay (iframe), nicht beim Seitenaufruf. So
+/** Calendly als kleines Fenster direkt auf der Seite (unten rechts wie
+ * ein Chat-Widget, mobil unten mittig), ohne Abdunkeln oder Blur. Der
+ * Kalender lädt erst nach dem Klick (iframe), nicht beim Seitenaufruf. So
  * bleibt der erste Aufruf frei von Calendly-Requests, und ohne JS oder
  * per Mittelklick führt der normale Link weiter auf calendly.com. */
 
@@ -44,19 +45,15 @@ export function CalendlyProvider({ children }: { children: React.ReactNode }) {
   const open = useCallback(() => setOpen(true), []);
   const close = useCallback(() => setOpen(false), []);
 
-  // Escape schließt, und der Seiten-Scroll bleibt hinter dem Overlay stehen.
+  // Escape schließt. Die Seite dahinter bleibt sichtbar und scrollbar,
+  // das Fenster liegt einfach als Karte darüber.
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
     window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
 
   return (
@@ -73,7 +70,7 @@ export function CalendlyProvider({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-[100] flex items-end justify-center p-3 lg:justify-end lg:p-6"
             onClick={close}
           >
             <motion.div
@@ -81,16 +78,16 @@ export function CalendlyProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.98 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="relative flex h-[min(88dvh,700px)] w-full max-w-[440px] flex-col overflow-hidden rounded-3xl border border-snow/15 bg-white shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+              className="relative flex h-[min(78dvh,580px)] w-full max-w-[370px] flex-col overflow-hidden rounded-2xl border border-snow/20 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.55),0_0_0_1px_rgba(0,0,0,0.4)]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between bg-sky px-5 py-3">
+              <div className="flex items-center justify-between bg-sky px-4 py-2.5">
                 <div>
                   <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-dune">
                     Erstgespräch · 30 Minuten
                   </p>
-                  <p className="text-sm font-medium text-snow">
-                    Boost your Socials, unverbindlich und kostenlos
+                  <p className="text-[13px] font-medium text-snow">
+                    Boost your Socials, unverbindlich
                   </p>
                 </div>
                 <button
