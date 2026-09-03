@@ -44,20 +44,11 @@ export function HeroSection() {
         <div className="aurora absolute -top-24 bottom-0 left-1/2 w-screen -translate-x-1/2 opacity-80" />
 
         <div className="relative py-8 lg:py-16 lg:text-center">
-          <motion.p
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-xs font-medium uppercase tracking-[0.25em] text-dune"
-          >
-            Deine #1 Social Media Agentur in Berlin &amp; Frankfurt
-          </motion.p>
-
           <motion.h1
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-4 text-[2.6rem] font-medium leading-[1.05] tracking-tight text-snow drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] lg:mx-auto lg:text-[clamp(4.5rem,8vw,6.75rem)] lg:leading-[1.02]"
+            className="text-[2.6rem] font-medium leading-[1.05] tracking-tight text-snow drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] lg:mx-auto lg:text-[clamp(4.5rem,8vw,6.75rem)] lg:leading-[1.02]"
           >
             Marken, die man
             <br />
