@@ -8,7 +8,8 @@ import { calendlyUrl } from "@/lib/content";
 
 export function DmSection() {
   return (
-    <div className="px-5 py-10">
+    <div className="px-5 py-10 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-12 lg:py-16">
+      {/* Desktop: Überschrift und Kontaktdaten links, Formular rechts. */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -18,11 +19,16 @@ export function DmSection() {
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
           Kontakt
         </p>
-        <h2 className="mt-2 text-2xl font-medium tracking-tight text-snow">
+        <h2 className="mt-2 text-2xl font-medium tracking-tight text-snow lg:text-5xl">
           Lass uns <span className="text-scroll-gradient">reden</span>.
         </h2>
+        <p className="mt-4 hidden max-w-sm text-base font-light leading-relaxed text-snow/70 lg:block">
+          Schreib uns, was dein Feed gerade braucht. Wir melden uns innerhalb
+          von zwei Werktagen mit einer ehrlichen Einschätzung.
+        </p>
       </motion.div>
 
+      <div>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -77,8 +83,9 @@ export function DmSection() {
           Termin buchen: Boost your Socials
         </a>
       </motion.div>
+      </div>
 
-      <div className="mt-10 space-y-1 text-center text-[11px] font-light text-snow/35">
+      <div className="mt-10 space-y-1 text-center text-[11px] font-light text-snow/35 lg:col-span-2">
         <p>Linienstrasse 214, Berlin · Eichendorffstrasse 32, Frankfurt</p>
         <p>
           <a href="mailto:hello@grid-agency.de" className="hover:text-snow/60">
