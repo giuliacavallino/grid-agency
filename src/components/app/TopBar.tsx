@@ -25,28 +25,33 @@ export function TopBar() {
         initial={{ y: -72, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-6"
+        className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-0"
       >
-        <div className="mx-auto w-full max-w-frame px-5 lg:max-w-frame-lg">
-          <div className="glass pointer-events-auto relative flex h-12 w-full items-center justify-between overflow-hidden rounded-full px-5 lg:h-[68px] lg:px-7">
-            <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
+        <div className="mx-auto w-full max-w-frame px-5 lg:max-w-none lg:px-0">
+          <div className="glass topbar-shell pointer-events-auto relative w-full overflow-hidden">
+            <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent lg:hidden" />
+            <div className="flex h-12 items-center justify-between px-5 lg:mx-auto lg:h-[68px] lg:max-w-frame-lg">
 
             <a
               href="#home"
               aria-label="Nach oben"
-              className="logo-rainbow relative flex flex-col items-start gap-1"
+              className="relative flex flex-col items-start gap-1"
               onClick={jump("home")}
             >
-              <Image
-                src="/brand/grid_logo_snow.png"
-                alt="GRID"
-                width={96}
-                height={25}
-                priority
-                className="h-[19px] w-auto lg:h-[23px]"
-              />
+              {/* Hover-Verlauf nur über dem Wortmarken-Bild, nicht über der
+                  Subline, sonst erscheint das Logo doppelt. */}
+              <span className="logo-rainbow">
+                <Image
+                  src="/brand/grid_logo_snow.png"
+                  alt="GRID"
+                  width={96}
+                  height={25}
+                  priority
+                  className="h-[19px] w-auto lg:h-[23px]"
+                />
+              </span>
               <span className="hidden text-[10px] font-medium uppercase tracking-[0.32em] text-snow/70 lg:block">
-                Social Media Agency
+                Agency
               </span>
             </a>
 
@@ -101,6 +106,7 @@ export function TopBar() {
               >
                 <Menu className="h-[22px] w-[22px]" strokeWidth={1.8} />
               </button>
+            </div>
             </div>
           </div>
         </div>
