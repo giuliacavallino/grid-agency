@@ -179,20 +179,6 @@ html {
   color: transparent;
 }
 
-/* Verlaufs-Typo mit Glow für die Laufbänder: wie .text-scroll-gradient,
-   plus weicher Schein in den Story-Farben (drop-shadow wirkt auch bei
-   background-clip: text, text-shadow nicht). */
-.text-glow-gradient {
-  background: linear-gradient(92deg, #feda75 0%, #fa7e1e 45%, #962fbf 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  padding-right: 0.09em;
-  margin-right: -0.09em;
-  color: transparent;
-  filter: drop-shadow(0 0 14px rgb(250 126 30 / 0.35))
-    drop-shadow(0 0 28px rgb(214 41 118 / 0.25));
-}
-
 /* Hover effects in the aurora palette. */
 @keyframes rainbow-slide {
   to {
