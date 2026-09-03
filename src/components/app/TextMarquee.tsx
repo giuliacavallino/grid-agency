@@ -1,7 +1,7 @@
 "use client";
 
 /** Laufendes Typo-Band auf voller Breite: große Begriffe, abwechselnd im
- * Instagram-Verlauf und als Outline. Rein dekorativ (aria-hidden), der
+ * Instagram-Verlauf mit Glow und in Snow. Rein dekorativ (aria-hidden), der
  * Loop nutzt die Marquee-Mechanik des Logo-Bands. */
 export function TextMarquee({
   items,
@@ -31,8 +31,8 @@ export function TextMarquee({
               <span
                 className={
                   gradient
-                    ? "text-scroll-gradient pb-[0.08em]"
-                    : "text-outline-snow pb-[0.08em]"
+                    ? "text-glow-gradient pb-[0.08em]"
+                    : "pb-[0.08em] text-snow"
                 }
               >
                 {item}

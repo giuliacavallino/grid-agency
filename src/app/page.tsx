@@ -24,7 +24,7 @@ export default function Home() {
 
       <section className="border-t border-snow/10">
         <TextMarquee
-          items={["Strategie", "Content", "Performance", "Community", "Events"]}
+          items={["Social Media", "Content Creation", "Performance Marketing", "Community Building", "Influencer Marketing", "Events"]}
         />
       </section>
 
