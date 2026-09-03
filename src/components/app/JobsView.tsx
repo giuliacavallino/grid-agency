@@ -21,14 +21,30 @@ function Bullets({ items }: { items: string[] }) {
   );
 }
 
-const bts: (
+type BtsItem =
   | { kind: "video"; src: string; poster: string; alt: string }
-  | { kind: "image"; src: string; alt: string }
-)[] = [
+  | { kind: "image"; src: string; alt: string };
+
+/** Behind the Scenes: kurze stumme Loops und Fotos von echten Drehs
+ * (Frittenwerk-Shoot, Casa Beef, Burger-Drehs, Interview-Setup). */
+const bts: BtsItem[] = [
   { kind: "video", src: "/jobs/bts-burger.mp4", poster: "/jobs/bts-burger.jpg", alt: "Behind the Scenes beim Burger-Dreh" },
+  { kind: "image", src: "/jobs/bts-rolltreppe.webp", alt: "Frittenwerk-Shoot auf der Rolltreppe" },
+  { kind: "video", src: "/jobs/bts-studio.mp4", poster: "/jobs/bts-studio.jpg", alt: "Behind the Scenes beim Fotoshooting im Studio" },
+  { kind: "video", src: "/jobs/bts-picknick.mp4", poster: "/jobs/bts-picknick.jpg", alt: "Behind the Scenes: Aufbau fürs Picknick-Shooting" },
   { kind: "image", src: "/referenzen/casa-beef/bts-1.webp", alt: "Behind the Scenes beim Content-Day im Casa Beef" },
+  { kind: "video", src: "/jobs/bts-mikro.mp4", poster: "/jobs/bts-mikro.jpg", alt: "Behind the Scenes: Mikro anstecken vor dem Dreh" },
   { kind: "video", src: "/jobs/bts-michelle.mp4", poster: "/jobs/bts-michelle.jpg", alt: "Behind the Scenes: Content-Shooting am Pass" },
+  { kind: "image", src: "/jobs/bts-bahn-tuer.webp", alt: "Frittenwerk-Shoot in der S-Bahn" },
+  { kind: "video", src: "/jobs/bts-laptop.mp4", poster: "/jobs/bts-laptop.jpg", alt: "Behind the Scenes: Bildauswahl am Laptop" },
+  { kind: "video", src: "/jobs/bts-sbahn.mp4", poster: "/jobs/bts-sbahn.jpg", alt: "Behind the Scenes beim S-Bahn-Shooting" },
   { kind: "video", src: "/jobs/bts-interview.mp4", poster: "/jobs/bts-interview.jpg", alt: "Behind the Scenes beim Interview-Dreh" },
+  { kind: "image", src: "/jobs/bts-zug.webp", alt: "Frittenwerk-Shoot am Bahnsteig" },
+  { kind: "video", src: "/jobs/bts-fotograf.mp4", poster: "/jobs/bts-fotograf.jpg", alt: "Behind the Scenes: Blick über die Schulter des Fotografen" },
+  { kind: "video", src: "/jobs/bts-laden.mp4", poster: "/jobs/bts-laden.jpg", alt: "Behind the Scenes: Filmen im Laden" },
+  { kind: "video", src: "/jobs/bts-kueche.mp4", poster: "/jobs/bts-kueche.jpg", alt: "Behind the Scenes in der Smash-Küche" },
+  { kind: "video", src: "/jobs/bts-cafe.mp4", poster: "/jobs/bts-cafe.jpg", alt: "Arbeiten im Café: Planung und Schnitt" },
+  { kind: "image", src: "/jobs/bts-bahnsteig.webp", alt: "Frittenwerk-Shoot vor der S-Bahn" },
 ];
 
 function applyHref(job: Job): string {
@@ -80,11 +96,20 @@ export function JobsView() {
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
           Behind the Scenes
         </p>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {bts.map((item) => (
+        {/* Laufender Streifen auf voller Breite, wie das Logo-Band. Feste
+            Kachelgrößen, damit lazy geladene Medien den Loop nicht
+            verschieben. */}
+        <div className="relative left-1/2 mt-3 w-screen -translate-x-1/2 overflow-hidden">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-sky to-transparent" />
+          <div
+            className="marquee flex w-max items-stretch [&:hover]:[animation-play-state:paused]"
+            style={{ "--marquee-duration": `${bts.length * 5}s` } as React.CSSProperties}
+          >
+          {[...bts, ...bts].map((item, i) => (
             <div
-              key={item.src}
-              className="aspect-[4/5] overflow-hidden rounded-2xl border border-snow/10 bg-sky"
+              key={`${item.src}-${i}`}
+              className="mr-3 aspect-[4/5] h-56 shrink-0 overflow-hidden rounded-2xl border border-snow/10 bg-sky lg:h-72"
             >
               {item.kind === "video" ? (
                 <video
@@ -109,6 +134,7 @@ export function JobsView() {
               )}
             </div>
           ))}
+          </div>
         </div>
       </motion.div>
 
