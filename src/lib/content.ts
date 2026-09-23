@@ -22,8 +22,23 @@ export type Client = {
   heroImageFit?: "cover" | "contain";
   /** What GRID actually did for this brand — shown as "Der Case". */
   caseStudy?: string;
+  /** Kennzahlen aus der Zusammenarbeit, als Kacheln über dem Case. */
+  results?: ClientResult[];
+  /** Quelle und Zeitraum der Kennzahlen, z. B. Meta Business Suite. */
+  resultsSource?: string;
+  /** Echte Kundenstimme zu diesem Projekt, Wortlaut unverändert. */
+  testimonial?: Testimonial;
   /** Extra per-client sections (Events, Behind the Scenes, Rebranding …). */
   sections?: ClientSection[];
+};
+
+export type ClientResult = {
+  /** Die Zahl, z. B. "+2.199 %". */
+  value: string;
+  /** Was die Zahl misst, z. B. "mehr Instagram-Reichweite". */
+  label: string;
+  /** Ein Satz dazu in Agentur-Stimme. */
+  text: string;
 };
 
 export type ClientSection = {
@@ -91,6 +106,24 @@ export const clients: Client[] = [
       "Die Pommesmanufaktur, die Poutine nach Deutschland geholt hat. Deutschlandweit gesnackt, von uns ins Scrollen gebracht.",
     caseStudy:
       "Frittenwerks Mission: die Energie aus über 40 Stores in einen Online-Auftritt übersetzen, der die Community wirklich erreicht. Wir haben einen Content-Plan um Urban Vibe und Signature Loaded Fries gebaut: Food-Shots, Behind-the-Scenes und Reels mit viralen Hooks. Dazu Kooperationen mit Foodbloggern und Lifestyle-Influencern und TikTok als neue Bühne. Das Ergebnis: 125.000+ Follower auf Instagram und Reels im Millionen-Reichweiten-Bereich. Aus Followern wurden Fans.",
+    results: [
+      {
+        value: "3,9 Mio.",
+        label: "Aufrufe",
+        text: "Ob Eventbegleitung, Filialpräsentation, Produkt-Shooting oder Mitarbeitervorstellung: Gemeinsam mit Frittenwerk erobern wir die kulinarische Welt mit professionellem Content.",
+      },
+      {
+        value: "125.000+",
+        label: "Follower auf Instagram",
+        text: "Von unwiderstehlichen Food-Fotos bis zu unterhaltsamen Geschichten hinter dem Frittenhimmel: Inhalte, die die Herzen der Zielgruppe erobern.",
+      },
+      {
+        value: "40+",
+        label: "Stores im Feed",
+        text: "Content, der knuspert: Hochwertige Inhalte und Storytelling haben Frittenwerk zu einem kulinarischen Phänomen gemacht.",
+      },
+    ],
+    resultsSource: "Quelle: Meta Business Suite @frittenwerk",
   },
   {
     name: "Lipstick", logo: "/clients/lipstick.png", height: 16,
@@ -141,8 +174,30 @@ export const clients: Client[] = [
     logo: "/clients/lovebirds.png",
     height: 30,
     instagram: "lovebirds.berlin",
+    tags: ["Social Media Management", "Content Creation", "Reels", "Feed-Konzept"],
     intro:
       "Contemporary Pizza mit Charakter, knusprig, verliebt, fotogen. Genau unser Beuteschema.",
+    caseStudy:
+      "Geschmackvolle Erfolgsstory: Wie lovebirds mit unserer Social-Media-Strategie den Berliner Pizza-Markt erobert und sich von der Konkurrenz abhebt. Unser erstes Reel: 633.000 Aufrufe. Von der Steigerung der Markenbekanntheit bis zu zielgerichteten, einzigartigen Inhalten, von denen sich jede Pizzeria eine Scheibe abschneiden sollte. Wir haben die richtigen Zutaten für den Erfolg geliefert.",
+    results: [
+      {
+        value: "+2.199 %",
+        label: "mehr Instagram-Reichweite",
+        text: "Ein Biss und du bist verliebt. Nicht nur in die Pizza, sondern auch in unseren Content.",
+      },
+      {
+        value: "540.000",
+        label: "neue Profilaufrufe",
+        text: "Edgy Inhalte und ein Grid, das hängen bleibt, machen aus Scrollern Gäste.",
+      },
+      {
+        value: "1.600",
+        label: "neue Follower",
+        text: "Die Herzen von Pizza-Liebhabern erobern und gleichzeitig zur Social-Media-Benchmark werden.",
+      },
+    ],
+    resultsSource:
+      "Quelle: Meta Business Suite @lovebirds.berlin, Ergebnisse nach 3 Monaten Zusammenarbeit",
   },
   {
     name: "Coffi", logo: "/clients/coffi.png", height: 34,
@@ -196,16 +251,60 @@ export const clients: Client[] = [
     logo: "/clients/yousthetics.png",
     height: 36,
     instagram: "yousthetics",
+    tags: ["Social Media Management", "Content Creation", "Reels", "Community Management"],
     intro:
       "Ästhetik-Treatments mit Ergebnis statt Versprechen. Wir übersetzen Vorher-Nachher in Scrollstopper.",
+    caseStudy:
+      "Strahlendes Erfolgserlebnis: Wie yousthetics durch unsere Social-Media-Strategie zu neuer Schönheit fand. Not just Botox: Eine kluge und professionelle Nutzung der Social-Media-Plattformen machte yousthetics zur wohl bekanntesten Schönheitsklinik Berlin-Mittes. Ob minimalinvasive Behandlungen, Infusionen oder EMSculpt, wir hatten schon alles vor der Linse. Durch gezielte Strategien und ansprechende Inhalte gewannen wir das Vertrauen potenzieller Kunden und steigerten die Reichweite der Klinik erheblich.",
+    results: [
+      {
+        value: "+5.199 %",
+        label: "mehr Instagram-Reichweite",
+        text: "Von der Steigerung der Markenbekanntheit bis zur Gewinnung neuer Kunden: die perfekte Balance zwischen Innovation und Eleganz.",
+      },
+      {
+        value: "4.500",
+        label: "neue Follower",
+        text: "Schönheit kennt keine Grenzen, und mit unserer Hilfe auch der Erfolg nicht.",
+      },
+      {
+        value: "+26 %",
+        label: "mehr Profilaufrufe",
+        text: "Vertrauen entsteht im Feed, lange bevor jemand die Praxis betritt.",
+      },
+    ],
+    resultsSource:
+      "Quelle: Meta Business Suite @yousthetics, Ergebnisse nach 9 Monaten Zusammenarbeit",
   },
   {
     name: "The Dawn",
     logo: "/clients/the-dawn.png",
     height: 48,
     instagram: "thedawn.berlin",
+    tags: ["Social Media Management", "Content Creation", "Influencer-Kooperationen", "Community Management"],
     intro:
       "Der Ort, an dem gute Abende anfangen. Wir sorgen dafür, dass sie im Feed weitergehen.",
+    caseStudy:
+      "Brunch mit Aussicht: Wie das Berliner Rooftop-Frühstücksrestaurant mit unserer Social-Media-Strategie zum Hotspot wurde. Monkeys and Pancakes! Durch gezielte Inhalte und strategisches Community-Management haben wir das Interesse an The Dawn mit Blick in den Zoo geweckt und es zum Lieblingsziel für Frühstücksliebhaber gemacht.",
+    results: [
+      {
+        value: "+70,5 %",
+        label: "mehr Reichweite",
+        text: "Jeder Food-Influencer war schon da. Dank gezielter Kooperationen haben wir The Dawn als Must-Visit Brunch Place in Berlin positioniert.",
+      },
+      {
+        value: "+6.500",
+        label: "neue Follower",
+        text: "Frühstück ist nicht nur die wichtigste Mahlzeit des Tages. Es kann auch der Startpunkt zum digitalen Erfolg sein und zum Gesprächsthema der Stadt.",
+      },
+    ],
+    resultsSource: "Quelle: Meta Business Suite @thedawn.berlin",
+    testimonial: {
+      quote:
+        "Das Team von GRID ist verantwortlich für unsere Social Media Kanäle von The Dawn. Das Team rund um Giulia hat mich mit seiner persönlichen Art und Nähe zum Kunden überzeugt. Ich bin allzeit zufrieden und kann die Grid Agency wärmstens weiterempfehlen, vor allem für Gastronomiebetriebe.",
+      name: "Omar Alayoub",
+      meta: "Geschäftsführer, The Dawn",
+    },
   },
   {
     name: "capvin",
@@ -413,6 +512,12 @@ export const clients: Client[] = [
     height: 40,
     intro:
       "Out-of-Home, das man nicht übersehen kann. Wir verlängern die Plakatwand in den Feed.",
+    testimonial: {
+      quote:
+        "Ich hatte das Vergnügen auf mehreren Accounts und Unternehmen mit GRID zusammenzuarbeiten. Ob es ein kurzfristiger “heute auf morgen” Podcast-Termin war oder der Wunsch nach einem Content Day: Das Team rund um die Gründerin Giulia Cavallino war zu jedem Zeitpunkt mit Herzblut und Leidenschaft an meiner Seite.",
+      name: "Vian Feldhusen",
+      meta: "Gründerin, Ultra OOH und YNG",
+    },
   },
   {
     name: "Das kann auch nach vorne losgehen",
@@ -562,6 +667,26 @@ export const extraServices: ExtraService[] = [
       "Eröffnungen, Aktionen und Saisonhöhepunkte mit Vorbereitung, Begleitung und Nachbereitung statt eines einzelnen Posts am Veranstaltungstag",
       "Besonders relevant bei Neueröffnungen, weil die Aufmerksamkeit dort nur einmal entsteht",
     ],
+  },
+];
+
+/** Durchschnittliche Ergebnisse über alle Kunden, aus dem
+ * Referenzdokument der Agentur. Stehen als Leiste über den Case Studies. */
+export const agencyResults: ClientResult[] = [
+  {
+    value: "+875 %",
+    label: "mehr Instagram-Reichweite",
+    text: "Mit gezielten Strategien und kreativem Content steigern wir die Instagram-Reichweite unserer Kunden im Schnitt um 875 Prozent. Der Fokus auf Wachstum, Engagement und neue Kanäle bringt nicht nur mehr Zahlen, sondern nachhaltig stärkere Marken.",
+  },
+  {
+    value: "450.000",
+    label: "neue Profilaufrufe",
+    text: "Gezielte Werbekampagnen und optimierter Content führen im Schnitt zu 450.000 neuen Profilaufrufen, steigern die Sichtbarkeit und fördern die Markenbekanntheit.",
+  },
+  {
+    value: "+150 %",
+    label: "mehr Likes",
+    text: "Kreative Inhalte, optimale Posting-Zeiten und die richtige Frequenz steigern das Engagement im Schnitt um 150 Prozent und intensivieren die Interaktion mit der Zielgruppe.",
   },
 ];
 

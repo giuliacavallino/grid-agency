@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { caseStudyTeasers, clientSlug } from "@/lib/content";
+import { agencyResults, caseStudyTeasers, clientSlug } from "@/lib/content";
 import { SectionWatermark } from "./SectionWatermark";
 import { CalendlyLink } from "./CalendlyProvider";
 
 /** Case Studies aus der Agentur-Präsentation auf der Startseite:
- * drei Karten mit den freigestellten Phone-Mockups aus dem Deck,
- * verlinkt auf die vollständigen Cases der Kundenseiten. */
+ * oben die Durchschnittszahlen über alle Kunden, darunter drei Karten
+ * mit den freigestellten Phone-Mockups aus dem Deck, verlinkt auf die
+ * vollständigen Cases der Kundenseiten. */
 export function CaseStudiesSection() {
   return (
     <div className="relative px-5 py-12">
@@ -28,7 +29,37 @@ export function CaseStudiesSection() {
           <br />
           statt <span className="text-scroll-gradient">Versprechen</span>.
         </h2>
+        <p className="mt-4 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
+          Wir lieben es, dein Grid zum Strahlen zu bringen. Mit GRID schreibst
+          du nicht nur Erfolgsgeschichten, sondern setzt den Maßstab für
+          Social Media neu.
+        </p>
       </motion.div>
+
+      {/* Durchschnittswerte über alle Kunden, aus dem Referenzdokument. */}
+      <div className="mt-8 grid gap-3 sm:grid-cols-3">
+        {agencyResults.map((r, i) => (
+          <motion.div
+            key={r.label}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, delay: i * 0.07 }}
+            className="glass rounded-2xl p-5"
+          >
+            <p className="text-scroll-gradient text-4xl font-medium tracking-tight">
+              {r.value}
+            </p>
+            <p className="mt-1 text-sm font-medium text-snow">{r.label}</p>
+            <p className="mt-2 text-sm font-light leading-relaxed text-snow/60">
+              {r.text}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] font-light text-snow/40">
+        Durchschnittswerte unserer Kunden, Quelle: Meta Business Suite
+      </p>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
         {caseStudyTeasers.map((cs, i) => (
