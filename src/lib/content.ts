@@ -22,8 +22,23 @@ export type Client = {
   heroImageFit?: "cover" | "contain";
   /** What GRID actually did for this brand — shown as "Der Case". */
   caseStudy?: string;
+  /** Kennzahlen aus der Zusammenarbeit, als Kacheln über dem Case. */
+  results?: ClientResult[];
+  /** Quelle und Zeitraum der Kennzahlen, z. B. Meta Business Suite. */
+  resultsSource?: string;
+  /** Echte Kundenstimme zu diesem Projekt, Wortlaut unverändert. */
+  testimonial?: Testimonial;
   /** Extra per-client sections (Events, Behind the Scenes, Rebranding …). */
   sections?: ClientSection[];
+};
+
+export type ClientResult = {
+  /** Die Zahl, z. B. "+2.199 %". */
+  value: string;
+  /** Was die Zahl misst, z. B. "mehr Instagram-Reichweite". */
+  label: string;
+  /** Ein Satz dazu in Agentur-Stimme. */
+  text: string;
 };
 
 export type ClientSection = {
@@ -77,7 +92,7 @@ export const clients: Client[] = [
     intro:
       "Kreuzberger Kult: Smashburger und goldene Fritten, für die man ansteht. Unser Job: dass der Feed genauso knuspert.",
     caseStudy:
-      "Goldies kam mit rund 6.000 Followern und einem Account weit unter seinem Potenzial zu uns. Unser Dreiklang: ein visuell kompromissloser Content-Plan mit Food-Fotografie, Behind-the-Scenes und Reels, die auf Burger-Fans zugeschnitten sind; Kooperationen mit Foodbloggern und Brands aus der Berliner und Frankfurter Gastro-Szene; und der Ausbau auf YouTube mit Short- und Longform-Content rund um Brand-Story und Community-Events. Heute steht der Account bei über 49.000 Followern, mit einer Community, die die Marke wirklich trägt.",
+      "Goldies kam mit rund 6.000 Followern und einem Account weit unter seinem Potenzial zu uns. Unser Dreiklang: ein visuell kompromissloser Content-Plan mit Food-Fotografie, Behind-the-Scenes und Reels, die auf Burger-Fans zugeschnitten sind; Kooperationen mit Foodblogger:innen und Brands aus der Berliner und Frankfurter Gastro-Szene; und der Ausbau auf YouTube mit Short- und Longform-Content rund um Brand-Story und Community-Events. Heute steht der Account bei über 49.000 Followern, mit einer Community, die die Marke wirklich trägt.",
   },
   {
     name: "Frittenwerk",
@@ -90,7 +105,25 @@ export const clients: Client[] = [
     intro:
       "Die Pommesmanufaktur, die Poutine nach Deutschland geholt hat. Deutschlandweit gesnackt, von uns ins Scrollen gebracht.",
     caseStudy:
-      "Frittenwerks Mission: die Energie aus über 40 Stores in einen Online-Auftritt übersetzen, der die Community wirklich erreicht. Wir haben einen Content-Plan um Urban Vibe und Signature Loaded Fries gebaut: Food-Shots, Behind-the-Scenes und Reels mit viralen Hooks. Dazu Kooperationen mit Foodbloggern und Lifestyle-Influencern und TikTok als neue Bühne. Das Ergebnis: 125.000+ Follower auf Instagram und Reels im Millionen-Reichweiten-Bereich. Aus Followern wurden Fans.",
+      "Frittenwerks Mission: die Energie aus über 40 Stores in einen Online-Auftritt übersetzen, der die Community wirklich erreicht. Wir haben einen Content-Plan um Urban Vibe und Signature Loaded Fries gebaut: Food-Shots, Behind-the-Scenes und Reels mit viralen Hooks. Dazu Kooperationen mit Foodblogger:innen und Lifestyle-Influencer:innen und TikTok als neue Bühne. Das Ergebnis: 125.000+ Follower auf Instagram und Reels im Millionen-Reichweiten-Bereich. Aus Followern wurden Fans.",
+    results: [
+      {
+        value: "3,9 Mio.",
+        label: "Aufrufe",
+        text: "Ob Eventbegleitung, Filialpräsentation, Produkt-Shooting oder Teamvorstellung: Gemeinsam mit Frittenwerk erobern wir die kulinarische Welt mit professionellem Content.",
+      },
+      {
+        value: "125.000+",
+        label: "Follower auf Instagram",
+        text: "Von unwiderstehlichen Food-Fotos bis zu unterhaltsamen Geschichten hinter dem Frittenhimmel: Inhalte, die die Herzen der Zielgruppe erobern.",
+      },
+      {
+        value: "40+",
+        label: "Stores im Feed",
+        text: "Content, der knuspert: Hochwertige Inhalte und Storytelling haben Frittenwerk zu einem kulinarischen Phänomen gemacht.",
+      },
+    ],
+    resultsSource: "Quelle: Meta Business Suite @frittenwerk",
   },
   {
     name: "Lipstick", logo: "/clients/lipstick.png", height: 16,
@@ -141,8 +174,30 @@ export const clients: Client[] = [
     logo: "/clients/lovebirds.png",
     height: 30,
     instagram: "lovebirds.berlin",
+    tags: ["Social Media Management", "Content Creation", "Reels", "Feed-Konzept"],
     intro:
       "Contemporary Pizza mit Charakter, knusprig, verliebt, fotogen. Genau unser Beuteschema.",
+    caseStudy:
+      "Geschmackvolle Erfolgsstory: Wie lovebirds mit unserer Social-Media-Strategie den Berliner Pizza-Markt erobert und sich von der Konkurrenz abhebt. Unser erstes Reel: 633.000 Aufrufe. Von der Steigerung der Markenbekanntheit bis zu zielgerichteten, einzigartigen Inhalten, von denen sich jede Pizzeria eine Scheibe abschneiden sollte. Wir haben die richtigen Zutaten für den Erfolg geliefert.",
+    results: [
+      {
+        value: "+2.199 %",
+        label: "mehr Instagram-Reichweite",
+        text: "Ein Biss und du bist verliebt. Nicht nur in die Pizza, sondern auch in unseren Content.",
+      },
+      {
+        value: "540.000",
+        label: "neue Profilaufrufe",
+        text: "Edgy Inhalte und ein Grid, das hängen bleibt, machen aus Scrollen einen Tisch für heute Abend.",
+      },
+      {
+        value: "1.600",
+        label: "neue Follower",
+        text: "Die Herzen der Pizza-Fans erobern und gleichzeitig zur Social-Media-Benchmark werden.",
+      },
+    ],
+    resultsSource:
+      "Quelle: Meta Business Suite @lovebirds.berlin, Ergebnisse nach 3 Monaten Zusammenarbeit",
   },
   {
     name: "Coffi", logo: "/clients/coffi.png", height: 34,
@@ -153,7 +208,7 @@ export const clients: Client[] = [
   {
     name: "Ditsch", logo: "/clients/ditsch.png", height: 36, instagram: "ditsch_brezel",
     intro:
-      "Die Brezel-Institution, die jeder aus der Fußgängerzone kennt. Tradition, die wir für den Feed neu aufbacken.",
+      "Die Brezel-Institution, die alle aus der Fußgängerzone kennen. Tradition, die wir für den Feed neu aufbacken.",
   },
   {
     name: "Hasir", logo: "/clients/hasir.png", height: 26,
@@ -196,16 +251,60 @@ export const clients: Client[] = [
     logo: "/clients/yousthetics.png",
     height: 36,
     instagram: "yousthetics",
+    tags: ["Social Media Management", "Content Creation", "Reels", "Community Management"],
     intro:
       "Ästhetik-Treatments mit Ergebnis statt Versprechen. Wir übersetzen Vorher-Nachher in Scrollstopper.",
+    caseStudy:
+      "Strahlendes Erfolgserlebnis: Wie yousthetics durch unsere Social-Media-Strategie zu neuer Schönheit fand. Not just Botox: Eine kluge und professionelle Nutzung der Social-Media-Plattformen machte yousthetics zur wohl bekanntesten Schönheitsklinik Berlin-Mittes. Ob minimalinvasive Behandlungen, Infusionen oder EMSculpt, wir hatten schon alles vor der Linse. Durch gezielte Strategien und ansprechende Inhalte gewannen wir das Vertrauen potenzieller Kund:innen und steigerten die Reichweite der Klinik erheblich.",
+    results: [
+      {
+        value: "+5.199 %",
+        label: "mehr Instagram-Reichweite",
+        text: "Von der Steigerung der Markenbekanntheit bis zur Gewinnung neuer Kund:innen: die perfekte Balance zwischen Innovation und Eleganz.",
+      },
+      {
+        value: "4.500",
+        label: "neue Follower",
+        text: "Schönheit kennt keine Grenzen, und mit unserer Hilfe auch der Erfolg nicht.",
+      },
+      {
+        value: "+26 %",
+        label: "mehr Profilaufrufe",
+        text: "Vertrauen entsteht im Feed, lange bevor jemand die Praxis betritt.",
+      },
+    ],
+    resultsSource:
+      "Quelle: Meta Business Suite @yousthetics, Ergebnisse nach 9 Monaten Zusammenarbeit",
   },
   {
     name: "The Dawn",
     logo: "/clients/the-dawn.png",
     height: 48,
     instagram: "thedawn.berlin",
+    tags: ["Social Media Management", "Content Creation", "Influencer-Kooperationen", "Community Management"],
     intro:
       "Der Ort, an dem gute Abende anfangen. Wir sorgen dafür, dass sie im Feed weitergehen.",
+    caseStudy:
+      "Brunch mit Aussicht: Wie das Berliner Rooftop-Frühstücksrestaurant mit unserer Social-Media-Strategie zum Hotspot wurde. Monkeys and Pancakes! Durch gezielte Inhalte und strategisches Community-Management haben wir das Interesse an The Dawn mit Blick in den Zoo geweckt und es zum Lieblingsziel für Frühstücksfans gemacht.",
+    results: [
+      {
+        value: "+70,5 %",
+        label: "mehr Reichweite",
+        text: "Die Food-Influencer:innen der Stadt waren alle schon da. Dank gezielter Kooperationen haben wir The Dawn als Must-Visit Brunch Place in Berlin positioniert.",
+      },
+      {
+        value: "+6.500",
+        label: "neue Follower",
+        text: "Frühstück ist nicht nur die wichtigste Mahlzeit des Tages. Es kann auch der Startpunkt zum digitalen Erfolg sein und zum Gesprächsthema der Stadt.",
+      },
+    ],
+    resultsSource: "Quelle: Meta Business Suite @thedawn.berlin",
+    testimonial: {
+      quote:
+        "Das Team von GRID ist verantwortlich für unsere Social Media Kanäle von The Dawn. Das Team rund um Giulia hat mich mit seiner persönlichen Art und Nähe zum Kunden überzeugt. Ich bin allzeit zufrieden und kann die Grid Agency wärmstens weiterempfehlen, vor allem für Gastronomiebetriebe.",
+      name: "Omar Alayoub",
+      meta: "Geschäftsführer, The Dawn",
+    },
   },
   {
     name: "capvin",
@@ -405,7 +504,7 @@ export const clients: Client[] = [
     intro:
       "Die Dating-App fürs Schmuck-Shopping. Match statt Suchen. Wir haben der App eine Online-Identität gebaut, die funkelt.",
     caseStudy:
-      "Sajent Club kam mit einer Mission zu uns: die App als Must-have etablieren. Wir haben einen visuell markanten Content-Plan um Features und User-Benefits gebaut. App-Walkthroughs, Success-Stories, Lifestyle-Reels, Kooperationen mit Tech-Influencern und Lifestyle-Bloggern kuratiert und die Marke per TikTok und YouTube Shorts auf neue Plattformen gebracht. Interaktive Stories mit Polls und Quizzes machen aus Reichweite Downloads.",
+      "Sajent Club kam mit einer Mission zu uns: die App als Must-have etablieren. Wir haben einen visuell markanten Content-Plan um Features und User-Benefits gebaut. App-Walkthroughs, Success-Stories, Lifestyle-Reels, Kooperationen mit Tech-Influencer:innen und Lifestyle-Blogger:innen kuratiert und die Marke per TikTok und YouTube Shorts auf neue Plattformen gebracht. Interaktive Stories mit Polls und Quizzes machen aus Reichweite Downloads.",
   },
   {
     name: "Ultra OOH",
@@ -413,6 +512,12 @@ export const clients: Client[] = [
     height: 40,
     intro:
       "Out-of-Home, das man nicht übersehen kann. Wir verlängern die Plakatwand in den Feed.",
+    testimonial: {
+      quote:
+        "Ich hatte das Vergnügen auf mehreren Accounts und Unternehmen mit GRID zusammenzuarbeiten. Ob es ein kurzfristiger “heute auf morgen” Podcast-Termin war oder der Wunsch nach einem Content Day: Das Team rund um die Gründerin Giulia Cavallino war zu jedem Zeitpunkt mit Herzblut und Leidenschaft an meiner Seite.",
+      name: "Vian Feldhusen",
+      meta: "Gründerin, Ultra OOH und YNG",
+    },
   },
   {
     name: "Das kann auch nach vorne losgehen",
@@ -497,10 +602,10 @@ export const services: Service[] = [
     image: "/referenzen/casa-beef/events-20.webp",
     title: "Influencer",
     accent: "und Kooperationen",
-    tagline: "Reichweite über Partner, die wirklich zu dir passen.",
+    tagline: "Reichweite über Partner:innen, die wirklich zu dir passen.",
     bullets: [
-      "Wir arbeiten mit lokalen Influencern zusammen, die authentisch zu deiner Marke passen.",
-      "Kooperationskampagnen mit lokalen Partnern bringen deine Marke in neue Feeds und zu neuen Zielgruppen.",
+      "Wir arbeiten mit lokalen Influencer:innen zusammen, die authentisch zu deiner Marke passen.",
+      "Kooperationskampagnen mit lokalen Partner:innen bringen deine Marke in neue Feeds und zu neuen Zielgruppen.",
     ],
   },
   {
@@ -550,7 +655,7 @@ export const extraServices: ExtraService[] = [
     bullets: [
       "Bewerbungen aus allen Kanälen laufen zentral in ein Dashboard: E-Mail, Social-Media-Funnel und Speed-Bewerbung per QR-Code direkt in der Filiale",
       "Jede neue Bewerbung löst automatisch eine Rückmeldung aus, mit Formular und Lebenslauf-Upload",
-      "Am Ende liegt eine vollständige Bewerberakte vor, statt drei Zeilen aus einer Direktnachricht",
+      "Am Ende liegt eine vollständige Bewerbungsakte vor, statt drei Zeilen aus einer Direktnachricht",
       "Keine Dubletten, eine einzige Quelle der Wahrheit",
     ],
     highlight: "Kein Recruiting-Marketing, sondern ein Prozess.",
@@ -562,6 +667,26 @@ export const extraServices: ExtraService[] = [
       "Eröffnungen, Aktionen und Saisonhöhepunkte mit Vorbereitung, Begleitung und Nachbereitung statt eines einzelnen Posts am Veranstaltungstag",
       "Besonders relevant bei Neueröffnungen, weil die Aufmerksamkeit dort nur einmal entsteht",
     ],
+  },
+];
+
+/** Durchschnittliche Ergebnisse über alle Kunden, aus dem
+ * Referenzdokument der Agentur. Stehen als Leiste über den Case Studies. */
+export const agencyResults: ClientResult[] = [
+  {
+    value: "+875 %",
+    label: "mehr Instagram-Reichweite",
+    text: "Mit gezielten Strategien und kreativem Content steigern wir die Instagram-Reichweite unserer Kund:innen im Schnitt um 875 Prozent. Der Fokus auf Wachstum, Engagement und neue Kanäle bringt nicht nur mehr Zahlen, sondern nachhaltig stärkere Marken.",
+  },
+  {
+    value: "450.000",
+    label: "neue Profilaufrufe",
+    text: "Gezielte Werbekampagnen und optimierter Content führen im Schnitt zu 450.000 neuen Profilaufrufen, steigern die Sichtbarkeit und fördern die Markenbekanntheit.",
+  },
+  {
+    value: "+150 %",
+    label: "mehr Likes",
+    text: "Kreative Inhalte, optimale Posting-Zeiten und die richtige Frequenz steigern das Engagement im Schnitt um 150 Prozent und intensivieren die Interaktion mit der Zielgruppe.",
   },
 ];
 
@@ -719,7 +844,7 @@ export const team = {
 export const vita = [
   {
     year: "2021",
-    text: "Gründung in Berlin-Mitte. Giulia sammelt die ersten Erfahrungen mit unseren heutigen Kunden, damals noch vom WG-Schreibtisch aus, ganz ohne Büro.",
+    text: "Gründung in Berlin-Mitte. Giulia sammelt die ersten Erfahrungen mit unseren heutigen Kund:innen, damals noch vom WG-Schreibtisch aus, ganz ohne Büro.",
   },
   {
     year: "2022",
@@ -756,11 +881,11 @@ export const jobsEmail = "hello@grid-agency.de";
 
 /** Gemeinsamer Vorspann aller Stellen. */
 export const jobsIntro =
-  "Wir sind Berlin-Mittes führende Social-Media-Marketing-Agentur und positionieren namhafte Marken mit innovativen Strategien im digitalen Raum. Als dynamisches, digital-affines Team der Generationen Y und Z begleiten wir ikonische Marken und ihre unverwechselbaren Markenidentitäten auf ihrem Social-Media-Auftritt.";
+  "Wir sind Berlins und Frankfurts führende Social-Media-Marketing-Agentur und positionieren namhafte Marken mit innovativen Strategien im digitalen Raum. Als dynamisches, digital-affines Team der Generationen Y und Z begleiten wir ikonische Marken und ihre unverwechselbaren Markenidentitäten auf ihrem Social-Media-Auftritt.";
 
 const jobsBenefitsCore = [
-  "Trendiges und inspirierendes Agenturumfeld in Berlin-Mitte und Frankfurt",
-  "Die Möglichkeit, an spannenden Projekten mit namhaften Kunden zu arbeiten",
+  "Trendiges und inspirierendes Agenturumfeld in Berlin und Frankfurt",
+  "Die Möglichkeit, an spannenden Projekten mit namhaften Kund:innen zu arbeiten",
   "Kleines Team, große Verantwortung",
 ];
 
@@ -777,7 +902,7 @@ const jobsTasksManagement = [
   "Erstellung und Verwaltung von Content-Kalendern inklusive der Posts für die verschiedenen Social-Media-Plattformen",
   "Identifizierung neuer Trends im Social-Media-Bereich und Anpassung der Strategien",
   "Umsetzung des Influencer-Marketing-Prozesses, von Screening und Ansprache über Verhandlung bis zum Reporting",
-  "Fortlaufende Optimierung und Management der Social-Media-Kanäle unserer Kunden",
+  "Fortlaufende Optimierung und Management der Social-Media-Kanäle unserer Kund:innen",
   "Überwachung der KPIs und Erstellung von Reportings",
 ];
 
@@ -790,7 +915,7 @@ export const jobs: Job[] = [
     scope: "Teil- oder Vollzeit",
     location: "Berlin und Frankfurt",
     role:
-      "Als Social Media Manager bei GRID bist du für die Entwicklung, Umsetzung und Überwachung der Social-Media-Strategien unserer Kunden verantwortlich und erstellst fesselnde Inhalte für die verschiedenen Plattformen.",
+      "Als Social Media Manager bei GRID bist du für die Entwicklung, Umsetzung und Überwachung der Social-Media-Strategien unserer Kund:innen verantwortlich und erstellst fesselnde Inhalte für die verschiedenen Plattformen.",
     tasks: jobsTasksManagement,
     profile: [
       "Abgeschlossenes Studium, vorzugsweise mit Schwerpunkt BWL, Marketing oder Kommunikation",
@@ -811,7 +936,7 @@ export const jobs: Job[] = [
     scope: "Teil- oder Vollzeit",
     location: "Berlin und Frankfurt",
     role:
-      "Als Content Creator bei GRID bist du für die Erstellung fesselnder Inhalte unserer Kunden verantwortlich, die auf den verschiedenen Social-Media-Plattformen geteilt werden.",
+      "Als Content Creator bei GRID bist du für die Erstellung fesselnder Inhalte unserer Kund:innen verantwortlich, die auf den verschiedenen Social-Media-Plattformen geteilt werden.",
     tasks: [
       "Gemeinsam mit den Marketing-Kolleginnen und -Kollegen bist du mitverantwortlich für die Content-Produktion für Social Media",
       "Du entwickelst und erstellst Foto- und Videoformate, von der Produktion bis zur Postproduktion",
@@ -841,7 +966,7 @@ export const jobs: Job[] = [
     scope: "Teilzeit, maximal 20 Stunden pro Woche",
     location: "Berlin und Frankfurt",
     role:
-      "Als Werkstudent bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
+      "Als Werkstudent:in bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
     tasks: [
       "Mitarbeit bei der Planung, Koordination und Durchführung von Social-Media-Kampagnen",
       "Assistenz im Tagesgeschäft",
@@ -864,7 +989,7 @@ export const jobs: Job[] = [
     location: "Berlin und Frankfurt",
     duration: "3 bis 6 Monate",
     role:
-      "Als Pflichtpraktikant bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
+      "Als Pflichtpraktikant:in bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
     tasks: [
       "Mitarbeit bei der Planung, Koordination und Durchführung von Social-Media-Kampagnen",
       "Assistenz im Tagesgeschäft",
@@ -879,5 +1004,247 @@ export const jobs: Job[] = [
     benefits: [...jobsBenefitsCore, "Schnelle Aufstiegschancen"],
     pitch:
       "Du hast erste Erfahrung im Social Media Management und in der Content Creation? Das Erstellen von Reels macht dir Spaß und du hast ein gutes Auge für den Feed?",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* FAQ                                                                */
+/* ------------------------------------------------------------------ */
+
+export type FaqItem = {
+  slug: string;
+  question: string;
+  /** Fließtext vor den Punkten (oder die komplette Antwort). */
+  intro?: string;
+  /** Optionale Stichpunkte mit Stichwort und Erklärung. */
+  points?: { title: string; text: string }[];
+  /** Fließtext nach den Punkten. */
+  outro?: string;
+  /** Optionaler weiterführender Link (z. B. zur Roadmap). */
+  link?: { href: string; label: string };
+};
+
+/** Häufige Fragen aus dem Q&A-Dokument der Agentur, sprachlich auf die
+ * Website angepasst (du-Form, GRID, keine Gedankenstriche). */
+export const faq: FaqItem[] = [
+  {
+    slug: "erste-beitraege",
+    question: "Wann gehen die ersten Beiträge nach Vertragsschluss live?",
+    intro:
+      "Bei GRID legen wir großen Wert darauf, dass deine Social-Media-Präsenz so schnell wie möglich und in höchster Qualität aufgebaut wird. Nach dem Vertragsschluss beginnt unser Team unverzüglich mit der Planung und Erstellung deiner Inhalte. In der Regel gehen die ersten Beiträge innerhalb von drei Wochen nach Vertragsschluss live. Dieser Zeitrahmen ermöglicht es uns, den ersten Content Day sauber zu planen, maßgeschneiderte Inhalte zu erstellen, die genau auf deine Marke und deine Zielgruppe abgestimmt sind, und den ersten Feed (das sogenannte Grid) aufzubauen.",
+    link: { href: "/#roadmap", label: "Zur Roadmap" },
+  },
+  {
+    slug: "followerzuwachs",
+    question: "Mit wie viel Followerzuwachs kann ich rechnen?",
+    intro:
+      "Der Followerzuwachs hängt von verschiedenen Faktoren ab: Branche, Zielgruppe, Art der Inhalte und aktuelle Marktbedingungen. Generell streben wir mit unseren Strategien und Kampagnen einen stetigen und qualitativen Zuwachs an Followern an. Wir setzen auf organisches Wachstum durch Videoinhalte mit viralem Potenzial und echtes Engagement, um eine starke Community für deine Marke aufzubauen. Genaue Zahlen können wir im Voraus nicht garantieren. Wir versichern dir aber, dass sich unser Team voll und ganz darauf konzentriert, deine Sichtbarkeit und Reichweite zu maximieren.",
+  },
+  {
+    slug: "gastro",
+    question:
+      "Lohnt sich ein professioneller Social-Media-Auftritt für die Gastronomie?",
+    intro:
+      "Ein professioneller Social-Media-Auftritt ist für Gastronomiebetriebe heute von entscheidender Bedeutung. Social Media bietet eine einzigartige Plattform, um deinen Betrieb zu präsentieren, mit Gästen in Kontakt zu treten und deine Zielgruppe zu erweitern. Gerade in der Gastronomie, wo Erlebnis und Atmosphäre eine große Rolle spielen, lassen sich deine Speisen und dein Ambiente durch ansprechende Bilder und Storytelling hervorheben. Darüber hinaus kannst du Feedback sammeln, Kundenbeziehungen stärken und Angebote oder Events bewerben. Ein professioneller Auftritt erhöht so nicht nur die Sichtbarkeit deines Betriebs, sondern trägt zu einer stärkeren Kundenbindung und letztlich zu Umsatzwachstum bei.",
+  },
+  {
+    slug: "roi",
+    question: "Wie rentiert sich Social Media schnellstmöglich?",
+    intro:
+      "Bei GRID wissen wir, dass ein schneller Return on Investment im Social-Media-Bereich entscheidend für den Erfolg deines Unternehmens ist. Diese Strategien setzen wir um, damit sich Social Media möglichst schnell rechnet:",
+    points: [
+      {
+        title: "Zielgruppengerechte Inhalte",
+        text: "Wir kreieren Inhalte, die genau auf deine Zielgruppe abgestimmt sind, um Relevanz und Engagement zu maximieren.",
+      },
+      {
+        title: "Effizientes Budget-Management",
+        text: "Wir nutzen dein Werbebudget gezielt, um die größtmögliche Wirkung zu erzielen, insbesondere durch zielgerichtete Werbekampagnen.",
+      },
+      {
+        title: "Messbare Ziele",
+        text: "Wir setzen klare und messbare Ziele, etwa die Steigerung deiner Follower-Zahlen, höhere Engagement-Raten oder mehr Traffic auf deiner Seite.",
+      },
+      {
+        title: "Analyse und Anpassung",
+        text: "Durch regelmäßige Analysen passen wir unsere Strategie an, damit wir die besten Ergebnisse erzielen.",
+      },
+      {
+        title: "Interaktion und Community-Aufbau",
+        text: "Wir legen großen Wert auf aktive Interaktion und Engagement, um eine starke Bindung zu deiner Community aufzubauen.",
+      },
+      {
+        title: "Influencer-Marketing",
+        text: "Wir prüfen Influencer-Kooperationen, um Reichweite und Glaubwürdigkeit deiner Marke zu erhöhen.",
+      },
+    ],
+    outro:
+      "Unser Ziel bei GRID ist nicht nur ein schneller, sondern ein nachhaltiger und qualitativer ROI. Lass uns gemeinsam über deine Ziele sprechen und eine maßgeschneiderte Strategie entwickeln, die dein Unternehmen voranbringt.",
+  },
+  {
+    slug: "plattformen",
+    question: "Welche Plattformen deckt GRID ab?",
+    intro:
+      "Wir decken die wichtigsten Social-Media-Plattformen ab, damit deine Marke auf den relevanten Kanälen präsent ist:",
+    points: [
+      {
+        title: "Facebook",
+        text: "Wir erstellen und betreuen ansprechende Facebook-Seiten und Werbekampagnen, um deine Zielgruppe zu erreichen und zu aktivieren.",
+      },
+      {
+        title: "Instagram",
+        text: "Mit kreativen visuellen Inhalten und effektivem Community-Management sorgen wir dafür, dass deine Marke auf Instagram herausragt.",
+      },
+      {
+        title: "LinkedIn",
+        text: "Für B2B-Marken optimieren wir dein LinkedIn-Profil und setzen gezielte Kampagnen auf, um professionelle Netzwerke zu erreichen.",
+      },
+      {
+        title: "YouTube",
+        text: "Wir unterstützen dich bei Videoinhalten und betreuen deinen YouTube-Kanal, um ein breiteres Publikum anzusprechen.",
+      },
+      {
+        title: "TikTok",
+        text: "Für Marken, die eine jüngere Zielgruppe ansprechen möchten, entwickeln wir kreative TikTok-Kampagnen.",
+      },
+    ],
+    outro:
+      "Unser Ziel ist es, die richtigen Plattformen für deine Marke auszuwählen und Strategien zu entwickeln, die deine Ziele erreichen und dein Publikum effektiv ansprechen. Ob Markenbekanntheit, Lead-Generierung oder Verkauf: Wir optimieren deine Social-Media-Präsenz.",
+  },
+  {
+    slug: "content",
+    question: "Welche Art von Content erstellt ihr?",
+    intro:
+      "Wir produzieren und betreuen eine vielfältige Palette an Content-Formaten, damit deine Marke auf Social Media effektiv präsent ist. Ein paar Beispiele:",
+    points: [
+      {
+        title: "Bildinhalte",
+        text: "Ansprechende Bilder, Grafiken und Infografiken, die deine Botschaft visuell vermitteln.",
+      },
+      {
+        title: "Videoinhalte",
+        text: "Von kurzen Clips bis zu längeren Videos, um deine Zielgruppe zu unterhalten und zu informieren.",
+      },
+      {
+        title: "Textinhalte",
+        text: "Überzeugende Texte, von Social-Media-Beiträgen über Blog-Artikel bis zu Werbetexten.",
+      },
+      {
+        title: "Storys",
+        text: "Temporäre Inhalte für Instagram und Facebook Stories, die Interaktion und Engagement deiner Follower fördern.",
+      },
+      {
+        title: "Live-Streams",
+        text: "Wir unterstützen Live-Streaming-Events für die Echtzeit-Interaktion mit deiner Zielgruppe.",
+      },
+      {
+        title: "Umfragen und Abstimmungen",
+        text: "Interaktive Formate, um die Beteiligung deiner Follower zu steigern und Feedback zu bekommen.",
+      },
+      {
+        title: "User-Generated Content",
+        text: "Wir fördern die Beteiligung deiner Community und teilen ihre Inhalte, um die Bindung zwischen Marke und Kundschaft zu stärken.",
+      },
+      {
+        title: "Influencer-Marketing",
+        text: "Wir arbeiten mit Influencer:innen zusammen, um authentische Empfehlungen für deine Produkte oder Dienstleistungen zu erhalten.",
+      },
+    ],
+    outro:
+      "Unsere Content-Strategie wird auf deine Ziele und die Bedürfnisse deiner Zielgruppe zugeschnitten, damit der Content wirkt und die gewünschten Ergebnisse erzielt.",
+  },
+  {
+    slug: "erfolgsmessung",
+    question: "Wie messt ihr den Erfolg auf Social Media?",
+    intro:
+      "Um den Erfolg auf Social Media zu messen, kombinieren wir verschiedene Kennzahlen und Analysen. Die wichtigsten Metriken:",
+    points: [
+      {
+        title: "Reichweite",
+        text: "Wie viele Personen deine Beiträge gesehen haben, damit deine Botschaft eine breite Zielgruppe erreicht.",
+      },
+      {
+        title: "Engagement",
+        text: "Likes, Kommentare, Shares und Klicks zeigen, wie gut deine Inhalte bei deinen Followern ankommen.",
+      },
+      {
+        title: "Follower-Wachstum",
+        text: "Die Zunahme der Follower-Zahlen ist ein Indikator für die Attraktivität deiner Inhalte und deiner Marke.",
+      },
+      {
+        title: "Conversion-Rate",
+        text: "Anmeldungen, Käufe oder Anfragen, die direkt aus deinen Social-Media-Aktivitäten entstehen.",
+      },
+      {
+        title: "Klickrate (CTR)",
+        text: "Wie viele Personen auf die Links in deinen Beiträgen geklickt haben.",
+      },
+      {
+        title: "Kosten pro Conversion",
+        text: "Was jede Conversion gekostet hat, um die Effizienz deiner Werbeausgaben zu bewerten.",
+      },
+      {
+        title: "ROI",
+        text: "Der finanzielle Erfolg deiner Kampagnen im Verhältnis zu den eingesetzten Ressourcen.",
+      },
+    ],
+    outro:
+      "Welche Metriken relevant sind, hängt von deinen Zielen und deiner Strategie ab. Wir analysieren diese Daten regelmäßig, nehmen Anpassungen vor und stellen sicher, dass deine Social-Media-Aktivitäten den gewünschten Erfolg bringen.",
+  },
+  {
+    slug: "community-management",
+    question: "Was ist Community Management und warum ist es wichtig?",
+    intro:
+      "Community Management ist ein entscheidender Teil des Social-Media-Marketings. Gemeint ist die professionelle Betreuung und Pflege der Online-Community eines Unternehmens oder einer Marke auf den verschiedenen Plattformen. Das Ziel: eine aktive und engagierte Community aufbauen und erhalten, indem wir auf die Bedürfnisse, Fragen und Anliegen der Mitglieder eingehen. Wer schnell und persönlich antwortet, baut Vertrauen auf, und Vertrauen ist die Basis für Empfehlungen, Wiederkehr und Wachstum.",
+  },
+  {
+    slug: "frequenz",
+    question: "Wie oft werden Beiträge veröffentlicht?",
+    intro:
+      "Wie häufig Beiträge erscheinen sollten, hängt von der Art des Unternehmens, der Zielgruppe und den Ressourcen ab. Ein paar bewährte Richtlinien:",
+    points: [
+      {
+        title: "Konsistenz",
+        text: "Eine regelmäßige, verlässliche Veröffentlichungsstrategie ist wichtig. Das kann täglich oder mehrmals pro Woche sein.",
+      },
+      {
+        title: "Qualität vor Quantität",
+        text: "Hochwertige, relevante Beiträge, die deine Zielgruppe ansprechen, zählen mehr als die reine Anzahl.",
+      },
+      {
+        title: "Plattformabhängigkeit",
+        text: "Unterschiedliche Plattformen haben unterschiedliche Anforderungen an die Frequenz.",
+      },
+    ],
+    outro:
+      "Eine Einheitslösung gibt es nicht, die richtige Frequenz hängt von deinen Zielen und deiner Zielgruppe ab. Wir bieten maßgeschneiderte Pakete an, die diese Richtlinien individuell berücksichtigen.",
+  },
+  {
+    slug: "ergebnisse",
+    question: "Wie lange dauert es, bis ich Ergebnisse sehe?",
+    intro:
+      "In der Regel siehst du innerhalb der ersten Monate erste Anzeichen von Erfolg: mehr Interaktionen, mehr Follower, mehr Reichweite. Wichtig sind realistische Erwartungen und eine langfristig geplante Strategie. Wie schnell Ergebnisse sichtbar werden, hängt von mehreren Faktoren ab:",
+    points: [
+      {
+        title: "Neuer oder bestehender Account",
+        text: "Ein bestehender Account bringt oft schon Reichweite, Vertrauen, historische Daten und eine etablierte Identität mit. Ein neuer Account muss das erst aufbauen, was Zeit und Aufwand erfordert.",
+      },
+      {
+        title: "Ziele und Strategie",
+        text: "Kurzfristige Ziele wie eine höhere Engagement-Rate liefern schneller sichtbare Ergebnisse, langfristige Ziele wie Markenbekanntheit oder Lead-Generierung brauchen mehr Zeit.",
+      },
+      {
+        title: "Plattform und Nische",
+        text: "Auf manchen Plattformen zeigen sich Ergebnisse schneller als auf anderen.",
+      },
+      {
+        title: "Konsistenz und Geduld",
+        text: "Social Media Marketing erfordert Geduld und Kontinuität: regelmäßige Aktivität, hochwertige Inhalte und Interaktion mit deiner Zielgruppe.",
+      },
+      {
+        title: "Analyse und Anpassung",
+        text: "Regelmäßige Analysen und Anpassungen unserer Strategie verbessern die Ergebnisse und beschleunigen den Erfolg.",
+      },
+    ],
   },
 ];

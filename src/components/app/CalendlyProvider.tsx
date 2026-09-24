@@ -7,15 +7,20 @@ import {
   useEffect,
   useState,
 } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { ShieldCheck, X } from "lucide-react";
 import { calendlyUrl } from "@/lib/content";
+import { grantConsent, hasConsent, onConsentChange } from "@/lib/consent";
 
 /** Calendly als kleines Fenster direkt auf der Seite (unten rechts wie
- * ein Chat-Widget, mobil unten mittig), ohne Abdunkeln oder Blur. Der
- * Kalender lädt erst nach dem Klick (iframe), nicht beim Seitenaufruf. So
- * bleibt der erste Aufruf frei von Calendly-Requests, und ohne JS oder
- * per Mittelklick führt der normale Link weiter auf calendly.com. */
+ * ein Chat-Widget, mobil unten mittig), ohne Abdunkeln oder Blur.
+ *
+ * Datenschutz: Beim Seitenaufruf gibt es keinerlei Verbindung zu Calendly.
+ * Nach dem Klick auf einen Buchungs-Button erscheint zuerst ein Hinweis mit
+ * Einwilligung (Zwei-Klick-Lösung). Erst mit "Kalender laden" wird das
+ * Calendly-iframe eingebunden. Ohne JS oder per Mittelklick führt der
+ * normale Link weiter auf calendly.com. */
 
 const CalendlyContext = createContext<{ open: () => void } | null>(null);
 
@@ -40,10 +45,74 @@ function embedUrl(): string {
   return `${calendlyUrl}?${params.toString()}`;
 }
 
+/** Hinweis vor dem ersten Laden des Kalenders. */
+function CalendlyConsent({ onAccept }: { onAccept: (remember: boolean) => void }) {
+  const [remember, setRemember] = useState(false);
+  return (
+    <div className="flex flex-1 flex-col justify-center gap-4 overflow-y-auto p-5 text-sky">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky/5">
+        <ShieldCheck className="h-5 w-5" strokeWidth={1.8} />
+      </span>
+      <div>
+        <p className="text-base font-medium">Kalender von Calendly laden?</p>
+        <p className="mt-2 text-[13px] font-light leading-relaxed text-sky/70">
+          Für die Terminbuchung nutzen wir Calendly (Calendly LLC, USA). Beim
+          Laden des Kalenders werden deine IP-Adresse und deine Eingaben an
+          Calendly übertragen, und Calendly kann Cookies setzen. Mehr dazu in
+          unserer{" "}
+          <Link href="/datenschutz#calendly" className="underline underline-offset-2">
+            Datenschutzerklärung
+          </Link>
+          .
+        </p>
+      </div>
+      <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-light text-sky/80">
+        <input
+          type="checkbox"
+          checked={remember}
+          onChange={(e) => setRemember(e.target.checked)}
+          className="h-4 w-4 accent-[#2b2926]"
+        />
+        Für künftige Besuche merken
+      </label>
+      <button
+        type="button"
+        onClick={() => onAccept(remember)}
+        className="rounded-full bg-sky py-3 text-sm font-medium text-snow transition-transform active:scale-[0.98]"
+      >
+        Kalender laden
+      </button>
+      <a
+        href={calendlyUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-center text-[12px] font-light text-sky/60 underline underline-offset-2"
+      >
+        Stattdessen direkt auf calendly.com buchen
+      </a>
+    </div>
+  );
+}
+
 export function CalendlyProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setOpen] = useState(false);
-  const open = useCallback(() => setOpen(true), []);
+  // Einwilligung nur für diesen Besuch (ohne "merken") oder gespeichert.
+  const [consented, setConsented] = useState(false);
+  const open = useCallback(() => {
+    if (hasConsent("calendly")) setConsented(true);
+    setOpen(true);
+  }, []);
   const close = useCallback(() => setOpen(false), []);
+  const accept = useCallback((remember: boolean) => {
+    if (remember) grantConsent("calendly");
+    setConsented(true);
+  }, []);
+
+  // Widerruf über die Datenschutz-Einstellungen greift sofort.
+  useEffect(
+    () => onConsentChange(() => setConsented(hasConsent("calendly"))),
+    [],
+  );
 
   // Escape schließt. Die Seite dahinter bleibt sichtbar und scrollbar,
   // das Fenster liegt einfach als Karte darüber.
@@ -99,12 +168,16 @@ export function CalendlyProvider({ children }: { children: React.ReactNode }) {
                   <X className="h-4 w-4" strokeWidth={2} />
                 </button>
               </div>
-              <iframe
-                src={embedUrl()}
-                title="Calendly: Erstgespräch buchen"
-                className="h-full w-full flex-1 bg-white"
-                allow="payment"
-              />
+              {consented ? (
+                <iframe
+                  src={embedUrl()}
+                  title="Calendly: Erstgespräch buchen"
+                  className="h-full w-full flex-1 bg-white"
+                  allow="payment"
+                />
+              ) : (
+                <CalendlyConsent onAccept={accept} />
+              )}
             </motion.div>
           </motion.div>
         )}

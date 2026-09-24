@@ -121,7 +121,7 @@ export function HeroSection() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.85 }}
         className="relative left-1/2 mt-10 w-screen -translate-x-1/2 overflow-hidden"
-        aria-label="Unsere Kunden"
+        aria-label="Unsere Kund:innen"
       >
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-sky to-transparent" />
