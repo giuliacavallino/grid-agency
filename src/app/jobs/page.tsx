@@ -5,7 +5,7 @@ import { JobsView } from "@/components/app/JobsView";
 export const metadata: Metadata = {
   title: "Jobs | GRID Agency",
   description:
-    "Offene Stellen bei GRID Agency in Berlin und Frankfurt: Social Media Manager, Video Content Creator, Werkstudent und Praktikum im Social Media Marketing.",
+    "Offene Stellen bei GRID Agency in Berlin und Frankfurt: Social Media Manager, Video Content Creator, Werkstudent:in und Praktikum im Social Media Marketing.",
 };
 
 export default function JobsPage() {

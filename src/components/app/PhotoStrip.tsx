@@ -8,15 +8,19 @@ import { motion } from "framer-motion";
  * Seitenverhältnisse, damit lazy geladene Bilder die Streifenbreite nie
  * verändern und der Loop sauber bleibt. */
 const shots: { src: string; href: string; alt: string; wide?: boolean }[] = [
-  { src: "/referenzen/480-gradi/21.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pizza am Tisch", wide: true },
+  { src: "/referenzen/casa-beef/27.webp", href: "/projekte/casa-beef", alt: "Casa Beef, aufgeschnittenes Steak" },
   { src: "/referenzen/casa-beef/events-12.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Opening" },
-  { src: "/referenzen/480-gradi/30.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pizzaschneider" },
-  { src: "/referenzen/casa-beef/14.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Gericht", wide: true },
-  { src: "/referenzen/casa-beef/events-3.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Gäste" },
-  { src: "/referenzen/480-gradi/12.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pizza aus dem Ofen" },
-  { src: "/referenzen/480-gradi/55.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pistazien-Pizza" },
+  { src: "/referenzen/casa-beef/12.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Burrata mit Tomaten" },
+  { src: "/referenzen/480-gradi/21.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pizza am Tisch", wide: true },
+  { src: "/referenzen/casa-beef/37.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Tomahawk" },
+  { src: "/referenzen/casa-beef/50.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Pasta" },
+  { src: "/referenzen/casa-beef/events-3.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Gäste beim Opening" },
+  { src: "/referenzen/casa-beef/52.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Steak auf dem Grill" },
+  { src: "/referenzen/casa-beef/33.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Crudo" },
+  { src: "/referenzen/casa-beef/36.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Steak mit Pommes" },
   { src: "/referenzen/casa-beef/events-30.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Service am Tisch" },
-  { src: "/referenzen/480-gradi/26.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pizza servieren", wide: true },
+  { src: "/referenzen/casa-beef/49.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Dessert" },
+  { src: "/referenzen/casa-beef/18.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Pommes mit Parmesan" },
 ];
 
 export function PhotoStrip() {

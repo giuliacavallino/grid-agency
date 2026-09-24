@@ -58,7 +58,7 @@ export function CaseStudiesSection() {
         ))}
       </div>
       <p className="mt-2 text-[11px] font-light text-snow/40">
-        Durchschnittswerte unserer Kunden, Quelle: Meta Business Suite
+        Durchschnittswerte unserer Kund:innen, Quelle: Meta Business Suite
       </p>
 
       <div className="mt-8 grid gap-4 lg:grid-cols-3">

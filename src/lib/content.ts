@@ -92,7 +92,7 @@ export const clients: Client[] = [
     intro:
       "Kreuzberger Kult: Smashburger und goldene Fritten, für die man ansteht. Unser Job: dass der Feed genauso knuspert.",
     caseStudy:
-      "Goldies kam mit rund 6.000 Followern und einem Account weit unter seinem Potenzial zu uns. Unser Dreiklang: ein visuell kompromissloser Content-Plan mit Food-Fotografie, Behind-the-Scenes und Reels, die auf Burger-Fans zugeschnitten sind; Kooperationen mit Foodbloggern und Brands aus der Berliner und Frankfurter Gastro-Szene; und der Ausbau auf YouTube mit Short- und Longform-Content rund um Brand-Story und Community-Events. Heute steht der Account bei über 49.000 Followern, mit einer Community, die die Marke wirklich trägt.",
+      "Goldies kam mit rund 6.000 Followern und einem Account weit unter seinem Potenzial zu uns. Unser Dreiklang: ein visuell kompromissloser Content-Plan mit Food-Fotografie, Behind-the-Scenes und Reels, die auf Burger-Fans zugeschnitten sind; Kooperationen mit Foodblogger:innen und Brands aus der Berliner und Frankfurter Gastro-Szene; und der Ausbau auf YouTube mit Short- und Longform-Content rund um Brand-Story und Community-Events. Heute steht der Account bei über 49.000 Followern, mit einer Community, die die Marke wirklich trägt.",
   },
   {
     name: "Frittenwerk",
@@ -105,12 +105,12 @@ export const clients: Client[] = [
     intro:
       "Die Pommesmanufaktur, die Poutine nach Deutschland geholt hat. Deutschlandweit gesnackt, von uns ins Scrollen gebracht.",
     caseStudy:
-      "Frittenwerks Mission: die Energie aus über 40 Stores in einen Online-Auftritt übersetzen, der die Community wirklich erreicht. Wir haben einen Content-Plan um Urban Vibe und Signature Loaded Fries gebaut: Food-Shots, Behind-the-Scenes und Reels mit viralen Hooks. Dazu Kooperationen mit Foodbloggern und Lifestyle-Influencern und TikTok als neue Bühne. Das Ergebnis: 125.000+ Follower auf Instagram und Reels im Millionen-Reichweiten-Bereich. Aus Followern wurden Fans.",
+      "Frittenwerks Mission: die Energie aus über 40 Stores in einen Online-Auftritt übersetzen, der die Community wirklich erreicht. Wir haben einen Content-Plan um Urban Vibe und Signature Loaded Fries gebaut: Food-Shots, Behind-the-Scenes und Reels mit viralen Hooks. Dazu Kooperationen mit Foodblogger:innen und Lifestyle-Influencer:innen und TikTok als neue Bühne. Das Ergebnis: 125.000+ Follower auf Instagram und Reels im Millionen-Reichweiten-Bereich. Aus Followern wurden Fans.",
     results: [
       {
         value: "3,9 Mio.",
         label: "Aufrufe",
-        text: "Ob Eventbegleitung, Filialpräsentation, Produkt-Shooting oder Mitarbeitervorstellung: Gemeinsam mit Frittenwerk erobern wir die kulinarische Welt mit professionellem Content.",
+        text: "Ob Eventbegleitung, Filialpräsentation, Produkt-Shooting oder Teamvorstellung: Gemeinsam mit Frittenwerk erobern wir die kulinarische Welt mit professionellem Content.",
       },
       {
         value: "125.000+",
@@ -188,12 +188,12 @@ export const clients: Client[] = [
       {
         value: "540.000",
         label: "neue Profilaufrufe",
-        text: "Edgy Inhalte und ein Grid, das hängen bleibt, machen aus Scrollern Gäste.",
+        text: "Edgy Inhalte und ein Grid, das hängen bleibt, machen aus Scrollen einen Tisch für heute Abend.",
       },
       {
         value: "1.600",
         label: "neue Follower",
-        text: "Die Herzen von Pizza-Liebhabern erobern und gleichzeitig zur Social-Media-Benchmark werden.",
+        text: "Die Herzen der Pizza-Fans erobern und gleichzeitig zur Social-Media-Benchmark werden.",
       },
     ],
     resultsSource:
@@ -208,7 +208,7 @@ export const clients: Client[] = [
   {
     name: "Ditsch", logo: "/clients/ditsch.png", height: 36, instagram: "ditsch_brezel",
     intro:
-      "Die Brezel-Institution, die jeder aus der Fußgängerzone kennt. Tradition, die wir für den Feed neu aufbacken.",
+      "Die Brezel-Institution, die alle aus der Fußgängerzone kennen. Tradition, die wir für den Feed neu aufbacken.",
   },
   {
     name: "Hasir", logo: "/clients/hasir.png", height: 26,
@@ -255,12 +255,12 @@ export const clients: Client[] = [
     intro:
       "Ästhetik-Treatments mit Ergebnis statt Versprechen. Wir übersetzen Vorher-Nachher in Scrollstopper.",
     caseStudy:
-      "Strahlendes Erfolgserlebnis: Wie yousthetics durch unsere Social-Media-Strategie zu neuer Schönheit fand. Not just Botox: Eine kluge und professionelle Nutzung der Social-Media-Plattformen machte yousthetics zur wohl bekanntesten Schönheitsklinik Berlin-Mittes. Ob minimalinvasive Behandlungen, Infusionen oder EMSculpt, wir hatten schon alles vor der Linse. Durch gezielte Strategien und ansprechende Inhalte gewannen wir das Vertrauen potenzieller Kunden und steigerten die Reichweite der Klinik erheblich.",
+      "Strahlendes Erfolgserlebnis: Wie yousthetics durch unsere Social-Media-Strategie zu neuer Schönheit fand. Not just Botox: Eine kluge und professionelle Nutzung der Social-Media-Plattformen machte yousthetics zur wohl bekanntesten Schönheitsklinik Berlin-Mittes. Ob minimalinvasive Behandlungen, Infusionen oder EMSculpt, wir hatten schon alles vor der Linse. Durch gezielte Strategien und ansprechende Inhalte gewannen wir das Vertrauen potenzieller Kund:innen und steigerten die Reichweite der Klinik erheblich.",
     results: [
       {
         value: "+5.199 %",
         label: "mehr Instagram-Reichweite",
-        text: "Von der Steigerung der Markenbekanntheit bis zur Gewinnung neuer Kunden: die perfekte Balance zwischen Innovation und Eleganz.",
+        text: "Von der Steigerung der Markenbekanntheit bis zur Gewinnung neuer Kund:innen: die perfekte Balance zwischen Innovation und Eleganz.",
       },
       {
         value: "4.500",
@@ -285,12 +285,12 @@ export const clients: Client[] = [
     intro:
       "Der Ort, an dem gute Abende anfangen. Wir sorgen dafür, dass sie im Feed weitergehen.",
     caseStudy:
-      "Brunch mit Aussicht: Wie das Berliner Rooftop-Frühstücksrestaurant mit unserer Social-Media-Strategie zum Hotspot wurde. Monkeys and Pancakes! Durch gezielte Inhalte und strategisches Community-Management haben wir das Interesse an The Dawn mit Blick in den Zoo geweckt und es zum Lieblingsziel für Frühstücksliebhaber gemacht.",
+      "Brunch mit Aussicht: Wie das Berliner Rooftop-Frühstücksrestaurant mit unserer Social-Media-Strategie zum Hotspot wurde. Monkeys and Pancakes! Durch gezielte Inhalte und strategisches Community-Management haben wir das Interesse an The Dawn mit Blick in den Zoo geweckt und es zum Lieblingsziel für Frühstücksfans gemacht.",
     results: [
       {
         value: "+70,5 %",
         label: "mehr Reichweite",
-        text: "Jeder Food-Influencer war schon da. Dank gezielter Kooperationen haben wir The Dawn als Must-Visit Brunch Place in Berlin positioniert.",
+        text: "Die Food-Influencer:innen der Stadt waren alle schon da. Dank gezielter Kooperationen haben wir The Dawn als Must-Visit Brunch Place in Berlin positioniert.",
       },
       {
         value: "+6.500",
@@ -504,7 +504,7 @@ export const clients: Client[] = [
     intro:
       "Die Dating-App fürs Schmuck-Shopping. Match statt Suchen. Wir haben der App eine Online-Identität gebaut, die funkelt.",
     caseStudy:
-      "Sajent Club kam mit einer Mission zu uns: die App als Must-have etablieren. Wir haben einen visuell markanten Content-Plan um Features und User-Benefits gebaut. App-Walkthroughs, Success-Stories, Lifestyle-Reels, Kooperationen mit Tech-Influencern und Lifestyle-Bloggern kuratiert und die Marke per TikTok und YouTube Shorts auf neue Plattformen gebracht. Interaktive Stories mit Polls und Quizzes machen aus Reichweite Downloads.",
+      "Sajent Club kam mit einer Mission zu uns: die App als Must-have etablieren. Wir haben einen visuell markanten Content-Plan um Features und User-Benefits gebaut. App-Walkthroughs, Success-Stories, Lifestyle-Reels, Kooperationen mit Tech-Influencer:innen und Lifestyle-Blogger:innen kuratiert und die Marke per TikTok und YouTube Shorts auf neue Plattformen gebracht. Interaktive Stories mit Polls und Quizzes machen aus Reichweite Downloads.",
   },
   {
     name: "Ultra OOH",
@@ -602,10 +602,10 @@ export const services: Service[] = [
     image: "/referenzen/casa-beef/events-20.webp",
     title: "Influencer",
     accent: "und Kooperationen",
-    tagline: "Reichweite über Partner, die wirklich zu dir passen.",
+    tagline: "Reichweite über Partner:innen, die wirklich zu dir passen.",
     bullets: [
-      "Wir arbeiten mit lokalen Influencern zusammen, die authentisch zu deiner Marke passen.",
-      "Kooperationskampagnen mit lokalen Partnern bringen deine Marke in neue Feeds und zu neuen Zielgruppen.",
+      "Wir arbeiten mit lokalen Influencer:innen zusammen, die authentisch zu deiner Marke passen.",
+      "Kooperationskampagnen mit lokalen Partner:innen bringen deine Marke in neue Feeds und zu neuen Zielgruppen.",
     ],
   },
   {
@@ -655,7 +655,7 @@ export const extraServices: ExtraService[] = [
     bullets: [
       "Bewerbungen aus allen Kanälen laufen zentral in ein Dashboard: E-Mail, Social-Media-Funnel und Speed-Bewerbung per QR-Code direkt in der Filiale",
       "Jede neue Bewerbung löst automatisch eine Rückmeldung aus, mit Formular und Lebenslauf-Upload",
-      "Am Ende liegt eine vollständige Bewerberakte vor, statt drei Zeilen aus einer Direktnachricht",
+      "Am Ende liegt eine vollständige Bewerbungsakte vor, statt drei Zeilen aus einer Direktnachricht",
       "Keine Dubletten, eine einzige Quelle der Wahrheit",
     ],
     highlight: "Kein Recruiting-Marketing, sondern ein Prozess.",
@@ -676,7 +676,7 @@ export const agencyResults: ClientResult[] = [
   {
     value: "+875 %",
     label: "mehr Instagram-Reichweite",
-    text: "Mit gezielten Strategien und kreativem Content steigern wir die Instagram-Reichweite unserer Kunden im Schnitt um 875 Prozent. Der Fokus auf Wachstum, Engagement und neue Kanäle bringt nicht nur mehr Zahlen, sondern nachhaltig stärkere Marken.",
+    text: "Mit gezielten Strategien und kreativem Content steigern wir die Instagram-Reichweite unserer Kund:innen im Schnitt um 875 Prozent. Der Fokus auf Wachstum, Engagement und neue Kanäle bringt nicht nur mehr Zahlen, sondern nachhaltig stärkere Marken.",
   },
   {
     value: "450.000",
@@ -844,7 +844,7 @@ export const team = {
 export const vita = [
   {
     year: "2021",
-    text: "Gründung in Berlin-Mitte. Giulia sammelt die ersten Erfahrungen mit unseren heutigen Kunden, damals noch vom WG-Schreibtisch aus, ganz ohne Büro.",
+    text: "Gründung in Berlin-Mitte. Giulia sammelt die ersten Erfahrungen mit unseren heutigen Kund:innen, damals noch vom WG-Schreibtisch aus, ganz ohne Büro.",
   },
   {
     year: "2022",
@@ -885,7 +885,7 @@ export const jobsIntro =
 
 const jobsBenefitsCore = [
   "Trendiges und inspirierendes Agenturumfeld in Berlin und Frankfurt",
-  "Die Möglichkeit, an spannenden Projekten mit namhaften Kunden zu arbeiten",
+  "Die Möglichkeit, an spannenden Projekten mit namhaften Kund:innen zu arbeiten",
   "Kleines Team, große Verantwortung",
 ];
 
@@ -902,7 +902,7 @@ const jobsTasksManagement = [
   "Erstellung und Verwaltung von Content-Kalendern inklusive der Posts für die verschiedenen Social-Media-Plattformen",
   "Identifizierung neuer Trends im Social-Media-Bereich und Anpassung der Strategien",
   "Umsetzung des Influencer-Marketing-Prozesses, von Screening und Ansprache über Verhandlung bis zum Reporting",
-  "Fortlaufende Optimierung und Management der Social-Media-Kanäle unserer Kunden",
+  "Fortlaufende Optimierung und Management der Social-Media-Kanäle unserer Kund:innen",
   "Überwachung der KPIs und Erstellung von Reportings",
 ];
 
@@ -915,7 +915,7 @@ export const jobs: Job[] = [
     scope: "Teil- oder Vollzeit",
     location: "Berlin und Frankfurt",
     role:
-      "Als Social Media Manager bei GRID bist du für die Entwicklung, Umsetzung und Überwachung der Social-Media-Strategien unserer Kunden verantwortlich und erstellst fesselnde Inhalte für die verschiedenen Plattformen.",
+      "Als Social Media Manager bei GRID bist du für die Entwicklung, Umsetzung und Überwachung der Social-Media-Strategien unserer Kund:innen verantwortlich und erstellst fesselnde Inhalte für die verschiedenen Plattformen.",
     tasks: jobsTasksManagement,
     profile: [
       "Abgeschlossenes Studium, vorzugsweise mit Schwerpunkt BWL, Marketing oder Kommunikation",
@@ -936,7 +936,7 @@ export const jobs: Job[] = [
     scope: "Teil- oder Vollzeit",
     location: "Berlin und Frankfurt",
     role:
-      "Als Content Creator bei GRID bist du für die Erstellung fesselnder Inhalte unserer Kunden verantwortlich, die auf den verschiedenen Social-Media-Plattformen geteilt werden.",
+      "Als Content Creator bei GRID bist du für die Erstellung fesselnder Inhalte unserer Kund:innen verantwortlich, die auf den verschiedenen Social-Media-Plattformen geteilt werden.",
     tasks: [
       "Gemeinsam mit den Marketing-Kolleginnen und -Kollegen bist du mitverantwortlich für die Content-Produktion für Social Media",
       "Du entwickelst und erstellst Foto- und Videoformate, von der Produktion bis zur Postproduktion",
@@ -966,7 +966,7 @@ export const jobs: Job[] = [
     scope: "Teilzeit, maximal 20 Stunden pro Woche",
     location: "Berlin und Frankfurt",
     role:
-      "Als Werkstudent bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
+      "Als Werkstudent:in bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
     tasks: [
       "Mitarbeit bei der Planung, Koordination und Durchführung von Social-Media-Kampagnen",
       "Assistenz im Tagesgeschäft",
@@ -989,7 +989,7 @@ export const jobs: Job[] = [
     location: "Berlin und Frankfurt",
     duration: "3 bis 6 Monate",
     role:
-      "Als Pflichtpraktikant bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
+      "Als Pflichtpraktikant:in bei GRID wirst du ein fester Teil unseres Teams. Du sammelst praktische Erfahrung und wendest dein theoretisches Wissen in einem professionellen Umfeld an.",
     tasks: [
       "Mitarbeit bei der Planung, Koordination und Durchführung von Social-Media-Kampagnen",
       "Assistenz im Tagesgeschäft",
@@ -1143,11 +1143,11 @@ export const faq: FaqItem[] = [
       },
       {
         title: "User-Generated Content",
-        text: "Wir fördern die Beteiligung deiner Community und teilen ihre Inhalte, um die Bindung zwischen Marke und Kunden zu stärken.",
+        text: "Wir fördern die Beteiligung deiner Community und teilen ihre Inhalte, um die Bindung zwischen Marke und Kundschaft zu stärken.",
       },
       {
         title: "Influencer-Marketing",
-        text: "Wir arbeiten mit Influencern zusammen, um authentische Empfehlungen für deine Produkte oder Dienstleistungen zu erhalten.",
+        text: "Wir arbeiten mit Influencer:innen zusammen, um authentische Empfehlungen für deine Produkte oder Dienstleistungen zu erhalten.",
       },
     ],
     outro:

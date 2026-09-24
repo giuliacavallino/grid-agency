@@ -35,7 +35,7 @@ export function TestimonialsSection() {
           Kundenstimmen
         </p>
         <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow">
-          Was unsere Kunden
+          Was unsere Kund:innen
           <br />
           <span className="text-scroll-gradient">sagen</span>.
         </h2>
