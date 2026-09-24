@@ -7,7 +7,6 @@ import { CaseStudiesSection } from "@/components/app/CaseStudiesSection";
 import { ProjekteTeaser } from "@/components/app/ProjekteTeaser";
 import { RoadmapSection } from "@/components/app/RoadmapSection";
 import { DmSection } from "@/components/app/DmSection";
-import { TextMarquee } from "@/components/app/TextMarquee";
 import { PhotoStrip } from "@/components/app/PhotoStrip";
 
 export default function Home() {
@@ -19,12 +18,6 @@ export default function Home() {
 
       <section className="border-t border-snow/10">
         <NewestCollab />
-      </section>
-
-      <section className="border-t border-snow/10">
-        <TextMarquee
-          items={["Social Media", "Content Creation", "Performance Marketing", "Community Building", "Influencer Marketing", "Events"]}
-        />
       </section>
 
       <section id="leistungen" className="scroll-mt-20">
@@ -49,13 +42,6 @@ export default function Home() {
 
       <section id="team" className="scroll-mt-20 border-t border-snow/10">
         <TeamSection />
-      </section>
-
-      <section className="border-t border-snow/10">
-        <TextMarquee
-          items={["Marken, die man nicht wegscrollen kann", "GRID Agency", "Berlin", "Frankfurt"]}
-          duration={46}
-        />
       </section>
 
       <section id="dm" className="scroll-mt-20 border-t border-snow/10">

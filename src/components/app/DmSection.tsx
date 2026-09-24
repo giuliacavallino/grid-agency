@@ -83,7 +83,16 @@ export function DmSection() {
       </div>
 
       <div className="mt-10 space-y-1 text-center text-[11px] font-light text-snow/35 lg:col-span-2">
-        <p>Linienstrasse 214, Berlin · Eichendorffstrasse 32, Frankfurt</p>
+        {/* Beide Standorte; auf schmalen Screens bricht die Zeile zwischen
+            den Adressen um, nie mitten in einer Adresse. */}
+        <p>
+          <span className="whitespace-nowrap">Sömmeringstraße 37, 10589 Berlin</span>
+          <span className="hidden sm:inline">{" · "}</span>
+          <br className="sm:hidden" />
+          <span className="whitespace-nowrap">
+            Eichendorffstraße 32, 60320 Frankfurt am Main
+          </span>
+        </p>
         <p>
           <a href="mailto:hello@grid-agency.de" className="hover:text-snow/60">
             hello@grid-agency.de
