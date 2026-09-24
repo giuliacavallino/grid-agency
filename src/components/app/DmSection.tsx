@@ -109,6 +109,9 @@ export function DmSection() {
           <a href="/datenschutz" className="hover:text-snow/60">
             Datenschutz
           </a>
+          <a href="/datenschutz#einstellungen" className="hover:text-snow/60">
+            Datenschutz-Einstellungen
+          </a>
         </p>
       </div>
     </div>

@@ -89,6 +89,14 @@ export function ContactForm() {
           </p>
         )}
       </div>
+      <p className="text-[11px] font-light leading-relaxed text-snow/45">
+        Mit dem Absenden verarbeiten wir deine Angaben, um deine Anfrage zu
+        beantworten. Mehr dazu in unserer{" "}
+        <a href="/datenschutz#kontaktformular" className="underline underline-offset-2 hover:text-snow/70">
+          Datenschutzerklärung
+        </a>
+        .
+      </p>
     </form>
   );
 }

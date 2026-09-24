@@ -14,7 +14,6 @@ const shots: { src: string; href: string; alt: string; wide?: boolean }[] = [
   { src: "/referenzen/casa-beef/14.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Gericht", wide: true },
   { src: "/referenzen/casa-beef/events-3.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Gäste" },
   { src: "/referenzen/480-gradi/12.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pizza aus dem Ofen" },
-  { src: "/referenzen/casa-beef/bts-2.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Behind the Scenes", wide: true },
   { src: "/referenzen/480-gradi/55.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pistazien-Pizza" },
   { src: "/referenzen/casa-beef/events-30.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Service am Tisch" },
   { src: "/referenzen/480-gradi/26.webp", href: "/projekte/480-gradi", alt: "480 GRADI, Pizza servieren", wide: true },

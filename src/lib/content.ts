@@ -881,10 +881,10 @@ export const jobsEmail = "hello@grid-agency.de";
 
 /** Gemeinsamer Vorspann aller Stellen. */
 export const jobsIntro =
-  "Wir sind Berlin-Mittes führende Social-Media-Marketing-Agentur und positionieren namhafte Marken mit innovativen Strategien im digitalen Raum. Als dynamisches, digital-affines Team der Generationen Y und Z begleiten wir ikonische Marken und ihre unverwechselbaren Markenidentitäten auf ihrem Social-Media-Auftritt.";
+  "Wir sind Berlins und Frankfurts führende Social-Media-Marketing-Agentur und positionieren namhafte Marken mit innovativen Strategien im digitalen Raum. Als dynamisches, digital-affines Team der Generationen Y und Z begleiten wir ikonische Marken und ihre unverwechselbaren Markenidentitäten auf ihrem Social-Media-Auftritt.";
 
 const jobsBenefitsCore = [
-  "Trendiges und inspirierendes Agenturumfeld in Berlin-Mitte und Frankfurt",
+  "Trendiges und inspirierendes Agenturumfeld in Berlin und Frankfurt",
   "Die Möglichkeit, an spannenden Projekten mit namhaften Kunden zu arbeiten",
   "Kleines Team, große Verantwortung",
 ];
