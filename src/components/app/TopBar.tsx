@@ -70,6 +70,9 @@ export function TopBar() {
               <Link href="/jobs" className="nav-rainbow">
                 Jobs
               </Link>
+              <Link href="/faq" className="nav-rainbow">
+                FAQ
+              </Link>
               <a
                 href="#dm"
                 onClick={jump("dm")}

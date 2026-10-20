@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { roadmap } from "@/lib/content";
 import { SectionWatermark } from "./SectionWatermark";
@@ -93,13 +94,22 @@ export function RoadmapSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5 }}
-        className="mt-10 flex justify-center"
+        className="mt-10 flex flex-col items-center gap-4"
       >
         <CalendlyLink
           className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
         >
           Jetzt Erstgespräch buchen
         </CalendlyLink>
+        <p className="text-sm font-light text-snow/50">
+          Noch Fragen?{" "}
+          <Link
+            href="/faq"
+            className="font-medium text-dune underline-offset-4 hover:underline"
+          >
+            Antworten in unseren FAQ →
+          </Link>
+        </p>
       </motion.div>
     </div>
   );

@@ -13,7 +13,6 @@ import {
   MapPin,
   Ticket,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { scrollToId, stashScrollTarget } from "@/lib/scroll";
 
 export type GridEvent = {
@@ -198,12 +197,11 @@ export function EventsView() {
 
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from("events")
-      .select("*")
-      .order("starts_at", { ascending: false })
-      .then(({ data }) => {
-        if (cancelled || !data) return;
+    // Über die eigene API, nicht direkt aus dem Browser zu Supabase.
+    fetch("/api/events")
+      .then((res) => (res.ok ? res.json() : { events: [] }))
+      .then(({ events: data }: { events: GridEvent[] }) => {
+        if (cancelled) return;
         const now = Date.now();
         const all = data as GridEvent[];
         setLists({
@@ -216,6 +214,9 @@ export function EventsView() {
             ),
           past: all.filter((e) => new Date(e.starts_at).getTime() < now),
         });
+      })
+      .catch(() => {
+        if (!cancelled) setLists({ upcoming: [], past: [] });
       });
     return () => {
       cancelled = true;

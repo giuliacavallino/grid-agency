@@ -11,7 +11,7 @@ export default function ImpressumPage() {
       <div className="space-y-8 text-sm font-light leading-relaxed text-snow/70">
           <section>
             <h2 className="mb-2 text-base font-medium text-snow">
-              Angaben gemäß § 5 TMG
+              Angaben gemäß § 5 DDG
             </h2>
             <p>
               GRID Agency UG (haftungsbeschränkt)
@@ -73,21 +73,10 @@ export default function ImpressumPage() {
 
           <section>
             <h2 className="mb-2 text-base font-medium text-snow">
-              EU-Streitschlichtung
+              Verbraucherstreitbeilegung
             </h2>
             <p>
-              Die Europäische Kommission stellt eine Plattform zur
-              Online-Streitbeilegung (OS) bereit:{" "}
-              <a
-                href="https://ec.europa.eu/consumers/odr/"
-                target="_blank"
-                rel="noreferrer"
-                className="underline hover:text-snow"
-              >
-                https://ec.europa.eu/consumers/odr/
-              </a>
-              . Unsere E-Mail-Adresse finden Sie oben im Impressum. Wir sind
-              nicht verpflichtet und nicht bereit, an
+              Wir sind nicht verpflichtet und nicht bereit, an
               Streitbeilegungsverfahren vor einer
               Verbraucherschlichtungsstelle teilzunehmen.
             </p>

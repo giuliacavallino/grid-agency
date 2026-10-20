@@ -21,6 +21,7 @@ const items: Item[] = [
   { kind: "page", href: "/projekte", label: "Projekte" },
   { kind: "page", href: "/events", label: "Events" },
   { kind: "page", href: "/jobs", label: "Jobs" },
+  { kind: "page", href: "/faq", label: "FAQ" },
   { kind: "section", id: "dm", label: "Kontakt" },
 ];
 

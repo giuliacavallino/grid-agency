@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 type TeaserEvent = { id: string; title: string; starts_at: string };
 
@@ -17,21 +16,27 @@ export function EventTeaser({ match }: { match?: string } = {}) {
 
   useEffect(() => {
     let cancelled = false;
-    supabase
-      .from("events")
-      .select("id,title,starts_at")
-      .gte("starts_at", new Date().toISOString())
-      .order("starts_at", { ascending: true })
-      .limit(10)
-      .then(({ data }) => {
-        if (cancelled || !data) return;
+    // Über die eigene API, nicht direkt aus dem Browser zu Supabase.
+    fetch("/api/events")
+      .then((res) => (res.ok ? res.json() : { events: [] }))
+      .then(({ events }: { events: TeaserEvent[] }) => {
+        if (cancelled) return;
+        const now = Date.now();
+        const upcoming = events
+          .filter((e) => new Date(e.starts_at).getTime() >= now)
+          .sort(
+            (a, b) =>
+              new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+          )
+          .slice(0, 10);
         const hit = match
-          ? data.find((e) =>
+          ? upcoming.find((e) =>
               e.title.toLowerCase().includes(match.toLowerCase()),
             )
-          : data[0];
+          : upcoming[0];
         if (hit) setEvent(hit);
-      });
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };

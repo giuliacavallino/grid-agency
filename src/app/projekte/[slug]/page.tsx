@@ -88,6 +88,40 @@ export default async function ClientPage({
 
         <EventTeaser match={client.name} />
 
+        {/* Kennzahlen aus der Zusammenarbeit, mit Quelle und Zeitraum. */}
+        {client.results && client.results.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
+              Ergebnisse
+            </h2>
+            <div
+              className={`mt-3 grid gap-3 ${
+                client.results.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"
+              }`}
+            >
+              {client.results.map((r) => (
+                <div
+                  key={r.label}
+                  className="card-rainbow rounded-2xl border border-snow/10 p-5"
+                >
+                  <p className="text-scroll-gradient text-3xl font-medium tracking-tight">
+                    {r.value}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-snow">{r.label}</p>
+                  <p className="mt-2 text-sm font-light leading-relaxed text-snow/65">
+                    {r.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {client.resultsSource && (
+              <p className="mt-2 text-[11px] font-light text-snow/40">
+                {client.resultsSource}
+              </p>
+            )}
+          </section>
+        )}
+
         {client.caseStudy && (
           <section className="mt-10">
             <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
@@ -96,6 +130,30 @@ export default async function ClientPage({
             <p className="mt-3 rounded-2xl bg-black p-5 text-sm font-light leading-relaxed text-snow/85">
               {client.caseStudy}
             </p>
+          </section>
+        )}
+
+        {/* Echte Kundenstimme zum Projekt, Wortlaut unverändert. */}
+        {client.testimonial && (
+          <section className="mt-10">
+            <h2 className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
+              Kundenstimme
+            </h2>
+            <figure className="mt-3 rounded-2xl border border-snow/10 p-5">
+              <blockquote className="text-sm font-light leading-relaxed text-snow/80">
+                &bdquo;{client.testimonial.quote}&ldquo;
+              </blockquote>
+              <figcaption className="mt-4">
+                <p className="text-sm font-medium text-snow">
+                  {client.testimonial.name}
+                </p>
+                {client.testimonial.meta && (
+                  <p className="text-xs font-light text-snow/50">
+                    {client.testimonial.meta}
+                  </p>
+                )}
+              </figcaption>
+            </figure>
           </section>
         )}
 
