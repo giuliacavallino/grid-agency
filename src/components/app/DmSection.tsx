@@ -49,7 +49,7 @@ export function DmSection() {
           </span>
           <div>
             <p className="text-sm font-medium text-snow">grid.berlin</p>
-            <p className="text-[11px] font-light text-dune">
+            <p className="text-[0.6875rem] font-light text-dune">
               antwortet innerhalb von 2 Werktagen
             </p>
           </div>
@@ -68,7 +68,7 @@ export function DmSection() {
       >
         <div className="flex items-center gap-4">
           <span className="h-px flex-1 bg-snow/10" />
-          <span className="text-[11px] font-light uppercase tracking-[0.25em] text-snow/40">
+          <span className="text-[0.6875rem] font-light uppercase tracking-[0.25em] text-snow/40">
             oder direkt
           </span>
           <span className="h-px flex-1 bg-snow/10" />
@@ -82,7 +82,7 @@ export function DmSection() {
       </motion.div>
       </div>
 
-      <div className="mt-10 space-y-1 text-center text-[11px] font-light text-snow/35 lg:col-span-2">
+      <div className="mt-10 space-y-1 text-center text-[0.6875rem] font-light text-snow/35 lg:col-span-2">
         {/* Beide Standorte; auf schmalen Screens bricht die Zeile zwischen
             den Adressen um, nie mitten in einer Adresse. */}
         <p>

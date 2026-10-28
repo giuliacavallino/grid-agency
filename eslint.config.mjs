@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Das Intranet ist eine eigene App mit eigener Lint-Konfiguration.
     "intranet/**",
+    // Minifizierte Fremdbibliotheken, nicht unser Code.
+    "**/*.min.js",
   ]),
 ]);
 

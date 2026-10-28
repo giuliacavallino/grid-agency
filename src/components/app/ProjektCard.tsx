@@ -25,7 +25,7 @@ export function ProjektCard({
           <img
             src={client.logo}
             alt={client.name}
-            style={{ height: Math.min((client.height ?? 32) * 1.15, 48) }}
+            style={{ height: `${Math.min((client.height ?? 32) * 1.15, 48) / 16}rem` }}
             className="w-auto max-w-[70%] object-contain opacity-90 transition-transform duration-300 ease-out group-hover:scale-105"
             loading={eager ? "eager" : "lazy"}
           />
@@ -42,7 +42,7 @@ export function ProjektCard({
           (tag) => (
             <span
               key={tag}
-              className="rounded-full border border-snow/15 px-2.5 py-0.5 text-[11px] font-light text-snow/65"
+              className="rounded-full border border-snow/15 px-2.5 py-0.5 text-[0.6875rem] font-light text-snow/65"
             >
               {tag}
             </span>

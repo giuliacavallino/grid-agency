@@ -66,7 +66,7 @@ export function EventTeaser({ match }: { match?: string } = {}) {
                   timeZone: "Europe/Berlin",
                 })}
               </span>
-              <span className="text-[9px] font-medium uppercase tracking-widest">
+              <span className="text-[0.5625rem] font-medium uppercase tracking-widest">
                 {new Date(event.starts_at).toLocaleDateString("de-DE", {
                   month: "short",
                   timeZone: "Europe/Berlin",
@@ -74,7 +74,7 @@ export function EventTeaser({ match }: { match?: string } = {}) {
               </span>
             </span>
             <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-dune">
+              <span className="flex items-center gap-1.5 text-[0.6875rem] font-medium uppercase tracking-[0.15em] text-dune">
                 <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
                 {match ? "Jetzt Event nicht verpassen" : "Anstehendes Event"}
               </span>
