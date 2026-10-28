@@ -1,10 +1,15 @@
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 /** Events für Startseite, Kundenseiten und /events. Die Abfrage läuft
  * bewusst serverseitig: Der Browser der Besucher spricht nur mit unserer
  * eigenen Domain und baut keine Verbindung zu Supabase auf, es werden also
  * keine IP-Adressen an Dritte übertragen. */
 export async function GET() {
+  const supabase = getSupabase();
+  if (!supabase) {
+    return Response.json({ events: [] }, { status: 503 });
+  }
+
   const { data, error } = await supabase
     .from("events")
     .select("*")

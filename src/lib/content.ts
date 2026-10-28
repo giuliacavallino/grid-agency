@@ -138,7 +138,6 @@ export const clients: Client[] = [
     /* Aufgehellte Lila-Variante: das dunkle Brand-Lila (#37255B) hätte
        auf dem Sky-Hintergrund kaum Kontrast. */
     logo: "/clients/casa-beef-lila-hell.png",
-    logoDetail: "/clients/casa-beef-lila.png",
     height: 34,
     instagram: "casa.beef",
     intro:

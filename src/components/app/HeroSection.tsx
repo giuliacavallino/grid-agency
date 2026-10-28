@@ -49,7 +49,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[2.6rem] font-medium leading-[1.05] tracking-tight text-snow drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] lg:mx-auto lg:text-[clamp(4.5rem,8vw,6.75rem)] lg:leading-[1.02]"
+            className="text-[clamp(2.1rem,11vw,2.6rem)] font-medium leading-[1.05] tracking-tight text-snow drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] lg:mx-auto lg:text-[clamp(4.5rem,8vw,6.75rem)] lg:leading-[1.02]"
           >
             Marken, die man
             <br />
@@ -74,14 +74,19 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.55 }}
-            className="mt-7 flex gap-2 lg:mx-auto lg:max-w-md"
+            className="mt-7 flex flex-wrap gap-2 lg:mx-auto lg:max-w-md"
           >
             {/* Direkt zur Calendly-Buchung — unverbindliches Erstgespräch,
-                öffnet im neuen Tab statt zur DM-Sektion zu scrollen. */}
+                öffnet im neuen Tab statt zur DM-Sektion zu scrollen. Beide
+                Buttons bleiben einzeilig; wird es zu eng (sehr schmale
+                Handys), rutschen sie untereinander statt umzubrechen. */}
             <CalendlyLink
-              className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
+              className="btn-rainbow flex flex-auto items-center lg:flex-1 justify-center gap-2 whitespace-nowrap rounded-full bg-snow px-5 py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
             >
-              Jetzt Erstgespräch buchen
+              <span>
+                <span className="hidden sm:inline">Jetzt </span>Erstgespräch
+                buchen
+              </span>
             </CalendlyLink>
             <a
               href="#cases"
@@ -89,7 +94,7 @@ export function HeroSection() {
                 e.preventDefault();
                 scrollToId("cases");
               }}
-              className="glass flex-1 rounded-full py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
+              className="glass flex-auto whitespace-nowrap lg:flex-1 rounded-full px-5 py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
             >
               Cases ansehen
             </a>

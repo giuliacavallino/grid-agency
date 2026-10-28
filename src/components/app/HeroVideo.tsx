@@ -28,7 +28,6 @@ export function HeroVideo() {
     >
       <picture>
         <source media="(min-width: 50rem)" srcSet="/hero/poster-landscape.jpg" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/hero/poster-portrait.jpg"
           alt=""

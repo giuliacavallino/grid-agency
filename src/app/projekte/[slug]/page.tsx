@@ -37,7 +37,7 @@ export default async function ClientPage({
   return (
     <LegalShell title={client.name}>
       <div>
-        <div className="flex min-h-24 items-center justify-center py-4">
+        <h1 className="flex min-h-24 items-center justify-center py-4">
           {client.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -51,7 +51,7 @@ export default async function ClientPage({
               {client.name}
             </span>
           )}
-        </div>
+        </h1>
 
         {/* Was GRID für die Marke gemacht hat — ohne eigene Angabe
             greifen die Kernleistungen der Agentur. */}

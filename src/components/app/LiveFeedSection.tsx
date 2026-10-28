@@ -11,7 +11,7 @@ import {
   MoreHorizontal,
   Send,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 type ClientPost = {
   id: string;
@@ -185,6 +185,8 @@ export function LiveFeedSection() {
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    const supabase = getSupabase();
+    if (!supabase) return;
     let cancelled = false;
 
     supabase

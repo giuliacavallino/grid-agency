@@ -55,21 +55,23 @@ export function ContactForm() {
           placeholder="Unternehmen / Marke"
           className={inputClasses}
         />
+        {/* Solange nichts gewählt ist, sieht der Platzhalter aus wie die
+            der Textfelder. */}
         <select
           name="budget"
           defaultValue=""
-          className={`${inputClasses} text-snow/70`}
+          className={`${inputClasses} has-[option[value='']:checked]:text-snow/40`}
         >
           <option value="" disabled>
             Monatliches Budget
           </option>
-          <option value="<1500" className="bg-sky">
+          <option value="<1500" className="bg-sky text-snow">
             unter 1.500 €
           </option>
-          <option value="1500-3000" className="bg-sky">
+          <option value="1500-3000" className="bg-sky text-snow">
             1.500 € – 3.000 €
           </option>
-          <option value=">3000" className="bg-sky">
+          <option value=">3000" className="bg-sky text-snow">
             über 3.000 €
           </option>
         </select>

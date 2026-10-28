@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "GRID Agency | Social Media Agentur Berlin & Frankfurt",
     description:
-      "Digitale Kommunikation im und außerhalb das Grid. Deine Nr. 1 Social Media Agentur in Berlin & Frankfurt.",
+      "Digitale Kommunikation innerhalb und außerhalb des Grids. Deine Nr. 1 Social-Media-Agentur in Berlin & Frankfurt.",
     url: "https://grid-agency.de",
     siteName: "GRID Agency",
     locale: "de_DE",
