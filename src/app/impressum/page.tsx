@@ -8,6 +8,12 @@ export const metadata: Metadata = {
 export default function ImpressumPage() {
   return (
     <LegalShell title="Impressum">
+      <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
+        Rechtliches
+      </p>
+      <h1 className="mb-8 mt-2 text-3xl font-medium tracking-tight text-snow">
+        Impressum
+      </h1>
       <div className="space-y-8 text-sm font-light leading-relaxed text-snow/70">
           <section>
             <h2 className="mb-2 text-base font-medium text-snow">

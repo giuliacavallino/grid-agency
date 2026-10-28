@@ -17,6 +17,12 @@ function H({ id, children }: { id?: string; children: React.ReactNode }) {
 export default function DatenschutzPage() {
   return (
     <LegalShell title="Datenschutz">
+      <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
+        Rechtliches
+      </p>
+      <h1 className="mb-8 mt-2 text-3xl font-medium tracking-tight text-snow">
+        Datenschutzerklärung
+      </h1>
       <div className="space-y-8 text-sm font-light leading-relaxed text-snow/70">
         <section>
           <p>
