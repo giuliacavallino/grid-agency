@@ -60,19 +60,19 @@ export function ServicesSection() {
               Details klappen per Tap auf, so bleibt der Block kompakt. */}
           <SnapRow
             label="Leistungen"
-            className="mt-5 items-start lg:m-0 lg:mt-8 lg:grid lg:grid-cols-3 lg:overflow-visible lg:p-0 lg:landscape:mt-0"
+            className="mt-5 items-stretch lg:m-0 lg:mt-8 lg:grid lg:auto-rows-fr lg:grid-cols-3 lg:overflow-visible lg:p-0 lg:landscape:mt-0"
           >
             {services.map((service, i) => (
               <motion.div
                 key={service.number}
                 {...cardMotion(i)}
-                className="w-[78%] max-w-[20rem] lg:w-auto lg:max-w-none"
+                className="flex w-[78%] max-w-[20rem] lg:w-auto lg:max-w-none"
               >
                 <button
                   type="button"
                   onClick={() => setOpen(open === i ? null : i)}
                   aria-expanded={open === i}
-                  className="card-rainbow group w-full overflow-hidden rounded-2xl border border-sky/15 bg-white text-left"
+                  className="card-rainbow group flex w-full flex-col overflow-hidden rounded-2xl border border-sky/15 bg-white text-left"
                 >
                   {service.image && (
                     <div className="overflow-hidden">
@@ -85,7 +85,7 @@ export function ServicesSection() {
                       />
                     </div>
                   )}
-                  <div className="p-4 xl:p-5">
+                  <div className="w-full flex-1 p-4 xl:p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-earth">
