@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getGraphToken } from "./auth";
-import { CALENDAR_SCOPES, DEMO, MAIL_SCOPES, SHARED_MAILBOX } from "./config";
-import { demoGraph } from "./graph-demo";
+import { CALENDAR_SCOPES, DEMO, MAIL_SCOPES } from "./config";
+import { demoGraphFor } from "./graph-demo";
 
-// Microsoft Graph für das gemeinsame Postfach hello@ (delegiert, mit dem
-// Login der Person). Im Vorschaumodus (DEMO) antworten Beispieldaten.
+// Microsoft Graph für die Postfächer aus MAILBOXES (delegiert, mit dem Login
+// der Person). graphFor(adresse) liefert den Client für ein Postfach. Im
+// Vorschaumodus (DEMO) antworten Beispieldaten.
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
-const BASE = `${GRAPH}/users/${SHARED_MAILBOX}`;
 
 // ---------- Typen ----------
 
@@ -54,6 +54,8 @@ export type Draft = { to: string[]; cc: string[]; subject: string; body: string 
 
 export type Calendar = {
   id: string;
+  /** Postfach, zu dem der Kalender gehört */
+  mailbox: string;
   name: string;
   color: string;
   isDefaultCalendar: boolean;
@@ -104,16 +106,19 @@ export interface GraphApi {
 // ---------- Fehler ----------
 
 export class GraphError extends Error {
-  constructor(public status: number, public code: string | undefined, message: string) {
+  constructor(public status: number, public code: string | undefined, message: string, public mailbox?: string) {
     super(message);
   }
 }
 
+export const isAccessDenied = (error: unknown) =>
+  error instanceof GraphError && (error.status === 403 || error.status === 404 || error.code === "ErrorAccessDenied");
+
 /** Verständliche Meldung für die häufigsten Graph-Fehler. */
 export function graphErrorMessage(error: unknown) {
   if (error instanceof GraphError) {
-    if (error.status === 403 || error.status === 404 || error.code === "ErrorAccessDenied") {
-      return `Dein Konto hat keinen Zugriff auf ${SHARED_MAILBOX}. Bitte in Exchange „Vollzugriff“ (und „Senden als“) auf das Postfach geben lassen.`;
+    if (isAccessDenied(error)) {
+      return `Dein Konto hat keinen Zugriff auf ${error.mailbox ?? "das Postfach"}. Bitte in Exchange „Vollzugriff“ (und „Senden als“) auf das Postfach geben lassen.`;
     }
     if (error.status === 429) return "Microsoft bremst gerade die Anfragen. Bitte gleich nochmal versuchen.";
   }
@@ -122,9 +127,9 @@ export function graphErrorMessage(error: unknown) {
 
 // ---------- Echter Graph-Client ----------
 
-async function graphFetch(path: string, scopes: string[], init: RequestInit = {}) {
+async function graphFetch(mailbox: string, path: string, scopes: string[], init: RequestInit = {}) {
   const token = await getGraphToken(scopes);
-  const response = await fetch(path.startsWith("http") ? path : `${BASE}${path}`, {
+  const response = await fetch(path.startsWith("http") ? path : `${GRAPH}/users/${mailbox}${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -134,13 +139,11 @@ async function graphFetch(path: string, scopes: string[], init: RequestInit = {}
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new GraphError(response.status, body?.error?.code, body?.error?.message ?? `Graph ${response.status}`);
+    throw new GraphError(response.status, body?.error?.code, body?.error?.message ?? `Graph ${response.status}`, mailbox);
   }
   return response;
 }
 
-const mail = (path: string, init?: RequestInit) => graphFetch(path, MAIL_SCOPES, init);
-const cal = (path: string, init?: RequestInit) => graphFetch(path, CALENDAR_SCOPES, init);
 
 const MESSAGE_FIELDS = [
   "id", "internetMessageId", "subject", "bodyPreview", "receivedDateTime", "sentDateTime", "from",
@@ -165,154 +168,170 @@ const CALENDAR_COLORS: Record<string, string> = {
   lightRed: "#ec5b54", maxColor: "#a77ff0", auto: "#4f9bf0",
 };
 
-const realGraph: GraphApi = {
-  async folders() {
-    const results = await Promise.allSettled(
-      FOLDERS.map(async ({ key }) => {
-        const folder = await (await mail(`/mailFolders/${key}?$select=id,unreadItemCount,totalItemCount`)).json();
-        return { key, id: folder.id, unreadItemCount: folder.unreadItemCount, totalItemCount: folder.totalItemCount };
-      })
-    );
-    // Archiv gibt es nicht in jedem Postfach; den Posteingang aber immer.
-    const inbox = results[0];
-    if (inbox.status === "rejected") throw inbox.reason;
-    return results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
-  },
+function realGraph(mailbox: string): GraphApi {
+  const mail = (path: string, init?: RequestInit) => graphFetch(mailbox, path, MAIL_SCOPES, init);
+  const cal = (path: string, init?: RequestInit) => graphFetch(mailbox, path, CALENDAR_SCOPES, init);
+  return {
+    async folders() {
+      const results = await Promise.allSettled(
+        FOLDERS.map(async ({ key }) => {
+          const folder = await (await mail(`/mailFolders/${key}?$select=id,unreadItemCount,totalItemCount`)).json();
+          return { key, id: folder.id, unreadItemCount: folder.unreadItemCount, totalItemCount: folder.totalItemCount };
+        })
+      );
+      // Archiv gibt es nicht in jedem Postfach; den Posteingang aber immer.
+      const inbox = results[0];
+      if (inbox.status === "rejected") throw inbox.reason;
+      return results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+    },
 
-  async messages({ folder, focused, search, next }) {
-    let url: string;
-    if (next) url = next;
-    else if (search) {
-      url = `/mailFolders/${folder}/messages?$search=${encodeURIComponent(`"${search.replace(/"/g, "")}"`)}&$select=${MESSAGE_FIELDS}&$top=40`;
-    } else {
-      // $orderby verlangt dieselbe Eigenschaft zuerst im $filter
-      const filters = ["receivedDateTime ge 1900-01-01T00:00:00Z"];
-      if (focused !== undefined && focused !== null) {
-        filters.push(`inferenceClassification eq '${focused ? "focused" : "other"}'`);
+    async messages({ folder, focused, search, next }) {
+      let url: string;
+      if (next) url = next;
+      else if (search) {
+        url = `/mailFolders/${folder}/messages?$search=${encodeURIComponent(`"${search.replace(/"/g, "")}"`)}&$select=${MESSAGE_FIELDS}&$top=40`;
+      } else {
+        // $orderby verlangt dieselbe Eigenschaft zuerst im $filter
+        const filters = ["receivedDateTime ge 1900-01-01T00:00:00Z"];
+        if (focused !== undefined && focused !== null) {
+          filters.push(`inferenceClassification eq '${focused ? "focused" : "other"}'`);
+        }
+        url = `/mailFolders/${folder}/messages?$select=${MESSAGE_FIELDS}&$top=40&$orderby=receivedDateTime desc&$filter=${encodeURIComponent(filters.join(" and "))}`;
       }
-      url = `/mailFolders/${folder}/messages?$select=${MESSAGE_FIELDS}&$top=40&$orderby=receivedDateTime desc&$filter=${encodeURIComponent(filters.join(" and "))}`;
-    }
-    const data = await (await mail(url)).json();
-    return { items: data.value, next: data["@odata.nextLink"] ?? null };
-  },
+      const data = await (await mail(url)).json();
+      return { items: data.value, next: data["@odata.nextLink"] ?? null };
+    },
 
-  async message(id) {
-    const response = await mail(`/messages/${id}?$select=${MESSAGE_FIELDS},body`, {
-      headers: { Prefer: 'outlook.body-content-type="html"' },
-    });
-    return response.json();
-  },
+    async message(id) {
+      const response = await mail(`/messages/${id}?$select=${MESSAGE_FIELDS},body`, {
+        headers: { Prefer: 'outlook.body-content-type="html"' },
+      });
+      return response.json();
+    },
 
-  async attachments(id) {
-    const data = await (await mail(`/messages/${id}/attachments?$select=id,name,contentType,size,isInline`)).json();
-    return data.value;
-  },
+    async attachments(id) {
+      const data = await (await mail(`/messages/${id}/attachments?$select=id,name,contentType,size,isInline`)).json();
+      return data.value;
+    },
 
-  async download(messageId, attachmentId) {
-    return (await mail(`/messages/${messageId}/attachments/${attachmentId}/$value`)).blob();
-  },
+    async download(messageId, attachmentId) {
+      return (await mail(`/messages/${messageId}/attachments/${attachmentId}/$value`)).blob();
+    },
 
-  async update(id, patch) {
-    await mail(`/messages/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
-  },
+    async update(id, patch) {
+      await mail(`/messages/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+    },
 
-  async move(id, destination) {
-    await mail(`/messages/${id}/move`, { method: "POST", body: JSON.stringify({ destinationId: destination }) });
-  },
+    async move(id, destination) {
+      await mail(`/messages/${id}/move`, { method: "POST", body: JSON.stringify({ destinationId: destination }) });
+    },
 
-  async remove(id) {
-    await mail(`/messages/${id}`, { method: "DELETE" });
-  },
+    async remove(id) {
+      await mail(`/messages/${id}`, { method: "DELETE" });
+    },
 
-  async send(draft) {
-    await mail(`/sendMail`, {
-      method: "POST",
-      body: JSON.stringify({
-        message: {
-          subject: draft.subject,
-          body: { contentType: "Text", content: draft.body },
-          toRecipients: recipients(draft.to),
-          ccRecipients: recipients(draft.cc),
-        },
-        saveToSentItems: true,
-      }),
-    });
-  },
+    async send(draft) {
+      await mail(`/sendMail`, {
+        method: "POST",
+        body: JSON.stringify({
+          message: {
+            subject: draft.subject,
+            body: { contentType: "Text", content: draft.body },
+            toRecipients: recipients(draft.to),
+            ccRecipients: recipients(draft.cc),
+          },
+          saveToSentItems: true,
+        }),
+      });
+    },
 
-  async reply(id, { comment, all }) {
-    await mail(`/messages/${id}/${all ? "replyAll" : "reply"}`, { method: "POST", body: JSON.stringify({ comment }) });
-  },
+    async reply(id, { comment, all }) {
+      await mail(`/messages/${id}/${all ? "replyAll" : "reply"}`, { method: "POST", body: JSON.stringify({ comment }) });
+    },
 
-  async forward(id, { to, comment }) {
-    await mail(`/messages/${id}/forward`, {
-      method: "POST",
-      body: JSON.stringify({ comment, toRecipients: recipients(to) }),
-    });
-  },
+    async forward(id, { to, comment }) {
+      await mail(`/messages/${id}/forward`, {
+        method: "POST",
+        body: JSON.stringify({ comment, toRecipients: recipients(to) }),
+      });
+    },
 
-  async calendars() {
-    const data = await (await cal(`/calendars?$select=id,name,color,hexColor,isDefaultCalendar,canEdit&$top=50`)).json();
-    return data.value.map((c: { id: string; name: string; color: string; hexColor: string; isDefaultCalendar: boolean; canEdit: boolean }) => ({
-      id: c.id,
-      name: c.name,
-      color: c.hexColor || CALENDAR_COLORS[c.color] || CALENDAR_COLORS.auto,
-      isDefaultCalendar: c.isDefaultCalendar,
-      canEdit: c.canEdit,
-    }));
-  },
+    async calendars() {
+      const data = await (await cal(`/calendars?$select=id,name,color,hexColor,isDefaultCalendar,canEdit&$top=50`)).json();
+      return data.value.map((c: { id: string; name: string; color: string; hexColor: string; isDefaultCalendar: boolean; canEdit: boolean }) => ({
+        id: c.id,
+        mailbox,
+        name: c.name,
+        color: c.hexColor || CALENDAR_COLORS[c.color] || CALENDAR_COLORS.auto,
+        isDefaultCalendar: c.isDefaultCalendar,
+        canEdit: c.canEdit,
+      }));
+    },
 
-  async events(calendar, start, end) {
-    const fields = "id,subject,start,end,isAllDay,location,organizer,attendees,onlineMeeting,bodyPreview,webLink";
-    let url: string | null =
-      `/calendars/${calendar.id}/calendarView?startDateTime=${start.toISOString()}&endDateTime=${end.toISOString()}&$select=${fields}&$top=200&$orderby=start/dateTime`;
-    const events: CalEvent[] = [];
-    while (url) {
-      const response = await cal(url, { headers: { Prefer: 'outlook.timezone="Europe/Berlin"' } });
-      const data = await response.json();
-      for (const e of data.value) {
-        events.push({
-          id: e.id,
-          calendarId: calendar.id,
-          subject: e.subject || "(Kein Titel)",
-          start: localDate(e.start.dateTime),
-          end: localDate(e.end.dateTime),
-          isAllDay: e.isAllDay,
-          location: e.location?.displayName || null,
-          organizer: e.organizer?.emailAddress?.name ?? null,
-          attendees: (e.attendees ?? []).map((a: { emailAddress: { name: string; address: string }; status?: { response: string } }) => ({
-            name: a.emailAddress.name,
-            address: a.emailAddress.address,
-            response: a.status?.response ?? "none",
-          })),
-          joinUrl: e.onlineMeeting?.joinUrl ?? null,
-          bodyPreview: e.bodyPreview ?? "",
-          webLink: e.webLink ?? null,
-        });
+    async events(calendar, start, end) {
+      const fields = "id,subject,start,end,isAllDay,location,organizer,attendees,onlineMeeting,bodyPreview,webLink";
+      let url: string | null =
+        `/calendars/${calendar.id}/calendarView?startDateTime=${start.toISOString()}&endDateTime=${end.toISOString()}&$select=${fields}&$top=200&$orderby=start/dateTime`;
+      const events: CalEvent[] = [];
+      while (url) {
+        const response = await cal(url, { headers: { Prefer: 'outlook.timezone="Europe/Berlin"' } });
+        const data = await response.json();
+        for (const e of data.value) {
+          events.push({
+            id: e.id,
+            calendarId: calendar.id,
+            subject: e.subject || "(Kein Titel)",
+            start: localDate(e.start.dateTime),
+            end: localDate(e.end.dateTime),
+            isAllDay: e.isAllDay,
+            location: e.location?.displayName || null,
+            organizer: e.organizer?.emailAddress?.name ?? null,
+            attendees: (e.attendees ?? []).map((a: { emailAddress: { name: string; address: string }; status?: { response: string } }) => ({
+              name: a.emailAddress.name,
+              address: a.emailAddress.address,
+              response: a.status?.response ?? "none",
+            })),
+            joinUrl: e.onlineMeeting?.joinUrl ?? null,
+            bodyPreview: e.bodyPreview ?? "",
+            webLink: e.webLink ?? null,
+          });
+        }
+        url = data["@odata.nextLink"] ?? null;
       }
-      url = data["@odata.nextLink"] ?? null;
-    }
-    return events;
-  },
+      return events;
+    },
 
-  async createEvent(calendarId, input) {
-    await cal(`/calendars/${calendarId}/events`, {
-      method: "POST",
-      body: JSON.stringify({
-        subject: input.subject,
-        isAllDay: input.isAllDay,
-        start: { dateTime: localString(input.start), timeZone: "Europe/Berlin" },
-        end: { dateTime: localString(input.end), timeZone: "Europe/Berlin" },
-        location: input.location ? { displayName: input.location } : undefined,
-      }),
-    });
-  },
+    async createEvent(calendarId, input) {
+      await cal(`/calendars/${calendarId}/events`, {
+        method: "POST",
+        body: JSON.stringify({
+          subject: input.subject,
+          isAllDay: input.isAllDay,
+          start: { dateTime: localString(input.start), timeZone: "Europe/Berlin" },
+          end: { dateTime: localString(input.end), timeZone: "Europe/Berlin" },
+          location: input.location ? { displayName: input.location } : undefined,
+        }),
+      });
+    },
 
-  async deleteEvent(id) {
-    await cal(`/events/${id}`, { method: "DELETE" });
-  },
-};
+    async deleteEvent(id) {
+      await cal(`/events/${id}`, { method: "DELETE" });
+    },
+  };
+}
 
-export const graph: GraphApi = DEMO ? demoGraph : realGraph;
+const clients = new Map<string, GraphApi>();
+
+/** Graph-Client für ein Postfach (Adresse aus MAILBOXES). */
+export function graphFor(mailbox: string): GraphApi {
+  const key = mailbox.toLowerCase();
+  let client = clients.get(key);
+  if (!client) {
+    client = DEMO ? demoGraphFor(key) : realGraph(key);
+    clients.set(key, client);
+  }
+  return client;
+}
 
 // ---------- Hook für asynchrone Daten ----------
 
