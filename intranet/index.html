@@ -79,6 +79,7 @@
       inset 0 1px 0 color-mix(in srgb, var(--snow) 18%, transparent),
       0 8px 32px rgb(0 0 0 / .35);
   }
+  .card[hidden] { display: none; }
 
   h1 {
     margin: 0 0 6px;
@@ -90,102 +91,59 @@
     margin: 0 0 24px;
     font-size: 14px;
     color: color-mix(in srgb, var(--snow) 60%, transparent);
+    overflow-wrap: anywhere;
   }
 
-  label {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 12px;
-    font-weight: 400;
-    color: color-mix(in srgb, var(--snow) 70%, transparent);
-  }
-  .field { margin-bottom: 16px; }
-  .field-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-
-  input[type="email"],
-  input[type="password"],
-  input[type="text"] {
+  /* Buttons: Primär (Snow mit Aurora-Hover wie .btn-rainbow) und Sekundär
+     (Outline). Jeder Button zeigt beim Warten einen Spinner (.is-loading). */
+  .btn {
+    position: relative;
     width: 100%;
     height: 48px;
-    padding: 0 16px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--snow) 14%, transparent);
-    background: color-mix(in srgb, var(--sky) 55%, transparent);
-    color: var(--snow);
-    font: inherit;
-    font-size: 16px; /* verhindert iOS-Zoom */
-    outline: none;
-    transition: border-color .2s, box-shadow .2s;
-  }
-  input::placeholder { color: color-mix(in srgb, var(--snow) 30%, transparent); }
-  input:focus {
-    border-color: color-mix(in srgb, var(--snow) 45%, transparent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--snow) 10%, transparent);
-  }
-  input[aria-invalid="true"] { border-color: var(--error); }
-
-  .password { position: relative; }
-  .password input { padding-right: 52px; }
-  .toggle {
-    position: absolute;
-    top: 0; right: 0;
-    width: 48px; height: 48px;
-    display: grid; place-items: center;
-    border: 0; background: none; cursor: pointer;
-    color: color-mix(in srgb, var(--snow) 50%, transparent);
-  }
-  .toggle:hover { color: var(--snow); }
-  .toggle svg { width: 18px; height: 18px; }
-  .toggle .hide { display: none; }
-  .toggle[aria-pressed="true"] .show { display: none; }
-  .toggle[aria-pressed="true"] .hide { display: block; }
-
-  .link {
-    font-size: 12px;
-    color: color-mix(in srgb, var(--snow) 50%, transparent);
-    text-decoration: none;
-  }
-  .link:hover { color: var(--snow); text-decoration: underline; text-underline-offset: 3px; }
-
-  .remember {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    margin: 4px 0 24px;
-    font-size: 13px;
-    color: color-mix(in srgb, var(--snow) 70%, transparent);
-    cursor: pointer;
-  }
-  .remember input { width: 16px; height: 16px; margin: 0; accent-color: var(--snow); }
-
-  /* Primärbutton inkl. Aurora-Hover wie .btn-rainbow */
-  button[type="submit"] {
-    width: 100%;
-    height: 48px;
-    border: 0;
     border-radius: 999px;
-    background: var(--snow);
-    color: var(--sky);
     font: inherit;
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
-    transition: transform .2s ease, box-shadow .25s ease;
+    transition: transform .2s ease, box-shadow .25s ease, background-color .2s;
   }
-  button[type="submit"]:hover:not(:disabled) {
+  .btn-primary { border: 0; background: var(--snow); color: var(--sky); }
+  .btn-primary:hover:not(:disabled) {
     background-image: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
     background-size: 200% 100%;
     animation: rainbow-slide 1.6s linear infinite;
     transform: scale(1.02);
     box-shadow: 0 10px 34px rgb(250 126 30 / .35);
   }
-  button[type="submit"]:active:not(:disabled) { transform: scale(.97); }
-  button[type="submit"]:disabled { opacity: .6; cursor: progress; }
+  .btn-secondary {
+    border: 1px solid color-mix(in srgb, var(--snow) 22%, transparent);
+    background: none;
+    color: var(--snow);
+  }
+  .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--snow) 8%, transparent); }
+  .btn:active:not(:disabled) { transform: scale(.97); }
+  .btn:disabled { cursor: progress; }
+  .btn:disabled:not(.is-loading) { opacity: .6; cursor: not-allowed; }
   @keyframes rainbow-slide { to { background-position: -200% 0; } }
+
+  .btn .ms-logo { width: 18px; height: 18px; flex: none; }
+  .spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    animation: spin .7s linear infinite;
+  }
+  .btn.is-loading .spinner { display: block; }
+  .btn.is-loading .ms-logo { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   .status {
     min-height: 20px;
@@ -194,6 +152,15 @@
     text-align: center;
   }
   .status.error { color: var(--error); }
+
+  .hint {
+    margin: 4px 0 0;
+    font-size: 12px;
+    text-align: center;
+    color: color-mix(in srgb, var(--snow) 45%, transparent);
+  }
+  .hint a { color: inherit; }
+  .hint a:hover { color: var(--snow); }
 
   footer {
     margin-top: 24px;
@@ -206,7 +173,8 @@
   footer a:hover { color: color-mix(in srgb, var(--snow) 60%, transparent); }
 
   @media (prefers-reduced-motion: reduce) {
-    button[type="submit"]:hover:not(:disabled) { animation: none; transform: none; }
+    .btn-primary:hover:not(:disabled) { animation: none; transform: none; }
+    .spinner { animation-duration: 1.6s; }
   }
 </style>
 </head>
@@ -219,40 +187,32 @@
     <span>Intranet</span>
   </div>
 
-  <div class="card">
+  <!-- Abgemeldet -->
+  <section class="card" id="signed-out">
     <h1>Willkommen zurück</h1>
-    <p class="lead">Melde dich mit deinem GRID-Account an.</p>
+    <p class="lead">Melde dich mit deinem GRID-Microsoft-Konto an.</p>
 
-    <form id="login" novalidate>
-      <div class="field">
-        <label for="email">E-Mail</label>
-        <input id="email" name="email" type="email" autocomplete="username"
-               placeholder="vorname@grid-agency.de" required autofocus>
-      </div>
+    <button type="button" class="btn btn-primary is-loading" id="sign-in" disabled aria-busy="true">
+      <span class="spinner" aria-hidden="true"></span>
+      <svg class="ms-logo" viewBox="0 0 21 21" aria-hidden="true"><path fill="#f25022" d="M0 0h10v10H0z"/><path fill="#7fba00" d="M11 0h10v10H11z"/><path fill="#00a4ef" d="M0 11h10v10H0z"/><path fill="#ffb900" d="M11 11h10v10H11z"/></svg>
+      <span class="label">Anmeldung wird geprüft …</span>
+    </button>
+    <p class="status" role="status" aria-live="polite"></p>
+    <p class="hint">
+      Probleme beim Login? <a href="mailto:hello@grid-agency.de?subject=Intranet-Login">hello@grid-agency.de</a>
+    </p>
+  </section>
 
-      <div class="field">
-        <div class="field-row">
-          <label for="password">Passwort</label>
-          <a class="link" href="mailto:hello@grid-agency.de?subject=Intranet%3A%20Passwort%20vergessen">Passwort vergessen?</a>
-        </div>
-        <div class="password">
-          <input id="password" name="password" type="password"
-                 autocomplete="current-password" placeholder="••••••••" required>
-          <button type="button" class="toggle" aria-label="Passwort anzeigen" aria-pressed="false">
-            <svg class="show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
-            <svg class="hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 4.2A9.8 9.8 0 0 1 12 4c6.5 0 10 8 10 8a17 17 0 0 1-2.2 3.2M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="m2 2 20 20"/></svg>
-          </button>
-        </div>
-      </div>
+  <!-- Angemeldet -->
+  <section class="card" id="signed-in" hidden>
+    <h1>Hallo <span id="user-name"></span></h1>
+    <p class="lead">Angemeldet als <span id="user-email"></span>. Hier entsteht das GRID Intranet.</p>
 
-      <label class="remember">
-        <input type="checkbox" name="remember"> Angemeldet bleiben
-      </label>
-
-      <button type="submit">Anmelden</button>
-      <p class="status" role="status" aria-live="polite"></p>
-    </form>
-  </div>
+    <button type="button" class="btn btn-secondary" id="sign-out">
+      <span class="spinner" aria-hidden="true"></span>
+      <span class="label">Abmelden</span>
+    </button>
+  </section>
 
   <footer>
     <a href="https://grid-agency.de">grid-agency.de</a>
@@ -261,65 +221,109 @@
   </footer>
 </main>
 
+<!-- Offizielles Browser-Bundle von @azure/msal-browser v5.25.1 (MIT),
+     lokal eingebunden, damit beim Seitenaufruf kein Drittanbieter-CDN lädt. -->
+<script src="assets/msal-browser.min.js"></script>
 <script>
-  const form = document.getElementById("login");
-  const email = form.email;
-  const password = form.password;
-  const status = form.querySelector(".status");
-  const submit = form.querySelector('button[type="submit"]');
-  const toggle = form.querySelector(".toggle");
+  // Microsoft Entra ID (Azure AD): App-Registrierung "GRID Intranet",
+  // Plattform "Single-page application", Redirect-URI
+  // https://intranet.grid-agency.de/ (für Tests zusätzlich http://localhost:…/).
+  // Die Client-ID steht auf der Übersichtsseite der App-Registrierung.
+  const CLIENT_ID = "";
+  // Nur Konten aus dem GRID-Tenant; statt der Domain geht auch die Tenant-ID.
+  const TENANT = "grid-agency.de";
 
-  toggle.addEventListener("click", () => {
-    const visible = toggle.getAttribute("aria-pressed") === "true";
-    toggle.setAttribute("aria-pressed", String(!visible));
-    toggle.setAttribute("aria-label", visible ? "Passwort anzeigen" : "Passwort verbergen");
-    password.type = visible ? "password" : "text";
-  });
+  const signedOut = document.getElementById("signed-out");
+  const signedIn = document.getElementById("signed-in");
+  const signInButton = document.getElementById("sign-in");
+  const signOutButton = document.getElementById("sign-out");
+  const status = signedOut.querySelector(".status");
 
-  function showError(message, field) {
+  function setLoading(button, loading, label) {
+    button.disabled = loading;
+    button.classList.toggle("is-loading", loading);
+    button.setAttribute("aria-busy", String(loading));
+    button.querySelector(".label").textContent = label;
+  }
+
+  function showError(message) {
     status.textContent = message;
     status.className = "status error";
-    if (field) {
-      field.setAttribute("aria-invalid", "true");
-      field.focus();
+  }
+
+  function showAccount(account) {
+    document.getElementById("user-name").textContent =
+      (account.name || account.username).split(" ")[0];
+    document.getElementById("user-email").textContent = account.username;
+    signedOut.hidden = true;
+    signedIn.hidden = false;
+  }
+
+  function errorMessage(error) {
+    const code = error && error.errorCode;
+    if (code === "user_cancelled") return "Anmeldung abgebrochen.";
+    if (code === "interaction_in_progress") return "Eine Anmeldung läuft bereits. Bitte kurz warten.";
+    if (code === "access_denied" || /AADSTS50020|AADSTS90072/.test(error && error.message))
+      return "Bitte melde dich mit deinem @grid-agency.de-Konto an.";
+    return "Anmeldung fehlgeschlagen. Bitte versuch es erneut.";
+  }
+
+  const msalApp = CLIENT_ID
+    ? new msal.PublicClientApplication({
+        auth: {
+          clientId: CLIENT_ID,
+          authority: `https://login.microsoftonline.com/${TENANT}`,
+          redirectUri: `${location.origin}/`,
+          postLogoutRedirectUri: `${location.origin}/`,
+        },
+        cache: { cacheLocation: "localStorage" },
+      })
+    : null;
+
+  // Beim Laden: Rückkehr vom Microsoft-Login verarbeiten bzw. bestehende
+  // Sitzung erkennen. Bis dahin zeigt der Button den Spinner.
+  (async () => {
+    if (!msalApp) {
+      setLoading(signInButton, false, "Mit Microsoft anmelden");
+      return;
     }
-  }
+    try {
+      await msalApp.initialize();
+      const result = await msalApp.handleRedirectPromise();
+      const account = result ? result.account : msalApp.getAllAccounts()[0];
+      if (account) {
+        msalApp.setActiveAccount(account);
+        showAccount(account);
+      }
+    } catch (error) {
+      showError(errorMessage(error));
+    }
+    setLoading(signInButton, false, "Mit Microsoft anmelden");
+  })();
 
-  [email, password].forEach((input) =>
-    input.addEventListener("input", () => input.removeAttribute("aria-invalid"))
-  );
-
-  // Platzhalter: Hier wird das Auth-Backend angebunden. Bis dahin
-  // lehnt der Login jeden Versuch mit einem Hinweis ab.
-  async function signIn(/* { email, password, remember } */) {
-    throw new Error("Der Intranet-Login ist noch nicht freigeschaltet.");
-  }
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
+  signInButton.addEventListener("click", async () => {
     status.textContent = "";
     status.className = "status";
-
-    if (!email.value.trim() || !email.validity.valid) {
-      return showError("Bitte gib eine gültige E-Mail-Adresse ein.", email);
+    if (!msalApp) {
+      showError("Der Microsoft-Login ist noch nicht eingerichtet.");
+      return;
     }
-    if (!password.value) {
-      return showError("Bitte gib dein Passwort ein.", password);
-    }
-
-    submit.disabled = true;
-    submit.textContent = "Anmelden …";
+    setLoading(signInButton, true, "Weiterleitung zu Microsoft …");
     try {
-      await signIn({
-        email: email.value.trim(),
-        password: password.value,
-        remember: form.remember.checked,
-      });
+      // Leitet die Seite zu Microsoft weiter; der Spinner bleibt bis dahin.
+      await msalApp.loginRedirect({ scopes: ["User.Read"], prompt: "select_account" });
     } catch (error) {
-      showError(error.message);
-    } finally {
-      submit.disabled = false;
-      submit.textContent = "Anmelden";
+      showError(errorMessage(error));
+      setLoading(signInButton, false, "Mit Microsoft anmelden");
+    }
+  });
+
+  signOutButton.addEventListener("click", async () => {
+    setLoading(signOutButton, true, "Abmelden …");
+    try {
+      await msalApp.logoutRedirect({ account: msalApp.getActiveAccount() });
+    } catch {
+      setLoading(signOutButton, false, "Abmelden");
     }
   });
 </script>
