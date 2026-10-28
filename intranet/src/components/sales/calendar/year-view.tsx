@@ -25,6 +25,7 @@ export function YearView({
             onSelect={onDay}
             title={month.toLocaleDateString("de-DE", { month: "long" })}
             onTitleClick={() => onMonth(month)}
+            hideOutside
           />
         );
       })}

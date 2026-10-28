@@ -14,6 +14,7 @@ export function MiniMonth({
   title,
   onTitleClick,
   compact,
+  hideOutside,
 }: {
   month: Date;
   today: Date;
@@ -22,6 +23,8 @@ export function MiniMonth({
   title?: React.ReactNode;
   onTitleClick?: () => void;
   compact?: boolean;
+  /** Tage aus Nachbarmonaten ausblenden (Jahresansicht) */
+  hideOutside?: boolean;
 }) {
   const days = monthDays(month);
   const isCurrentMonth = month.getFullYear() === today.getFullYear() && month.getMonth() === today.getMonth();
@@ -45,7 +48,8 @@ export function MiniMonth({
         ))}
         {days.map((day) => {
           const inMonth = day.getMonth() === month.getMonth();
-          const isToday = sameDay(day, today);
+          const isToday = inMonth && sameDay(day, today);
+          if (hideOutside && !inMonth) return <span key={day.toISOString()} aria-hidden />;
           const isSelected = selected && sameDay(day, selected);
           return (
             <button
