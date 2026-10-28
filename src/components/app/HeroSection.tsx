@@ -36,11 +36,12 @@ function CountUp({ value, suffix }: { value: number; suffix: string }) {
 
 export function HeroSection() {
   return (
-    <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center px-5 pb-28 lg:pb-12">
+    <div className="flex min-h-[calc(100dvh-5rem)] flex-col px-5 pb-28 lg:pb-12">
       {/* Dark opening act with an aurora glow in client-brand colors:
           the backdrop breaks out of the content column and reaches up
-          behind the top bar. */}
-      <div className="relative">
+          behind the top bar. It fills all spare height and centers the
+          copy itself, so on tall screens no gap opens above the video. */}
+      <div className="relative flex flex-1 flex-col justify-center">
         <HeroVideo />
         <div className="aurora absolute -top-24 bottom-0 left-1/2 w-screen -translate-x-1/2 opacity-80" />
 
@@ -111,7 +112,7 @@ export function HeroSection() {
                 <p className="text-xl font-medium text-snow lg:text-2xl">
                   <CountUp value={stat.value} suffix={stat.suffix} />
                 </p>
-                <p className="mt-0.5 text-[11px] font-light text-snow/50">
+                <p className="mt-0.5 text-[0.6875rem] font-light text-snow/50">
                   {stat.label}
                 </p>
               </div>
@@ -150,7 +151,7 @@ export function HeroSection() {
                 <img
                   src={client.logo}
                   alt={client.name}
-                  style={{ height: client.height ?? 32 }}
+                  style={{ height: `${(client.height ?? 32) / 16}rem` }}
                   className="w-auto opacity-90"
                   loading="eager"
                 />

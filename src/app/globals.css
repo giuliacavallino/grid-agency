@@ -38,6 +38,16 @@
   --breakpoint-lg: 50rem; /* 800px statt Tailwind-Default 1024px */
 }
 
+/* Große Monitore (27" mit 2560px und mehr): Alles ist in rem gesetzt,
+   also skaliert eine größere Grundschrift Typo, Abstände und den
+   Seitenrahmen gemeinsam. Bis 1440px bleibt es bei 16px, darüber wächst
+   sie fließend bis 22px (bei ca. 2560px). Mobile und Laptop unverändert. */
+@media (min-width: 1440px) {
+  html {
+    font-size: clamp(16px, 0.5rem + 0.55vw, 22px);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

@@ -102,7 +102,7 @@ export function TabBar({ active }: { active: ViewId }) {
       className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-frame px-5 pb-[calc(env(safe-area-inset-bottom)+16px)] lg:hidden"
       aria-label="Hauptnavigation"
     >
-      <div className="glass pointer-events-auto relative mx-auto h-[68px] overflow-hidden rounded-full">
+      <div className="glass pointer-events-auto relative mx-auto h-[4.25rem] overflow-hidden rounded-full">
         <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 
         <div className="absolute inset-0 flex items-stretch justify-around px-2">
@@ -144,7 +144,7 @@ export function TabBar({ active }: { active: ViewId }) {
                 <motion.span
                   animate={{ opacity: isLit ? 1 : 0.45 }}
                   transition={{ duration: 0.3 }}
-                  className="text-[10px] font-light text-snow"
+                  className="text-[0.625rem] font-light text-snow"
                 >
                   {tab.label}
                 </motion.span>

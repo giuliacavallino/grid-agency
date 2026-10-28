@@ -39,7 +39,7 @@ export function ProcessSection() {
             <span className="pointer-events-none absolute -right-3 -top-6 text-[5.5rem] font-medium leading-none text-snow/[0.06]">
               {step.number}
             </span>
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-dune">
+            <p className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-dune">
               {step.number} · {step.title}
             </p>
             <h3 className="mt-2 text-xl font-medium tracking-tight text-snow">
