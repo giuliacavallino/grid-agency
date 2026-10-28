@@ -70,8 +70,9 @@ export function Mailbox() {
   const selected = messages.find((m) => m.id === selectedId) ?? null;
   const outgoing = OUTGOING.includes(folder);
 
-  // Einordnung durch den Mail-Abgleich (Anfrage → Lead / Bewerbung)
-  const ids = messages.map((m) => m.internetMessageId).filter(Boolean);
+  // Einordnung durch den Mail-Abgleich (Anfrage → Lead / Bewerbung). Nur für
+  // die ersten 40 Mails, damit die URL beim Weiterblättern kurz bleibt.
+  const ids = messages.map((m) => m.internetMessageId).filter(Boolean).slice(0, 40);
   const { data: inboundRows } = useResource<InboundMessage[]>(
     ids.length ? `/api/sales/inbound_messages?ids=${encodeURIComponent(ids.join(","))}` : null
   );
