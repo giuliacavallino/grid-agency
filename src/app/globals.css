@@ -29,13 +29,71 @@
      share this width so every surface lines up edge to edge — the single
      source of truth for "wie breit ist die Seite". Change it here once. */
   --container-frame: 35rem; /* 560px — mobile app frame */
-  --container-frame-lg: 68rem; /* 1088px — desktop frame */
+  --container-frame-lg: 68rem; /* 1088px — Unterseiten (Lesetext) */
+  /* Startseite ab Desktop: volle Bildschirmbreite; der Deckel greift erst
+     jenseits von 27"-Monitoren (Ultrawide), damit Zeilen nicht zerfasern. */
+  --container-frame-wide: 150rem;
+
+  /* Seitenrand ab Desktop: wächst mit der Bildschirmbreite mit, von
+     ~2rem auf dem 14"-MacBook bis 6rem auf 27". */
+  --spacing-gutter: clamp(2rem, 4vw, 6rem);
 
   /* Desktop-Ansicht früher greifen lassen: Die Desktop-Variante ist ohnehin
      auf den 760px-Frame gedeckelt, braucht also keine 1024px Viewport.
      Ohne das Override "springt" ein halbbreites Browserfenster (z.B.
      ~1000px auf dem MacBook) schon in die Mobile-App-Ansicht. */
   --breakpoint-lg: 50rem; /* 800px statt Tailwind-Default 1024px */
+}
+
+/* Ab großen Displays (16", 24", 27") wächst die ganze Seite proportional
+   mit: Tailwind rechnet Schrift, Abstände und Rahmen in rem, also skaliert
+   ein flüssiger Root-Font das komplette Layout. Bis ~1500px bleibt es
+   bei 16px (14"-MacBook, iPad, iPhone). Media Queries rechnen weiter mit
+   16px, die Breakpoints verschieben sich dadurch nicht. */
+html {
+  font-size: clamp(16px, calc(0.45vw + 9.2px), 21px);
+}
+/* Auf kurzen Handy-Displays (iPhone 13/14/15 mit eingeblendeten Safari-
+   Leisten) rückt alles ein paar Prozent zusammen, damit jede Sektion in
+   einen Bildschirm passt. Ab ~730px Höhe bleibt es bei 16px. */
+@media (max-width: 49.99rem) {
+  html {
+    font-size: clamp(14px, 2.2svh, 16px);
+  }
+}
+
+/* Ein "Bildschirm": Jede Sektion ist mindestens eine Viewporthöhe hoch,
+   Inhalt mittig, oben Luft für die schwebende Kopfleiste und mobil unten
+   für die Tab-Leiste. svh = kleinste Viewporthöhe, damit nichts unter
+   eingeblendeten Safari-Leisten verschwindet. */
+:root {
+  --screen-pt: calc(env(safe-area-inset-top) + 4.5rem);
+  --screen-pb: calc(env(safe-area-inset-bottom) + 6rem);
+}
+@media (min-width: 50rem) {
+  :root {
+    --screen-pt: 7rem;
+    --screen-pb: 2.5rem;
+  }
+}
+
+@utility screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100svh;
+  padding-top: var(--screen-pt);
+  padding-bottom: var(--screen-pb);
+  scroll-snap-align: start;
+}
+
+/* Desktop rastet sanft Sektion für Sektion ein; "proximity" lässt
+   freies Scrollen zu und greift nur nahe einer Sektionskante. */
+@media (min-width: 50rem) and (pointer: fine) {
+  html {
+    scroll-snap-type: y proximity;
+  }
 }
 
 body {
@@ -56,6 +114,34 @@ body {
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Horizontale Wisch-Reihe (mobil für Karten-Grids, die sonst mehrere
+   Bildschirme hoch wären). Als Utility, damit Varianten wie lg:grid sie
+   ab Desktop wieder zum Grid machen können. */
+@utility snap-row {
+  --bleed: 1.25rem; /* = px-5 der Sektion */
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--bleed);
+  padding-inline: var(--bleed);
+  margin-inline: calc(var(--bleed) * -1);
+  scrollbar-width: none;
+
+  @media (min-width: 50rem) {
+    --bleed: var(--spacing-gutter); /* = lg:px-gutter */
+    gap: 1rem;
+  }
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  & > * {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {

@@ -24,7 +24,7 @@ export function HeroVideo() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -top-24 bottom-0 left-1/2 w-screen -translate-x-1/2 overflow-hidden"
+      className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2 overflow-hidden"
     >
       <picture>
         <source media="(min-width: 50rem)" srcSet="/hero/poster-landscape.jpg" />

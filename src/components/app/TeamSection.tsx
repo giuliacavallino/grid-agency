@@ -9,127 +9,132 @@ import { SectionWatermark } from "./SectionWatermark";
 
 export function TeamSection() {
   return (
-    <div className="relative px-5 py-12">
+    <div className="relative px-5 lg:screen lg:px-gutter">
       <SectionWatermark word="Team" />
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.5 }}
-      >
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-          Team
-        </p>
-        <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow">
-          Die Person hinter
-          <br />
-          deinem <span className="text-scroll-gradient">Wachstum</span>.
-        </h2>
-      </motion.div>
 
-      {/* Desktop zweispaltig: Profil links, Vita rechts. */}
-      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-        className="glass mt-8 overflow-hidden rounded-3xl p-6"
-      >
-        <div className="flex items-center gap-5">
-          <div className="relative h-24 w-24 shrink-0">
-            <div className="story-ring absolute inset-0 animate-[spin_6s_linear_infinite] rounded-full" />
-            <div className="absolute inset-[3px] overflow-hidden rounded-full bg-sky">
-              <Image
-                src="/team/giulia-avatar.jpg"
-                alt={team.name}
-                fill
-                sizes="96px"
-                className="object-cover"
-              />
-            </div>
-          </div>
-          <div>
-            <p className="flex items-center gap-1.5 text-lg font-medium text-snow">
-              {team.name}
-              <BadgeCheck className="h-4.5 w-4.5 text-dune" strokeWidth={2} />
+      {/* Desktop zweispaltig: Überschrift und Profil links, Vita rechts.
+          Mobil ist jede Spalte ein eigener Bildschirm. */}
+      <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-[clamp(2.5rem,5vw,6rem)]">
+        <div className="max-lg:screen">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5 }}
+            className="relative"
+          >
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
+              Team
             </p>
-            <p className="text-sm font-light text-dune">{team.role}</p>
-          </div>
-        </div>
+            <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow lg:text-4xl">
+              Die Person hinter
+              <br />
+              deinem <span className="text-scroll-gradient">Wachstum</span>.
+            </h2>
+          </motion.div>
 
-        <p className="mt-5 text-sm font-light leading-relaxed text-snow/75">
-          {team.bio}
-        </p>
-
-        <div className="mt-6 flex justify-between border-t border-snow/10 pt-5">
-          {team.facts.map((fact) => (
-            <div key={fact.label} className="text-center">
-              <p className="text-lg font-medium text-snow">{fact.value}</p>
-              <p className="mt-0.5 text-[11px] font-light text-snow/50">
-                {fact.label}
-              </p>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="glass mt-6 overflow-hidden rounded-3xl p-6 lg:mt-8"
+          >
+            <div className="flex items-center gap-5">
+              <div className="relative h-24 w-24 shrink-0">
+                <div className="story-ring absolute inset-0 animate-[spin_6s_linear_infinite] rounded-full" />
+                <div className="absolute inset-[3px] overflow-hidden rounded-full bg-sky">
+                  <Image
+                    src="/team/giulia-avatar.jpg"
+                    alt={team.name}
+                    fill
+                    sizes="(min-width: 1500px) 128px, 96px"
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="flex items-center gap-1.5 text-lg font-medium text-snow">
+                  {team.name}
+                  <BadgeCheck className="h-4.5 w-4.5 text-dune" strokeWidth={2} />
+                </p>
+                <p className="text-sm font-light text-dune">{team.role}</p>
+              </div>
             </div>
-          ))}
-        </div>
-      </motion.div>
 
-      {/* Vita: die Stationen der Agentur seit 2021, aus dem Agentur-Deck. */}
-      <div className="mt-8 lg:mt-8">
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.5 }}
-          className="text-xs font-medium uppercase tracking-[0.2em] text-dune"
-        >
-          Vita
-        </motion.p>
-        <div className="mt-4 space-y-0">
-          {vita.map((station, i) => (
-            <motion.div
-              key={station.year}
-              initial={{ opacity: 0, x: -16 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="relative flex gap-5 pb-6 last:pb-0"
+            <p className="mt-5 text-sm font-light leading-relaxed text-snow/75">
+              {team.bio}
+            </p>
+
+            <div className="mt-6 flex justify-between border-t border-snow/10 pt-5">
+              {team.facts.map((fact) => (
+                <div key={fact.label} className="text-center">
+                  <p className="text-lg font-medium text-snow">{fact.value}</p>
+                  <p className="mt-0.5 text-[11px] font-light text-snow/50">
+                    {fact.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Vita: die Stationen der Agentur seit 2021, aus dem Agentur-Deck. */}
+        <div className="max-lg:screen">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5 }}
+            className="text-xs font-medium uppercase tracking-[0.2em] text-dune"
+          >
+            Vita
+          </motion.p>
+          <div className="mt-4 space-y-0">
+            {vita.map((station, i) => (
+              <motion.div
+                key={station.year}
+                initial={{ opacity: 0, x: -16 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="relative flex gap-5 pb-4 last:pb-0 lg:pb-6"
+              >
+                <div className="flex flex-col items-center">
+                  <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-dune" />
+                  {i < vita.length - 1 && (
+                    <span className="mt-1 w-px flex-1 bg-snow/15" />
+                  )}
+                </div>
+                <div className="pb-1">
+                  <p className="text-base font-medium tracking-tight text-snow lg:text-lg">
+                    {station.year}
+                  </p>
+                  <p className="mt-1 max-w-xl text-sm font-light leading-relaxed text-snow/65">
+                    {station.text}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.5, delay: 0.25 }}
+            className="mt-5 text-sm font-light text-snow/50 max-lg:text-center lg:mt-8"
+          >
+            Das Team wächst.{" "}
+            <Link
+              href="/jobs"
+              className="font-medium text-dune underline-offset-4 hover:underline"
             >
-              <div className="flex flex-col items-center">
-                <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-dune" />
-                {i < vita.length - 1 && (
-                  <span className="mt-1 w-px flex-1 bg-snow/15" />
-                )}
-              </div>
-              <div className="pb-1">
-                <p className="text-lg font-medium tracking-tight text-snow">
-                  {station.year}
-                </p>
-                <p className="mt-1 max-w-xl text-sm font-light leading-relaxed text-snow/65">
-                  {station.text}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+              Offene Stellen ansehen →
+            </Link>
+          </motion.p>
         </div>
       </div>
-      </div>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.5, delay: 0.25 }}
-        className="mt-8 text-center text-sm font-light text-snow/50"
-      >
-        Das Team wächst.{" "}
-        <Link
-          href="/jobs"
-          className="font-medium text-dune underline-offset-4 hover:underline"
-        >
-          Offene Stellen ansehen →
-        </Link>
-      </motion.p>
     </div>
   );
 }

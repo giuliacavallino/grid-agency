@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 /** Foto-Streifen auf voller Breite: die stärksten Shots aus echten
  * Produktionen driften wie das Logo-Band vorbei. Feste Höhe und feste
  * Seitenverhältnisse, damit lazy geladene Bilder die Streifenbreite nie
- * verändern und der Loop sauber bleibt. */
+ * verändern und der Loop sauber bleibt. Die Höhe hängt am Viewport,
+ * so füllt der Streifen auf jedem Gerät genau einen Bildschirm. */
 const shots: { src: string; href: string; alt: string; wide?: boolean }[] = [
   { src: "/referenzen/casa-beef/27.webp", href: "/projekte/casa-beef", alt: "Casa Beef, aufgeschnittenes Steak" },
   { src: "/referenzen/casa-beef/events-12.webp", href: "/projekte/casa-beef", alt: "Casa Beef, Opening" },
@@ -25,18 +26,18 @@ const shots: { src: string; href: string; alt: string; wide?: boolean }[] = [
 
 export function PhotoStrip() {
   return (
-    <div className="py-12">
+    <div className="screen">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.5 }}
-        className="px-5"
+        className="px-5 lg:px-gutter"
       >
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
           Aus unseren Produktionen
         </p>
-        <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow">
+        <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow lg:text-4xl">
           Content, der <span className="text-scroll-gradient">Appetit</span>{" "}
           macht.
         </h2>
@@ -59,7 +60,7 @@ export function PhotoStrip() {
             <Link
               key={`${shot.src}-${i}`}
               href={shot.href}
-              className={`mr-3 block h-56 shrink-0 overflow-hidden rounded-2xl lg:mr-4 lg:h-80 ${
+              className={`mr-3 block h-[clamp(13rem,46svh,26rem)] shrink-0 overflow-hidden rounded-2xl lg:mr-4 lg:h-[clamp(16rem,58svh,46rem)] ${
                 shot.wide ? "aspect-[4/3]" : "aspect-[4/5]"
               }`}
             >

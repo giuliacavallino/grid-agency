@@ -36,83 +36,81 @@ function CountUp({ value, suffix }: { value: number; suffix: string }) {
 
 export function HeroSection() {
   return (
-    <div className="flex min-h-[calc(100dvh-5rem)] flex-col justify-center px-5 pb-28 lg:pb-12">
+    <div className="screen px-5 lg:px-gutter">
       {/* Dark opening act with an aurora glow in client-brand colors:
-          the backdrop breaks out of the content column and reaches up
+          video and glow fill the whole first screen, full-bleed and up
           behind the top bar. */}
-      <div className="relative">
-        <HeroVideo />
-        <div className="aurora absolute -top-24 bottom-0 left-1/2 w-screen -translate-x-1/2 opacity-80" />
+      <HeroVideo />
+      <div className="aurora absolute inset-y-0 left-1/2 w-screen -translate-x-1/2 opacity-80" />
 
-        <div className="relative py-8 lg:py-16 lg:text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[2.6rem] font-medium leading-[1.05] tracking-tight text-snow drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] lg:mx-auto lg:text-[clamp(4.5rem,8vw,6.75rem)] lg:leading-[1.02]"
-          >
-            Marken, die man
-            <br />
-            nicht{" "}
-            <span className="text-scroll-gradient italic">wegscrollen</span>
-            <br className="lg:hidden" />{" "}
-            kann.
-          </motion.h1>
+      <div className="relative lg:text-center">
+        <motion.h1
+          initial={{ opacity: 0, y: 22 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="text-[clamp(2rem,min(10.5vw,5.6svh),2.9rem)] font-medium leading-[1.05] tracking-tight text-snow drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)] lg:mx-auto lg:text-[clamp(3.5rem,min(7vw,11svh),10rem)] lg:leading-[1.02]"
+        >
+          Marken, die man
+          <br />
+          nicht{" "}
+          <span className="text-scroll-gradient italic">wegscrollen</span>
+          <br className="lg:hidden" />{" "}
+          kann.
+        </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-6 max-w-[24rem] text-base font-light leading-relaxed text-snow/80 lg:mx-auto lg:max-w-[40rem] lg:text-xl"
-          >
-            Wir sind dein unfairer Vorteil im Feed. Strategie, Content, Editing,
-            und ein Gespür für Trends, bevor sie welche sind. Dein Feed wird das
-            Problem deiner Konkurrenz.
-          </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mt-[clamp(0.75rem,2.5svh,1.5rem)] max-w-[24rem] text-[15px] font-light leading-relaxed text-snow/80 min-[400px]:text-base lg:mx-auto lg:max-w-[40rem] lg:text-xl"
+        >
+          Wir sind dein unfairer Vorteil im Feed. Strategie, Content, Editing,
+          und ein Gespür für Trends, bevor sie welche sind. Dein Feed wird das
+          Problem deiner Konkurrenz.
+        </motion.p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.55 }}
-            className="mt-7 flex gap-2 lg:mx-auto lg:max-w-md"
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.55 }}
+          className="mt-[clamp(1rem,3svh,1.75rem)] flex gap-2 lg:mx-auto lg:max-w-md"
+        >
+          {/* Direkt zur Calendly-Buchung — unverbindliches Erstgespräch,
+              öffnet im neuen Tab statt zur DM-Sektion zu scrollen. */}
+          <CalendlyLink
+            className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow px-3 py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
           >
-            {/* Direkt zur Calendly-Buchung — unverbindliches Erstgespräch,
-                öffnet im neuen Tab statt zur DM-Sektion zu scrollen. */}
-            <CalendlyLink
-              className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
-            >
-              Jetzt Erstgespräch buchen
-            </CalendlyLink>
-            <a
-              href="#cases"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToId("cases");
-              }}
-              className="glass flex-1 rounded-full py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
-            >
-              Cases ansehen
-            </a>
-          </motion.div>
+            Jetzt Erstgespräch buchen
+          </CalendlyLink>
+          <a
+            href="#cases"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToId("cases");
+            }}
+            className="glass flex flex-1 items-center justify-center rounded-full px-3 py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
+          >
+            Cases ansehen
+          </a>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-            className="mt-9 flex justify-between border-t border-snow/10 pt-5 lg:mx-auto lg:max-w-lg"
-          >
-            {heroStats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-xl font-medium text-snow lg:text-2xl">
-                  <CountUp value={stat.value} suffix={stat.suffix} />
-                </p>
-                <p className="mt-0.5 text-[11px] font-light text-snow/50">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </motion.div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.7 }}
+          className="mt-[clamp(1.25rem,3.5svh,2.25rem)] flex justify-between border-t border-snow/10 pt-[clamp(0.75rem,2svh,1.25rem)] lg:mx-auto lg:max-w-lg"
+        >
+          {heroStats.map((stat) => (
+            <div key={stat.label} className="text-center">
+              <p className="text-xl font-medium text-snow lg:text-2xl">
+                <CountUp value={stat.value} suffix={stat.suffix} />
+              </p>
+              <p className="mt-0.5 text-[11px] font-light text-snow/50">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </motion.div>
       </div>
 
       {/* Client logo band, full-bleed. */}
@@ -120,7 +118,7 @@ export function HeroSection() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.85 }}
-        className="relative left-1/2 mt-10 w-screen -translate-x-1/2 overflow-hidden"
+        className="relative left-1/2 mt-[clamp(1.5rem,5svh,3.5rem)] w-screen -translate-x-1/2 overflow-hidden"
         aria-label="Unsere Kund:innen"
       >
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
@@ -145,7 +143,7 @@ export function HeroSection() {
                 <img
                   src={client.logo}
                   alt={client.name}
-                  style={{ height: client.height ?? 32 }}
+                  style={{ height: `${(client.height ?? 32) / 16}rem` }}
                   className="w-auto opacity-90"
                   loading="eager"
                 />
@@ -163,7 +161,7 @@ export function HeroSection() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 1 }}
-        className="mt-4 text-center"
+        className="relative mt-[clamp(0.5rem,1.5svh,1rem)] text-center"
       >
         <Link
           href="/projekte"
@@ -173,8 +171,8 @@ export function HeroSection() {
         </Link>
       </motion.p>
 
-      <div className="lg:mx-auto lg:w-full lg:max-w-2xl">
-        <EventTeaser />
+      <div className="relative lg:mx-auto lg:w-full lg:max-w-2xl">
+        <EventTeaser className="mt-[clamp(1rem,3svh,2rem)]" />
       </div>
     </div>
   );

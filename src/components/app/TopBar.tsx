@@ -27,7 +27,7 @@ export function TopBar() {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-6"
       >
-        <div className="mx-auto w-full max-w-frame px-5 lg:max-w-frame-lg">
+        <div className="mx-auto w-full max-w-frame px-5 lg:max-w-frame-wide lg:px-gutter">
           <div className="glass pointer-events-auto relative flex h-12 w-full items-center justify-between overflow-hidden rounded-full px-5 lg:h-[68px] lg:px-7">
             <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 
@@ -54,7 +54,7 @@ export function TopBar() {
               </span>
             </a>
 
-            <nav className="relative hidden items-center gap-8 text-[15px] font-normal text-snow/80 lg:flex">
+            <nav className="relative hidden items-center gap-5 whitespace-nowrap text-[15px] font-normal text-snow/80 lg:flex xl:gap-8">
               <a href="#leistungen" onClick={jump("leistungen")} className="nav-rainbow">
                 Leistungen
               </a>

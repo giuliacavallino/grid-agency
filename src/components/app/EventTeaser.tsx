@@ -11,7 +11,10 @@ type TeaserEvent = { id: string; title: string; starts_at: string };
  * next upcoming event. Renders nothing while no event is scheduled.
  * With `match`, it only shows events whose title mentions that brand
  * (used on client pages: "Event nicht verpassen"). */
-export function EventTeaser({ match }: { match?: string } = {}) {
+export function EventTeaser({
+  match,
+  className = "mt-12",
+}: { match?: string; className?: string } = {}) {
   const [event, setEvent] = useState<TeaserEvent | null>(null);
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export function EventTeaser({ match }: { match?: string } = {}) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="mt-12"
+          className={className}
         >
           <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
             {match ? "Nicht verpassen" : "GRID News"}
