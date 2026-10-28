@@ -1,0 +1,226 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { clsx } from "clsx";
+import {
+  BarChart3,
+  BookOpenCheck,
+  Building2,
+  CalendarDays,
+  ChevronsLeft,
+  ChevronsRight,
+  Columns3,
+  Inbox,
+  LayoutGrid,
+  Menu,
+  Package,
+  X,
+} from "lucide-react";
+import { AccountMenu } from "@/components/hub";
+import { Logo } from "@/components/logo";
+import { useRows } from "@/lib/data";
+import type { Lead } from "@/lib/sales/types";
+
+export const SALES_NAV = [
+  { href: "/sales", label: "Pipeline", icon: Columns3 },
+  { href: "/sales/posteingang", label: "Posteingang", icon: Inbox },
+  { href: "/sales/kalender", label: "Kalender", icon: CalendarDays },
+  { href: "/sales/kunden", label: "Kunden", icon: Building2 },
+  { href: "/sales/auftragsbuch", label: "Auftragsbuch", icon: BookOpenCheck },
+  { href: "/sales/artikel", label: "Artikel", icon: Package },
+  { href: "/sales/analytics", label: "Analytics", icon: BarChart3 },
+];
+
+const STORAGE_KEY = "intranet:sidebar-collapsed";
+
+function isActive(pathname: string, href: string) {
+  return href === "/sales" ? pathname === "/sales" : pathname.startsWith(href);
+}
+
+function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const { data: leads } = useRows<Lead>("leads", "status=offen");
+  const fresh = leads?.filter((lead) => lead.stage === "neu").length ?? 0;
+
+  return (
+    <ul className="flex flex-col gap-0.5">
+      {SALES_NAV.map(({ href, label, icon: Icon }) => {
+        const active = isActive(pathname, href);
+        const count = href === "/sales" && fresh > 0 ? fresh : null;
+        return (
+          <li key={href}>
+            <Link
+              href={href}
+              onClick={onNavigate}
+              title={collapsed ? label : undefined}
+              aria-current={active ? "page" : undefined}
+              className={clsx(
+                "relative flex h-10 items-center gap-3 rounded-xl text-[14px] transition-colors",
+                collapsed ? "justify-center px-0" : "px-3",
+                active ? "bg-snow/[0.12] font-medium text-snow" : "text-snow/65 hover:bg-snow/[0.06] hover:text-snow"
+              )}
+            >
+              <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
+              {!collapsed && <span className="flex-1 truncate">{label}</span>}
+              {count !== null &&
+                (collapsed ? (
+                  <span className="absolute top-1.5 right-2 h-2 w-2 rounded-full bg-[#fa7e1e]" aria-label={`${count} neue Leads`} />
+                ) : (
+                  <span className="rounded-full bg-snow/12 px-1.5 text-[11px] font-medium text-snow/80">{count}</span>
+                ))}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function Brand({ collapsed }: { collapsed: boolean }) {
+  return (
+    <Link href="/" className="group flex items-center gap-2.5 px-1" aria-label="Zur Übersicht">
+      <span className="logo-rainbow">
+        <Logo className={collapsed ? "h-[18px]" : "h-[22px]"} />
+      </span>
+      {!collapsed && <span className="pt-0.5 text-[10px] font-medium uppercase tracking-[0.3em] text-snow/55">Sales</span>}
+    </Link>
+  );
+}
+
+/** Arbeitsfläche für Sales: Seitenleiste links, Inhalt füllt den Rest. */
+export function SalesShell({ children }: { children: React.ReactNode }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [drawer, setDrawer] = useState(false);
+  const pathname = usePathname();
+  const current = SALES_NAV.find((item) => isActive(pathname, item.href));
+
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- gespeicherte Vorliebe erst im Browser lesen
+      setCollapsed(localStorage.getItem(STORAGE_KEY) === "1");
+    } catch {}
+  }, []);
+
+  const toggle = () => {
+    setCollapsed((value) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, value ? "0" : "1");
+      } catch {}
+      return !value;
+    });
+  };
+
+  return (
+    <div className="flex h-dvh overflow-hidden bg-canvas">
+      {/* Desktop-Seitenleiste */}
+      <aside
+        className={clsx(
+          "hidden shrink-0 flex-col border-r border-snow/[0.08] bg-sky py-4 transition-[width] duration-200 md:flex",
+          collapsed ? "w-[68px] px-2.5" : "w-[232px] px-3"
+        )}
+      >
+        <div className={clsx("mb-6 flex h-8 items-center", collapsed ? "justify-center" : "justify-between pl-1.5")}>
+          <Brand collapsed={collapsed} />
+        </div>
+        <nav aria-label="Sales" className="flex-1 overflow-y-auto">
+          <NavList collapsed={collapsed} />
+        </nav>
+        <div className="mt-4 flex flex-col gap-0.5 border-t border-snow/[0.08] pt-3">
+          <Link
+            href="/"
+            title={collapsed ? "Übersicht" : undefined}
+            className={clsx(
+              "flex h-10 items-center gap-3 rounded-xl text-[14px] text-snow/65 hover:bg-snow/[0.06] hover:text-snow",
+              collapsed ? "justify-center" : "px-3"
+            )}
+          >
+            <LayoutGrid className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            {!collapsed && "Übersicht"}
+          </Link>
+          <button
+            type="button"
+            onClick={toggle}
+            className={clsx(
+              "flex h-10 items-center gap-3 rounded-xl text-[14px] text-snow/65 hover:bg-snow/[0.06] hover:text-snow",
+              collapsed ? "justify-center" : "px-3"
+            )}
+            aria-label={collapsed ? "Seitenleiste ausklappen" : "Seitenleiste einklappen"}
+            title={collapsed ? "Ausklappen" : undefined}
+          >
+            {collapsed ? <ChevronsRight className="h-[18px] w-[18px]" /> : <ChevronsLeft className="h-[18px] w-[18px]" />}
+            {!collapsed && "Einklappen"}
+          </button>
+          <div className={clsx("mt-2 flex", collapsed ? "justify-center" : "px-1.5")}>
+            <AccountMenu align="left" />
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobil: schmale Kopfzeile + Schublade */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex h-12 shrink-0 items-center gap-2 border-b border-snow/[0.08] bg-sky px-2 pt-[env(safe-area-inset-top)] md:hidden">
+          <button
+            type="button"
+            onClick={() => setDrawer(true)}
+            aria-label="Menü öffnen"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-snow/80 hover:bg-snow/10"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="flex-1 truncate text-[15px] font-medium">{current?.label ?? "Sales"}</span>
+          <AccountMenu />
+        </div>
+
+        <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+      </div>
+
+      {drawer && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="animate-fade absolute inset-0 bg-black/50" onClick={() => setDrawer(false)} />
+          <aside className="animate-sheet absolute inset-y-0 left-0 flex w-72 flex-col bg-sky px-3 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 shadow-2xl">
+            <div className="mb-6 flex items-center justify-between pl-1.5">
+              <Brand collapsed={false} />
+              <button
+                type="button"
+                onClick={() => setDrawer(false)}
+                aria-label="Menü schließen"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-snow/70 hover:bg-snow/10"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <NavList collapsed={false} onNavigate={() => setDrawer(false)} />
+            <Link
+              href="/"
+              className="mt-auto flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] text-snow/65 hover:bg-snow/[0.06]"
+            >
+              <LayoutGrid className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              Übersicht
+            </Link>
+          </aside>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Schmale Werkzeugleiste oben in jeder Sales-Seite: Titel links, Aktionen rechts. */
+export function PageBar({
+  title,
+  meta,
+  children,
+}: {
+  title: string;
+  meta?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-14 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-snow/[0.08] px-4 py-2.5 md:px-5">
+      <h1 className="hidden text-[17px] font-medium md:block">{title}</h1>
+      {meta && <div className="hidden text-[13px] text-snow/50 md:block">{meta}</div>}
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">{children}</div>
+    </div>
+  );
+}
