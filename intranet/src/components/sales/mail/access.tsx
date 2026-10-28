@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { RefreshCw, ShieldCheck, TriangleAlert } from "lucide-react";
 import { ConsentRequiredError, requestConsent } from "@/lib/auth";
-import { SHARED_MAILBOX } from "@/lib/config";
-import { GraphError, graphErrorMessage } from "@/lib/graph";
+import { GraphError, graphErrorMessage, isAccessDenied } from "@/lib/graph";
 import { Button } from "@/components/ui";
 
 /** Hinweis, wenn Graph nicht liefert: Zustimmung fehlt, kein Postfachzugriff
@@ -14,9 +13,9 @@ export function GraphProblem({ error, scopes, onRetry }: { error: unknown; scope
 
   if (error instanceof ConsentRequiredError) {
     return (
-      <Panel icon={<ShieldCheck className="h-6 w-6" />} title={`Zugriff auf ${SHARED_MAILBOX} erlauben`}>
+      <Panel icon={<ShieldCheck className="h-6 w-6" />} title="Zugriff auf die Postfächer erlauben">
         <p>
-          Damit das Intranet das gemeinsame Postfach anzeigen kann, braucht es einmal deine Zustimmung bei Microsoft.
+          Damit das Intranet die Postfächer anzeigen kann, braucht es einmal deine Zustimmung bei Microsoft.
           Danach geht es automatisch hierher zurück.
         </p>
         <Button
@@ -35,11 +34,12 @@ export function GraphProblem({ error, scopes, onRetry }: { error: unknown; scope
     );
   }
 
-  const denied = error instanceof GraphError && (error.status === 403 || error.status === 404);
+  const denied = isAccessDenied(error);
+  const mailbox = error instanceof GraphError ? error.mailbox : undefined;
   return (
     <Panel
       icon={<TriangleAlert className="h-6 w-6" />}
-      title={denied ? `Kein Zugriff auf ${SHARED_MAILBOX}` : "Laden fehlgeschlagen"}
+      title={denied ? `Kein Zugriff auf ${mailbox ?? "das Postfach"}` : "Laden fehlgeschlagen"}
     >
       <p>{graphErrorMessage(error)}</p>
       <Button className="mt-5" icon={<RefreshCw className="h-4 w-4" />} onClick={onRetry}>

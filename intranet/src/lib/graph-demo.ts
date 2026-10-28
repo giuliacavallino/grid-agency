@@ -1,6 +1,6 @@
 import type { Attachment, CalEvent, Calendar, FolderKey, GraphApi, Message, Recipient } from "./graph";
 
-// Vorschau-Postfach für hello@ (nur NEXT_PUBLIC_INTRANET_DEMO=1 auf localhost):
+// Vorschau-Postfächer (nur NEXT_PUBLIC_INTRANET_DEMO=1 auf localhost):
 // realistische Beispieldaten im Speicher, Änderungen wirken bis zum Neuladen.
 
 const wait = (ms = 220) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -14,8 +14,15 @@ function at(daysAgo: number, hours: number, minutes = 0) {
 
 const person = (name: string, address: string): Recipient => ({ emailAddress: { name, address } });
 const HELLO = person("GRID Agency", "hello@grid-agency.de");
+const GIULIA = person("Giulia Cavallino", "giulia.cavallino@grid-agency.de");
+const BUCHHALTUNG = person("Buchhaltung GRID", "buchhaltung@grid-agency.de");
+const GOOGLE = person("GRID Google", "google@grid-agency.de");
 
-type DemoMessage = Message & { folder: FolderKey; attachmentList?: (Attachment & { text: string })[] };
+type DemoMessage = Message & {
+  mailbox: string;
+  folder: FolderKey;
+  attachmentList?: (Attachment & { text: string })[];
+};
 let seq = 0;
 
 function msg(
@@ -31,6 +38,7 @@ function msg(
   return {
     id,
     internetMessageId: `<${id}@demo.grid-agency.de>`,
+    mailbox: HELLO.emailAddress.address,
     folder,
     subject,
     bodyPreview: text.slice(0, 160),
@@ -113,7 +121,40 @@ const messages: DemoMessage[] = [
     `<p>Klicken Sie hier, um Ihren Preis abzuholen.</p>`),
 ];
 
+const pdf = (id: string, name: string, size: number) => ({ id, name, contentType: "application/pdf", size, isInline: false, text: `${name} (Vorschau)` });
+
+messages.push(
+  msg("inbox", person("Adobe", "mail@mail.adobe.com"), "Rechnung Creative Cloud Oktober", at(1, 5, 12),
+    `<p>Rechnungsnummer IE-2026-118422, Betrag 89,24 € (inkl. USt.), fällig am 15. des Monats.</p>`,
+    { id: "demo-inv-adobe", mailbox: BUCHHALTUNG.emailAddress.address, toRecipients: [BUCHHALTUNG], internetMessageId: "demo-mail-3", isRead: false, hasAttachments: true, attachmentList: [pdf("att-4", "Adobe_IE-2026-118422.pdf", 88_211)] }),
+  msg("inbox", person("Steffen Video", "rechnung@steffen-video.de"), "Rechnung 2026-041 Shooting Frittenwerk", at(3, 9, 40),
+    `<p>Hallo, anbei meine Rechnung 2026-041 über 1.428,00 € brutto. Zahlbar innerhalb von 14 Tagen.</p>${signature("Steffen", "Video & Foto")}`,
+    { id: "demo-inv-steffen", mailbox: BUCHHALTUNG.emailAddress.address, toRecipients: [BUCHHALTUNG], internetMessageId: "demo-mail-4", hasAttachments: true, attachmentList: [pdf("att-5", "Rechnung_2026-041.pdf", 141_002)] }),
+  msg("inbox", person("Telekom", "rechnung@telekom.de"), "Ihre Mobilfunk-Rechnung", at(6, 6, 0),
+    `<p>Ihre Rechnung über 54,90 € ist online verfügbar.</p>`,
+    { mailbox: BUCHHALTUNG.emailAddress.address, toRecipients: [BUCHHALTUNG], hasAttachments: true, attachmentList: [pdf("att-6", "Telekom_Rechnung.pdf", 61_204)] }),
+  msg("inbox", person("Jonas Weber", "jonas@weber-gastro.de"), "Social Media für unsere Weinbar", at(0, 10, 3),
+    `<p>Hallo Giulia, ich habe dich auf der Internorga kennengelernt. Wir eröffnen im Frühjahr eine Weinbar in Sachsenhausen und bräuchten Unterstützung bei Instagram.</p>${signature("Jonas Weber", "Weber Gastro")}`,
+    { mailbox: GIULIA.emailAddress.address, toRecipients: [GIULIA], isRead: false }),
+  msg("inbox", person("Anna Goschin", "anna@goschin-art.de"), "Vernissage am Freitag", at(2, 19, 22),
+    `<p>Liebe Giulia, kommst du Freitag vorbei? Würde mich sehr freuen!</p>`,
+    { mailbox: GIULIA.emailAddress.address, toRecipients: [GIULIA] }),
+  msg("inbox", person("Google", "no-reply@accounts.google.com"), "Sicherheitswarnung für google@grid-agency.de", at(1, 22, 1),
+    `<p>Neue Anmeldung auf einem Mac. Wenn du das warst, musst du nichts weiter tun.</p>`,
+    { mailbox: GOOGLE.emailAddress.address, toRecipients: [GOOGLE], inferenceClassification: "other" }),
+  msg("inbox", person("Lea Schmitt", "lea.schmitt@web.de"), "Bewerbung Praktikum Content Creation", at(4, 13, 30),
+    `<p>Hallo, über Google bin ich auf euch gestoßen und möchte mich für ein Praktikum bewerben. Lebenslauf anbei.</p>`,
+    { mailbox: GOOGLE.emailAddress.address, toRecipients: [GOOGLE], hasAttachments: true, attachmentList: [pdf("att-7", "Lebenslauf_Lea_Schmitt.pdf", 201_330)] }),
+);
+
 const PAGE = 25;
+
+const OWN: Record<string, Recipient> = {
+  [HELLO.emailAddress.address]: HELLO,
+  [GIULIA.emailAddress.address]: GIULIA,
+  [BUCHHALTUNG.emailAddress.address]: BUCHHALTUNG,
+  [GOOGLE.emailAddress.address]: GOOGLE,
+};
 
 function findMessage(id: string) {
   const found = messages.find((m) => m.id === id);
@@ -124,6 +165,7 @@ function findMessage(id: string) {
 /** Nachricht ohne Demo-Felder und ohne Body, wie in der Graph-Liste */
 function strip(message: DemoMessage): Message {
   const copy: Partial<DemoMessage> = { ...message };
+  delete copy.mailbox;
   delete copy.folder;
   delete copy.attachmentList;
   delete copy.body;
@@ -132,11 +174,15 @@ function strip(message: DemoMessage): Message {
 
 // ---------- Kalender ----------
 
+const H = HELLO.emailAddress.address;
 const calendars: Calendar[] = [
-  { id: "cal-hello", name: "Kalender", color: "#4f9bf0", isDefaultCalendar: true, canEdit: true },
-  { id: "cal-kunden", name: "Kundentermine", color: "#f29c38", isDefaultCalendar: false, canEdit: true },
-  { id: "cal-shoot", name: "Shootings", color: "#a77ff0", isDefaultCalendar: false, canEdit: true },
-  { id: "cal-feiertage", name: "Feiertage", color: "#ec5b54", isDefaultCalendar: false, canEdit: false },
+  { id: "cal-hello", mailbox: H, name: "Kalender", color: "#4f9bf0", isDefaultCalendar: true, canEdit: true },
+  { id: "cal-kunden", mailbox: H, name: "Kundentermine", color: "#f29c38", isDefaultCalendar: false, canEdit: true },
+  { id: "cal-shoot", mailbox: H, name: "Shootings", color: "#a77ff0", isDefaultCalendar: false, canEdit: true },
+  { id: "cal-feiertage", mailbox: H, name: "Feiertage", color: "#ec5b54", isDefaultCalendar: false, canEdit: false },
+  { id: "cal-giulia", mailbox: GIULIA.emailAddress.address, name: "Kalender", color: "#3fb7b0", isDefaultCalendar: true, canEdit: true },
+  { id: "cal-buchhaltung", mailbox: BUCHHALTUNG.emailAddress.address, name: "Kalender", color: "#e7c13e", isDefaultCalendar: true, canEdit: true },
+  { id: "cal-google", mailbox: GOOGLE.emailAddress.address, name: "Kalender", color: "#9a948b", isDefaultCalendar: true, canEdit: true },
 ];
 
 function monday(date: Date) {
@@ -221,126 +267,133 @@ calendarEvents.push(
   allDay("cal-feiertage", "Reformationstag", new Date(new Date().getFullYear(), 9, 31)),
   allDay("cal-feiertage", "Tag der Deutschen Einheit", new Date(new Date().getFullYear(), 9, 3)),
   allDay("cal-feiertage", "1. Weihnachtstag", new Date(new Date().getFullYear(), 11, 25)),
-  allDay("cal-hello", "Messe Internorga (Team vor Ort)", day(0, 0), 1)
+  allDay("cal-hello", "Messe Internorga (Team vor Ort)", day(0, 0), 1),
+  event("cal-giulia", "Steuerberatung", 0, 1, 16, 60, { location: "Kanzlei" }),
+  event("cal-giulia", "Vernissage Anna", 0, 4, 19, 120)
 );
 
-export const demoGraph: GraphApi = {
-  async folders() {
-    await wait();
-    const keys: FolderKey[] = ["inbox", "drafts", "sentitems", "archive", "deleteditems", "junkemail"];
-    return keys.map((key) => {
-      const items = messages.filter((m) => m.folder === key);
-      return { key, id: key, unreadItemCount: items.filter((m) => !m.isRead).length, totalItemCount: items.length };
-    });
-  },
+export function demoGraphFor(mailbox: string): GraphApi {
+  const own = OWN[mailbox] ?? person(mailbox, mailbox);
+  const mine = () => messages.filter((m) => m.mailbox === mailbox);
+  const sent = (folder: FolderKey, subject: string, html: string, extra: Partial<DemoMessage>) =>
+    messages.push(msg(folder, own, subject, new Date(), html, { mailbox, ...extra }));
+  return {
+    async folders() {
+      await wait();
+      const keys: FolderKey[] = ["inbox", "drafts", "sentitems", "archive", "deleteditems", "junkemail"];
+      return keys.map((key) => {
+        const items = mine().filter((m) => m.folder === key);
+        return { key, id: key, unreadItemCount: items.filter((m) => !m.isRead).length, totalItemCount: items.length };
+      });
+    },
 
-  async messages({ folder, focused, search, next }) {
-    await wait();
-    const q = search?.toLowerCase().trim();
-    const all = messages
-      .filter((m) => m.folder === folder)
-      .filter((m) => (focused === undefined || focused === null ? true : (m.inferenceClassification === "focused") === focused))
-      .filter((m) => !q || [m.subject, m.bodyPreview, m.from?.emailAddress.name, m.from?.emailAddress.address].some((v) => v?.toLowerCase().includes(q)))
-      .sort((a, b) => b.receivedDateTime.localeCompare(a.receivedDateTime));
-    const offset = next ? Number(next.split(":")[1]) : 0;
-    const page = all.slice(offset, offset + PAGE);
-    return { items: page.map(strip), next: offset + PAGE < all.length ? `demo:${offset + PAGE}` : null };
-  },
+    async messages({ folder, focused, search, next }) {
+      await wait();
+      const q = search?.toLowerCase().trim();
+      const all = mine()
+        .filter((m) => m.folder === folder)
+        .filter((m) => (focused === undefined || focused === null ? true : (m.inferenceClassification === "focused") === focused))
+        .filter((m) => !q || [m.subject, m.bodyPreview, m.from?.emailAddress.name, m.from?.emailAddress.address].some((v) => v?.toLowerCase().includes(q)))
+        .sort((a, b) => b.receivedDateTime.localeCompare(a.receivedDateTime));
+      const offset = next ? Number(next.split(":")[1]) : 0;
+      const page = all.slice(offset, offset + PAGE);
+      return { items: page.map(strip), next: offset + PAGE < all.length ? `demo:${offset + PAGE}` : null };
+    },
 
-  async message(id) {
-    await wait(160);
-    const m = findMessage(id);
-    return { ...strip(m), body: m.body };
-  },
+    async message(id) {
+      await wait(160);
+      const m = findMessage(id);
+      return { ...strip(m), body: m.body };
+    },
 
-  async attachments(id) {
-    await wait(120);
-    return (findMessage(id).attachmentList ?? []).map(({ id, name, contentType, size, isInline }) => ({ id, name, contentType, size, isInline }));
-  },
+    async attachments(id) {
+      await wait(120);
+      return (findMessage(id).attachmentList ?? []).map(({ id, name, contentType, size, isInline }) => ({ id, name, contentType, size, isInline }));
+    },
 
-  async download(messageId, attachmentId) {
-    await wait(400);
-    const attachment = findMessage(messageId).attachmentList?.find((a) => a.id === attachmentId);
-    return new Blob([attachment?.text ?? ""], { type: "text/plain" });
-  },
+    async download(messageId, attachmentId) {
+      await wait(400);
+      const attachment = findMessage(messageId).attachmentList?.find((a) => a.id === attachmentId);
+      return new Blob([attachment?.text ?? ""], { type: "text/plain" });
+    },
 
-  async update(id, patch) {
-    await wait(120);
-    Object.assign(findMessage(id), patch);
-  },
+    async update(id, patch) {
+      await wait(120);
+      Object.assign(findMessage(id), patch);
+    },
 
-  async move(id, destination) {
-    await wait();
-    findMessage(id).folder = destination;
-  },
+    async move(id, destination) {
+      await wait();
+      findMessage(id).folder = destination;
+    },
 
-  async remove(id) {
-    await wait();
-    const index = messages.findIndex((m) => m.id === id);
-    if (index >= 0) messages.splice(index, 1);
-  },
+    async remove(id) {
+      await wait();
+      const index = messages.findIndex((m) => m.id === id);
+      if (index >= 0) messages.splice(index, 1);
+    },
 
-  async send(draft) {
-    await wait(700);
-    messages.push(
-      msg("sentitems", HELLO, draft.subject || "(Kein Betreff)", new Date(), `<p>${draft.body.replace(/\n/g, "<br>")}</p>`, {
+    async files(id) {
+      await wait(300);
+      return (findMessage(id).attachmentList ?? []).map((a) => ({ name: a.name, contentType: a.contentType, contentBytes: btoa(a.text) }));
+    },
+
+    async send(draft) {
+      await wait(700);
+      sent("sentitems", draft.subject || "(Kein Betreff)", `<p>${draft.body.replace(/\n/g, "<br>")}</p>`, {
         toRecipients: draft.to.map((address) => person(address, address)),
         ccRecipients: draft.cc.map((address) => person(address, address)),
-      })
-    );
-  },
+      });
+    },
 
-  async reply(id, { comment }) {
-    await wait(700);
-    const original = findMessage(id);
-    messages.push(
-      msg("sentitems", HELLO, `AW: ${original.subject ?? ""}`, new Date(), `<p>${comment.replace(/\n/g, "<br>")}</p>`, {
+    async reply(id, { comment }) {
+      await wait(700);
+      const original = findMessage(id);
+      sent("sentitems", `AW: ${original.subject ?? ""}`, `<p>${comment.replace(/\n/g, "<br>")}</p>`, {
         toRecipients: original.from ? [original.from] : [],
-      })
-    );
-  },
+      });
+    },
 
-  async forward(id, { to, comment }) {
-    await wait(700);
-    const original = findMessage(id);
-    messages.push(
-      msg("sentitems", HELLO, `WG: ${original.subject ?? ""}`, new Date(), `<p>${comment.replace(/\n/g, "<br>")}</p>`, {
+    async forward(id, { to, comment }) {
+      await wait(700);
+      const original = findMessage(id);
+      sent("sentitems", `WG: ${original.subject ?? ""}`, `<p>${comment.replace(/\n/g, "<br>")}</p>`, {
         toRecipients: to.map((address) => person(address, address)),
-      })
-    );
-  },
+      });
+    },
 
-  async calendars() {
-    await wait();
-    return calendars;
-  },
+    async calendars() {
+      await wait();
+      return calendars.filter((c) => c.mailbox === mailbox);
+    },
 
-  async events(calendar, start, end) {
-    await wait();
-    return calendarEvents.filter((e) => e.calendarId === calendar.id && e.start < end && e.end > start);
-  },
+    async events(calendar, start, end) {
+      await wait();
+      return calendarEvents.filter((e) => e.calendarId === calendar.id && e.start < end && e.end > start);
+    },
 
-  async createEvent(calendarId, input) {
-    await wait(500);
-    calendarEvents.push({
-      id: `demo-evt-${++eventSeq}`,
-      calendarId,
-      subject: input.subject,
-      start: input.start,
-      end: input.end,
-      isAllDay: input.isAllDay,
-      location: input.location || null,
-      organizer: "GRID Agency",
-      attendees: [],
-      joinUrl: null,
-      bodyPreview: "",
-      webLink: null,
-    });
-  },
+    async createEvent(calendarId, input) {
+      await wait(500);
+      calendarEvents.push({
+        id: `demo-evt-${++eventSeq}`,
+        calendarId,
+        subject: input.subject,
+        start: input.start,
+        end: input.end,
+        isAllDay: input.isAllDay,
+        location: input.location || null,
+        organizer: "GRID Agency",
+        attendees: [],
+        joinUrl: null,
+        bodyPreview: "",
+        webLink: null,
+      });
+    },
 
-  async deleteEvent(id) {
-    await wait(400);
-    const index = calendarEvents.findIndex((e) => e.id === id);
-    if (index >= 0) calendarEvents.splice(index, 1);
-  },
-};
+    async deleteEvent(id) {
+      await wait(400);
+      const index = calendarEvents.findIndex((e) => e.id === id);
+      if (index >= 0) calendarEvents.splice(index, 1);
+    },
+  };
+}

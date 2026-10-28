@@ -147,9 +147,88 @@ const activities: Row[] = leads.map((l) => ({
   to_stage: "neu",
 }));
 
+const BUCHHALTUNG = "buchhaltung@grid-agency.de";
+const HELLO = "hello@grid-agency.de";
+
+function invoice(stage: string, vendor: string, number: string, amount: number, daysAgo: number, dueInDays: number, extra: Record<string, unknown> = {}): Row {
+  const received = new Date(Date.now() - daysAgo * day);
+  return {
+    id: uid(),
+    created_at: received.toISOString(),
+    updated_at: received.toISOString(),
+    stage,
+    position: received.getTime() / 1000,
+    source_ref: null,
+    mailbox: BUCHHALTUNG,
+    graph_id: null,
+    received_at: received.toISOString(),
+    vendor,
+    vendor_email: null,
+    invoice_number: number,
+    invoice_date: received.toISOString().slice(0, 10),
+    due_date: new Date(Date.now() + dueInDays * day).toISOString().slice(0, 10),
+    amount,
+    currency: "EUR",
+    description: null,
+    attachment_names: [`${number}.pdf`],
+    approved_by: stage === "neu" ? null : "Giulia Cavallino",
+    approved_at: stage === "neu" ? null : ago(Math.max(0, daysAgo - 1)),
+    datev_sent_at: stage === "datev" ? ago(Math.max(0, daysAgo - 2)) : null,
+    datev_sent_by: stage === "datev" ? "Giulia Cavallino" : null,
+    notes: null,
+    raw: null,
+    ...extra,
+  };
+}
+
+const invoices: Row[] = [
+  invoice("neu", "Adobe Systems", "IE-2026-118422", 89.24, 1, 14, { source_ref: "demo-mail-3", graph_id: "demo-inv-adobe", vendor_email: "mail@mail.adobe.com", description: "Creative Cloud Oktober" }),
+  invoice("neu", "Steffen Video", "2026-041", 1428, 3, 11, { source_ref: "demo-mail-4", graph_id: "demo-inv-steffen", vendor_email: "rechnung@steffen-video.de", description: "Shooting Frittenwerk" }),
+  invoice("neu", "Telekom", "9087 1123 4410", 54.9, 6, -1, { description: "Mobilfunk" }),
+  invoice("freigegeben", "Canva", "CV-55102", 119.99, 8, 6),
+  invoice("datev", "Studio Kreuzberg", "R-2026-88", 650, 20, -6, { description: "Studiomiete Content Day" }),
+  invoice("datev", "Hetzner", "R0012345678", 17.85, 25, -12),
+];
+
+function application(stage: string, name: string, title: string, daysAgo: number, message: string, extra: Record<string, unknown> = {}): Row {
+  return {
+    id: uid(),
+    created_at: ago(daysAgo),
+    updated_at: ago(daysAgo),
+    stage,
+    position: Date.now() / 1000 - daysAgo * 86400,
+    source_ref: null,
+    mailbox: HELLO,
+    graph_id: null,
+    received_at: ago(daysAgo),
+    name,
+    email: `${slug(name.split(" ")[0])}@example.de`,
+    phone: null,
+    position_title: title,
+    message,
+    attachment_names: ["Lebenslauf.pdf"],
+    owner: null,
+    next_step: null,
+    next_step_at: null,
+    notes: null,
+    raw: null,
+    ...extra,
+  };
+}
+
+const applications: Row[] = [
+  application("neu", "Max Meyer", "Content Creator", 1, "Ich produziere seit drei Jahren Reels für Gastro-Accounts und würde gern Teil des Teams werden.", { source_ref: "demo-mail-2", graph_id: "demo-msg-2" }),
+  application("neu", "Jana Peters", "Werkstudentin Social Media", 6, "Ich studiere Medienmanagement im 5. Semester."),
+  application("gespraech", "Lea Schmitt", "Praktikum Content Creation", 4, "Über Google bin ich auf euch gestoßen.", { mailbox: "google@grid-agency.de", next_step: "Kennenlernen", next_step_at: ago(-2) }),
+  application("case_study", "Tom Richter", "Social Media Manager", 12, "Fünf Jahre Agenturerfahrung, zuletzt bei einer Food-Brand.", { next_step: "Case Study abgeben", next_step_at: ago(-4) }),
+  application("absage", "Kim Lorenz", "Grafikdesign Freelance", 30, "Portfolio anbei."),
+];
+
 const inbound: Row[] = [
-  { id: "demo-mail-1", received_at: ago(2), from_email: "clara@studionord.de", from_name: "Clara Neumann", subject: "Anfrage Social Media", classification: "anfrage", reason: "Fragt nach Betreuung", lead_id: leads[2].id },
-  { id: "demo-mail-2", received_at: ago(1), from_email: "max.meyer@gmail.com", from_name: "Max Meyer", subject: "Initiativbewerbung Content Creator", classification: "bewerbung", reason: "Bewerbung mit Lebenslauf", lead_id: null },
+  { id: "demo-mail-1", mailbox: HELLO, received_at: ago(2), from_email: "clara@studionord.de", from_name: "Clara Neumann", subject: "Anfrage Social Media", classification: "anfrage", reason: "Fragt nach Betreuung", lead_id: leads[2].id, invoice_id: null, application_id: null },
+  { id: "demo-mail-2", mailbox: HELLO, received_at: ago(1), from_email: "max.meyer@gmail.com", from_name: "Max Meyer", subject: "Initiativbewerbung Content Creator", classification: "bewerbung", reason: "Bewerbung mit Lebenslauf", lead_id: null, invoice_id: null, application_id: applications[0].id },
+  { id: "demo-mail-3", mailbox: BUCHHALTUNG, received_at: ago(1), from_email: "mail@mail.adobe.com", from_name: "Adobe", subject: "Rechnung Creative Cloud Oktober", classification: "rechnung", reason: "Rechnung mit PDF", lead_id: null, invoice_id: invoices[0].id, application_id: null },
+  { id: "demo-mail-4", mailbox: BUCHHALTUNG, received_at: ago(3), from_email: "rechnung@steffen-video.de", from_name: "Steffen Video", subject: "Rechnung 2026-041", classification: "rechnung", reason: "Rechnung eines Freelancers", lead_id: null, invoice_id: invoices[1].id, application_id: null },
 ];
 
 const tables: Record<string, Row[]> = {
@@ -159,8 +238,13 @@ const tables: Record<string, Row[]> = {
   articles,
   retainers,
   inbound_messages: inbound,
+  invoices,
+  applications,
 };
-const settings: Record<string, unknown> = { capacity: { team_hours_per_month: 480 } };
+const settings: Record<string, unknown> = {
+  capacity: { team_hours_per_month: 480 },
+  datev: { upload_address: "beispiel@uploadmail.datev.de" },
+};
 
 const now = () => new Date().toISOString();
 
@@ -177,6 +261,9 @@ export const demoStore: Store = {
   },
   async insert(table, input) {
     const row: Row = { id: uid(), created_at: now(), ...input } as Row;
+    if (table === "invoices" || table === "applications") {
+      Object.assign(row, { updated_at: now(), stage: row.stage ?? "neu", position: row.position ?? Date.now() / 1000 });
+    }
     if (table === "leads") {
       Object.assign(row, { updated_at: now(), stage: row.stage ?? "neu", status: "offen", position: row.position ?? Date.now() / 1000 });
       tables.lead_activities.unshift({ id: uid(), created_at: now(), lead_id: row.id, kind: "stage", author: null, body: "Lead angelegt", from_stage: null, to_stage: row.stage });
@@ -188,7 +275,9 @@ export const demoStore: Store = {
     const exists = tables[table].some((row) =>
       table === "leads"
         ? row.source === input.source && row.source_ref === input.source_ref
-        : row.id === input.id
+        : table === "inbound_messages"
+          ? row.id === input.id
+          : row.source_ref === input.source_ref
     );
     return exists ? null : this.insert(table as TableName, input);
   },
@@ -199,7 +288,7 @@ export const demoStore: Store = {
       tables.lead_activities.unshift({ id: uid(), created_at: now(), lead_id: id, kind: "stage", author: null, body: null, from_stage: row.stage, to_stage: patch.stage });
       if (patch.stage === "gewonnen" && !row.won_at) row.won_at = now();
     }
-    Object.assign(row, patch, table === "leads" || table === "customers" ? { updated_at: now() } : {});
+    Object.assign(row, patch, ["leads", "customers", "invoices", "applications"].includes(table) ? { updated_at: now() } : {});
     return structuredClone(row);
   },
   async remove(table, id) {

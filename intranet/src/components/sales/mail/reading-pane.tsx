@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Download, Forward, Paperclip, Reply, ReplyAll, UserPlus } from "lucide-react";
-import { graph, useAsync, type Attachment, type Message } from "@/lib/graph";
+import { graphFor, useAsync, type Attachment, type Message } from "@/lib/graph";
 import type { InboundMessage } from "@/lib/sales/types";
 import { Avatar, Button, IconButton, Spinner, useToast } from "@/components/ui";
 import { NewLeadDialog } from "../lead-sheet";
@@ -13,17 +13,19 @@ import { ClassificationChip } from "./message-list";
 export type ReplyMode = "reply" | "replyAll" | "forward";
 
 export function ReadingPane({
+  mailbox,
   message,
   inbound,
   onReply,
   onBack,
 }: {
+  mailbox: string;
   message: Message;
   inbound?: InboundMessage;
   onReply: (mode: ReplyMode) => void;
   onBack: () => void;
 }) {
-  const { data: full, error } = useAsync(`message:${message.id}`, () => graph.message(message.id));
+  const { data: full, error } = useAsync(`message:${mailbox}:${message.id}`, () => graphFor(mailbox).message(message.id));
   const [leadOpen, setLeadOpen] = useState(false);
   const sender = message.from?.emailAddress;
 
@@ -68,12 +70,12 @@ export function ReadingPane({
             Weiterleiten
           </Button>
           <span className="flex-1" />
-          {inbound?.lead_id ? (
+          {inbound?.lead_id || inbound?.application_id || inbound?.invoice_id ? (
             <Link
-              href="/sales"
+              href={inbound.lead_id ? "/sales" : inbound.application_id ? "/personal" : "/finance"}
               className="inline-flex h-8 items-center gap-2 rounded-full border border-success/30 px-3 text-[13px] font-medium text-success hover:bg-success/10"
             >
-              Lead in der Pipeline
+              {inbound.lead_id ? "Lead in der Pipeline" : inbound.application_id ? "Bewerbung in Personal" : "Rechnung in Finance"}
             </Link>
           ) : (
             <Button size="sm" variant="primary" icon={<UserPlus className="h-4 w-4" />} onClick={() => setLeadOpen(true)}>
@@ -82,7 +84,7 @@ export function ReadingPane({
           )}
         </div>
 
-        {message.hasAttachments && <Attachments messageId={message.id} />}
+        {message.hasAttachments && <Attachments mailbox={mailbox} messageId={message.id} />}
       </div>
 
       <div className="flex-1 px-2 pt-4 pb-6 md:px-6">
@@ -162,26 +164,26 @@ function MailBody({ body }: { body: NonNullable<Message["body"]> }) {
   );
 }
 
-function Attachments({ messageId }: { messageId: string }) {
-  const { data } = useAsync(`attachments:${messageId}`, () => graph.attachments(messageId));
+export function Attachments({ mailbox, messageId }: { mailbox: string; messageId: string }) {
+  const { data } = useAsync(`attachments:${mailbox}:${messageId}`, () => graphFor(mailbox).attachments(messageId));
   const files = data?.filter((a) => !a.isInline) ?? [];
   if (!files.length) return null;
   return (
     <ul className="mt-4 flex flex-wrap gap-2">
       {files.map((file) => (
-        <AttachmentChip key={file.id} messageId={messageId} file={file} />
+        <AttachmentChip key={file.id} mailbox={mailbox} messageId={messageId} file={file} />
       ))}
     </ul>
   );
 }
 
-function AttachmentChip({ messageId, file }: { messageId: string; file: Attachment }) {
+function AttachmentChip({ mailbox, messageId, file }: { mailbox: string; messageId: string; file: Attachment }) {
   const [busy, setBusy] = useState(false);
   const toast = useToast();
   async function download() {
     setBusy(true);
     try {
-      const blob = await graph.download(messageId, file.id);
+      const blob = await graphFor(mailbox).download(messageId, file.id);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

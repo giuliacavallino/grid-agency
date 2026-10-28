@@ -1,10 +1,10 @@
 import "server-only";
-import { CLIENT_ID, SHARED_MAILBOX, TENANT_ID } from "@/lib/config";
+import { CLIENT_ID, TENANT_ID } from "@/lib/config";
 
-// App-Zugriff (ohne angemeldete Person) auf hello@ für den Mail-Eingang.
-// Braucht in Entra ein Client-Secret (MS_CLIENT_SECRET) und die
-// Anwendungsberechtigung Mail.Read mit Admin-Zustimmung – am besten per
-// Application Access Policy auf hello@ beschränkt.
+// App-Zugriff (ohne angemeldete Person) auf die Postfächer aus MAILBOXES für
+// den Mail-Eingang. Braucht in Entra ein Client-Secret (MS_CLIENT_SECRET) und
+// die Anwendungsberechtigung Mail.Read mit Admin-Zustimmung – am besten per
+// Application Access Policy auf diese Postfächer beschränkt.
 
 let cached: { token: string; expires: number } | null = null;
 
@@ -43,10 +43,12 @@ export async function appGraph<T>(path: string, init: RequestInit = {}): Promise
   return response.status === 204 ? (undefined as T) : response.json();
 }
 
-export const MAILBOX_PATH = `/users/${encodeURIComponent(SHARED_MAILBOX)}`;
+export const mailboxPath = (mailbox: string) => `/users/${encodeURIComponent(mailbox)}`;
 
 export type GraphMail = {
   id: string;
+  /** Postfach, in dem die Mail liegt */
+  mailbox: string;
   internetMessageId: string;
   receivedDateTime: string;
   subject: string | null;
@@ -54,21 +56,33 @@ export type GraphMail = {
   body?: { content: string };
   bodyPreview?: string;
   conversationId?: string;
+  hasAttachments?: boolean;
 };
 
-const SELECT = "id,internetMessageId,receivedDateTime,subject,from,body,bodyPreview,conversationId";
+const SELECT = "id,internetMessageId,receivedDateTime,subject,from,body,bodyPreview,conversationId,hasAttachments";
 
-export const getMail = (id: string) =>
-  appGraph<GraphMail>(`${MAILBOX_PATH}/messages/${encodeURIComponent(id)}?$select=${SELECT}`);
+export const getMail = async (mailbox: string, id: string): Promise<GraphMail> => ({
+  ...(await appGraph<Omit<GraphMail, "mailbox">>(`${mailboxPath(mailbox)}/messages/${encodeURIComponent(id)}?$select=${SELECT}`)),
+  mailbox,
+});
+
+/** Namen der Dateianhänge (ohne eingebettete Bilder) */
+export async function attachmentNames(mail: GraphMail) {
+  if (!mail.hasAttachments) return [];
+  const data = await appGraph<{ value: { name: string; isInline: boolean }[] }>(
+    `${mailboxPath(mail.mailbox)}/messages/${encodeURIComponent(mail.id)}/attachments?$select=name,isInline`
+  );
+  return data.value.filter((a) => !a.isInline).map((a) => a.name);
+}
 
 /** Mails im Posteingang seit einem Zeitpunkt (für den täglichen Abgleich). */
-export async function listInboxSince(since: Date) {
+export async function listInboxSince(mailbox: string, since: Date) {
   const filter = encodeURIComponent(`receivedDateTime ge ${since.toISOString()}`);
-  let next: string | null = `${MAILBOX_PATH}/mailFolders/inbox/messages?$select=${SELECT}&$filter=${filter}&$top=50`;
+  let next: string | null = `${mailboxPath(mailbox)}/mailFolders/inbox/messages?$select=${SELECT}&$filter=${filter}&$top=50`;
   const mails: GraphMail[] = [];
   while (next) {
-    const page: { value: GraphMail[]; "@odata.nextLink"?: string } = await appGraph(next);
-    mails.push(...page.value);
+    const page: { value: Omit<GraphMail, "mailbox">[]; "@odata.nextLink"?: string } = await appGraph(next);
+    mails.push(...page.value.map((mail) => ({ ...mail, mailbox })));
     next = page["@odata.nextLink"]?.replace("https://graph.microsoft.com/v1.0", "") ?? null;
   }
   return mails;

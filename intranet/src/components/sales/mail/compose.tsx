@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { ArrowLeft, Send } from "lucide-react";
-import { SHARED_MAILBOX } from "@/lib/config";
-import { graph, type Message } from "@/lib/graph";
-import { Button, IconButton, Input, Textarea, useToast } from "@/components/ui";
+import { MAILBOXES } from "@/lib/config";
+import { graphFor, type Message } from "@/lib/graph";
+import { Button, IconButton, Input, Select, Textarea, useToast } from "@/components/ui";
 import { isEmail, parseAddresses, recipientList, recipientName } from "./format";
 
 export type ComposeState =
@@ -15,8 +15,24 @@ const PREFIX = { reply: "AW: ", replyAll: "AW: ", forward: "WG: " } as const;
 
 /** Verfassen direkt im Lesebereich wie in Outlook: neue Mail, Antwort oder
  * Weiterleitung. Antworten hängen die Originalnachricht automatisch an. */
-export function Compose({ state, onClose, onSent }: { state: ComposeState; onClose: () => void; onSent: () => void }) {
+export function Compose({
+  state,
+  mailbox,
+  fromOptions = [],
+  onClose,
+  onSent,
+}: {
+  state: ComposeState;
+  /** Postfach, aus dem gesendet bzw. geantwortet wird */
+  mailbox: string;
+  /** Bei neuen Mails wählbare Absender (Postfächer des Bereichs) */
+  fromOptions?: string[];
+  onClose: () => void;
+  onSent: () => void;
+}) {
   const toast = useToast();
+  const [sender, setSender] = useState(mailbox);
+  const own = new Set(MAILBOXES.map((m) => m.address));
   const source = state.mode === "new" ? null : state.source;
   const [to, setTo] = useState(state.mode === "new" ? (state.to ?? "") : "");
   const [cc, setCc] = useState("");
@@ -33,7 +49,7 @@ export function Compose({ state, onClose, onSent }: { state: ComposeState; onClo
       : state.mode === "replyAll"
         ? recipientList(
             [state.source.from, ...state.source.toRecipients, ...state.source.ccRecipients].filter(
-              (r): r is NonNullable<typeof r> => !!r && r.emailAddress.address.toLowerCase() !== SHARED_MAILBOX
+              (r): r is NonNullable<typeof r> => !!r && !own.has(r.emailAddress.address.toLowerCase())
             )
           )
         : null;
@@ -50,6 +66,7 @@ export function Compose({ state, onClose, onSent }: { state: ComposeState; onClo
     if (state.mode === "new" && !body.trim() && !subject.trim()) return setError("Die Nachricht ist leer.");
 
     setSending(true);
+    const graph = graphFor(state.mode === "new" ? sender : mailbox);
     try {
       if (state.mode === "new") await graph.send({ to: toList, cc: ccList, subject, body });
       else if (state.mode === "forward") await graph.forward(state.source.id, { to: toList, comment: body });
@@ -57,7 +74,7 @@ export function Compose({ state, onClose, onSent }: { state: ComposeState; onClo
       toast("Gesendet");
       onSent();
     } catch {
-      setError("Senden fehlgeschlagen. Hat dein Konto „Senden als“ für hello@?");
+      setError(`Senden fehlgeschlagen. Hat dein Konto „Senden als“ für ${state.mode === "new" ? sender : mailbox}?`);
       setSending(false);
     }
   }
@@ -90,7 +107,22 @@ export function Compose({ state, onClose, onSent }: { state: ComposeState; onClo
 
       <div className="flex flex-col border-b border-snow/[0.08] text-sm">
         <Row label="Von">
-          <span className="px-3 text-snow/60">{SHARED_MAILBOX}</span>
+          {state.mode === "new" && fromOptions.length > 1 ? (
+            <Select
+              value={sender}
+              onChange={(e) => setSender(e.target.value)}
+              aria-label="Absender"
+              className="h-10 w-auto rounded-none border-0 bg-transparent focus:shadow-none"
+            >
+              {fromOptions.map((address) => (
+                <option key={address} value={address}>
+                  {address}
+                </option>
+              ))}
+            </Select>
+          ) : (
+            <span className="px-3 text-snow/60">{mailbox}</span>
+          )}
         </Row>
         <Row label="An">
           {fixedTo !== null ? (

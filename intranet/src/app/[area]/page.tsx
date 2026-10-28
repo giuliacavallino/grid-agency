@@ -4,7 +4,8 @@ import { RequireAuth } from "@/components/login";
 import { AREAS } from "@/lib/areas";
 
 // Bereiche ohne eigene Seite zeigen vorerst einen Platzhalter.
-const PLACEHOLDERS = AREAS.filter((area) => !area.external && area.id !== "sales");
+const BUILT = ["sales", "finance", "personal", "mail"];
+const PLACEHOLDERS = AREAS.filter((area) => !area.external && !BUILT.includes(area.id));
 
 export function generateStaticParams() {
   return PLACEHOLDERS.map((area) => ({ area: area.id }));

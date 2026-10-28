@@ -16,15 +16,21 @@ import {
   LayoutGrid,
   Menu,
   Package,
+  Settings,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { AccountMenu } from "@/components/hub";
 import { Logo } from "@/components/logo";
 import { useRows } from "@/lib/data";
-import type { Lead } from "@/lib/sales/types";
 
-export const SALES_NAV = [
-  { href: "/sales", label: "Pipeline", icon: Columns3 },
+/** Zähler „neu“ an einem Menüpunkt (Leads, Bewerbungen, Rechnungen) */
+type Counter = "leads" | "applications" | "invoices";
+
+export type NavItem = { href: string; label: string; icon: LucideIcon; counter?: Counter };
+
+export const SALES_NAV: NavItem[] = [
+  { href: "/sales", label: "Pipeline", icon: Columns3, counter: "leads" },
   { href: "/sales/posteingang", label: "Posteingang", icon: Inbox },
   { href: "/sales/kalender", label: "Kalender", icon: CalendarDays },
   { href: "/sales/kunden", label: "Kunden", icon: Building2 },
@@ -33,22 +39,56 @@ export const SALES_NAV = [
   { href: "/sales/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
+export const FINANCE_NAV: NavItem[] = [
+  { href: "/finance", label: "Eingangsrechnungen", icon: Columns3, counter: "invoices" },
+  { href: "/finance/posteingang", label: "Posteingang", icon: Inbox },
+  { href: "/finance/einstellungen", label: "Einstellungen", icon: Settings },
+];
+
+export const PERSONAL_NAV: NavItem[] = [{ href: "/personal", label: "Bewerbungen", icon: Columns3, counter: "applications" }];
+
+export const MAIL_NAV: NavItem[] = [
+  { href: "/mail", label: "Posteingang", icon: Inbox },
+  { href: "/mail/kalender", label: "Kalender", icon: CalendarDays },
+];
+
 const STORAGE_KEY = "intranet:sidebar-collapsed";
 
-function isActive(pathname: string, href: string) {
-  return href === "/sales" ? pathname === "/sales" : pathname.startsWith(href);
+function isActive(pathname: string, href: string, root: string) {
+  return href === root ? pathname === root : pathname.startsWith(href);
 }
 
-function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+const COUNTER_QUERY: Record<Counter, [string, string]> = {
+  leads: ["leads", "status=offen"],
+  applications: ["applications", "stage=neu"],
+  invoices: ["invoices", "stage=neu"],
+};
+
+/** Anzahl neuer Einträge (Leads in „Neuer Lead“, neue Bewerbungen, neue Rechnungen) */
+function useNewCount(counter: Counter) {
+  const [table, query] = COUNTER_QUERY[counter];
+  const { data } = useRows<{ stage: string }>(table, query);
+  return data?.filter((row) => row.stage === "neu").length ?? 0;
+}
+
+function NavCount({ counter, collapsed, label }: { counter: Counter; collapsed: boolean; label: string }) {
+  const count = useNewCount(counter);
+  if (!count) return null;
+  return collapsed ? (
+    <span className="absolute top-1.5 right-2 h-2 w-2 rounded-full bg-[#fa7e1e]" aria-label={`${count} neu in ${label}`} />
+  ) : (
+    <span className="rounded-full bg-snow/12 px-1.5 text-[11px] font-medium text-snow/80">{count}</span>
+  );
+}
+
+function NavList({ nav, collapsed, onNavigate }: { nav: NavItem[]; collapsed: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
-  const { data: leads } = useRows<Lead>("leads", "status=offen");
-  const fresh = leads?.filter((lead) => lead.stage === "neu").length ?? 0;
+  const root = nav[0].href;
 
   return (
     <ul className="flex flex-col gap-0.5">
-      {SALES_NAV.map(({ href, label, icon: Icon }) => {
-        const active = isActive(pathname, href);
-        const count = href === "/sales" && fresh > 0 ? fresh : null;
+      {nav.map(({ href, label, icon: Icon, counter }) => {
+        const active = isActive(pathname, href, root);
         return (
           <li key={href}>
             <Link
@@ -64,12 +104,7 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
             >
               <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
               {!collapsed && <span className="flex-1 truncate">{label}</span>}
-              {count !== null &&
-                (collapsed ? (
-                  <span className="absolute top-1.5 right-2 h-2 w-2 rounded-full bg-[#fa7e1e]" aria-label={`${count} neue Leads`} />
-                ) : (
-                  <span className="rounded-full bg-snow/12 px-1.5 text-[11px] font-medium text-snow/80">{count}</span>
-                ))}
+              {counter && <NavCount counter={counter} collapsed={collapsed} label={label} />}
             </Link>
           </li>
         );
@@ -78,23 +113,32 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
   );
 }
 
-function Brand({ collapsed }: { collapsed: boolean }) {
+function Brand({ collapsed, title }: { collapsed: boolean; title: string }) {
   return (
     <Link href="/" className="group flex items-center gap-2.5 px-1" aria-label="Zur Übersicht">
       <span className="logo-rainbow">
         <Logo className={collapsed ? "h-[18px]" : "h-[22px]"} />
       </span>
-      {!collapsed && <span className="pt-0.5 text-[10px] font-medium uppercase tracking-[0.3em] text-snow/55">Sales</span>}
+      {!collapsed && <span className="pt-0.5 text-[10px] font-medium uppercase tracking-[0.3em] text-snow/55">{title}</span>}
     </Link>
   );
 }
 
-/** Arbeitsfläche für Sales: Seitenleiste links, Inhalt füllt den Rest. */
 export function SalesShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AreaShell title="Sales" nav={SALES_NAV}>
+      {children}
+    </AreaShell>
+  );
+}
+
+/** Arbeitsfläche eines Bereichs (Sales, Finance, Personal, Mail):
+ * Seitenleiste links, Inhalt füllt den Rest. */
+export function AreaShell({ title, nav, children }: { title: string; nav: NavItem[]; children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const pathname = usePathname();
-  const current = SALES_NAV.find((item) => isActive(pathname, item.href));
+  const current = nav.find((item) => isActive(pathname, item.href, nav[0].href));
 
   useEffect(() => {
     try {
@@ -122,10 +166,10 @@ export function SalesShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className={clsx("mb-6 flex h-8 items-center", collapsed ? "justify-center" : "justify-between pl-1.5")}>
-          <Brand collapsed={collapsed} />
+          <Brand collapsed={collapsed} title={title} />
         </div>
-        <nav aria-label="Sales" className="flex-1 overflow-y-auto">
-          <NavList collapsed={collapsed} />
+        <nav aria-label={title} className="flex-1 overflow-y-auto">
+          <NavList nav={nav} collapsed={collapsed} />
         </nav>
         <div className="mt-4 flex flex-col gap-0.5 border-t border-snow/[0.08] pt-3">
           <Link
@@ -169,7 +213,7 @@ export function SalesShell({ children }: { children: React.ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <span className="flex-1 truncate text-[15px] font-medium">{current?.label ?? "Sales"}</span>
+          <span className="flex-1 truncate text-[15px] font-medium">{current?.label ?? title}</span>
           <AccountMenu />
         </div>
 
@@ -181,7 +225,7 @@ export function SalesShell({ children }: { children: React.ReactNode }) {
           <div className="animate-fade absolute inset-0 bg-black/50" onClick={() => setDrawer(false)} />
           <aside className="animate-sheet absolute inset-y-0 left-0 flex w-72 flex-col bg-sky px-3 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 shadow-2xl">
             <div className="mb-6 flex items-center justify-between pl-1.5">
-              <Brand collapsed={false} />
+              <Brand collapsed={false} title={title} />
               <button
                 type="button"
                 onClick={() => setDrawer(false)}
@@ -191,7 +235,7 @@ export function SalesShell({ children }: { children: React.ReactNode }) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <NavList collapsed={false} onNavigate={() => setDrawer(false)} />
+            <NavList nav={nav} collapsed={false} onNavigate={() => setDrawer(false)} />
             <Link
               href="/"
               className="mt-auto flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] text-snow/65 hover:bg-snow/[0.06]"
@@ -206,7 +250,7 @@ export function SalesShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Schmale Werkzeugleiste oben in jeder Sales-Seite: Titel links, Aktionen rechts. */
+/** Schmale Werkzeugleiste oben in jeder Bereichsseite: Titel links, Aktionen rechts. */
 export function PageBar({
   title,
   meta,
@@ -222,5 +266,29 @@ export function PageBar({
       {meta && <div className="hidden text-[13px] text-snow/50 md:block">{meta}</div>}
       <div className="flex min-w-0 flex-1 items-center justify-end gap-2">{children}</div>
     </div>
+  );
+}
+
+export function FinanceShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AreaShell title="Finance" nav={FINANCE_NAV}>
+      {children}
+    </AreaShell>
+  );
+}
+
+export function PersonalShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AreaShell title="Personal" nav={PERSONAL_NAV}>
+      {children}
+    </AreaShell>
+  );
+}
+
+export function MailShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AreaShell title="Mail" nav={MAIL_NAV}>
+      {children}
+    </AreaShell>
   );
 }

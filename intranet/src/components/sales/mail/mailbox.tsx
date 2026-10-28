@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   Archive,
   Ban,
+  ChevronDown,
   FileText,
   Flag,
   Inbox,
@@ -19,9 +20,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { MAIL_SCOPES } from "@/lib/config";
+import { ConsentRequiredError } from "@/lib/auth";
+import { MAIL_SCOPES, mailboxLabel } from "@/lib/config";
 import { useResource } from "@/lib/data";
-import { FOLDERS, graph, useAsync, type FolderKey, type Message } from "@/lib/graph";
+import { FOLDERS, graphFor, graphErrorMessage, useAsync, type FolderKey, type MailFolder, type Message } from "@/lib/graph";
 import type { InboundMessage } from "@/lib/sales/types";
 import { accentText } from "@/lib/theme";
 import { Button, Dialog, Empty, IconButton, Input, Select, Spinner, useToast } from "@/components/ui";
@@ -41,11 +43,16 @@ const FOLDER_ICON: Record<FolderKey, LucideIcon> = {
 
 const OUTGOING: FolderKey[] = ["sentitems", "drafts"];
 
-/** Posteingang von hello@ im Aufbau von Outlook im Web: Ordner, Liste,
- * Lesebereich. Auf dem Handy nacheinander statt nebeneinander. */
-export function Mailbox() {
+type MailboxFolders = { mailbox: string; folders?: MailFolder[]; error?: unknown };
+
+/** Posteingang im Aufbau von Outlook im Web: Ordnerleiste mit allen
+ * Postfächern des Bereichs, Liste, Lesebereich. Auf dem Handy nacheinander
+ * statt nebeneinander. */
+export function Mailbox({ mailboxes }: { mailboxes: string[] }) {
   const params = useSearchParams();
   const toast = useToast();
+  const [mailbox, setMailbox] = useState(mailboxes[0]);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [folder, setFolder] = useState<FolderKey>("inbox");
   const [tab, setTab] = useState<"focused" | "other">("focused");
   const [searchInput, setSearchInput] = useState("");
@@ -60,9 +67,22 @@ export function Mailbox() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const folders = useAsync("folders", () => graph.folders());
+  const graph = graphFor(mailbox);
+  // Ordner aller Postfächer; ein Postfach ohne Zugriff zeigt nur einen Hinweis
+  const folders = useAsync<MailboxFolders[]>(`folders:${mailboxes.join()}`, () =>
+    Promise.all(
+      mailboxes.map((address) =>
+        graphFor(address)
+          .folders()
+          .then(
+            (list) => ({ mailbox: address, folders: list }),
+            (error) => ({ mailbox: address, error })
+          )
+      )
+    )
+  );
   const useTabs = folder === "inbox" && !query;
-  const listKey = `${folder}|${useTabs ? tab : ""}|${query}`;
+  const listKey = `${mailbox}|${folder}|${useTabs ? tab : ""}|${query}`;
   const list = useAsync(listKey, () =>
     graph.messages({ folder, focused: useTabs ? tab === "focused" : null, search: query || undefined })
   );
@@ -78,14 +98,28 @@ export function Mailbox() {
   );
   const inbound = useMemo(() => new Map((inboundRows ?? []).map((row) => [row.id, row])), [inboundRows]);
 
-  const problem = folders.error ?? list.error;
+  // Fehlende Zustimmung gilt für alle Postfächer: dann die große Abfrage zeigen
+  const consent = folders.data?.find((f) => f.error instanceof ConsentRequiredError)?.error;
+  const current = folders.data?.find((f) => f.mailbox === mailbox);
+  const problem = consent ?? folders.error ?? current?.error ?? list.error;
 
   function patchMessage(id: string, patch: Partial<Message>) {
     list.setData((page) => ({ ...page, items: page.items.map((m) => (m.id === id ? { ...m, ...patch } : m)) }));
   }
 
   function changeUnread(delta: number) {
-    folders.setData((all) => all.map((f) => (f.key === folder ? { ...f, unreadItemCount: Math.max(0, f.unreadItemCount + delta) } : f)));
+    folders.setData((all) =>
+      all.map((box) =>
+        box.mailbox !== mailbox || !box.folders
+          ? box
+          : {
+              ...box,
+              folders: box.folders.map((f) =>
+                f.key === folder ? { ...f, unreadItemCount: Math.max(0, f.unreadItemCount + delta) } : f
+              ),
+            }
+      )
+    );
   }
 
   function select(message: Message) {
@@ -101,7 +135,8 @@ export function Mailbox() {
     }
   }
 
-  function openFolder(key: FolderKey) {
+  function openFolder(key: FolderKey, address = mailbox) {
+    setMailbox(address);
     setFolder(key);
     setSelectedId(null);
     setCompose(null);
@@ -169,6 +204,7 @@ export function Mailbox() {
   }
 
   const folderLabel = FOLDERS.find((f) => f.key === folder)?.label ?? "";
+  const multiple = mailboxes.length > 1;
   const showDetail = !!(compose || selected);
 
   return (
@@ -258,40 +294,73 @@ export function Mailbox() {
         <div className="flex min-h-0 flex-1">
           {/* Ordner */}
           {foldersOpen && (
-            <nav aria-label="Ordner" className="hidden w-56 shrink-0 overflow-y-auto border-r border-snow/[0.08] bg-sky px-2 py-3 md:block">
-              <p className="mb-1 px-3 text-[11px] font-medium tracking-wide text-snow/45 uppercase">hello@grid-agency.de</p>
-              <ul className="flex flex-col gap-0.5">
-                {FOLDERS.map(({ key, label }) => {
-                  const info = folders.data?.find((f) => f.key === key);
-                  if (folders.data && !info) return null;
-                  const Icon = FOLDER_ICON[key];
-                  const count = key === "drafts" ? info?.totalItemCount : info?.unreadItemCount;
-                  return (
-                    <li key={key}>
-                      <button
-                        type="button"
-                        onClick={() => openFolder(key)}
-                        aria-current={folder === key ? "true" : undefined}
-                        className={cn(
-                          "flex h-9 w-full items-center gap-3 rounded-lg px-3 text-[14px] transition-colors",
-                          folder === key ? "bg-snow/[0.1] font-medium text-snow" : "text-snow/70 hover:bg-snow/[0.05] hover:text-snow"
-                        )}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} />
-                        <span className="flex-1 truncate text-left">{label}</span>
-                        {!!count && (
-                          <span
-                            className="text-[12px] font-semibold"
-                            style={key === "inbox" ? { color: accentText(MAIL_ACCENT) } : undefined}
-                          >
-                            {count}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+            <nav aria-label="Ordner" className="hidden w-60 shrink-0 overflow-y-auto border-r border-snow/[0.08] bg-sky px-2 py-3 md:block">
+              {mailboxes.map((address) => {
+                const box = folders.data?.find((f) => f.mailbox === address);
+                const closed = collapsed.has(address);
+                return (
+                  <div key={address} className="mb-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollapsed((set) => {
+                          const next = new Set(set);
+                          if (closed) next.delete(address);
+                          else next.add(address);
+                          return next;
+                        })
+                      }
+                      aria-expanded={!closed}
+                      className="mb-1 flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] font-medium tracking-wide text-snow/55 uppercase hover:text-snow"
+                    >
+                      <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", closed && "-rotate-90")} />
+                      <span className="truncate" title={address}>
+                        {address}
+                      </span>
+                    </button>
+                    {!closed &&
+                      (box?.error ? (
+                        <p className="px-3 py-1 text-[12px] leading-snug text-snow/45" title={graphErrorMessage(box.error)}>
+                          Kein Zugriff auf dieses Postfach
+                        </p>
+                      ) : (
+                        <ul className="flex flex-col gap-0.5">
+                          {FOLDERS.map(({ key, label }) => {
+                            const info = box?.folders?.find((f) => f.key === key);
+                            if (box?.folders && !info) return null;
+                            const Icon = FOLDER_ICON[key];
+                            const count = key === "drafts" ? info?.totalItemCount : info?.unreadItemCount;
+                            const active = mailbox === address && folder === key;
+                            return (
+                              <li key={key}>
+                                <button
+                                  type="button"
+                                  onClick={() => openFolder(key, address)}
+                                  aria-current={active ? "true" : undefined}
+                                  className={cn(
+                                    "flex h-9 w-full items-center gap-3 rounded-lg px-3 text-[14px] transition-colors",
+                                    active ? "bg-snow/[0.1] font-medium text-snow" : "text-snow/70 hover:bg-snow/[0.05] hover:text-snow"
+                                  )}
+                                >
+                                  <Icon className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+                                  <span className="flex-1 truncate text-left">{label}</span>
+                                  {!!count && (
+                                    <span
+                                      className="text-[12px] font-semibold"
+                                      style={key === "inbox" ? { color: accentText(MAIL_ACCENT) } : undefined}
+                                    >
+                                      {count}
+                                    </span>
+                                  )}
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ))}
+                  </div>
+                );
+              })}
             </nav>
           )}
 
@@ -305,17 +374,27 @@ export function Mailbox() {
           >
             <div className="shrink-0 px-4 pt-3">
               <div className="flex items-center gap-2">
-                <h2 className="hidden flex-1 truncate text-[17px] font-medium md:block">{query ? `Suche: „${query}“` : folderLabel}</h2>
+                <h2 className="hidden min-w-0 flex-1 truncate text-[17px] font-medium md:block">
+                  {query ? `Suche: „${query}“` : folderLabel}
+                  {multiple && <span className="ml-2 text-[13px] font-normal text-snow/45">{mailboxLabel(mailbox)}</span>}
+                </h2>
                 <Select
-                  value={folder}
-                  onChange={(e) => openFolder(e.target.value as FolderKey)}
+                  value={`${mailbox}|${folder}`}
+                  onChange={(e) => {
+                    const [address, key] = e.target.value.split("|");
+                    openFolder(key as FolderKey, address);
+                  }}
                   className="h-9 flex-1 md:hidden"
                   aria-label="Ordner"
                 >
-                  {FOLDERS.map(({ key, label }) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
+                  {mailboxes.map((address) => (
+                    <optgroup key={address} label={address}>
+                      {FOLDERS.map(({ key, label }) => (
+                        <option key={key} value={`${address}|${key}`}>
+                          {label}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </Select>
               </div>
@@ -377,8 +456,10 @@ export function Mailbox() {
           <section aria-label="Lesebereich" className={cn("min-w-0 flex-1", showDetail ? "block" : "hidden md:block")}>
             {compose ? (
               <Compose
-                key={compose.mode === "new" ? "new" : `${compose.mode}:${compose.source.id}`}
+                key={compose.mode === "new" ? `new:${mailbox}` : `${compose.mode}:${compose.source.id}`}
                 state={compose}
+                mailbox={mailbox}
+                fromOptions={mailboxes}
                 onClose={() => setCompose(null)}
                 onSent={() => {
                   setCompose(null);
@@ -388,7 +469,8 @@ export function Mailbox() {
               />
             ) : selected ? (
               <ReadingPane
-                key={selected.id}
+                key={`${mailbox}:${selected.id}`}
+                mailbox={mailbox}
                 message={selected}
                 inbound={inbound.get(selected.internetMessageId)}
                 onReply={(mode) => setCompose({ mode, source: selected })}

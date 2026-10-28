@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { graph, type Calendar } from "@/lib/graph";
+import { mailboxLabel } from "@/lib/config";
+import { graphFor, type Calendar } from "@/lib/graph";
 import { Button, Dialog, Field, Input, Select, useToast } from "@/components/ui";
 import { addDays, fromInput, toInput } from "./dates";
 
-/** Neuer Termin im Kalender von hello@ */
+/** Neuer Termin in einem der Kalender des Bereichs */
 export function EventDialog({
   start,
   calendars,
@@ -36,6 +37,7 @@ function EventForm({
   onCreated: () => void;
 }) {
   const editable = calendars.filter((c) => c.canEdit);
+  const multiple = new Set(editable.map((c) => c.mailbox)).size > 1;
   const toast = useToast();
   const [subject, setSubject] = useState("");
   const [calendarId, setCalendarId] = useState(editable.find((c) => c.isDefaultCalendar)?.id ?? editable[0]?.id ?? "");
@@ -64,11 +66,12 @@ function EventForm({
 
     setBusy(true);
     try {
-      await graph.createEvent(calendarId, { subject: subject.trim(), start: startDate, end: endDate, isAllDay: allDay, location: location.trim() });
+      const calendar = editable.find((c) => c.id === calendarId)!;
+      await graphFor(calendar.mailbox).createEvent(calendarId, { subject: subject.trim(), start: startDate, end: endDate, isAllDay: allDay, location: location.trim() });
       toast("Termin angelegt");
       onCreated();
     } catch {
-      setError("Anlegen fehlgeschlagen. Hat dein Konto Schreibzugriff auf den Kalender von hello@?");
+      setError("Anlegen fehlgeschlagen. Hat dein Konto Schreibzugriff auf diesen Kalender?");
       setBusy(false);
     }
   }
@@ -83,7 +86,7 @@ function EventForm({
           <Select id={id} value={calendarId} onChange={(e) => setCalendarId(e.target.value)}>
             {editable.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {multiple ? `${mailboxLabel(c.mailbox)} · ${c.name}` : c.name}
               </option>
             ))}
           </Select>

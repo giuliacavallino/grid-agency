@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays, Clock, ExternalLink, MapPin, Trash2, Users, Video } from "lucide-react";
-import { graph, type CalEvent, type Calendar } from "@/lib/graph";
+import { graphFor, type CalEvent, type Calendar } from "@/lib/graph";
 import { Button, Dialog, Sheet, useToast } from "@/components/ui";
 import { addDays, sameDay, time } from "./dates";
 
@@ -41,10 +41,10 @@ export function EventSheet({
   const toast = useToast();
 
   async function remove() {
-    if (!event) return;
+    if (!event || !calendar) return;
     setBusy(true);
     try {
-      await graph.deleteEvent(event.id);
+      await graphFor(calendar.mailbox).deleteEvent(event.id);
       toast("Termin gelöscht");
       setConfirm(false);
       onDeleted();
@@ -134,7 +134,7 @@ export function EventSheet({
         }
       >
         <p className="text-sm text-snow/60">
-          „{event?.subject}“ wird aus dem Kalender von hello@ entfernt. Eingeladene Personen bekommen keine Absage.
+          „{event?.subject}“ wird aus dem Kalender {calendar?.mailbox} entfernt. Eingeladene Personen bekommen keine Absage.
         </p>
       </Dialog>
     </Sheet>
