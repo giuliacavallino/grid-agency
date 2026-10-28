@@ -52,6 +52,9 @@ export type Page<T> = { items: T[]; next: string | null };
 
 export type Draft = { to: string[]; cc: string[]; subject: string; body: string };
 
+/** Dateianhang mit Inhalt (Base64), z. B. zum Weiterleiten an DATEV */
+export type FileAttachment = { name: string; contentType: string; contentBytes: string };
+
 export type Calendar = {
   id: string;
   /** Postfach, zu dem der Kalender gehört */
@@ -94,7 +97,9 @@ export interface GraphApi {
   update(id: string, patch: { isRead?: boolean; flag?: Message["flag"] }): Promise<void>;
   move(id: string, destination: FolderKey): Promise<void>;
   remove(id: string): Promise<void>;
-  send(draft: Draft): Promise<void>;
+  send(draft: Draft, attachments?: FileAttachment[]): Promise<void>;
+  /** Dateianhänge einer Mail mit Inhalt (ohne eingebettete Bilder) */
+  files(id: string): Promise<FileAttachment[]>;
   reply(id: string, opts: { comment: string; all: boolean }): Promise<void>;
   forward(id: string, opts: { to: string[]; comment: string }): Promise<void>;
   calendars(): Promise<Calendar[]>;
@@ -230,7 +235,7 @@ function realGraph(mailbox: string): GraphApi {
       await mail(`/messages/${id}`, { method: "DELETE" });
     },
 
-    async send(draft) {
+    async send(draft, attachments = []) {
       await mail(`/sendMail`, {
         method: "POST",
         body: JSON.stringify({
@@ -239,10 +244,18 @@ function realGraph(mailbox: string): GraphApi {
             body: { contentType: "Text", content: draft.body },
             toRecipients: recipients(draft.to),
             ccRecipients: recipients(draft.cc),
+            attachments: attachments.map((a) => ({ "@odata.type": "#microsoft.graph.fileAttachment", ...a })),
           },
           saveToSentItems: true,
         }),
       });
+    },
+
+    async files(id) {
+      const data = await (await mail(`/messages/${id}/attachments`)).json();
+      return (data.value as (FileAttachment & { "@odata.type": string; isInline: boolean })[])
+        .filter((a) => a["@odata.type"] === "#microsoft.graph.fileAttachment" && !a.isInline)
+        .map(({ name, contentType, contentBytes }) => ({ name, contentType, contentBytes }));
     },
 
     async reply(id, { comment, all }) {

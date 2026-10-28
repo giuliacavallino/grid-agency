@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, PanelLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { CALENDAR_SCOPES } from "@/lib/config";
-import { graph, useAsync, type CalEvent } from "@/lib/graph";
+import { ConsentRequiredError } from "@/lib/auth";
+import { graphFor, useAsync, type CalEvent, type Calendar } from "@/lib/graph";
 import { Button, IconButton, Spinner } from "@/components/ui";
 import { GraphProblem } from "../mail/access";
 import { addMonths, rangeFor, startOfDay, step, titleFor, today as getToday, type View } from "./dates";
@@ -22,8 +23,8 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "year", label: "Jahr" },
 ];
 
-/** Kalender von hello@ im Stil von Apple Kalender. */
-export function CalendarApp() {
+/** Kalender der Postfächer eines Bereichs im Stil von Apple Kalender. */
+export function CalendarApp({ mailboxes }: { mailboxes: string[] }) {
   const [view, setView] = useState<View>("week");
   const [anchor, setAnchor] = useState(getToday);
   const [today] = useState(getToday);
@@ -39,11 +40,23 @@ export function CalendarApp() {
     if (window.matchMedia("(max-width: 767px)").matches) setView("day");
   }, []);
 
-  const calendars = useAsync("calendars", () => graph.calendars());
+  // Kalender aller Postfächer; ein Postfach ohne Zugriff fällt einfach weg
+  const loaded = useAsync(`calendars:${mailboxes.join()}`, async () => {
+    const results = await Promise.allSettled(mailboxes.map((m) => graphFor(m).calendars()));
+    const failed = results.flatMap((r) => (r.status === "rejected" ? [r.reason] : []));
+    // Ohne Zustimmung oder ganz ohne Zugriff den Fehler zeigen
+    const consent = failed.find((e) => e instanceof ConsentRequiredError);
+    if (consent || failed.length === results.length) throw consent ?? failed[0];
+    return {
+      list: results.flatMap((r) => (r.status === "fulfilled" ? r.value : [])),
+      denied: mailboxes.filter((_, i) => results[i].status === "rejected"),
+    };
+  });
+  const calendars = { ...loaded, data: loaded.data?.list };
   const { start, end } = rangeFor(view, anchor);
   const ids = calendars.data?.map((c) => c.id).join(",") ?? "";
   const events = useAsync(view === "year" || !calendars.data ? null : `events:${start.toISOString()}:${end.toISOString()}:${ids}`, async () => {
-    const lists = await Promise.all(calendars.data!.map((c) => graph.events(c, start, end)));
+    const lists = await Promise.all(calendars.data!.map((c) => graphFor(c.mailbox).events(c, start, end)));
     return lists.flat();
   });
 
@@ -142,49 +155,38 @@ export function CalendarApp() {
               <MiniMonth month={miniMonth} today={today} selected={anchor} onSelect={(day) => go(day, view === "year" ? "day" : view)} compact />
             </div>
 
-            <div>
-              <p className="mb-2 text-[11px] font-medium tracking-wide text-snow/45 uppercase">hello@grid-agency.de</p>
-              {calendars.loading ? (
-                <Spinner className="h-4 w-4" />
-              ) : (
-                <ul className="flex flex-col gap-1">
-                  {calendars.data?.map((c) => {
-                    const on = !hidden.has(c.id);
-                    return (
-                      <li key={c.id}>
-                        <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 text-[13.5px] hover:bg-snow/[0.05]">
-                          <input
-                            type="checkbox"
-                            checked={on}
-                            onChange={() =>
-                              setHidden((set) => {
-                                const next = new Set(set);
-                                if (on) next.add(c.id);
-                                else next.delete(c.id);
-                                return next;
-                              })
-                            }
-                            className="sr-only"
-                          />
-                          <span
-                            className="grid h-4 w-4 shrink-0 place-items-center rounded-[4px] border-2"
-                            style={{ borderColor: c.color, background: on ? c.color : "transparent" }}
-                            aria-hidden
-                          >
-                            {on && (
-                              <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 text-white">
-                                <path d="M2.5 6.2 5 8.5l4.5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </span>
-                          <span className="truncate">{c.name}</span>
-                        </label>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+            {mailboxes.map((address) => (
+              <div key={address}>
+                <p className="mb-2 truncate text-[11px] font-medium tracking-wide text-snow/45 uppercase" title={address}>
+                  {address}
+                </p>
+                {calendars.loading ? (
+                  <Spinner className="h-4 w-4" />
+                ) : loaded.data?.denied.includes(address) ? (
+                  <p className="text-[12px] text-snow/45">Kein Zugriff auf diesen Kalender</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {calendars.data
+                      ?.filter((c) => c.mailbox === address)
+                      .map((c) => (
+                        <CalendarToggle
+                          key={c.id}
+                          calendar={c}
+                          on={!hidden.has(c.id)}
+                          onToggle={() =>
+                            setHidden((set) => {
+                              const next = new Set(set);
+                              if (next.has(c.id)) next.delete(c.id);
+                              else next.add(c.id);
+                              return next;
+                            })
+                          }
+                        />
+                      ))}
+                  </ul>
+                )}
+              </div>
+            ))}
           </aside>
         )}
 
@@ -194,7 +196,7 @@ export function CalendarApp() {
               error={problem}
               scopes={CALENDAR_SCOPES}
               onRetry={() => {
-                calendars.reload();
+                loaded.reload();
                 events.reload();
               }}
             />
@@ -244,6 +246,28 @@ export function CalendarApp() {
         }}
       />
     </div>
+  );
+}
+
+function CalendarToggle({ calendar: c, on, onToggle }: { calendar: Calendar; on: boolean; onToggle: () => void }) {
+  return (
+    <li>
+      <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1 text-[13.5px] hover:bg-snow/[0.05]">
+        <input type="checkbox" checked={on} onChange={onToggle} className="sr-only" />
+        <span
+          className="grid h-4 w-4 shrink-0 place-items-center rounded-[4px] border-2"
+          style={{ borderColor: c.color, background: on ? c.color : "transparent" }}
+          aria-hidden
+        >
+          {on && (
+            <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 text-white">
+              <path d="M2.5 6.2 5 8.5l4.5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+        <span className="truncate">{c.name}</span>
+      </label>
+    </li>
   );
 }
 

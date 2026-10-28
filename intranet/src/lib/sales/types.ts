@@ -105,16 +105,87 @@ export type Retainer = {
 
 export type InboundMessage = {
   id: string;
+  mailbox: string | null;
   received_at: string | null;
   from_email: string | null;
   from_name: string | null;
   subject: string | null;
-  classification: "anfrage" | "bewerbung" | "sonstiges";
+  classification: "anfrage" | "bewerbung" | "rechnung" | "sonstiges";
   reason: string | null;
   lead_id: string | null;
+  invoice_id: string | null;
+  application_id: string | null;
 };
 
-export type Settings = { capacity: { team_hours_per_month: number } };
+// ---------- Finance: Eingangsrechnungen ----------
+
+export const INVOICE_STAGES = [
+  { id: "neu", label: "Neu", color: "#afaaa0" },
+  { id: "freigegeben", label: "Freigegeben", color: "#7fa8ff" },
+  { id: "datev", label: "An DATEV gesendet", color: "#9fd8a8" },
+] as const;
+export type InvoiceStage = (typeof INVOICE_STAGES)[number]["id"] | "abgelehnt";
+
+export type Invoice = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  stage: InvoiceStage;
+  position: number;
+  source_ref: string | null;
+  mailbox: string | null;
+  graph_id: string | null;
+  received_at: string | null;
+  vendor: string;
+  vendor_email: string | null;
+  invoice_number: string | null;
+  invoice_date: string | null;
+  due_date: string | null;
+  amount: number | null;
+  currency: string;
+  description: string | null;
+  attachment_names: string[] | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  datev_sent_at: string | null;
+  datev_sent_by: string | null;
+  notes: string | null;
+};
+
+// ---------- Personal: Bewerbungen ----------
+
+export const APPLICATION_STAGES = [
+  { id: "neu", label: "Neue Bewerbung", color: "#afaaa0" },
+  { id: "gespraech", label: "Gespräch", color: "#7fa8ff" },
+  { id: "case_study", label: "Case Study", color: "#b58cf0" },
+  { id: "zusage", label: "Zusage", color: "#9fd8a8" },
+  { id: "absage", label: "Absage", color: "#ec8a84" },
+] as const;
+export type ApplicationStage = (typeof APPLICATION_STAGES)[number]["id"];
+
+export type Application = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  stage: ApplicationStage;
+  position: number;
+  source_ref: string | null;
+  mailbox: string | null;
+  graph_id: string | null;
+  received_at: string | null;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  position_title: string | null;
+  message: string | null;
+  attachment_names: string[] | null;
+  owner: string | null;
+  next_step: string | null;
+  next_step_at: string | null;
+  notes: string | null;
+};
+
+export type Settings = { capacity: { team_hours_per_month: number }; datev: { upload_address: string } };
 
 /** Position für „ganz oben“ in einer Pipeline-Spalte (absteigend sortiert). */
 export const topPosition = () => Date.now() / 1000;

@@ -70,12 +70,12 @@ export function ReadingPane({
             Weiterleiten
           </Button>
           <span className="flex-1" />
-          {inbound?.lead_id ? (
+          {inbound?.lead_id || inbound?.application_id || inbound?.invoice_id ? (
             <Link
-              href="/sales"
+              href={inbound.lead_id ? "/sales" : inbound.application_id ? "/personal" : "/finance"}
               className="inline-flex h-8 items-center gap-2 rounded-full border border-success/30 px-3 text-[13px] font-medium text-success hover:bg-success/10"
             >
-              Lead in der Pipeline
+              {inbound.lead_id ? "Lead in der Pipeline" : inbound.application_id ? "Bewerbung in Personal" : "Rechnung in Finance"}
             </Link>
           ) : (
             <Button size="sm" variant="primary" icon={<UserPlus className="h-4 w-4" />} onClick={() => setLeadOpen(true)}>

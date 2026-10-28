@@ -1,13 +1,15 @@
 import { after } from "next/server";
 import { getMail } from "@/lib/server/graph-app";
 import { ingestMail } from "@/lib/server/mail-ingest";
+import { mailboxForSubscription } from "@/lib/server/mail-subscriptions";
 import { safeEqual } from "@/lib/server/signature";
 
 export const maxDuration = 60;
 
-type Notification = { clientState?: string; resourceData?: { id?: string } };
+type Notification = { subscriptionId?: string; clientState?: string; resourceData?: { id?: string } };
 
-/** Microsoft-Graph-Benachrichtigung: neue Mail im Posteingang von hello@. */
+/** Microsoft-Graph-Benachrichtigung: neue Mail im Posteingang eines der
+ * Postfächer aus MAILBOXES (ein Abo je Postfach). */
 export async function POST(request: Request) {
   // Beim Anlegen des Abos prüft Graph die URL mit einem validationToken.
   const validationToken = new URL(request.url).searchParams.get("validationToken");
@@ -19,15 +21,17 @@ export async function POST(request: Request) {
   if (!secret) return new Response("Nicht eingerichtet", { status: 503 });
 
   const body = (await request.json().catch(() => ({}))) as { value?: Notification[] };
-  const ids = (body.value ?? [])
-    .filter((n) => n.clientState && safeEqual(n.clientState, secret) && n.resourceData?.id)
-    .map((n) => n.resourceData!.id!);
+  const notifications = (body.value ?? []).filter(
+    (n) => n.clientState && safeEqual(n.clientState, secret) && n.resourceData?.id && n.subscriptionId
+  );
 
   // Graph erwartet eine schnelle Antwort; verarbeitet wird danach.
   after(async () => {
-    for (const id of ids) {
+    for (const n of notifications) {
       try {
-        await ingestMail(await getMail(id));
+        const mailbox = await mailboxForSubscription(n.subscriptionId!);
+        if (!mailbox) continue;
+        await ingestMail(await getMail(mailbox, n.resourceData!.id!));
       } catch (error) {
         console.error("Mail konnte nicht verarbeitet werden:", error);
       }

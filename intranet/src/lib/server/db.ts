@@ -44,10 +44,29 @@ export const TABLES = {
   },
   inbound_messages: {
     columns: [],
-    filters: ["classification"],
+    filters: ["classification", "mailbox"],
     order: { column: "received_at", ascending: false },
   },
+  invoices: {
+    columns: [
+      "stage", "position", "vendor", "vendor_email", "invoice_number", "invoice_date", "due_date",
+      "amount", "currency", "description", "notes",
+    ],
+    filters: ["stage"],
+    order: { column: "position", ascending: true },
+  },
+  applications: {
+    columns: [
+      "stage", "position", "name", "email", "phone", "position_title", "message", "owner",
+      "next_step", "next_step_at", "notes",
+    ],
+    filters: ["stage"],
+    order: { column: "position", ascending: true },
+  },
 } as const;
+
+/** Tabellen mit Herkunftsschlüssel (source_ref) aus dem Mail-Eingang */
+export type IngestTable = "leads" | "inbound_messages" | "invoices" | "applications";
 
 export type TableName = keyof typeof TABLES;
 export type Row = Record<string, unknown> & { id: string };
@@ -71,7 +90,7 @@ export interface Store {
   get(table: TableName, id: string): Promise<Row | null>;
   insert(table: TableName, row: Record<string, unknown>): Promise<Row>;
   /** Insert, der bei bestehendem (source, source_ref) bzw. id nichts tut. */
-  insertIgnore(table: "leads" | "inbound_messages", row: Record<string, unknown>): Promise<Row | null>;
+  insertIgnore(table: IngestTable, row: Record<string, unknown>): Promise<Row | null>;
   update(table: TableName, id: string, patch: Record<string, unknown>): Promise<Row>;
   remove(table: TableName, id: string): Promise<void>;
   getSetting<T>(key: string): Promise<T | null>;
@@ -112,7 +131,7 @@ const supabaseStore: Store = {
     return check(await sb().from(table).insert(row).select().single()) as Row;
   },
   async insertIgnore(table, row) {
-    const onConflict = table === "leads" ? "source,source_ref" : "id";
+    const onConflict = table === "leads" ? "source,source_ref" : table === "inbound_messages" ? "id" : "source_ref";
     const rows = check(
       await sb().from(table).upsert(row, { onConflict, ignoreDuplicates: true }).select()
     ) as Row[];

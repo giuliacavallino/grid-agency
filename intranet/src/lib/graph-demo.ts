@@ -126,10 +126,10 @@ const pdf = (id: string, name: string, size: number) => ({ id, name, contentType
 messages.push(
   msg("inbox", person("Adobe", "mail@mail.adobe.com"), "Rechnung Creative Cloud Oktober", at(1, 5, 12),
     `<p>Rechnungsnummer IE-2026-118422, Betrag 89,24 € (inkl. USt.), fällig am 15. des Monats.</p>`,
-    { mailbox: BUCHHALTUNG.emailAddress.address, toRecipients: [BUCHHALTUNG], internetMessageId: "demo-mail-3", isRead: false, hasAttachments: true, attachmentList: [pdf("att-4", "Adobe_IE-2026-118422.pdf", 88_211)] }),
+    { id: "demo-inv-adobe", mailbox: BUCHHALTUNG.emailAddress.address, toRecipients: [BUCHHALTUNG], internetMessageId: "demo-mail-3", isRead: false, hasAttachments: true, attachmentList: [pdf("att-4", "Adobe_IE-2026-118422.pdf", 88_211)] }),
   msg("inbox", person("Steffen Video", "rechnung@steffen-video.de"), "Rechnung 2026-041 Shooting Frittenwerk", at(3, 9, 40),
     `<p>Hallo, anbei meine Rechnung 2026-041 über 1.428,00 € brutto. Zahlbar innerhalb von 14 Tagen.</p>${signature("Steffen", "Video & Foto")}`,
-    { mailbox: BUCHHALTUNG.emailAddress.address, toRecipients: [BUCHHALTUNG], internetMessageId: "demo-mail-4", hasAttachments: true, attachmentList: [pdf("att-5", "Rechnung_2026-041.pdf", 141_002)] }),
+    { id: "demo-inv-steffen", mailbox: BUCHHALTUNG.emailAddress.address, toRecipients: [BUCHHALTUNG], internetMessageId: "demo-mail-4", hasAttachments: true, attachmentList: [pdf("att-5", "Rechnung_2026-041.pdf", 141_002)] }),
   msg("inbox", person("Telekom", "rechnung@telekom.de"), "Ihre Mobilfunk-Rechnung", at(6, 6, 0),
     `<p>Ihre Rechnung über 54,90 € ist online verfügbar.</p>`,
     { mailbox: BUCHHALTUNG.emailAddress.address, toRecipients: [BUCHHALTUNG], hasAttachments: true, attachmentList: [pdf("att-6", "Telekom_Rechnung.pdf", 61_204)] }),
@@ -331,6 +331,11 @@ export function demoGraphFor(mailbox: string): GraphApi {
       await wait();
       const index = messages.findIndex((m) => m.id === id);
       if (index >= 0) messages.splice(index, 1);
+    },
+
+    async files(id) {
+      await wait(300);
+      return (findMessage(id).attachmentList ?? []).map((a) => ({ name: a.name, contentType: a.contentType, contentBytes: btoa(a.text) }));
     },
 
     async send(draft) {

@@ -14,7 +14,8 @@ export const MAIL_ACCENT = "#4f9bf0";
 
 const CLASSIFICATION = {
   anfrage: { label: "Anfrage → Lead", color: "#5bbf6a" },
-  bewerbung: { label: "Bewerbung", color: "#a77ff0" },
+  bewerbung: { label: "Bewerbung → Personal", color: "#a77ff0" },
+  rechnung: { label: "Rechnung → Finance", color: "#e7a33e" },
 } as const;
 
 export function ClassificationChip({ inbound }: { inbound?: InboundMessage }) {
