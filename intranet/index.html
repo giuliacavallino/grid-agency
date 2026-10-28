@@ -20,8 +20,9 @@
     --sky: #2b2926;
     --snow: #e4e2e7;
     --dune: #afaaa0;
-    --earth: #676159;
     --error: #f2a49a;
+    --muted: color-mix(in srgb, var(--snow) 55%, transparent);
+    --faint: color-mix(in srgb, var(--snow) 35%, transparent);
   }
 
   * { box-sizing: border-box; }
@@ -29,14 +30,10 @@
 
   body {
     min-height: 100dvh;
-    display: grid;
-    place-items: center;
-    padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
-    /* Pattern zur Mitte hin abdunkeln, damit die Karte ruhig steht */
-    background:
-      radial-gradient(ellipse at center, rgb(43 41 38 / .7) 0%, rgb(43 41 38 / .35) 70%),
-      var(--sky) url("assets/pattern.png") repeat;
-    background-size: auto, 420px auto;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px calc(20px + env(safe-area-inset-bottom));
+    background: var(--sky);
     color: var(--snow);
     font-family: "Readex Pro", system-ui, -apple-system, sans-serif;
     font-weight: 300;
@@ -45,59 +42,40 @@
 
   ::selection { background: var(--dune); color: var(--sky); }
 
-  main { width: 100%; max-width: 380px; }
-
-  .brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 28px;
-  }
-  .brand img { width: 128px; height: auto; }
-  .brand span {
-    font-size: 11px;
-    letter-spacing: .3em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--snow) 45%, transparent);
+  main {
+    flex: 1;
+    display: grid;
+    place-items: center;
   }
 
-  /* Liquid-Glass-Karte wie .glass auf der Website */
-  .card {
-    position: relative;
-    padding: 32px 24px 28px;
-    border-radius: 28px;
-    background: linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--snow) 12%, transparent),
-      color-mix(in srgb, var(--snow) 5%, transparent)
-    );
-    -webkit-backdrop-filter: blur(24px) saturate(1.6);
-    backdrop-filter: blur(24px) saturate(1.6);
-    border: 1px solid color-mix(in srgb, var(--snow) 16%, transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, var(--snow) 18%, transparent),
-      0 8px 32px rgb(0 0 0 / .35);
+  section {
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
   }
-  .card[hidden] { display: none; }
+  section[hidden] { display: none; }
+
+  .logo { display: inline-block; margin-bottom: 40px; }
+  .logo img { display: block; width: 96px; height: auto; }
 
   h1 {
-    margin: 0 0 6px;
-    font-size: 24px;
+    margin: 0 0 8px;
+    font-size: 22px;
     font-weight: 500;
     letter-spacing: -.01em;
   }
   .lead {
-    margin: 0 0 24px;
+    margin: 0 0 32px;
     font-size: 14px;
-    color: color-mix(in srgb, var(--snow) 60%, transparent);
+    line-height: 1.5;
+    color: var(--muted);
     overflow-wrap: anywhere;
+    text-wrap: balance;
   }
 
   /* Buttons: Primär (Snow mit Aurora-Hover wie .btn-rainbow) und Sekundär
      (Outline). Jeder Button zeigt beim Warten einen Spinner (.is-loading). */
   .btn {
-    position: relative;
     width: 100%;
     height: 48px;
     display: flex;
@@ -116,8 +94,7 @@
     background-image: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
     background-size: 200% 100%;
     animation: rainbow-slide 1.6s linear infinite;
-    transform: scale(1.02);
-    box-shadow: 0 10px 34px rgb(250 126 30 / .35);
+    box-shadow: 0 10px 34px rgb(250 126 30 / .3);
   }
   .btn-secondary {
     border: 1px solid color-mix(in srgb, var(--snow) 22%, transparent);
@@ -127,14 +104,14 @@
   .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--snow) 8%, transparent); }
   .btn:active:not(:disabled) { transform: scale(.97); }
   .btn:disabled { cursor: progress; }
-  .btn:disabled:not(.is-loading) { opacity: .6; cursor: not-allowed; }
+  .btn:focus-visible { outline: 2px solid var(--snow); outline-offset: 3px; }
   @keyframes rainbow-slide { to { background-position: -200% 0; } }
 
-  .btn .ms-logo { width: 18px; height: 18px; flex: none; }
+  .btn .ms-logo { width: 16px; height: 16px; flex: none; }
   .spinner {
     display: none;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     flex: none;
     border-radius: 50%;
     border: 2px solid currentColor;
@@ -147,49 +124,35 @@
 
   .status {
     min-height: 20px;
-    margin: 14px 0 0;
+    margin: 12px 0 0;
     font-size: 13px;
-    text-align: center;
   }
   .status.error { color: var(--error); }
 
-  .hint {
-    margin: 4px 0 0;
-    font-size: 12px;
-    text-align: center;
-    color: color-mix(in srgb, var(--snow) 45%, transparent);
-  }
-  .hint a { color: inherit; }
-  .hint a:hover { color: var(--snow); }
-
   footer {
-    margin-top: 24px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 16px;
+    gap: 6px 16px;
     font-size: 11px;
   }
-  footer a { color: color-mix(in srgb, var(--snow) 35%, transparent); text-decoration: none; }
-  footer a:hover { color: color-mix(in srgb, var(--snow) 60%, transparent); }
+  footer a { color: var(--faint); text-decoration: none; }
+  footer a:hover { color: var(--muted); }
 
   @media (prefers-reduced-motion: reduce) {
-    .btn-primary:hover:not(:disabled) { animation: none; transform: none; }
+    .btn-primary:hover:not(:disabled) { animation: none; }
     .spinner { animation-duration: 1.6s; }
   }
 </style>
 </head>
 <body>
 <main>
-  <div class="brand">
-    <a href="https://grid-agency.de" aria-label="Zur GRID Website">
+  <!-- Abgemeldet -->
+  <section id="signed-out">
+    <a class="logo" href="https://grid-agency.de" aria-label="Zur GRID Website">
       <img src="assets/logo.png" alt="GRID" width="626" height="226">
     </a>
-    <span>Intranet</span>
-  </div>
-
-  <!-- Abgemeldet -->
-  <section class="card" id="signed-out">
-    <h1>Willkommen zurück</h1>
+    <h1>Intranet</h1>
     <p class="lead">Melde dich mit deinem GRID-Microsoft-Konto an.</p>
 
     <button type="button" class="btn btn-primary is-loading" id="sign-in" disabled aria-busy="true">
@@ -198,40 +161,39 @@
       <span class="label">Anmeldung wird geprüft …</span>
     </button>
     <p class="status" role="status" aria-live="polite"></p>
-    <p class="hint">
-      Probleme beim Login? <a href="mailto:hello@grid-agency.de?subject=Intranet-Login">hello@grid-agency.de</a>
-    </p>
   </section>
 
   <!-- Angemeldet -->
-  <section class="card" id="signed-in" hidden>
+  <section id="signed-in" hidden>
+    <a class="logo" href="https://grid-agency.de" aria-label="Zur GRID Website">
+      <img src="assets/logo.png" alt="GRID" width="626" height="226">
+    </a>
     <h1>Hallo <span id="user-name"></span></h1>
-    <p class="lead">Angemeldet als <span id="user-email"></span>. Hier entsteht das GRID Intranet.</p>
+    <p class="lead">Angemeldet als <span id="user-email"></span>.<br>Hier entsteht das GRID Intranet.</p>
 
     <button type="button" class="btn btn-secondary" id="sign-out">
       <span class="spinner" aria-hidden="true"></span>
       <span class="label">Abmelden</span>
     </button>
   </section>
-
-  <footer>
-    <a href="https://grid-agency.de">grid-agency.de</a>
-    <a href="https://grid-agency.de/impressum">Impressum</a>
-    <a href="https://grid-agency.de/datenschutz">Datenschutz</a>
-  </footer>
 </main>
+
+<footer>
+  <a href="mailto:hello@grid-agency.de?subject=Intranet-Login">Hilfe beim Login</a>
+  <a href="https://grid-agency.de/impressum">Impressum</a>
+  <a href="https://grid-agency.de/datenschutz">Datenschutz</a>
+</footer>
 
 <!-- Offizielles Browser-Bundle von @azure/msal-browser v5.25.1 (MIT),
      lokal eingebunden, damit beim Seitenaufruf kein Drittanbieter-CDN lädt. -->
 <script src="assets/msal-browser.min.js"></script>
 <script>
-  // Microsoft Entra ID (Azure AD): App-Registrierung "GRID Intranet",
-  // Plattform "Single-page application", Redirect-URI
-  // https://intranet.grid-agency.de/ (für Tests zusätzlich http://localhost:…/).
-  // Die Client-ID steht auf der Übersichtsseite der App-Registrierung.
-  const CLIENT_ID = "";
-  // Nur Konten aus dem GRID-Tenant; statt der Domain geht auch die Tenant-ID.
-  const TENANT = "grid-agency.de";
+  // Microsoft Entra ID: App-Registrierung "GRID Intranet" (Single-page
+  // application, Einzelmandant). Client- und Tenant-ID sind nicht geheim.
+  // Jede Seiten-URL (Produktion, Vercel-Preview, localhost) muss in Entra als
+  // SPA-Redirect-URI mit Slash am Ende eingetragen sein, sonst AADSTS50011.
+  const CLIENT_ID = "bfd6b866-b603-42e0-8c33-74fde6f14239";
+  const TENANT_ID = "ffbd83b1-951c-4041-aab7-a836e49e3957";
 
   const signedOut = document.getElementById("signed-out");
   const signedIn = document.getElementById("signed-in");
@@ -268,25 +230,19 @@
     return "Anmeldung fehlgeschlagen. Bitte versuch es erneut.";
   }
 
-  const msalApp = CLIENT_ID
-    ? new msal.PublicClientApplication({
-        auth: {
-          clientId: CLIENT_ID,
-          authority: `https://login.microsoftonline.com/${TENANT}`,
-          redirectUri: `${location.origin}/`,
-          postLogoutRedirectUri: `${location.origin}/`,
-        },
-        cache: { cacheLocation: "localStorage" },
-      })
-    : null;
+  const msalApp = new msal.PublicClientApplication({
+    auth: {
+      clientId: CLIENT_ID,
+      authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+      redirectUri: `${location.origin}/`,
+      postLogoutRedirectUri: `${location.origin}/`,
+    },
+    cache: { cacheLocation: "localStorage" },
+  });
 
   // Beim Laden: Rückkehr vom Microsoft-Login verarbeiten bzw. bestehende
   // Sitzung erkennen. Bis dahin zeigt der Button den Spinner.
   (async () => {
-    if (!msalApp) {
-      setLoading(signInButton, false, "Mit Microsoft anmelden");
-      return;
-    }
     try {
       await msalApp.initialize();
       const result = await msalApp.handleRedirectPromise();
@@ -304,10 +260,6 @@
   signInButton.addEventListener("click", async () => {
     status.textContent = "";
     status.className = "status";
-    if (!msalApp) {
-      showError("Der Microsoft-Login ist noch nicht eingerichtet.");
-      return;
-    }
     setLoading(signInButton, true, "Weiterleitung zu Microsoft …");
     try {
       // Leitet die Seite zu Microsoft weiter; der Spinner bleibt bis dahin.
