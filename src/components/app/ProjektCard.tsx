@@ -6,20 +6,24 @@ import { clientSlug, type Client } from "@/lib/content";
 
 /** Eine Projekt-Karte: Logo, Rubriken-Chips (was GRID gemacht hat),
  * Kurzbeschreibung und Link auf die Projektseite. Wird von der
- * Projektübersicht und dem Startseiten-Teaser geteilt. */
+ * Projektübersicht und dem Startseiten-Teaser geteilt. `compact` hält
+ * die Karte flach genug, dass die Startseiten-Reihe auf einen
+ * Bildschirm passt (Text gekürzt, Bild an die Höhe gekoppelt). */
 export function ProjektCard({
   client,
   eager = false,
+  compact = false,
 }: {
   client: Client;
   eager?: boolean;
+  compact?: boolean;
 }) {
   return (
     <Link
       href={`/projekte/${clientSlug(client.name)}`}
       className="card-rainbow group flex h-full flex-col rounded-2xl border border-snow/10 p-5"
     >
-      <div className="flex h-16 items-center">
+      <div className={`flex items-center ${compact ? "h-12" : "h-16"}`}>
         {client.logo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -51,7 +55,11 @@ export function ProjektCard({
       </div>
 
       {client.intro && (
-        <p className="mt-3 flex-1 text-sm font-light leading-relaxed text-snow/65">
+        <p
+          className={`mt-3 flex-1 text-sm font-light leading-relaxed text-snow/65 ${
+            compact ? "line-clamp-2 lg:line-clamp-3" : ""
+          }`}
+        >
           {client.intro}
         </p>
       )}
@@ -65,11 +73,13 @@ export function ProjektCard({
             src={client.heroImage}
             alt={`${client.name}, Einblick in den Content`}
             loading="lazy"
-            className={
+            className={`${
               client.heroImageFit === "contain"
-                ? "mx-auto h-48 w-auto object-contain py-2 transition-transform duration-300 group-hover:scale-[1.03]"
-                : "aspect-[16/10] w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            }
+                ? "mx-auto h-48 w-auto object-contain py-2"
+                : "aspect-[16/10] w-full object-cover"
+            } transition-transform duration-300 group-hover:scale-[1.03] ${
+              compact ? "max-h-[16svh] lg:max-h-[18svh]" : ""
+            }`}
           />
         </div>
       )}

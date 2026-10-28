@@ -27,7 +27,7 @@ export function TopBar() {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-6"
       >
-        <div className="mx-auto w-full max-w-frame px-5 lg:max-w-frame-lg">
+        <div className="mx-auto w-full max-w-frame px-5 lg:max-w-frame-wide lg:px-gutter">
           <div className="glass pointer-events-auto relative flex h-12 w-full items-center justify-between overflow-hidden rounded-full px-5 lg:h-[4.25rem] lg:px-7">
             <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 

@@ -31,8 +31,10 @@ export function ContactForm() {
   const [state, formAction] = useActionState(submitContactForm, initialState);
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form action={formAction} className="space-y-3 sm:space-y-4">
+      {/* Name und E-Mail haben kurze Platzhalter, die passen auch mobil
+          nebeneinander und halten das Formular auf einem Bildschirm. */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <input
           name="name"
           type="text"
@@ -48,7 +50,7 @@ export function ContactForm() {
           className={inputClasses}
         />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
         <input
           name="company"
           type="text"

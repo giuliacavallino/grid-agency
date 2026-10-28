@@ -12,7 +12,7 @@ import { PhotoStrip } from "@/components/app/PhotoStrip";
 export default function Home() {
   return (
     <AppShell>
-      <section id="home" className="scroll-mt-20">
+      <section id="home">
         <HeroSection />
       </section>
 
@@ -20,15 +20,15 @@ export default function Home() {
         <NewestCollab />
       </section>
 
-      <section id="leistungen" className="scroll-mt-20">
+      <section id="leistungen">
         <ServicesSection />
       </section>
 
-      <section id="cases" className="scroll-mt-20 border-t border-snow/10">
+      <section id="cases" className="border-t border-snow/10">
         <CaseStudiesSection />
       </section>
 
-      <section id="projekte" className="scroll-mt-20 border-t border-snow/10">
+      <section id="projekte" className="border-t border-snow/10">
         <ProjekteTeaser />
       </section>
 
@@ -36,15 +36,15 @@ export default function Home() {
         <PhotoStrip />
       </section>
 
-      <section id="roadmap" className="scroll-mt-20 border-t border-snow/10">
+      <section id="roadmap" className="border-t border-snow/10">
         <RoadmapSection />
       </section>
 
-      <section id="team" className="scroll-mt-20 border-t border-snow/10">
+      <section id="team" className="border-t border-snow/10">
         <TeamSection />
       </section>
 
-      <section id="dm" className="scroll-mt-20 border-t border-snow/10">
+      <section id="dm" className="border-t border-snow/10">
         <DmSection />
       </section>
     </AppShell>

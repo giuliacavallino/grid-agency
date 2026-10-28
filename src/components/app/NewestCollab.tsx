@@ -20,7 +20,8 @@ function spreadGallery(list: string[]): string[] {
 
 /** "Newest Collaboration" strip on the homepage: the freshest client's
  * whole gallery drifts by as a full-bleed marquee (same mechanic as the
- * logo band) plus a CTA to the full case page. */
+ * logo band) plus a CTA to the full case page. The tiles take their
+ * height from the viewport, so the strip fills one screen on any device. */
 export function NewestCollab() {
   const client = clients.find((c) => c.name === newestCollab);
   if (!client || !client.gallery || client.gallery.length === 0) return null;
@@ -32,7 +33,7 @@ export function NewestCollab() {
   const href = `/projekte/${clientSlug(client.name)}`;
 
   return (
-    <div className="px-5 py-12">
+    <div className="screen px-5 lg:px-gutter">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -44,7 +45,7 @@ export function NewestCollab() {
           <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
             Newest Collaboration
           </p>
-          <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow">
+          <h2 className="mt-2 text-3xl font-medium tracking-tight text-snow lg:text-4xl">
             Frisch aus dem{" "}
             <span className="text-scroll-gradient">Ofen</span>.
           </h2>
@@ -90,7 +91,7 @@ export function NewestCollab() {
             <Link
               key={`${src}-${i}`}
               href={href}
-              className="mr-3 block aspect-[4/5] w-52 shrink-0 overflow-hidden rounded-2xl sm:w-60"
+              className="mr-3 block aspect-[4/5] h-[clamp(14rem,44svh,24rem)] shrink-0 overflow-hidden rounded-2xl lg:mr-4 lg:h-[clamp(16rem,56svh,44rem)]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
