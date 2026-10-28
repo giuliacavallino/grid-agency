@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#2b2926">
-<title>Login | GRID Intranet</title>
+<title>GRID Intranet</title>
 <link rel="preload" href="assets/ReadexPro-Variable.ttf" as="font" type="font/ttf" crossorigin>
 <style>
   @font-face {
@@ -22,21 +22,19 @@
     --dune: #afaaa0;
     --earth: #676159;
     --error: #f2a49a;
+    --aurora: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
+    /* Seitenbreite wie --container-frame-lg der Website */
+    --frame: 1088px;
   }
 
   * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; }
+  html, body { margin: 0; }
+  [hidden] { display: none !important; }
 
   body {
     min-height: 100dvh;
-    display: grid;
-    place-items: center;
-    padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
-    /* Pattern zur Mitte hin abdunkeln, damit die Karte ruhig steht */
-    background:
-      radial-gradient(ellipse at center, rgb(43 41 38 / .7) 0%, rgb(43 41 38 / .35) 70%),
-      var(--sky) url("assets/pattern.png") repeat;
-    background-size: auto, 420px auto;
+    background: var(--sky) url("assets/pattern.png") repeat;
+    background-size: 420px auto;
     color: var(--snow);
     font-family: "Readex Pro", system-ui, -apple-system, sans-serif;
     font-weight: 300;
@@ -45,7 +43,43 @@
 
   ::selection { background: var(--dune); color: var(--sky); }
 
-  main { width: 100%; max-width: 380px; }
+  /* Liquid-Glass-Fläche wie .glass auf der Website */
+  .glass {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--snow) 12%, transparent),
+      color-mix(in srgb, var(--snow) 5%, transparent)
+    );
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid color-mix(in srgb, var(--snow) 16%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--snow) 18%, transparent),
+      0 8px 32px rgb(0 0 0 / .35);
+  }
+
+  .icon {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ---------- Login ---------- */
+
+  .login {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+    /* Pattern zur Mitte hin abdunkeln, damit die Karte ruhig steht */
+    background: radial-gradient(ellipse at center, rgb(43 41 38 / .7) 0%, rgb(43 41 38 / .35) 70%);
+  }
+  .login > div { width: 100%; max-width: 380px; }
 
   .brand {
     display: flex;
@@ -62,24 +96,11 @@
     color: color-mix(in srgb, var(--snow) 45%, transparent);
   }
 
-  /* Liquid-Glass-Karte wie .glass auf der Website */
   .card {
     position: relative;
     padding: 32px 24px 28px;
     border-radius: 28px;
-    background: linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--snow) 12%, transparent),
-      color-mix(in srgb, var(--snow) 5%, transparent)
-    );
-    -webkit-backdrop-filter: blur(24px) saturate(1.6);
-    backdrop-filter: blur(24px) saturate(1.6);
-    border: 1px solid color-mix(in srgb, var(--snow) 16%, transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, var(--snow) 18%, transparent),
-      0 8px 32px rgb(0 0 0 / .35);
   }
-  .card[hidden] { display: none; }
 
   h1 {
     margin: 0 0 6px;
@@ -108,12 +129,13 @@
     font: inherit;
     font-size: 15px;
     font-weight: 500;
+    text-decoration: none;
     cursor: pointer;
     transition: transform .2s ease, box-shadow .25s ease, background-color .2s;
   }
   .btn-primary { border: 0; background: var(--snow); color: var(--sky); }
   .btn-primary:hover:not(:disabled) {
-    background-image: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
+    background-image: var(--aurora);
     background-size: 200% 100%;
     animation: rainbow-slide 1.6s linear infinite;
     transform: scale(1.02);
@@ -142,7 +164,8 @@
     animation: spin .7s linear infinite;
   }
   .btn.is-loading .spinner { display: block; }
-  .btn.is-loading .ms-logo { display: none; }
+  .btn.is-loading .ms-logo,
+  .btn.is-loading .icon { display: none; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .status {
@@ -162,64 +185,422 @@
   .hint a { color: inherit; }
   .hint a:hover { color: var(--snow); }
 
-  footer {
-    margin-top: 24px;
+  .legal {
     display: flex;
     justify-content: center;
     gap: 16px;
     font-size: 11px;
   }
-  footer a { color: color-mix(in srgb, var(--snow) 35%, transparent); text-decoration: none; }
-  footer a:hover { color: color-mix(in srgb, var(--snow) 60%, transparent); }
+  .login .legal { margin-top: 24px; }
+  .legal a { color: color-mix(in srgb, var(--snow) 35%, transparent); text-decoration: none; }
+  .legal a:hover { color: color-mix(in srgb, var(--snow) 60%, transparent); }
+
+  /* ---------- Hub ---------- */
+
+  .hub {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    /* Oben ruhiger, damit Navbar und Begrüßung sauber lesbar sind */
+    background: linear-gradient(to bottom, rgb(43 41 38 / .85), rgb(43 41 38 / .55) 60%, rgb(43 41 38 / .8));
+  }
+
+  .frame {
+    width: 100%;
+    max-width: var(--frame);
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* Navbar als schwebende Glas-Pill wie TopBar.tsx der Website */
+  .topbar {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 40;
+    padding-top: calc(env(safe-area-inset-top) + 12px);
+    pointer-events: none;
+  }
+  .topbar .bar {
+    position: relative;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 8px 0 20px;
+    border-radius: 999px;
+    pointer-events: auto;
+  }
+  /* Lichtkante oben wie auf der Website */
+  .topbar .bar::before {
+    content: "";
+    position: absolute;
+    inset: 0 24px auto;
+    height: 1px;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--snow) 40%, transparent), transparent);
+    pointer-events: none;
+  }
+
+  .logo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: inherit;
+    text-decoration: none;
+  }
+  .logo-mark { position: relative; display: inline-block; transition: transform .25s ease; }
+  .logo-mark img { display: block; height: 26px; width: auto; }
+  /* Aurora läuft beim Hover durch die Buchstaben (wie .logo-rainbow) */
+  .logo-mark::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--aurora);
+    background-size: 200% 100%;
+    -webkit-mask: url("assets/logo.png") center / contain no-repeat;
+    mask: url("assets/logo.png") center / contain no-repeat;
+    opacity: 0;
+    transition: opacity .25s ease;
+    animation: rainbow-slide 1.4s linear infinite;
+    pointer-events: none;
+  }
+  .logo:hover .logo-mark { transform: scale(1.08); }
+  .logo:hover .logo-mark::after { opacity: 1; }
+  .logo-sub {
+    margin-top: -6px;
+    padding-left: 3px;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: .32em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--snow) 70%, transparent);
+  }
+
+  .nav { display: none; align-items: center; gap: 26px; font-size: 15px; font-weight: 400; }
+  .nav a {
+    color: color-mix(in srgb, var(--snow) 80%, transparent);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav a[aria-current="page"] { color: var(--snow); font-weight: 500; }
+  /* Buchstaben füllen sich beim Hover mit dem Verlauf (wie .nav-rainbow) */
+  .nav a:hover {
+    background-image: var(--aurora);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-slide 1.4s linear infinite;
+  }
+
+  .bar-actions { display: flex; align-items: center; gap: 6px; }
+
+  .icon-btn,
+  .avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--snow);
+    font: inherit;
+    cursor: pointer;
+    transition: transform .15s ease, background-color .2s;
+  }
+  .icon-btn:hover { background: color-mix(in srgb, var(--snow) 10%, transparent); }
+  .icon-btn:active, .avatar:active { transform: scale(.9); }
+  .avatar {
+    background: var(--snow);
+    color: var(--sky);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+  .avatar:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--snow) 22%, transparent); }
+
+  /* Aufklappbare Panels unter der Navbar: Konto und Mobile-Menü */
+  .popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(300px, calc(100vw - 40px));
+    padding: 8px;
+    border-radius: 24px;
+    pointer-events: auto;
+    /* Deckender als .glass, damit der Inhalt dahinter nicht durchscheint */
+    background-color: rgb(43 41 38 / .97);
+    animation: pop-in .18s ease-out;
+  }
+  @keyframes pop-in { from { opacity: 0; transform: translateY(-6px); } }
+  .account-info { padding: 12px 12px 14px; }
+  .account-info strong { display: block; font-size: 15px; font-weight: 500; }
+  .account-info span {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    color: color-mix(in srgb, var(--snow) 55%, transparent);
+    overflow-wrap: anywhere;
+  }
+  .popover .btn { height: 44px; font-size: 14px; }
+
+  .menu-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+  .menu-list a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 16px;
+    color: color-mix(in srgb, var(--snow) 85%, transparent);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 400;
+  }
+  .menu-list a:hover { background: color-mix(in srgb, var(--snow) 8%, transparent); color: var(--snow); }
+  .menu-list a[aria-current="page"] { background: color-mix(in srgb, var(--snow) 12%, transparent); color: var(--snow); font-weight: 500; }
+  .menu-list .ext { margin-left: auto; width: 15px; height: 15px; opacity: .5; }
+
+  .content { flex: 1; padding-top: calc(env(safe-area-inset-top) + 100px); padding-bottom: 48px; }
+
+  .eyebrow {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--snow) 50%, transparent);
+  }
+  .greeting {
+    margin: 0;
+    font-size: clamp(30px, 7vw, 48px);
+    font-weight: 500;
+    letter-spacing: -.02em;
+    line-height: 1.1;
+  }
+  .sub {
+    margin: 10px 0 0;
+    font-size: 15px;
+    color: color-mix(in srgb, var(--snow) 60%, transparent);
+  }
+
+  /* Kacheln: 2 Spalten mobil, 4 ab Desktop. Sales ist die breite
+     Hauptkachel, dadurch gehen 7 Bereiche in beiden Rastern glatt auf. */
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 32px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .tiles li:first-child { grid-column: span 2; }
+
+  .tile {
+    position: relative;
+    height: 100%;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    border-radius: 24px;
+    color: var(--snow);
+    text-decoration: none;
+    overflow: hidden;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  }
+  .tile:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--snow) 30%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--snow) 24%, transparent),
+      0 14px 40px rgb(0 0 0 / .45);
+  }
+  .tile:active { transform: scale(.98); }
+  .tile:focus-visible, .nav a:focus-visible, .menu-list a:focus-visible,
+  .icon-btn:focus-visible, .avatar:focus-visible, .btn:focus-visible, .logo:focus-visible {
+    outline: 2px solid var(--snow);
+    outline-offset: 3px;
+  }
+
+  .tile-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--snow) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--snow) 12%, transparent);
+    transition: background-color .25s, color .25s;
+  }
+  .tile-icon .icon { width: 22px; height: 22px; }
+  .tile:hover .tile-icon { background: var(--snow); color: var(--sky); }
+
+  .tile-arrow {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 18px;
+    height: 18px;
+    opacity: .4;
+    transition: opacity .25s, transform .25s ease;
+  }
+  .tile:hover .tile-arrow { opacity: 1; transform: translate(2px, -2px); }
+
+  .tile-text { margin-top: auto; padding-top: 22px; }
+  .tile h2 { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -.01em; }
+  .tile p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: color-mix(in srgb, var(--snow) 55%, transparent);
+  }
+  /* Zwei Zeilen reservieren, damit die Titel in einer Reihe auf einer Höhe stehen */
+  .tile:not(.is-featured) p { min-height: 2.8em; }
+  .tile.is-featured h2 { font-size: 22px; }
+  .tile.is-featured p { font-size: 14px; }
+
+  /* Platzhalter für Bereiche, die noch gebaut werden */
+  .area-head { display: flex; align-items: center; gap: 16px; }
+  .area-head .tile-icon { width: 56px; height: 56px; border-radius: 18px; }
+  .area-head .tile-icon .icon { width: 26px; height: 26px; }
+  .area-card {
+    margin-top: 32px;
+    padding: 28px 24px;
+    border-radius: 28px;
+    max-width: 520px;
+  }
+  .area-card h2 { margin: 0 0 6px; font-size: 18px; font-weight: 500; }
+  .area-card .btn { width: auto; padding: 0 22px; margin-top: 4px; display: inline-flex; }
+
+  .hub .legal { padding: 0 20px calc(24px + env(safe-area-inset-bottom)); }
+
+  @media (min-width: 800px) {
+    .topbar { padding-top: 24px; }
+    .topbar .bar { height: 68px; padding: 0 12px 0 28px; }
+    .logo-mark img { height: 30px; }
+    .logo-sub { font-size: 10px; margin-top: -7px; }
+    .content { padding-top: calc(env(safe-area-inset-top) + 140px); }
+    .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 40px; }
+    .tile { min-height: 190px; padding: 22px; }
+    .tile-arrow { top: 22px; right: 22px; }
+  }
+  @media (min-width: 1000px) {
+    .nav { display: flex; }
+    .menu-toggle { display: none !important; }
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    .btn-primary:hover:not(:disabled) { animation: none; transform: none; }
+    .btn-primary:hover:not(:disabled),
+    .nav a:hover,
+    .logo-mark::after { animation: none; }
+    .btn-primary:hover:not(:disabled),
+    .tile:hover,
+    .logo:hover .logo-mark { transform: none; }
+    .popover { animation: none; }
     .spinner { animation-duration: 1.6s; }
   }
 </style>
 </head>
 <body>
-<main>
-  <div class="brand">
-    <a href="https://grid-agency.de" aria-label="Zur GRID Website">
-      <img src="assets/logo.png" alt="GRID" width="626" height="226">
-    </a>
-    <span>Intranet</span>
+
+<!-- Icons (Lucide, ISC-Lizenz), einmal definiert und per <use> eingesetzt -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-sales" viewBox="0 0 24 24"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-personal" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-marketing" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+  <symbol id="i-kalender" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></symbol>
+  <symbol id="i-aufgaben" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></symbol>
+  <symbol id="i-admin" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-uebersicht" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+</svg>
+
+<!-- ===== Login ===== -->
+<main class="login" id="login">
+  <div>
+    <div class="brand">
+      <a href="https://grid-agency.de" aria-label="Zur GRID Website">
+        <img src="assets/logo.png" alt="GRID" width="626" height="226">
+      </a>
+      <span>Intranet</span>
+    </div>
+
+    <section class="card glass">
+      <h1>Willkommen zurück</h1>
+      <p class="lead">Melde dich mit deinem GRID-Microsoft-Konto an.</p>
+
+      <button type="button" class="btn btn-primary is-loading" id="sign-in" disabled aria-busy="true">
+        <span class="spinner" aria-hidden="true"></span>
+        <svg class="ms-logo" viewBox="0 0 21 21" aria-hidden="true"><path fill="#f25022" d="M0 0h10v10H0z"/><path fill="#7fba00" d="M11 0h10v10H11z"/><path fill="#00a4ef" d="M0 11h10v10H0z"/><path fill="#ffb900" d="M11 11h10v10H11z"/></svg>
+        <span class="label">Anmeldung wird geprüft …</span>
+      </button>
+      <p class="status" role="status" aria-live="polite"></p>
+      <p class="hint">
+        Probleme beim Login? <a href="mailto:hello@grid-agency.de?subject=Intranet-Login">hello@grid-agency.de</a>
+      </p>
+    </section>
+
+    <footer class="legal">
+      <a href="https://grid-agency.de">grid-agency.de</a>
+      <a href="https://grid-agency.de/impressum">Impressum</a>
+      <a href="https://grid-agency.de/datenschutz">Datenschutz</a>
+    </footer>
   </div>
+</main>
 
-  <!-- Abgemeldet -->
-  <section class="card" id="signed-out">
-    <h1>Willkommen zurück</h1>
-    <p class="lead">Melde dich mit deinem GRID-Microsoft-Konto an.</p>
+<!-- ===== Hub (nach dem Login) ===== -->
+<div class="hub" id="hub" hidden>
+  <header class="topbar">
+    <div class="frame">
+      <div class="bar glass">
+        <a href="#/" class="logo" aria-label="Zur Übersicht">
+          <span class="logo-mark"><img src="assets/logo.png" alt="GRID" width="626" height="226"></span>
+          <span class="logo-sub">Intranet</span>
+        </a>
 
-    <button type="button" class="btn btn-primary is-loading" id="sign-in" disabled aria-busy="true">
-      <span class="spinner" aria-hidden="true"></span>
-      <svg class="ms-logo" viewBox="0 0 21 21" aria-hidden="true"><path fill="#f25022" d="M0 0h10v10H0z"/><path fill="#7fba00" d="M11 0h10v10H11z"/><path fill="#00a4ef" d="M0 11h10v10H0z"/><path fill="#ffb900" d="M11 11h10v10H11z"/></svg>
-      <span class="label">Anmeldung wird geprüft …</span>
-    </button>
-    <p class="status" role="status" aria-live="polite"></p>
-    <p class="hint">
-      Probleme beim Login? <a href="mailto:hello@grid-agency.de?subject=Intranet-Login">hello@grid-agency.de</a>
-    </p>
-  </section>
+        <nav class="nav" id="nav" aria-label="Bereiche"></nav>
 
-  <!-- Angemeldet -->
-  <section class="card" id="signed-in" hidden>
-    <h1>Hallo <span id="user-name"></span></h1>
-    <p class="lead">Angemeldet als <span id="user-email"></span>. Hier entsteht das GRID Intranet.</p>
+        <div class="bar-actions">
+          <button type="button" class="avatar" id="account-toggle" aria-expanded="false" aria-controls="account-panel" aria-label="Konto"></button>
+          <button type="button" class="icon-btn menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="menu-panel" aria-label="Menü öffnen">
+            <svg class="icon"><use href="#i-menu"/></svg>
+          </button>
+        </div>
 
-    <button type="button" class="btn btn-secondary" id="sign-out">
-      <span class="spinner" aria-hidden="true"></span>
-      <span class="label">Abmelden</span>
-    </button>
-  </section>
+        <div class="popover glass" id="account-panel" hidden>
+          <div class="account-info">
+            <strong id="user-name"></strong>
+            <span id="user-email"></span>
+          </div>
+          <button type="button" class="btn btn-secondary" id="sign-out">
+            <span class="spinner" aria-hidden="true"></span>
+            <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>
+            <span class="label">Abmelden</span>
+          </button>
+        </div>
 
-  <footer>
+        <div class="popover glass" id="menu-panel" hidden>
+          <ul class="menu-list" id="menu-list"></ul>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content frame" id="view"></main>
+
+  <footer class="legal">
     <a href="https://grid-agency.de">grid-agency.de</a>
     <a href="https://grid-agency.de/impressum">Impressum</a>
     <a href="https://grid-agency.de/datenschutz">Datenschutz</a>
   </footer>
-</main>
+</div>
 
 <!-- Offizielles Browser-Bundle von @azure/msal-browser v5.25.1 (MIT),
      lokal eingebunden, damit beim Seitenaufruf kein Drittanbieter-CDN lädt. -->
@@ -233,11 +614,27 @@
   // Nur Konten aus dem GRID-Tenant; statt der Domain geht auch die Tenant-ID.
   const TENANT = "grid-agency.de";
 
-  const signedOut = document.getElementById("signed-out");
-  const signedIn = document.getElementById("signed-in");
+  // Bereiche des Hubs: Navbar, Mobile-Menü, Kacheln und Bereichsseiten
+  // entstehen alle aus dieser Liste. Mit "href" öffnet die Kachel eine
+  // externe App (Microsoft 365) in einem neuen Tab statt einer eigenen Seite.
+  const AREAS = [
+    { id: "sales", title: "Sales", text: "Leads, Angebote und Kund*innen im Blick" },
+    { id: "personal", title: "Personal", text: "Team, Urlaub und Onboarding" },
+    { id: "marketing", title: "Marketing", text: "Eigene Kanäle, Content und Kampagnen" },
+    { id: "mail", title: "Mail", text: "Dein Outlook-Postfach", href: "https://outlook.office.com/mail/" },
+    { id: "kalender", title: "Kalender", text: "Termine und Meetings in Outlook", href: "https://outlook.office.com/calendar/" },
+    { id: "aufgaben", title: "Aufgaben", text: "To-dos und Zuständigkeiten" },
+    { id: "admin", title: "Admin", text: "Zugänge, Rechte und Einstellungen" },
+  ];
+
+  const loginView = document.getElementById("login");
+  const hubView = document.getElementById("hub");
   const signInButton = document.getElementById("sign-in");
   const signOutButton = document.getElementById("sign-out");
-  const status = signedOut.querySelector(".status");
+  const status = loginView.querySelector(".status");
+  const view = document.getElementById("view");
+
+  // ---------- Login ----------
 
   function setLoading(button, loading, label) {
     button.disabled = loading;
@@ -249,14 +646,6 @@
   function showError(message) {
     status.textContent = message;
     status.className = "status error";
-  }
-
-  function showAccount(account) {
-    document.getElementById("user-name").textContent =
-      (account.name || account.username).split(" ")[0];
-    document.getElementById("user-email").textContent = account.username;
-    signedOut.hidden = true;
-    signedIn.hidden = false;
   }
 
   function errorMessage(error) {
@@ -280,9 +669,17 @@
       })
     : null;
 
+  // Solange keine Client-ID eingetragen ist, zeigt localhost den Hub mit
+  // einem Vorschau-Konto, damit er sich ohne Login entwickeln lässt.
+  const PREVIEW = !msalApp && ["localhost", "127.0.0.1"].includes(location.hostname);
+
   // Beim Laden: Rückkehr vom Microsoft-Login verarbeiten bzw. bestehende
   // Sitzung erkennen. Bis dahin zeigt der Button den Spinner.
-  (async () => {
+  async function init() {
+    if (PREVIEW) {
+      showHub({ name: "Vorschau", username: "vorschau@grid-agency.de" });
+      return;
+    }
     if (!msalApp) {
       setLoading(signInButton, false, "Mit Microsoft anmelden");
       return;
@@ -293,13 +690,13 @@
       const account = result ? result.account : msalApp.getAllAccounts()[0];
       if (account) {
         msalApp.setActiveAccount(account);
-        showAccount(account);
+        showHub(account);
       }
     } catch (error) {
       showError(errorMessage(error));
     }
     setLoading(signInButton, false, "Mit Microsoft anmelden");
-  })();
+  }
 
   signInButton.addEventListener("click", async () => {
     status.textContent = "";
@@ -320,12 +717,161 @@
 
   signOutButton.addEventListener("click", async () => {
     setLoading(signOutButton, true, "Abmelden …");
+    if (!msalApp) {
+      location.reload();
+      return;
+    }
     try {
       await msalApp.logoutRedirect({ account: msalApp.getActiveAccount() });
     } catch {
       setLoading(signOutButton, false, "Abmelden");
     }
   });
+
+  // ---------- Hub ----------
+
+  let firstName = "";
+
+  function icon(id, extraClass = "") {
+    return `<svg class="icon ${extraClass}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  }
+
+  function escapeHtml(text) {
+    return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  }
+
+  // Externe Bereiche öffnen in neuem Tab, interne laufen über #/bereich
+  function linkAttrs(area) {
+    return area.href
+      ? `href="${area.href}" target="_blank" rel="noopener"`
+      : `href="#/${area.id}" data-area="${area.id}"`;
+  }
+
+  function showHub(account) {
+    const name = account.name || account.username;
+    firstName = name.split(" ")[0];
+    const initials = name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase();
+
+    document.getElementById("account-toggle").textContent = initials;
+    document.getElementById("user-name").textContent = name;
+    document.getElementById("user-email").textContent = account.username;
+
+    document.getElementById("nav").innerHTML = AREAS
+      .map((area) => `<a ${linkAttrs(area)}>${area.title}</a>`)
+      .join("");
+    document.getElementById("menu-list").innerHTML = [
+      { id: "uebersicht", title: "Übersicht" },
+      ...AREAS,
+    ]
+      .map((area) => {
+        const attrs = area.id === "uebersicht" ? `href="#/" data-area=""` : linkAttrs(area);
+        return `<li><a ${attrs}>${icon(area.id)}${area.title}${area.href ? icon("arrow", "ext") : ""}</a></li>`;
+      })
+      .join("");
+
+    loginView.hidden = true;
+    hubView.hidden = false;
+    render();
+  }
+
+  function greeting() {
+    const hour = new Date().getHours();
+    if (hour < 5) return "Gute Nacht";
+    if (hour < 11) return "Guten Morgen";
+    if (hour < 18) return "Hallo";
+    return "Guten Abend";
+  }
+
+  function renderOverview() {
+    const today = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+    document.title = "Übersicht | GRID Intranet";
+    view.innerHTML = `
+      <p class="eyebrow">${today}</p>
+      <h1 class="greeting">${greeting()}, ${escapeHtml(firstName)}</h1>
+      <p class="sub">Wohin geht’s heute?</p>
+      <ul class="tiles">
+        ${AREAS.map((area, index) => `
+          <li>
+            <a class="tile glass${index === 0 ? " is-featured" : ""}" ${linkAttrs(area)}>
+              <span class="tile-icon">${icon(area.id)}</span>
+              ${icon("arrow", "tile-arrow")}
+              <span class="tile-text">
+                <h2>${area.title}</h2>
+                <p>${area.text}</p>
+              </span>
+            </a>
+          </li>`).join("")}
+      </ul>`;
+  }
+
+  function renderArea(area) {
+    document.title = `${area.title} | GRID Intranet`;
+    view.innerHTML = `
+      <div class="area-head">
+        <span class="tile-icon">${icon(area.id)}</span>
+        <div>
+          <p class="eyebrow">Bereich</p>
+          <h1 class="greeting">${area.title}</h1>
+        </div>
+      </div>
+      <section class="area-card glass">
+        <h2>Hier wird gerade gebaut</h2>
+        <p class="lead">${area.text}: Dieser Bereich des Intranets entsteht gerade.</p>
+        <a class="btn btn-secondary" href="#/">${icon("back")}Zur Übersicht</a>
+      </section>`;
+  }
+
+  function render() {
+    const id = location.hash.replace(/^#\/?/, "");
+    const area = AREAS.find((a) => a.id === id && !a.href);
+    if (area) renderArea(area);
+    else renderOverview();
+
+    document.querySelectorAll("[data-area]").forEach((link) => {
+      if (link.dataset.area === (area ? area.id : "")) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+    closePanels();
+    window.scrollTo(0, 0);
+  }
+
+  window.addEventListener("hashchange", () => {
+    if (!hubView.hidden) render();
+  });
+
+  // ---------- Konto- und Menü-Panel ----------
+
+  const panels = [
+    [document.getElementById("account-toggle"), document.getElementById("account-panel")],
+    [document.getElementById("menu-toggle"), document.getElementById("menu-panel")],
+  ];
+
+  function closePanels() {
+    panels.forEach(([toggle, panel]) => {
+      panel.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  panels.forEach(([toggle, panel]) => {
+    toggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const open = panel.hidden;
+      closePanels();
+      panel.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+    });
+    panel.addEventListener("click", (event) => {
+      if (event.target.closest("a")) closePanels();
+      else event.stopPropagation();
+    });
+  });
+  document.addEventListener("click", closePanels);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closePanels();
+  });
+
+  init();
 </script>
 </body>
 </html>
