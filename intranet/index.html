@@ -23,16 +23,20 @@
     --error: #f2a49a;
     --muted: color-mix(in srgb, var(--snow) 55%, transparent);
     --faint: color-mix(in srgb, var(--snow) 35%, transparent);
+    --aurora: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
+    --ease: cubic-bezier(.16, 1, .3, 1);
   }
 
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
 
   body {
+    position: relative;
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
     padding: 24px 16px calc(20px + env(safe-area-inset-bottom));
+    overflow-x: hidden;
     background: var(--sky);
     color: var(--snow);
     font-family: "Readex Pro", system-ui, -apple-system, sans-serif;
@@ -42,7 +46,37 @@
 
   ::selection { background: var(--dune); color: var(--sky); }
 
+  /* Hintergrund wie im Boot-Intro der Website: Snow-Pattern auf Sky, das
+     sanft einblendet, dazu der Aurora-Schimmer in den Kundenfarben. */
+  .bg-pattern,
+  .bg-aurora {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+  .bg-pattern {
+    background: url("assets/pattern.png") repeat;
+    background-size: 420px auto;
+    opacity: .25;
+    animation: fade-to-pattern 1.6s ease-out both;
+  }
+  .bg-aurora {
+    inset: -10%;
+    background:
+      radial-gradient(60rem 40rem at 12% 8%, rgb(254 218 117 / .16), transparent 60%),
+      radial-gradient(70rem 46rem at 88% 12%, rgb(79 91 213 / .17), transparent 60%),
+      radial-gradient(62rem 44rem at 78% 88%, rgb(250 126 30 / .15), transparent 62%),
+      radial-gradient(52rem 38rem at 15% 92%, rgb(214 41 118 / .12), transparent 60%);
+    animation:
+      fade-in 2s ease-out both,
+      aurora-drift 18s ease-in-out 2s infinite alternate;
+  }
+  @keyframes fade-to-pattern { from { opacity: 0; } }
+  @keyframes fade-in { from { opacity: 0; } }
+  @keyframes aurora-drift { to { transform: translate(-4%, 3%) scale(1.08); } }
+
   main {
+    position: relative;
     flex: 1;
     display: grid;
     place-items: center;
@@ -55,23 +89,68 @@
   }
   section[hidden] { display: none; }
 
-  .logo { display: inline-block; margin-bottom: 40px; }
-  .logo img { display: block; width: 96px; height: auto; }
-
-  h1 {
-    margin: 0 0 8px;
-    font-size: 22px;
-    font-weight: 500;
-    letter-spacing: -.01em;
+  /* Marke: Logo wischt von links herein, danach läuft der Aurora-Verlauf
+     einmal durch die Buchstaben; "Intranet" zieht die Laufweite auf. */
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 36px;
+    text-decoration: none;
+    color: inherit;
   }
+  .logo {
+    position: relative;
+    width: 128px;
+    animation: logo-wipe 1s var(--ease) both;
+  }
+  .logo img { display: block; width: 100%; height: auto; }
+  .logo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--aurora);
+    background-size: 200% 100%;
+    -webkit-mask: url("assets/logo.png") center / contain no-repeat;
+    mask: url("assets/logo.png") center / contain no-repeat;
+    opacity: 0;
+    animation:
+      logo-shine 2.6s ease-in-out 1s both,
+      rainbow-slide 2.4s linear 1s infinite;
+  }
+  .brand h1 {
+    margin: 10px 0 0;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: .35em;
+    text-transform: uppercase;
+    color: var(--muted);
+    animation: kicker-in .6s var(--ease) .8s both;
+  }
+  @keyframes logo-wipe {
+    from { clip-path: inset(0 100% 0 0); opacity: .4; transform: scale(.94); }
+    to { clip-path: inset(0 0 0 0); opacity: 1; transform: none; }
+  }
+  @keyframes logo-shine {
+    0%, 100% { opacity: 0; }
+    25%, 60% { opacity: 1; }
+  }
+  @keyframes kicker-in {
+    from { opacity: 0; transform: translateY(8px); letter-spacing: .05em; }
+  }
+
+  .content { animation: rise-in .6s var(--ease) 1.1s both; }
+  @keyframes rise-in { from { opacity: 0; transform: translateY(12px); } }
+
   .lead {
-    margin: 0 0 32px;
+    margin: 0 0 24px;
     font-size: 14px;
     line-height: 1.5;
     color: var(--muted);
     overflow-wrap: anywhere;
     text-wrap: balance;
   }
+  .lead strong { font-weight: 500; color: var(--snow); }
 
   /* Buttons: Primär (Snow mit Aurora-Hover wie .btn-rainbow) und Sekundär
      (Outline). Jeder Button zeigt beim Warten einen Spinner (.is-loading). */
@@ -87,23 +166,24 @@
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
-    transition: transform .2s ease, box-shadow .25s ease, background-color .2s;
+    transition: transform .2s ease, box-shadow .25s ease, background-color .2s, opacity .2s;
   }
   .btn-primary { border: 0; background: var(--snow); color: var(--sky); }
   .btn-primary:hover:not(:disabled) {
-    background-image: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
+    background-image: var(--aurora);
     background-size: 200% 100%;
     animation: rainbow-slide 1.6s linear infinite;
     box-shadow: 0 10px 34px rgb(250 126 30 / .3);
   }
   .btn-secondary {
     border: 1px solid color-mix(in srgb, var(--snow) 22%, transparent);
-    background: none;
+    background: color-mix(in srgb, var(--sky) 40%, transparent);
     color: var(--snow);
   }
   .btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--snow) 8%, transparent); }
   .btn:active:not(:disabled) { transform: scale(.97); }
   .btn:disabled { cursor: progress; }
+  .btn:disabled:not(.is-loading) { opacity: .5; cursor: default; }
   .btn:focus-visible { outline: 2px solid var(--snow); outline-offset: 3px; }
   @keyframes rainbow-slide { to { background-position: -200% 0; } }
 
@@ -122,6 +202,60 @@
   .btn.is-loading .ms-logo { display: none; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 16px;
+    font-size: 11px;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  .divider::before,
+  .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: color-mix(in srgb, var(--snow) 12%, transparent);
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  input[type="email"] {
+    width: 100%;
+    height: 48px;
+    margin-bottom: 10px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--snow) 16%, transparent);
+    background: color-mix(in srgb, var(--sky) 60%, transparent);
+    color: var(--snow);
+    font: inherit;
+    font-size: 16px; /* verhindert iOS-Zoom */
+    text-align: center;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  input::placeholder { color: var(--faint); }
+  input:focus {
+    border-color: color-mix(in srgb, var(--snow) 45%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--snow) 10%, transparent);
+  }
+  input[aria-invalid="true"] { border-color: var(--error); }
+
+  .note {
+    margin: 10px 0 0;
+    font-size: 12px;
+    text-wrap: balance;
+    color: var(--faint);
+  }
+
   .status {
     min-height: 20px;
     margin: 12px 0 0;
@@ -130,51 +264,77 @@
   .status.error { color: var(--error); }
 
   footer {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px 16px;
     font-size: 11px;
+    animation: fade-in .6s ease-out 1.4s both;
   }
   footer a { color: var(--faint); text-decoration: none; }
   footer a:hover { color: var(--muted); }
 
   @media (prefers-reduced-motion: reduce) {
-    .btn-primary:hover:not(:disabled) { animation: none; }
-    .spinner { animation-duration: 1.6s; }
+    *, *::before, *::after { animation: none !important; }
+    .logo::after { display: none; }
+    .spinner { animation: spin 1.6s linear infinite !important; }
   }
 </style>
 </head>
 <body>
+<div class="bg-pattern" aria-hidden="true"></div>
+<div class="bg-aurora" aria-hidden="true"></div>
+
 <main>
   <!-- Abgemeldet -->
   <section id="signed-out">
-    <a class="logo" href="https://grid-agency.de" aria-label="Zur GRID Website">
-      <img src="assets/logo.png" alt="GRID" width="626" height="226">
+    <a class="brand" href="https://grid-agency.de" aria-label="Zur GRID Website">
+      <span class="logo"><img src="assets/logo.png" alt="GRID" width="626" height="226"></span>
+      <h1>Intranet</h1>
     </a>
-    <h1>Intranet</h1>
-    <p class="lead">Melde dich mit deinem GRID-Microsoft-Konto an.</p>
 
-    <button type="button" class="btn btn-primary is-loading" id="sign-in" disabled aria-busy="true">
-      <span class="spinner" aria-hidden="true"></span>
-      <svg class="ms-logo" viewBox="0 0 21 21" aria-hidden="true"><path fill="#f25022" d="M0 0h10v10H0z"/><path fill="#7fba00" d="M11 0h10v10H11z"/><path fill="#00a4ef" d="M0 11h10v10H0z"/><path fill="#ffb900" d="M11 11h10v10H11z"/></svg>
-      <span class="label">Anmeldung wird geprüft …</span>
-    </button>
-    <p class="status" role="status" aria-live="polite"></p>
+    <div class="content">
+      <p class="lead">Melde dich mit deinem GRID-Microsoft-Konto an.</p>
+
+      <button type="button" class="btn btn-primary is-loading" id="sign-in" disabled aria-busy="true">
+        <span class="spinner" aria-hidden="true"></span>
+        <svg class="ms-logo" viewBox="0 0 21 21" aria-hidden="true"><path fill="#f25022" d="M0 0h10v10H0z"/><path fill="#7fba00" d="M11 0h10v10H11z"/><path fill="#00a4ef" d="M0 11h10v10H0z"/><path fill="#ffb900" d="M11 11h10v10H11z"/></svg>
+        <span class="label">Anmeldung wird geprüft …</span>
+      </button>
+
+      <div class="divider">oder mit E-Mail</div>
+
+      <form id="email-form" novalidate>
+        <label class="visually-hidden" for="email">E-Mail</label>
+        <input id="email" name="email" type="email" autocomplete="username"
+               placeholder="vorname@grid-agency.de" required>
+        <button type="submit" class="btn btn-secondary" id="email-sign-in" disabled>
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="label">Weiter zum Passwort</span>
+        </button>
+      </form>
+      <p class="note">Dein Passwort gibst du danach bei Microsoft ein.</p>
+      <p class="status" role="status" aria-live="polite"></p>
+    </div>
   </section>
 
   <!-- Angemeldet -->
   <section id="signed-in" hidden>
-    <a class="logo" href="https://grid-agency.de" aria-label="Zur GRID Website">
-      <img src="assets/logo.png" alt="GRID" width="626" height="226">
+    <a class="brand" href="https://grid-agency.de" aria-label="Zur GRID Website">
+      <span class="logo"><img src="assets/logo.png" alt="GRID" width="626" height="226"></span>
+      <h1>Intranet</h1>
     </a>
-    <h1>Hallo <span id="user-name"></span></h1>
-    <p class="lead">Angemeldet als <span id="user-email"></span>.<br>Hier entsteht das GRID Intranet.</p>
 
-    <button type="button" class="btn btn-secondary" id="sign-out">
-      <span class="spinner" aria-hidden="true"></span>
-      <span class="label">Abmelden</span>
-    </button>
+    <div class="content">
+      <p class="lead"><strong>Hallo <span id="user-name"></span></strong><br>
+        Angemeldet als <span id="user-email"></span>.<br>Hier entsteht das GRID Intranet.</p>
+
+      <button type="button" class="btn btn-secondary" id="sign-out">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="label">Abmelden</span>
+      </button>
+    </div>
   </section>
 </main>
 
@@ -194,12 +354,19 @@
   // SPA-Redirect-URI mit Slash am Ende eingetragen sein, sonst AADSTS50011.
   const CLIENT_ID = "bfd6b866-b603-42e0-8c33-74fde6f14239";
   const TENANT_ID = "ffbd83b1-951c-4041-aab7-a836e49e3957";
+  const DOMAIN = "grid-agency.de";
 
   const signedOut = document.getElementById("signed-out");
   const signedIn = document.getElementById("signed-in");
   const signInButton = document.getElementById("sign-in");
+  const emailForm = document.getElementById("email-form");
+  const emailInput = document.getElementById("email");
+  const emailButton = document.getElementById("email-sign-in");
   const signOutButton = document.getElementById("sign-out");
   const status = signedOut.querySelector(".status");
+
+  const SIGN_IN_LABEL = "Mit Microsoft anmelden";
+  const EMAIL_LABEL = "Weiter zum Passwort";
 
   function setLoading(button, loading, label) {
     button.disabled = loading;
@@ -208,9 +375,25 @@
     button.querySelector(".label").textContent = label;
   }
 
-  function showError(message) {
+  // Während eine Anmeldung läuft, ist der jeweils andere Weg gesperrt.
+  function setBusy(busy) {
+    signInButton.disabled = busy;
+    emailButton.disabled = busy;
+  }
+
+  function clearStatus() {
+    status.textContent = "";
+    status.className = "status";
+    emailInput.removeAttribute("aria-invalid");
+  }
+
+  function showError(message, field) {
     status.textContent = message;
     status.className = "status error";
+    if (field) {
+      field.setAttribute("aria-invalid", "true");
+      field.focus();
+    }
   }
 
   function showAccount(account) {
@@ -226,7 +409,7 @@
     if (code === "user_cancelled") return "Anmeldung abgebrochen.";
     if (code === "interaction_in_progress") return "Eine Anmeldung läuft bereits. Bitte kurz warten.";
     if (code === "access_denied" || /AADSTS50020|AADSTS90072/.test(error && error.message))
-      return "Bitte melde dich mit deinem @grid-agency.de-Konto an.";
+      return `Bitte melde dich mit deinem @${DOMAIN}-Konto an.`;
     return "Anmeldung fehlgeschlagen. Bitte versuch es erneut.";
   }
 
@@ -254,21 +437,49 @@
     } catch (error) {
       showError(errorMessage(error));
     }
-    setLoading(signInButton, false, "Mit Microsoft anmelden");
+    setLoading(signInButton, false, SIGN_IN_LABEL);
+    setBusy(false);
   })();
 
-  signInButton.addEventListener("click", async () => {
-    status.textContent = "";
-    status.className = "status";
-    setLoading(signInButton, true, "Weiterleitung zu Microsoft …");
+  async function signIn(button, busyLabel, idleLabel, request) {
+    clearStatus();
+    setBusy(true);
+    setLoading(button, true, busyLabel);
     try {
       // Leitet die Seite zu Microsoft weiter; der Spinner bleibt bis dahin.
-      await msalApp.loginRedirect({ scopes: ["User.Read"], prompt: "select_account" });
+      await msalApp.loginRedirect({ scopes: ["User.Read"], ...request });
     } catch (error) {
       showError(errorMessage(error));
-      setLoading(signInButton, false, "Mit Microsoft anmelden");
+      setLoading(button, false, idleLabel);
+      setBusy(false);
     }
+  }
+
+  signInButton.addEventListener("click", () =>
+    signIn(signInButton, "Weiterleitung zu Microsoft …", SIGN_IN_LABEL, {
+      prompt: "select_account",
+    })
+  );
+
+  // E-Mail vorab: Microsoft springt mit dem Hinweis direkt zur
+  // Passworteingabe für genau dieses Konto.
+  emailForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    clearStatus();
+    const email = emailInput.value.trim().toLowerCase();
+    if (!email || !emailInput.validity.valid) {
+      return showError("Bitte gib eine gültige E-Mail-Adresse ein.", emailInput);
+    }
+    if (!email.endsWith(`@${DOMAIN}`)) {
+      return showError(`Bitte nutze deine @${DOMAIN}-Adresse.`, emailInput);
+    }
+    signIn(emailButton, "Weiter zu Microsoft …", EMAIL_LABEL, {
+      loginHint: email,
+      prompt: "login",
+    });
   });
+
+  emailInput.addEventListener("input", () => emailInput.removeAttribute("aria-invalid"));
 
   signOutButton.addEventListener("click", async () => {
     setLoading(signOutButton, true, "Abmelden …");
