@@ -30,13 +30,14 @@ function MetaGlyph(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export const SOURCE_STYLE: Record<Source, { color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  website: { color: "#cfc9bd", icon: Globe },
-  instagram: { color: "#f06ba5", icon: InstagramGlyph },
-  meta: { color: "#7fa8ff", icon: MetaGlyph },
-  linkedin: { color: "#6cb4f0", icon: LinkedInGlyph },
-  email: { color: "#feda75", icon: Mail },
-  empfehlung: { color: "#9fd8a8", icon: HeartHandshake },
-  manuell: { color: "#afaaa0", icon: PenLine },
+  // Gleiche Farbtöne wie in den Analytics-Diagrammen (charts/theme.ts)
+  linkedin: { color: "#3987e5", icon: LinkedInGlyph },
+  website: { color: "#d95926", icon: Globe },
+  empfehlung: { color: "#199e70", icon: HeartHandshake },
+  email: { color: "#c98500", icon: Mail },
+  instagram: { color: "#d55181", icon: InstagramGlyph },
+  manuell: { color: "#008300", icon: PenLine },
+  meta: { color: "#9085e9", icon: MetaGlyph },
 };
 
 export const sourceLabel = (source: Source) => SOURCES.find((s) => s.id === source)?.label ?? source;
