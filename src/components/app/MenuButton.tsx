@@ -14,7 +14,7 @@ export function MenuButton() {
         onClick={() => setOpen(true)}
         className="relative text-snow transition-transform active:scale-90"
       >
-        <Menu className="h-[22px] w-[22px]" strokeWidth={1.8} />
+        <Menu className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.8} />
       </button>
       <MainMenu open={open} onClose={() => setOpen(false)} />
     </>

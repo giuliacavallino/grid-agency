@@ -124,7 +124,7 @@ export function BootIntro() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1, duration: 0.5 }}
-            className="relative z-10 mt-3 max-w-[20rem] px-6 text-center text-[11px] font-light uppercase leading-relaxed tracking-[0.3em] text-snow/45 lg:max-w-none"
+            className="relative z-10 mt-3 max-w-[20rem] px-6 text-center text-[0.6875rem] font-light uppercase leading-relaxed tracking-[0.3em] text-snow/45 lg:max-w-none"
           >
             Willkommen bei deiner Lieblings-Social-Media-Agentur
           </motion.p>

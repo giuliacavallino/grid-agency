@@ -28,7 +28,7 @@ export function LegalShell({
               width={64}
               height={17}
               priority
-              className="h-[17px] w-auto"
+              className="h-[1.0625rem] w-auto"
             />
           </Link>
           <span className="relative min-w-0 truncate text-sm font-medium text-snow">
@@ -41,7 +41,7 @@ export function LegalShell({
         </div>
       </header>
       <main className="px-5 pb-16 pt-28">{children}</main>
-      <footer className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] text-[11px] font-light text-snow/35">
+      <footer className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] text-[0.6875rem] font-light text-snow/35">
         <Link href="/" className="hover:text-snow/60">
           Startseite
         </Link>

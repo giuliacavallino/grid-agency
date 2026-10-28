@@ -57,7 +57,7 @@ export function CaseStudiesSection() {
           </motion.div>
         ))}
       </div>
-      <p className="mt-2 text-[11px] font-light text-snow/40">
+      <p className="mt-2 text-[0.6875rem] font-light text-snow/40">
         Durchschnittswerte unserer Kund:innen, Quelle: Meta Business Suite
       </p>
 
@@ -88,7 +88,7 @@ export function CaseStudiesSection() {
                 />
               </div>
               <div className="flex flex-1 flex-col p-5">
-                <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-dune">
+                <p className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-dune">
                   Case Study #{i + 1}
                 </p>
                 <h3 className="card-rainbow-title mt-2 text-xl font-medium tracking-tight text-snow">

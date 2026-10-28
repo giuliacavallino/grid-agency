@@ -50,7 +50,7 @@ function InsightsPanel({ post }: { post: ClientPost }) {
       className="overflow-hidden"
     >
       <div className="glass mt-3 rounded-2xl p-4">
-        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-dune">
+        <p className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-dune">
           Insights, betreut von GRID
         </p>
         <div className="mt-3 flex justify-between">
@@ -58,13 +58,13 @@ function InsightsPanel({ post }: { post: ClientPost }) {
             <p className="text-lg font-medium text-snow">
               {post.reach.toLocaleString("de-DE")}
             </p>
-            <p className="text-[11px] font-light text-snow/50">Reichweite</p>
+            <p className="text-[0.6875rem] font-light text-snow/50">Reichweite</p>
           </div>
           <div className="text-center">
             <p className="text-lg font-medium text-snow">
               {interactions.toLocaleString("de-DE")}
             </p>
-            <p className="text-[11px] font-light text-snow/50">
+            <p className="text-[0.6875rem] font-light text-snow/50">
               Interaktionen
             </p>
           </div>
@@ -72,7 +72,7 @@ function InsightsPanel({ post }: { post: ClientPost }) {
             <p className="text-lg font-medium text-dune">
               {post.engagement_rate.toString().replace(".", ",")}%
             </p>
-            <p className="text-[11px] font-light text-snow/50">Engagement</p>
+            <p className="text-[0.6875rem] font-light text-snow/50">Engagement</p>
           </div>
         </div>
       </div>
@@ -106,7 +106,7 @@ function PostCard({ post, isNew }: { post: ClientPost; isNew: boolean }) {
             {post.handle}
             <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-dune" strokeWidth={2} />
           </p>
-          <p className="text-[11px] font-light text-snow/50">
+          <p className="text-[0.6875rem] font-light text-snow/50">
             betreut von <span className="text-dune">grid.berlin</span>
           </p>
         </div>
@@ -125,7 +125,7 @@ function PostCard({ post, isNew }: { post: ClientPost; isNew: boolean }) {
         <span className="absolute inset-0 flex items-center justify-center text-7xl drop-shadow-lg">
           {post.emoji}
         </span>
-        <span className="absolute bottom-3 left-3 rounded-full bg-sky/60 px-2.5 py-1 text-[10px] font-light tracking-wide text-snow/80 backdrop-blur-sm">
+        <span className="absolute bottom-3 left-3 rounded-full bg-sky/60 px-2.5 py-1 text-[0.625rem] font-light tracking-wide text-snow/80 backdrop-blur-sm">
           {post.client}
         </span>
       </div>
@@ -147,7 +147,7 @@ function PostCard({ post, isNew }: { post: ClientPost; isNew: boolean }) {
         <button
           onClick={() => setShowInsights(!showInsights)}
           aria-label="Insights anzeigen"
-          className={`ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium transition-all active:scale-95 ${
+          className={`ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.6875rem] font-medium transition-all active:scale-95 ${
             showInsights ? "bg-snow text-sky" : "glass text-snow"
           }`}
         >
@@ -169,7 +169,7 @@ function PostCard({ post, isNew }: { post: ClientPost; isNew: boolean }) {
         <p className="mt-1 text-sm font-light text-snow/45">
           Alle {post.comments} Kommentare ansehen
         </p>
-        <p className="mt-1 text-[11px] font-light uppercase tracking-wide text-snow/35">
+        <p className="mt-1 text-[0.6875rem] font-light uppercase tracking-wide text-snow/35">
           {timeAgo(post.posted_at)}
         </p>
         <AnimatePresence>

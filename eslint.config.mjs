@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Minifizierte Fremdbibliotheken (MSAL fürs Intranet), nicht unser Code.
+    "**/*.min.js",
   ]),
 ]);
 

@@ -43,7 +43,7 @@ export function RoadmapSection() {
                 transition={{ duration: 0.5, delay: i * 0.09 }}
                 className="relative"
               >
-                <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border border-snow/25 bg-sky text-[11px] font-medium text-snow">
+                <span className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border border-snow/25 bg-sky text-[0.6875rem] font-medium text-snow">
                   {step.number}
                 </span>
                 <h3 className="mt-4 text-base font-medium tracking-tight text-snow">
@@ -70,7 +70,7 @@ export function RoadmapSection() {
             className="relative flex gap-4 pb-6 last:pb-0"
           >
             <div className="flex flex-col items-center">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-snow/25 bg-sky text-[11px] font-medium text-snow">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-snow/25 bg-sky text-[0.6875rem] font-medium text-snow">
                 {step.number}
               </span>
               {i < roadmap.length - 1 && (

@@ -80,7 +80,7 @@ function UpcomingCard({ event }: { event: GridEvent }) {
           <span className="text-lg font-semibold leading-none">
             {dayFmt.format(date)}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-widest">
+          <span className="text-[0.625rem] font-medium uppercase tracking-widest">
             {monthFmt.format(date)}
           </span>
         </span>
