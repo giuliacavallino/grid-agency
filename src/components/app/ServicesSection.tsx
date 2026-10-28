@@ -88,7 +88,7 @@ export function ServicesSection() {
                   <div className="p-4 xl:p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-earth">
+                        <p className="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-earth">
                           {service.number}
                         </p>
                         <h3 className="card-rainbow-title mt-1 text-xl font-medium leading-snug tracking-tight text-sky lg:text-lg xl:text-xl">

@@ -37,13 +37,13 @@ export default async function ClientPage({
   return (
     <LegalShell title={client.name}>
       <div>
-        <div className="flex min-h-24 items-center justify-center py-4">
+        <h1 className="flex min-h-24 items-center justify-center py-4">
           {client.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={client.logoDetail ?? client.logo}
               alt={client.name}
-              style={{ height: Math.min((client.height ?? 32) * 1.8, 80) }}
+              style={{ height: `${Math.min((client.height ?? 32) * 1.8, 80) / 16}rem` }}
               className="w-auto"
             />
           ) : (
@@ -51,7 +51,7 @@ export default async function ClientPage({
               {client.name}
             </span>
           )}
-        </div>
+        </h1>
 
         {/* Was GRID für die Marke gemacht hat — ohne eigene Angabe
             greifen die Kernleistungen der Agentur. */}
@@ -60,7 +60,7 @@ export default async function ClientPage({
             (tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-snow/15 px-3 py-1 text-[11px] font-light text-snow/70"
+                className="rounded-full border border-snow/15 px-3 py-1 text-[0.6875rem] font-light text-snow/70"
               >
                 {tag}
               </span>
@@ -115,7 +115,7 @@ export default async function ClientPage({
               ))}
             </div>
             {client.resultsSource && (
-              <p className="mt-2 text-[11px] font-light text-snow/40">
+              <p className="mt-2 text-[0.6875rem] font-light text-snow/40">
                 {client.resultsSource}
               </p>
             )}

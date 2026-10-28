@@ -28,7 +28,7 @@ export function TopBar() {
         className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-6"
       >
         <div className="mx-auto w-full max-w-frame px-5 lg:max-w-frame-wide lg:px-gutter">
-          <div className="glass pointer-events-auto relative flex h-12 w-full items-center justify-between overflow-hidden rounded-full px-5 lg:h-[68px] lg:px-7">
+          <div className="glass pointer-events-auto relative flex h-12 w-full items-center justify-between overflow-hidden rounded-full px-5 lg:h-[4.25rem] lg:px-7">
             <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 
             <a
@@ -46,15 +46,18 @@ export function TopBar() {
                   width={96}
                   height={25}
                   priority
-                  className="h-[19px] w-auto lg:h-[23px]"
+                  className="h-[1.1875rem] w-auto lg:h-[1.4375rem]"
                 />
               </span>
-              <span className="-mt-[3px] hidden pl-[3px] text-[10px] font-medium uppercase tracking-[0.32em] text-snow/70 lg:block">
+              <span className="-mt-[3px] hidden pl-[3px] text-[0.625rem] font-medium uppercase tracking-[0.32em] text-snow/70 lg:block">
                 Agency
               </span>
             </a>
 
-            <nav className="relative hidden items-center gap-5 whitespace-nowrap text-[15px] font-normal text-snow/80 lg:flex xl:gap-8">
+            {/* Ab 800px greift die Desktop-Nav; bis xl enger gesetzt, damit
+                Logo, Links und CTA auch im halbbreiten Fenster in eine
+                Zeile passen. */}
+            <nav className="relative hidden items-center gap-4 whitespace-nowrap text-[0.875rem] font-normal text-snow/80 lg:flex xl:gap-8 xl:text-[0.9375rem]">
               <a href="#leistungen" onClick={jump("leistungen")} className="nav-rainbow">
                 Leistungen
               </a>
@@ -76,7 +79,7 @@ export function TopBar() {
               <a
                 href="#dm"
                 onClick={jump("dm")}
-                className="btn-rainbow ml-2 flex items-center gap-2.5 rounded-full bg-snow py-2.5 pl-5 pr-2.5 text-[15px] font-medium text-sky active:scale-95"
+                className="btn-rainbow ml-1 flex items-center gap-2.5 rounded-full bg-snow py-2.5 pl-4 pr-2.5 text-[0.875rem] font-medium text-sky active:scale-95 xl:ml-2 xl:pl-5 xl:text-[0.9375rem]"
               >
                 Slide in die DMs
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky text-snow">
@@ -86,27 +89,29 @@ export function TopBar() {
             </nav>
 
             <div className="relative flex items-center gap-5 lg:hidden">
-              <button
-                aria-label="Aktivität"
+              {/* Herz = Aktivität: führt zu den Events, was gerade los ist. */}
+              <Link
+                href="/events"
+                aria-label="Events"
                 className="relative text-snow transition-transform active:scale-90"
               >
-                <Heart className="h-[22px] w-[22px]" strokeWidth={1.8} />
+                <Heart className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.8} />
                 <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-dune" />
-              </button>
+              </Link>
               <a
                 href="#dm"
                 aria-label="Nachricht schreiben"
                 className="text-snow transition-transform active:scale-90"
                 onClick={jump("dm")}
               >
-                <Send className="h-[22px] w-[22px]" strokeWidth={1.8} />
+                <Send className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.8} />
               </a>
               <button
                 aria-label="Menü öffnen"
                 onClick={() => setMenuOpen(true)}
                 className="text-snow transition-transform active:scale-90"
               >
-                <Menu className="h-[22px] w-[22px]" strokeWidth={1.8} />
+                <Menu className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.8} />
               </button>
             </div>
           </div>

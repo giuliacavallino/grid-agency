@@ -57,7 +57,7 @@ export function DmSection() {
               </span>
               <div>
                 <p className="text-sm font-medium text-snow">grid.berlin</p>
-                <p className="text-[11px] font-light text-dune">
+                <p className="text-[0.6875rem] font-light text-dune">
                   antwortet innerhalb von 2 Werktagen
                 </p>
               </div>
@@ -78,7 +78,7 @@ export function DmSection() {
           >
             <div className="flex items-center gap-4">
               <span className="h-px flex-1 bg-snow/10" />
-              <span className="text-[11px] font-light uppercase tracking-[0.25em] text-snow/40">
+              <span className="text-[0.6875rem] font-light uppercase tracking-[0.25em] text-snow/40">
                 oder direkt
               </span>
               <span className="h-px flex-1 bg-snow/10" />
@@ -92,7 +92,7 @@ export function DmSection() {
           </motion.div>
 
           {/* Desktop unten in der linken Spalte, mobil zentriert am Ende. */}
-          <div className="mt-8 space-y-1 text-center text-[11px] font-light text-snow/35 lg:col-start-1 lg:row-start-2 lg:mt-0 lg:self-end lg:text-left">
+          <div className="mt-8 space-y-1 text-center text-[0.6875rem] font-light text-snow/35 lg:col-start-1 lg:row-start-2 lg:mt-0 lg:self-end lg:text-left">
             {/* Beide Standorte; auf schmalen Screens bricht die Zeile zwischen
                 den Adressen um, nie mitten in einer Adresse. */}
             <p>
@@ -112,7 +112,7 @@ export function DmSection() {
                 +49 1512 2910161
               </a>
             </p>
-            <p className="flex items-center justify-center gap-3 pt-1 lg:justify-start">
+            <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-1 lg:justify-start">
               <a href="/impressum" className="hover:text-snow/60">
                 Impressum
               </a>
@@ -121,6 +121,9 @@ export function DmSection() {
               </a>
               <a href="/datenschutz#einstellungen" className="hover:text-snow/60">
                 Datenschutz-Einstellungen
+              </a>
+              <a href="https://intranet.grid-agency.de" className="hover:text-snow/60">
+                Login
               </a>
             </p>
           </div>

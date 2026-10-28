@@ -80,7 +80,7 @@ function UpcomingCard({ event }: { event: GridEvent }) {
           <span className="text-lg font-semibold leading-none">
             {dayFmt.format(date)}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-widest">
+          <span className="text-[0.625rem] font-medium uppercase tracking-widest">
             {monthFmt.format(date)}
           </span>
         </span>
@@ -159,7 +159,20 @@ function PastCard({ event }: { event: GridEvent }) {
         />
       )}
 
-      {event.gallery.length > 0 ? (
+      {/* Ohne Galerie zeigt die Karte wenigstens die Einladung. */}
+      {event.cover_url && !event.showreel_url && !event.gallery?.length && (
+        <div className="relative mx-auto mt-4 aspect-[4/5] w-full max-w-sm overflow-hidden rounded-2xl">
+          <Image
+            src={event.cover_url}
+            alt={event.title}
+            fill
+            sizes="(max-width: 560px) 100vw, 384px"
+            className="object-cover"
+          />
+        </div>
+      )}
+
+      {event.gallery?.length ? (
         <div className="mt-4 grid grid-cols-3 gap-1.5">
           {event.gallery.map((src) => (
             <div
@@ -177,7 +190,7 @@ function PastCard({ event }: { event: GridEvent }) {
           ))}
         </div>
       ) : (
-        !event.showreel_url && (
+        !event.showreel_url && !event.cover_url && (
           <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-snow/15 px-4 py-5">
             <Camera className="h-4 w-4 text-snow/30" strokeWidth={1.6} />
             <p className="text-xs font-light text-snow/40">
@@ -301,7 +314,7 @@ export function EventsView() {
                 KaDeWe die Sechste, Berlin-Charlottenburg
               </p>
               <Link
-                href="/referenzen/casa-beef"
+                href="/projekte/casa-beef"
                 className="btn-rainbow mt-4 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97]"
               >
                 Bilder &amp; Reel ansehen

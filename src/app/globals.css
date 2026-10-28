@@ -45,13 +45,14 @@
   --breakpoint-lg: 50rem; /* 800px statt Tailwind-Default 1024px */
 }
 
-/* Ab großen Displays (16", 24", 27") wächst die ganze Seite proportional
-   mit: Tailwind rechnet Schrift, Abstände und Rahmen in rem, also skaliert
-   ein flüssiger Root-Font das komplette Layout. Bis ~1500px bleibt es
-   bei 16px (14"-MacBook, iPad, iPhone). Media Queries rechnen weiter mit
-   16px, die Breakpoints verschieben sich dadurch nicht. */
-html {
-  font-size: clamp(16px, calc(0.45vw + 9.2px), 21px);
+/* Große Monitore (27" mit 2560px und mehr): Alles ist in rem gesetzt,
+   also skaliert eine größere Grundschrift Typo, Abstände und den
+   Seitenrahmen gemeinsam. Bis 1440px bleibt es bei 16px, darüber wächst
+   sie fließend bis 22px (bei ca. 2560px). Mobile und Laptop unverändert. */
+@media (min-width: 1440px) {
+  html {
+    font-size: clamp(16px, 0.5rem + 0.55vw, 22px);
+  }
 }
 /* Auf kurzen Handy-Displays (iPhone 13/14/15 mit eingeblendeten Safari-
    Leisten) rückt alles ein paar Prozent zusammen, damit jede Sektion in

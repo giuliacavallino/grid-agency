@@ -70,7 +70,7 @@ export function TeamSection() {
               {team.facts.map((fact) => (
                 <div key={fact.label} className="text-center">
                   <p className="text-lg font-medium text-snow">{fact.value}</p>
-                  <p className="mt-0.5 text-[11px] font-light text-snow/50">
+                  <p className="mt-0.5 text-[0.6875rem] font-light text-snow/50">
                     {fact.label}
                   </p>
                 </div>

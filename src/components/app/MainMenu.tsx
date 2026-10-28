@@ -45,10 +45,15 @@ export function MainMenu({
   useEffect(() => {
     if (!open) return;
     document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, onClose]);
 
   const goToSection = (id: string) => {
     onClose();
@@ -70,6 +75,9 @@ export function MainMenu({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menü"
           className="fixed inset-0 z-[60] flex flex-col bg-sky/85 backdrop-blur-2xl"
         >
           <div className="mx-auto flex w-full max-w-frame flex-1 flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+28px)] pt-[calc(env(safe-area-inset-top)+12px)] lg:max-w-frame-lg">

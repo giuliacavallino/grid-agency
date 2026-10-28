@@ -9,7 +9,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShieldCheck, X } from "lucide-react";
+import { LoaderCircle, ShieldCheck, X } from "lucide-react";
 import { calendlyUrl } from "@/lib/content";
 import { grantConsent, hasConsent, onConsentChange } from "@/lib/consent";
 
@@ -45,6 +45,31 @@ function embedUrl(): string {
   return `${calendlyUrl}?${params.toString()}`;
 }
 
+/** Calendly-iframe mit Ladeanzeige, bis der Kalender da ist. */
+function CalendlyFrame() {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="relative flex flex-1">
+      <iframe
+        src={embedUrl()}
+        title="Calendly: Erstgespräch buchen"
+        className="h-full w-full flex-1 bg-white"
+        allow="payment"
+        onLoad={() => setLoaded(true)}
+      />
+      {!loaded && (
+        <div
+          role="status"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white text-sky"
+        >
+          <LoaderCircle className="h-6 w-6 animate-spin" strokeWidth={2} aria-hidden />
+          <span className="text-[0.8125rem] font-light text-sky/70">Kalender wird geladen …</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Hinweis vor dem ersten Laden des Kalenders. */
 function CalendlyConsent({ onAccept }: { onAccept: (remember: boolean) => void }) {
   const [remember, setRemember] = useState(false);
@@ -55,7 +80,7 @@ function CalendlyConsent({ onAccept }: { onAccept: (remember: boolean) => void }
       </span>
       <div>
         <p className="text-base font-medium">Kalender von Calendly laden?</p>
-        <p className="mt-2 text-[13px] font-light leading-relaxed text-sky/70">
+        <p className="mt-2 text-[0.8125rem] font-light leading-relaxed text-sky/70">
           Für die Terminbuchung nutzen wir Calendly (Calendly LLC, USA). Beim
           Laden des Kalenders werden deine IP-Adresse und deine Eingaben an
           Calendly übertragen, und Calendly kann Cookies setzen. Mehr dazu in
@@ -66,7 +91,7 @@ function CalendlyConsent({ onAccept }: { onAccept: (remember: boolean) => void }
           .
         </p>
       </div>
-      <label className="flex cursor-pointer items-center gap-2.5 text-[13px] font-light text-sky/80">
+      <label className="flex cursor-pointer items-center gap-2.5 text-[0.8125rem] font-light text-sky/80">
         <input
           type="checkbox"
           checked={remember}
@@ -86,7 +111,7 @@ function CalendlyConsent({ onAccept }: { onAccept: (remember: boolean) => void }
         href={calendlyUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-center text-[12px] font-light text-sky/60 underline underline-offset-2"
+        className="text-center text-[0.75rem] font-light text-sky/60 underline underline-offset-2"
       >
         Stattdessen direkt auf calendly.com buchen
       </a>
@@ -147,15 +172,15 @@ export function CalendlyProvider({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.98 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="relative flex h-[min(78dvh,580px)] w-full max-w-[370px] flex-col overflow-hidden rounded-2xl border border-snow/20 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.55),0_0_0_1px_rgba(0,0,0,0.4)]"
+              className="relative flex h-[min(78dvh,580px)] w-full max-w-[23.125rem] flex-col overflow-hidden rounded-2xl border border-snow/20 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.55),0_0_0_1px_rgba(0,0,0,0.4)]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between bg-sky px-4 py-2.5">
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-dune">
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[0.2em] text-dune">
                     Erstgespräch · 30 Minuten
                   </p>
-                  <p className="text-[13px] font-medium text-snow">
+                  <p className="text-[0.8125rem] font-medium text-snow">
                     Boost your Socials, unverbindlich
                   </p>
                 </div>
@@ -169,12 +194,7 @@ export function CalendlyProvider({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
               {consented ? (
-                <iframe
-                  src={embedUrl()}
-                  title="Calendly: Erstgespräch buchen"
-                  className="h-full w-full flex-1 bg-white"
-                  allow="payment"
-                />
+                <CalendlyFrame />
               ) : (
                 <CalendlyConsent onAccept={accept} />
               )}

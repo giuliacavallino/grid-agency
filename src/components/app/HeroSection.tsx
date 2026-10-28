@@ -62,7 +62,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-[clamp(0.75rem,2.5svh,1.5rem)] max-w-[24rem] text-[15px] font-light leading-relaxed text-snow/80 min-[400px]:text-base lg:mx-auto lg:max-w-[40rem] lg:text-xl"
+          className="mt-[clamp(0.75rem,2.5svh,1.5rem)] max-w-[24rem] text-[0.9375rem] font-light leading-relaxed text-snow/80 min-[400px]:text-base lg:mx-auto lg:max-w-[40rem] lg:text-xl"
         >
           Wir sind dein unfairer Vorteil im Feed. Strategie, Content, Editing,
           und ein Gespür für Trends, bevor sie welche sind. Dein Feed wird das
@@ -73,14 +73,19 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.55 }}
-          className="mt-[clamp(1rem,3svh,1.75rem)] flex gap-2 lg:mx-auto lg:max-w-md"
+          className="mt-[clamp(1rem,3svh,1.75rem)] flex flex-wrap gap-2 lg:mx-auto lg:max-w-md"
         >
           {/* Direkt zur Calendly-Buchung — unverbindliches Erstgespräch,
-              öffnet im neuen Tab statt zur DM-Sektion zu scrollen. */}
+              öffnet im neuen Tab statt zur DM-Sektion zu scrollen. Beide
+              Buttons bleiben einzeilig; wird es zu eng (sehr schmale
+              Handys), rutschen sie untereinander statt umzubrechen. */}
           <CalendlyLink
-            className="btn-rainbow flex flex-1 items-center justify-center gap-2 rounded-full bg-snow px-3 py-3 text-center text-sm font-medium text-sky active:scale-[0.97]"
+            className="btn-rainbow flex flex-auto items-center justify-center gap-2 whitespace-nowrap rounded-full bg-snow px-5 py-3 text-center text-sm font-medium text-sky active:scale-[0.97] lg:flex-1"
           >
-            Jetzt Erstgespräch buchen
+            <span>
+              <span className="hidden sm:inline">Jetzt </span>Erstgespräch
+              buchen
+            </span>
           </CalendlyLink>
           <a
             href="#cases"
@@ -88,7 +93,7 @@ export function HeroSection() {
               e.preventDefault();
               scrollToId("cases");
             }}
-            className="glass flex flex-1 items-center justify-center rounded-full px-3 py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97]"
+            className="glass flex-auto whitespace-nowrap rounded-full px-5 py-3 text-center text-sm font-medium text-snow transition-all active:scale-[0.97] lg:flex-1"
           >
             Cases ansehen
           </a>
@@ -105,7 +110,7 @@ export function HeroSection() {
               <p className="text-xl font-medium text-snow lg:text-2xl">
                 <CountUp value={stat.value} suffix={stat.suffix} />
               </p>
-              <p className="mt-0.5 text-[11px] font-light text-snow/50">
+              <p className="mt-0.5 text-[0.6875rem] font-light text-snow/50">
                 {stat.label}
               </p>
             </div>

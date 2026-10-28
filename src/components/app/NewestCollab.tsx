@@ -64,7 +64,7 @@ export function NewestCollab() {
             <img
               src={client.logo}
               alt={client.name}
-              style={{ height: Math.min((client.height ?? 32) * 1.1, 48) }}
+              style={{ height: `${Math.min((client.height ?? 32) * 1.1, 48) / 16}rem` }}
               className="w-auto shrink-0 opacity-90"
             />
           )}

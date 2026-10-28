@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { LoaderCircle } from "lucide-react";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
 
 const initialState: ContactFormState = { status: "idle" };
@@ -15,8 +16,12 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="btn-rainbow w-full rounded-full bg-snow px-7 py-3.5 text-sm font-medium text-sky disabled:opacity-60 sm:w-auto"
+      aria-busy={pending}
+      className="btn-rainbow inline-flex w-full items-center justify-center gap-2 rounded-full bg-snow px-7 py-3.5 text-sm font-medium text-sky disabled:cursor-progress disabled:opacity-80 sm:w-auto"
     >
+      {pending && (
+        <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
+      )}
       {pending ? "Wird gesendet…" : "Nachricht senden"}
     </button>
   );
@@ -52,21 +57,23 @@ export function ContactForm() {
           placeholder="Unternehmen / Marke"
           className={inputClasses}
         />
+        {/* Solange nichts gewählt ist, sieht der Platzhalter aus wie die
+            der Textfelder. */}
         <select
           name="budget"
           defaultValue=""
-          className={`${inputClasses} text-snow/70`}
+          className={`${inputClasses} has-[option[value='']:checked]:text-snow/40`}
         >
           <option value="" disabled>
             Monatliches Budget
           </option>
-          <option value="<1500" className="bg-sky">
+          <option value="<1500" className="bg-sky text-snow">
             unter 1.500 €
           </option>
-          <option value="1500-3000" className="bg-sky">
+          <option value="1500-3000" className="bg-sky text-snow">
             1.500 € – 3.000 €
           </option>
-          <option value=">3000" className="bg-sky">
+          <option value=">3000" className="bg-sky text-snow">
             über 3.000 €
           </option>
         </select>
@@ -91,7 +98,7 @@ export function ContactForm() {
           </p>
         )}
       </div>
-      <p className="text-[11px] font-light leading-relaxed text-snow/45">
+      <p className="text-[0.6875rem] font-light leading-relaxed text-snow/45">
         Mit dem Absenden verarbeiten wir deine Angaben, um deine Anfrage zu
         beantworten. Mehr dazu in unserer{" "}
         <a href="/datenschutz#kontaktformular" className="underline underline-offset-2 hover:text-snow/70">
