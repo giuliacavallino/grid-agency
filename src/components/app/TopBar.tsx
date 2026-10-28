@@ -54,7 +54,10 @@ export function TopBar() {
               </span>
             </a>
 
-            <nav className="relative hidden items-center gap-8 text-[15px] font-normal text-snow/80 lg:flex">
+            {/* Ab 800px greift die Desktop-Nav; bis xl enger gesetzt, damit
+                Logo, Links und CTA auch im halbbreiten Fenster in eine
+                Zeile passen. */}
+            <nav className="relative hidden items-center gap-4 whitespace-nowrap text-[14px] font-normal text-snow/80 lg:flex xl:gap-8 xl:text-[15px]">
               <a href="#leistungen" onClick={jump("leistungen")} className="nav-rainbow">
                 Leistungen
               </a>
@@ -76,7 +79,7 @@ export function TopBar() {
               <a
                 href="#dm"
                 onClick={jump("dm")}
-                className="btn-rainbow ml-2 flex items-center gap-2.5 rounded-full bg-snow py-2.5 pl-5 pr-2.5 text-[15px] font-medium text-sky active:scale-95"
+                className="btn-rainbow ml-1 flex items-center gap-2.5 rounded-full bg-snow py-2.5 pl-4 pr-2.5 text-[14px] font-medium text-sky active:scale-95 xl:ml-2 xl:pl-5 xl:text-[15px]"
               >
                 Slide in die DMs
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky text-snow">
@@ -86,13 +89,15 @@ export function TopBar() {
             </nav>
 
             <div className="relative flex items-center gap-5 lg:hidden">
-              <button
-                aria-label="Aktivität"
+              {/* Herz = Aktivität: führt zu den Events, was gerade los ist. */}
+              <Link
+                href="/events"
+                aria-label="Events"
                 className="relative text-snow transition-transform active:scale-90"
               >
                 <Heart className="h-[22px] w-[22px]" strokeWidth={1.8} />
                 <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-dune" />
-              </button>
+              </Link>
               <a
                 href="#dm"
                 aria-label="Nachricht schreiben"

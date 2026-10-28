@@ -1,6 +1,6 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export type ContactFormState = {
   status: "idle" | "success" | "error";
@@ -24,6 +24,14 @@ export async function submitContactForm(
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailPattern.test(email)) {
     return { status: "error", message: "Bitte gib eine gültige E-Mail-Adresse ein." };
+  }
+
+  const supabase = getSupabase();
+  if (!supabase) {
+    return {
+      status: "error",
+      message: "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
+    };
   }
 
   const { error } = await supabase.from("contact_submissions").insert({
