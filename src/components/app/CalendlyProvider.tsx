@@ -9,7 +9,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { ShieldCheck, X } from "lucide-react";
+import { LoaderCircle, ShieldCheck, X } from "lucide-react";
 import { calendlyUrl } from "@/lib/content";
 import { grantConsent, hasConsent, onConsentChange } from "@/lib/consent";
 
@@ -43,6 +43,31 @@ function embedUrl(): string {
     params.set("embed_domain", window.location.hostname);
   }
   return `${calendlyUrl}?${params.toString()}`;
+}
+
+/** Calendly-iframe mit Ladeanzeige, bis der Kalender da ist. */
+function CalendlyFrame() {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="relative flex flex-1">
+      <iframe
+        src={embedUrl()}
+        title="Calendly: Erstgespräch buchen"
+        className="h-full w-full flex-1 bg-white"
+        allow="payment"
+        onLoad={() => setLoaded(true)}
+      />
+      {!loaded && (
+        <div
+          role="status"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white text-sky"
+        >
+          <LoaderCircle className="h-6 w-6 animate-spin" strokeWidth={2} aria-hidden />
+          <span className="text-[13px] font-light text-sky/70">Kalender wird geladen …</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** Hinweis vor dem ersten Laden des Kalenders. */
@@ -169,12 +194,7 @@ export function CalendlyProvider({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
               {consented ? (
-                <iframe
-                  src={embedUrl()}
-                  title="Calendly: Erstgespräch buchen"
-                  className="h-full w-full flex-1 bg-white"
-                  allow="payment"
-                />
+                <CalendlyFrame />
               ) : (
                 <CalendlyConsent onAccept={accept} />
               )}

@@ -102,7 +102,7 @@ export function DmSection() {
             +49 1512 2910161
           </a>
         </p>
-        <p className="flex items-center justify-center gap-3 pt-1">
+        <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-1">
           <a href="/impressum" className="hover:text-snow/60">
             Impressum
           </a>
@@ -111,6 +111,9 @@ export function DmSection() {
           </a>
           <a href="/datenschutz#einstellungen" className="hover:text-snow/60">
             Datenschutz-Einstellungen
+          </a>
+          <a href="https://intranet.grid-agency.de" className="hover:text-snow/60">
+            Login
           </a>
         </p>
       </div>

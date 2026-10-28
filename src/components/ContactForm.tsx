@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { LoaderCircle } from "lucide-react";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
 
 const initialState: ContactFormState = { status: "idle" };
@@ -15,8 +16,12 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="btn-rainbow w-full rounded-full bg-snow px-7 py-3.5 text-sm font-medium text-sky disabled:opacity-60 sm:w-auto"
+      aria-busy={pending}
+      className="btn-rainbow inline-flex w-full items-center justify-center gap-2 rounded-full bg-snow px-7 py-3.5 text-sm font-medium text-sky disabled:cursor-progress disabled:opacity-80 sm:w-auto"
     >
+      {pending && (
+        <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
+      )}
       {pending ? "Wird gesendet…" : "Nachricht senden"}
     </button>
   );
