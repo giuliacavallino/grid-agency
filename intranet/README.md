@@ -42,6 +42,7 @@ Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in 
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`: ohne sie bleiben die Sales-Seiten leer.
 - `MS_CLIENT_SECRET`, `MAIL_WEBHOOK_SECRET` (beliebiger langer Zufallswert), `CRON_SECRET`, `INTRANET_URL`
 - `ANTHROPIC_API_KEY`: ohne Key ordnen einfache Stichwort-Regeln die Mails ein.
+- `EASYBILL_API_KEY`: easybill → Einstellungen → API. Damit gleicht das Intranet Kunden, Artikel, Serienrechnungen (→ Retainer) und offene Angebote (→ Leads in „Angebot“) ab, täglich und per Knopf „easybill“ in Kunden, Auftragsbuch und Artikel.
 - `META_APP_SECRET`, `META_VERIFY_TOKEN`, `META_PAGE_ACCESS_TOKEN`
 - `LINKEDIN_CLIENT_SECRET`, `LINKEDIN_ACCESS_TOKEN`
 

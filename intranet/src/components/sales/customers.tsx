@@ -9,6 +9,7 @@ import { createRow, deleteRow, revalidate, updateRow, useRows } from "@/lib/data
 import { euro, formatDate, num } from "@/lib/format";
 import { SOURCES, type Customer, type Lead, type Retainer } from "@/lib/sales/types";
 import { Avatar, Badge, Button, Dialog, Empty, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
+import { EasybillSync } from "./easybill-sync";
 import { PageBar } from "./shell";
 import { SourceBadge } from "./source";
 import { monthRange, countsInMonth, RetainerDialog, RetainerStatus } from "./orderbook";
@@ -89,6 +90,7 @@ export function Customers() {
             </option>
           ))}
         </Select>
+        <EasybillSync />
         <Button variant="primary" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
           <span className="sr-only sm:not-sr-only">Neuer Kunde</span>
         </Button>

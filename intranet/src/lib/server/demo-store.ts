@@ -291,6 +291,16 @@ export const demoStore: Store = {
     Object.assign(row, patch, ["leads", "customers", "invoices", "applications"].includes(table) ? { updated_at: now() } : {});
     return structuredClone(row);
   },
+  async upsertEasybill(table, rows) {
+    const out: Row[] = [];
+    for (const input of rows) {
+      const row = tables[table].find((r) => r.easybill_id === input.easybill_id);
+      // Datenbank-Standardwerte nachbilden, die der Abgleich nicht mitschickt
+      const defaults = table === "retainers" ? { hours_per_month: 0, notes: null } : table === "articles" ? { hours: 0 } : { lead_id: null, industry: null };
+      out.push(row ? await this.update(table, row.id, input) : await this.insert(table, { ...defaults, ...input }));
+    }
+    return out;
+  },
   async remove(table, id) {
     tables[table] = tables[table].filter((row) => row.id !== id);
   },
