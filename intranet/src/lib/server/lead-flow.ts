@@ -10,6 +10,7 @@ import { sendAppMail } from "./graph-app";
 import { createEnvelope, markEnvelopeSent } from "./sign";
 import { createMeeting, freeSlots, type Busy, type SlotRules } from "./slots";
 import { verifyAltcha } from "./altcha";
+import { book as bookErstgespraech, freeSlots as freeErstgespraech, type Slot } from "./booking";
 
 // Pipeline-Automatik: Neuer Lead → Erstgespräch (Lead bucht selbst auf der
 // Website, mit oder ohne Einladungslink) → Angebot verschickt (Angebot +
@@ -102,25 +103,23 @@ export async function inviteLead(id: string, user: { email: string; name: string
   return updated;
 }
 
-// ---------- Terminbuchung (Website) ----------
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Gebuchte Termine aus der Pipeline, auch wenn Outlook sie noch nicht meldet */
-async function bookedMeetings(): Promise<Busy[]> {
-  const now = new Date().toISOString();
-  const rows = check(await sb().from("leads").select("meeting_at,kickoff_at").or(`meeting_at.gt.${now},kickoff_at.gt.${now}`)) as {
-    meeting_at: string | null;
-    kickoff_at: string | null;
-  }[];
-  return rows.flatMap((r) =>
-    [
-      r.meeting_at && { start: Date.parse(r.meeting_at), end: Date.parse(r.meeting_at) + RULES.erstgespraech.minutes * 60_000 },
-      r.kickoff_at && { start: Date.parse(r.kickoff_at), end: Date.parse(r.kickoff_at) + RULES.kickoff.minutes * 60_000 },
-    ].filter((b): b is Busy => !!b)
-  );
+// ---------- Terminbuchung (Website, mit Einladungslink) ----------
+
+/** Gebuchte Kick-offs, auch wenn Outlook sie noch nicht als belegt meldet */
+async function bookedKickoffs(): Promise<Busy[]> {
+  const rows = check(await sb().from("leads").select("kickoff_at").gt("kickoff_at", new Date().toISOString())) as { kickoff_at: string }[];
+  return rows.map((r) => ({ start: Date.parse(r.kickoff_at), end: Date.parse(r.kickoff_at) + RULES.kickoff.minutes * 60_000 }));
 }
 
-async function slotsFor(kind: MeetingKind) {
-  return freeSlots(HOST_MAILBOX, RULES[kind], DEMO ? [] : await bookedMeetings());
+async function slotsFor(kind: MeetingKind): Promise<Slot[]> {
+  if (kind === "erstgespraech") return freeErstgespraech();
+  const minutes = RULES.kickoff.minutes * 60_000;
+  return (await freeSlots(HOST_MAILBOX, RULES.kickoff, DEMO ? [] : await bookedKickoffs())).map((ms) => ({
+    start: new Date(ms).toISOString(),
+    end: new Date(ms + minutes).toISOString(),
+  }));
 }
 
 async function leadByToken(token: string, kind: MeetingKind) {
@@ -138,113 +137,54 @@ async function leadByToken(token: string, kind: MeetingKind) {
 export type BookingView = {
   kind: MeetingKind;
   minutes: number;
-  host: string;
   prefill: { name: string; email: string; company: string } | null;
   booked: { start: string; url: string | null } | null;
-  slots: string[];
-  calendar_error: boolean;
+  slots: Slot[];
 };
 
+/** Freie Zeiten für einen Einladungslink (Erstgespräch) bzw. den Kick-off */
 export async function bookingView(kind: MeetingKind, token: string | null): Promise<BookingView> {
   if (kind === "kickoff" && !token) throw new FlowError("Für den Kick-off brauchst du den Link aus unserer Mail.");
   const lead = token ? await leadByToken(token, kind) : null;
   const at = lead && (kind === "kickoff" ? lead.kickoff_at : lead.meeting_at);
-  const view: BookingView = {
+  return {
     kind,
     minutes: RULES[kind].minutes,
-    host: HOST_NAME,
     prefill: lead ? { name: String(lead.name ?? ""), email: String(lead.email ?? ""), company: String(lead.company ?? "") } : null,
     booked: at ? { start: String(at), url: ((kind === "kickoff" ? lead.kickoff_url : lead.meeting_url) as string) ?? null } : null,
-    slots: [],
-    calendar_error: false,
+    slots: at ? [] : await slotsFor(kind),
   };
-  if (view.booked) return view;
-  try {
-    view.slots = (await slotsFor(kind)).map((ms) => new Date(ms).toISOString());
-  } catch (error) {
-    console.error(error);
-    view.calendar_error = true;
-  }
-  return view;
 }
 
-export type BookingInput = {
-  kind: MeetingKind;
-  token: string | null;
-  start: string;
-  name: string;
-  email: string;
-  company: string;
-  phone: string;
-  message: string;
-  altcha: string;
-};
+export type BookingInput = { kind: MeetingKind; token: string; start: string; name: string; email: string; company: string; phone: string; message: string };
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/** Bucht einen Slot: Captcha, Slot erneut gegen den Kalender prüfen, Teams-
- * Termin anlegen (Outlook lädt ein), Lead anlegen bzw. nach „Erstgespräch“. */
-export async function book(input: BookingInput) {
-  await verifyAltcha(input.altcha);
+/** Buchung über einen Einladungslink: Erstgespräch über die Website-Buchung
+ * (hello@ als Organisator), Kick-off im Kalender von BOOKING_MAILBOX */
+export async function bookWithLink(input: BookingInput) {
   const kind = input.kind === "kickoff" ? "kickoff" : "erstgespraech";
-  const name = input.name.trim().slice(0, 120);
-  const email = input.email.trim().toLowerCase().slice(0, 200);
-  const company = input.company.trim().slice(0, 160);
-  if (!name || !EMAIL.test(email)) throw new FlowError("Bitte Name und eine gültige E-Mail-Adresse angeben.");
+  const lead = await leadByToken(input.token, kind);
+  if (kind === "kickoff" ? lead.kickoff_at : lead.meeting_at) throw new FlowError("Du hast schon einen Termin gebucht.");
+  const name = input.name.trim().slice(0, 120) || String(lead.name);
+  const email = String(lead.email ?? input.email).trim();
 
-  let lead = input.token ? await leadByToken(input.token, kind) : null;
-  if (lead && (kind === "kickoff" ? lead.kickoff_at : lead.meeting_at)) throw new FlowError("Du hast schon einen Termin gebucht.");
+  if (kind === "erstgespraech") {
+    return bookErstgespraech({ start: input.start, name, email, company: input.company, phone: input.phone, message: input.message }, lead.id);
+  }
+
   const start = Date.parse(input.start);
-  const free = await slotsFor(kind);
-  if (!free.includes(start)) throw new FlowError("Dieser Termin ist gerade vergeben worden. Bitte wähl einen anderen.");
-
-  // Ohne Link: offenen Lead mit derselben Adresse nehmen, sonst neu anlegen
-  if (!lead && !DEMO) {
-    lead = (check(await sb().from("leads").select("*").eq("status", "offen").ilike("email", email).limit(1).maybeSingle()) as Row | null) ?? null;
-  }
-  if (!lead) {
-    lead = await db().insert("leads", {
-      source: "website",
-      source_ref: `termin-${randomBytes(8).toString("hex")}`,
-      stage: "neu",
-      position: Date.now() / 1000,
-      name,
-      email,
-      company: company || null,
-      phone: input.phone.trim().slice(0, 60) || null,
-      message: input.message.trim().slice(0, 4000) || null,
-    });
-  }
-
-  const who = String(lead.company || company || name);
+  const free = await slotsFor("kickoff");
+  const slot = free.find((s) => Date.parse(s.start) === start);
+  if (!slot) return null;
   const event = await createMeeting(HOST_MAILBOX, {
-    subject: kind === "kickoff" ? `Kick-off GRID × ${who}` : `Erstgespräch GRID × ${who}`,
-    text:
-      kind === "kickoff"
-        ? `Hi ${firstName(name)},\n\nwir freuen uns auf den Start! Im Kick-off gehen wir Ziele, Zugänge, Content-Plan und Abläufe durch. Den Teams-Link findest du in diesem Termin.\n\nBis bald\n${HOST_NAME}\nGRID Agency`
-        : `Hi ${firstName(name)},\n\nschön, dass es klappt! Wir sprechen per Microsoft Teams, den Link findest du in diesem Termin.${input.message.trim() ? `\n\nDeine Nachricht:\n${input.message.trim().slice(0, 1500)}` : ""}\n\nBis bald\n${HOST_NAME}\nGRID Agency`,
+    subject: `Kick-off GRID × ${lead.company || name}`,
+    text: `Hi ${firstName(name)},\n\nwir freuen uns auf den Start! Im Kick-off gehen wir Ziele, Zugänge, Content-Plan und Abläufe durch. Den Teams-Link findest du in diesem Termin.\n\nBis bald\n${HOST_NAME}\nGRID Agency`,
     start,
-    minutes: RULES[kind].minutes,
+    minutes: RULES.kickoff.minutes,
     attendee: { email, name },
   });
-  const at = new Date(start).toISOString();
-  await db().update(
-    "leads",
-    lead.id,
-    kind === "kickoff"
-      ? { kickoff_at: at, kickoff_event_id: event.id, kickoff_url: event.joinUrl }
-      : {
-          meeting_at: at,
-          meeting_event_id: event.id,
-          meeting_url: event.joinUrl,
-          stage: "erstgespraech",
-          position: Date.now() / 1000,
-          ...(!lead.phone && input.phone.trim() ? { phone: input.phone.trim().slice(0, 60) } : {}),
-          ...(!lead.company && company ? { company } : {}),
-        }
-  );
-  await note(lead.id, "termin", `${kind === "kickoff" ? "Kick-off" : "Erstgespräch"} gebucht: ${dateTimeDe(start)}`, name);
-  return { start: at, url: event.joinUrl };
+  await db().update("leads", lead.id, { kickoff_at: slot.start, kickoff_event_id: event.id, kickoff_url: event.joinUrl });
+  await note(lead.id, "termin", `Kick-off gebucht: ${dateTimeDe(start)}`, name);
+  return { ...slot, url: event.joinUrl };
 }
 
 /** Kontaktformular der Website (mit Captcha); der Datenbank-Trigger legt den Lead an */

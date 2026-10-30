@@ -3,16 +3,17 @@
 import { useEffect, useState } from "react";
 import { TopBar } from "./TopBar";
 import { TabBar } from "./TabBar";
-import { BootIntro } from "./BootIntro";
-import { BookingProvider } from "./BookingProvider";
+import { SiteFooter } from "./SiteFooter";
 import { popScrollTarget, scrollToId } from "@/lib/scroll";
 
 export type ViewId = "home" | "cases" | "team" | "dm";
 
+/** Rahmen der Startseite: Kopfleiste, Inhalt, Footer und mobil die untere
+ * Navigation, deren Lupe der gerade sichtbaren Sektion folgt. */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [activeView, setActiveView] = useState<ViewId>("home");
 
-  // Always start at the top: no browser scroll restoration, no stale #hash.
+  // Immer oben starten: keine Scroll-Wiederherstellung, kein alter #hash.
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
@@ -22,19 +23,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
     window.scrollTo(0, 0);
 
-    // Subpages (menu, Referenzen, Events) stash a section id before
-    // navigating home; honor it once the sections are on screen.
+    // Unterseiten (Menü, Kontakt-Links) merken sich die Ziel-Sektion vor
+    // dem Wechsel auf die Startseite.
     const target = popScrollTarget();
-    if (target) {
-      requestAnimationFrame(() => scrollToId(target));
-    }
+    if (target) requestAnimationFrame(() => scrollToId(target));
   }, []);
 
   useEffect(() => {
     const sections = ["home", "cases", "team", "dm"]
       .map((id) => document.getElementById(id))
       .filter(Boolean) as HTMLElement[];
-
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -42,23 +40,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (visible) setActiveView(visible.target.id as ViewId);
       },
-      { rootMargin: "-40% 0px -40% 0px", threshold: [0, 0.25, 0.5] }
+      { rootMargin: "-40% 0px -40% 0px", threshold: [0, 0.25, 0.5] },
     );
-
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
   }, []);
 
   return (
-    <BookingProvider>
     <div className="relative min-h-dvh w-full overflow-x-clip">
-      <BootIntro />
       <TopBar />
-      <main className="mx-auto w-full max-w-frame lg:max-w-frame-wide">
-        {children}
-      </main>
+      <main>{children}</main>
+      <SiteFooter />
       <TabBar active={activeView} />
     </div>
-    </BookingProvider>
   );
 }

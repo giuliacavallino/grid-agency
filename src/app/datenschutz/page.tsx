@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/app/PageShell";
 import { LegalArticle, LegalHeading } from "@/components/app/LegalArticle";
+import { ConsentSettings } from "@/components/app/ConsentSettings";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | GRID Agency",
@@ -67,8 +68,9 @@ export default function DatenschutzPage() {
           <LegalHeading>3. Cookies und lokale Speicherung</LegalHeading>
           <p>
             Wir setzen keine Cookies und verwenden keine Analyse-, Tracking-
-            oder Werbewerkzeuge. Deshalb brauchen wir auch kein
-            Cookie-Banner.
+            oder Werbewerkzeuge. Einzige Ausnahme ist das Meta-Pixel auf
+            unserer E-Book-Seite, das nur mit deiner Einwilligung lädt
+            (siehe Abschnitt 7).
           </p>
           <p className="mt-2">
             Für den Betrieb der Seite speichern wir wenige technische
@@ -77,12 +79,17 @@ export default function DatenschutzPage() {
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
-              ob die Intro-Animation in diesem Besuch schon lief (wird beim
-              Schließen des Tabs gelöscht),
-            </li>
-            <li>
               zu welchem Abschnitt der Startseite du aus dem Menü springen
               wolltest (wird sofort nach dem Sprung gelöscht),
+            </li>
+            <li>
+              ob du im Kontaktbereich &bdquo;Termin buchen&ldquo; oder
+              &bdquo;Nachricht&ldquo; gewählt hast, wenn du von einer
+              Unterseite kommst (wird sofort danach gelöscht),
+            </li>
+            <li>
+              deine Entscheidung zum Meta-Pixel auf der E-Book-Seite (siehe
+              Abschnitt 7), damit wir nicht bei jedem Besuch erneut fragen.
             </li>
           </ul>
           <p className="mt-2">
@@ -93,7 +100,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading id="kontaktformular">4. Kontaktformular, E-Mail und Telefon</LegalHeading>
+          <LegalHeading id="kontaktformular">4. Kontaktformular, E-Book, E-Mail und Telefon</LegalHeading>
           <p>
             Wenn du uns über das Kontaktformular schreibst, verarbeiten wir
             die Angaben, die du machst (Name, E-Mail-Adresse, optional
@@ -114,6 +121,20 @@ export default function DatenschutzPage() {
             Interesse an der Beantwortung von Anfragen (Art. 6 Abs. 1 lit. f
             DSGVO). Wir löschen die Daten, sobald deine Anfrage erledigt ist
             und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
+          </p>
+          <p id="ebook" className="mt-2 scroll-mt-24 lg:scroll-mt-32">
+            Wenn du auf unserer Website unser E-Book anforderst, verarbeiten
+            wir Name, E-Mail-Adresse, optional dein Unternehmen sowie die
+            Kampagnen-Angaben aus dem Link, über den du gekommen bist (z. B.
+            utm-Parameter oder die Klick-ID einer Meta-Anzeige). Wir
+            speichern sie wie beim Kontaktformular bei Supabase, um dir das
+            E-Book bereitzustellen und dich, wie von dir erlaubt, per E-Mail
+            oder Telefon zu Social Media und einer kostenlosen Erstberatung zu
+            kontaktieren. Rechtsgrundlage ist deine Einwilligung
+            (Art. 6 Abs. 1 lit. a DSGVO), die du jederzeit mit Wirkung für
+            die Zukunft widerrufen kannst, etwa per E-Mail an uns. Nach einem
+            Widerruf oder spätestens zwei Jahre nach dem letzten Kontakt
+            löschen wir die Daten.
           </p>
         </section>
 
@@ -141,44 +162,90 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading id="terminbuchung">6. Terminbuchung</LegalHeading>
+          <LegalHeading id="termine">6. Terminbuchung</LegalHeading>
           <p>
-            Ein Erstgespräch oder Kick-off kannst du direkt auf unserer Seite
-            buchen. Dafür zeigen wir freie Zeiten aus unserem Kalender an. Wenn
-            du einen Termin buchst, verarbeiten wir die Angaben, die du machst
-            (Name, E-Mail-Adresse, optional Unternehmen, Telefonnummer und
-            Nachricht) sowie den gewählten Termin. Sie werden über unseren
-            Server in unserer Datenbank bei Supabase (siehe Abschnitt 4)
-            gespeichert und als Termin mit Microsoft-Teams-Link in unseren
-            Kalender bei Microsoft 365 (Microsoft Ireland Operations Ltd.,
-            Dublin, Irland) eingetragen; Microsoft verschickt die Einladung an
-            deine E-Mail-Adresse. Mit Microsoft besteht ein Vertrag zur
-            Auftragsverarbeitung. Ein Dienst eines Drittanbieters wird in
-            deinem Browser dafür nicht geladen.
+            Ein Erstgespräch kannst du direkt auf unserer Website buchen. Wir
+            nutzen dafür keinen externen Buchungsdienst: Beim Öffnen des
+            Kalenders fragt unser Server bei unserem internen System ab, zu
+            welchen Zeiten wir frei sind. Dabei werden keine Daten von dir
+            übertragen.
+          </p>
+          <p className="mt-2">
+            Wenn du einen Termin buchst, verarbeiten wir die Angaben, die du
+            machst (Name, E-Mail-Adresse, gewählter Termin, optional
+            Unternehmen, Telefonnummer und Nachricht). Wir legen den Termin in
+            unserem Kalender bei Microsoft 365 (Microsoft Ireland Operations
+            Ltd., One Microsoft Place, South County Business Park,
+            Leopardstown, Dublin 18, Irland) an und schicken dir von dort die
+            Einladung mit einem Link zu Microsoft Teams. Deine Anfrage
+            speichern wir außerdem bei unserem Datenbank-Dienstleister
+            Supabase (siehe Abschnitt 4), um das Gespräch vorzubereiten. Mit
+            Microsoft und Supabase bestehen Verträge zur
+            Auftragsverarbeitung; für Übermittlungen in Drittländer gelten die
+            EU-Standardvertragsklauseln bzw. das EU-US Data Privacy Framework.
           </p>
           <p className="mt-2">
             Rechtsgrundlage ist die Anbahnung einer Zusammenarbeit (Art. 6
-            Abs. 1 lit. b DSGVO). Wir löschen die Angaben, wenn keine
-            Zusammenarbeit zustande kommt und keine gesetzlichen
-            Aufbewahrungspflichten entgegenstehen.
+            Abs. 1 lit. b DSGVO). Für das Gespräch in Microsoft Teams gelten
+            zusätzlich die Datenschutzbestimmungen von Microsoft. Wir löschen
+            deine Angaben, sobald sie für die Anbahnung nicht mehr nötig sind
+            und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
           </p>
-        </section>
-
-        <section>
-          <LegalHeading id="captcha">7. Schutz vor Spam (Captcha)</LegalHeading>
-          <p>
+          <p id="captcha" className="mt-2">
             Kontaktformular und Terminbuchung schützen wir mit ALTCHA vor
-            automatisierten Einsendungen. Dein Browser löst dabei im
-            Hintergrund eine kleine Rechenaufgabe, die unser Server stellt und
-            prüft. Es werden keine Cookies gesetzt, keine Daten an Dritte
-            übertragen und keine Profile gebildet. Rechtsgrundlage ist unser
-            berechtigtes Interesse am Schutz vor Missbrauch (Art. 6 Abs. 1
-            lit. f DSGVO).
+            automatisierten Einsendungen: Dein Browser löst im Hintergrund
+            eine kleine Rechenaufgabe, die unser Server stellt und prüft. Es
+            werden keine Cookies gesetzt, keine Daten an Dritte übertragen und
+            keine Profile gebildet. Rechtsgrundlage ist unser berechtigtes
+            Interesse am Schutz vor Missbrauch (Art. 6 Abs. 1 lit. f DSGVO).
           </p>
         </section>
 
         <section>
-          <LegalHeading>8. Links zu sozialen Netzwerken und Google</LegalHeading>
+          <LegalHeading id="meta-pixel">7. Meta-Pixel auf der E-Book-Seite</LegalHeading>
+          <p>
+            Auf unserer E-Book-Seite (/ebook) nutzen wir mit deiner
+            Einwilligung das Meta-Pixel der Meta Platforms Ireland Ltd.,
+            Merrion Road, Dublin 4, D04 X2K5, Irland. Ohne Einwilligung wird
+            es nicht geladen; auf allen anderen Seiten setzen wir es nicht
+            ein. Mit dem Pixel messen wir, ob Menschen über unsere Anzeigen
+            auf Facebook und Instagram zu uns kommen und das E-Book
+            anfordern, und können unsere Anzeigen entsprechend aussteuern.
+          </p>
+          <p className="mt-2">
+            Dabei überträgt dein Browser deine IP-Adresse, technische Daten
+            zu Browser und Gerät, die aufgerufene Seite und die Ereignisse
+            &bdquo;Seitenaufruf&ldquo; und &bdquo;E-Book angefordert&ldquo;
+            an Meta. Meta setzt dafür Cookies (z. B. _fbp) und kann die
+            Daten deinem Facebook- oder Instagram-Konto zuordnen. Name und
+            E-Mail-Adresse aus dem Formular übermitteln wir nicht an Meta.
+            Für die Erhebung und Übermittlung sind wir mit Meta gemeinsam
+            verantwortlich (Art. 26 DSGVO); die Vereinbarung dazu stellt
+            Meta unter facebook.com/legal/controller_addendum bereit. Meta
+            verarbeitet Daten auch in den USA und ist unter dem EU-US Data
+            Privacy Framework zertifiziert.
+          </p>
+          <p className="mt-2">
+            Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a
+            DSGVO, § 25 Abs. 1 TDDDG). Du kannst sie jederzeit unten in den
+            Datenschutz-Einstellungen widerrufen. Weitere Informationen
+            findest du in der Datenschutzrichtlinie von Meta unter
+            facebook.com/privacy/policy.
+          </p>
+        </section>
+
+        <section>
+          <LegalHeading id="einstellungen">8. Datenschutz-Einstellungen</LegalHeading>
+          <p>
+            Hier siehst du, ob du eine Einwilligung gespeichert hast, und
+            kannst sie jederzeit mit Wirkung für die Zukunft widerrufen
+            (Art. 7 Abs. 3 DSGVO).
+          </p>
+          <ConsentSettings />
+        </section>
+
+        <section>
+          <LegalHeading>9. Links zu sozialen Netzwerken und Google</LegalHeading>
           <p>
             Auf unserer Website verlinken wir auf Instagram-Profile und auf
             unsere Google-Bewertungen. Das sind einfache Links: Es werden
@@ -190,7 +257,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading>9. Veranstaltungen</LegalHeading>
+          <LegalHeading>10. Veranstaltungen</LegalHeading>
           <p>
             Die Informationen zu unseren Events laden wir serverseitig aus
             unserer Datenbank. Dein Browser spricht dabei nur mit unserer
@@ -200,7 +267,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading>10. Deine Rechte</LegalHeading>
+          <LegalHeading>11. Deine Rechte</LegalHeading>
           <p>Du hast jederzeit das Recht auf</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>Auskunft über deine bei uns gespeicherten Daten (Art. 15 DSGVO),</li>
@@ -230,14 +297,14 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading>11. Keine automatisierte Entscheidungsfindung</LegalHeading>
+          <LegalHeading>12. Keine automatisierte Entscheidungsfindung</LegalHeading>
           <p>
             Wir setzen keine automatisierte Entscheidungsfindung
             einschließlich Profiling im Sinne von Art. 22 DSGVO ein.
           </p>
         </section>
 
-        <p className="text-xs text-snow/40">Stand: September 2026</p>
+        <p className="text-xs text-snow/40">Stand: Oktober 2026</p>
       </LegalArticle>
     </PageShell>
   );

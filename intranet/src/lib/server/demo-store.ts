@@ -353,7 +353,10 @@ export const demoStore: Store = {
     }
     if (table === "task_projects") Object.assign(row, { color: row.color ?? "#afaaa0", archived: row.archived ?? false, briefing: row.briefing ?? null, customer_id: null, position: row.position ?? Date.now() / 1000 });
     if (table === "task_sections") Object.assign(row, { position: row.position ?? Date.now() / 1000 });
-    if (table === "customers" && !row.customer_number) row.customer_number = String(Math.max(0, ...tables.customers.map((c) => Number(c.customer_number) || 0)) + 1);
+    // Wie der Datenbank-Trigger: fehlende oder vergebene Nummer → nächste freie
+    if (table === "customers" && (!row.customer_number || tables.customers.some((c) => c.customer_number === row.customer_number))) {
+      row.customer_number = String(Math.max(0, ...tables.customers.map((c) => Number(c.customer_number) || 0)) + 1);
+    }
     tables[table].push(row);
     return structuredClone(row);
   },

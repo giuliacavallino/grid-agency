@@ -11,10 +11,14 @@ export async function submitContactForm(
   _prevState: ContactFormState,
   formData: FormData
 ): Promise<ContactFormState> {
-  const field = (key: string) => String(formData.get(key) ?? "").trim();
-  const name = field("name");
-  const email = field("email");
-  const message = field("message");
+  // Honeypot: nur Bots füllen das versteckte Feld aus
+  if (String(formData.get("website") ?? "")) return { status: "success" };
+
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const company = String(formData.get("company") ?? "").trim();
+  const message = String(formData.get("message") ?? "").trim();
+  const budget = String(formData.get("budget") ?? "").trim();
 
   if (!name || !email || !message) {
     return { status: "error", message: "Bitte fülle alle Pflichtfelder aus." };
@@ -29,14 +33,7 @@ export async function submitContactForm(
   try {
     await intranet("/api/public/kontakt", {
       method: "POST",
-      body: JSON.stringify({
-        name,
-        email,
-        company: field("company"),
-        budget: field("budget"),
-        message,
-        altcha: field("altcha"),
-      }),
+      body: JSON.stringify({ name, email, company, budget, message, altcha: String(formData.get("altcha") ?? "") }),
     });
   } catch (error) {
     return {
@@ -45,5 +42,5 @@ export async function submitContactForm(
     };
   }
 
-  return { status: "success", message: "Danke! Wir melden uns in Kürze bei dir." };
+  return { status: "success", message: "Danke! Deine Nachricht ist bei uns, wir melden uns innerhalb von zwei Werktagen." };
 }

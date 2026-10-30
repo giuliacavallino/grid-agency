@@ -105,11 +105,11 @@ Finance → Ausgangsrechnungen schreibt Rechnungen, Gutschriften und Serienrechn
 Vier Spalten, jede mit dem nächsten Schritt direkt an der Karte:
 
 - **Neuer Lead**: „Termin einladen“ schickt von hello@ eine Mail mit persönlichem Buchungslink (`grid-agency.de/termin?l=…`, nur der SHA-256 liegt am Lead). „Absage“ nimmt den Lead mit Grund (z. B. Spam) aus der Pipeline.
-- **Erstgespräch**: Leads buchen selbst auf der Website (Buchungsfenster bzw. `/termin`, mit oder ohne Einladung). Freie 30-Minuten-Slots Mo–Fr 10–17 Uhr ab morgen, 3 Wochen, 15 Min Puffer, aus dem Kalender von `BOOKING_MAILBOX` (Standard giulia.cavallino@). Die Buchung legt den Teams-Termin an (Outlook lädt ein), legt den Lead an bzw. findet ihn per E-Mail und schiebt ihn hierher. Nach dem Gespräch: „Angebot erstellen“ (Kunde, Leistungen, Vertrag, SEPA, Unterschrift) → „Abschicken“ legt den Kunden an, schreibt das Angebot fest und schickt die Mappe von hello@.
+- **Erstgespräch**: Leads buchen selbst auf der Website (Kontaktbereich bzw. `/termin?l=…` aus der Einladung) über `/api/public/booking` (`src/lib/server/booking.ts`: freie Zeiten von Giulia und hello@, Termin bei hello@ mit Teams-Link). Die Buchung verschiebt den eingeladenen bzw. per E-Mail gefundenen Lead hierher oder legt ihn neu an; Termin und Teams-Link stehen an der Karte. Nach dem Gespräch: „Angebot erstellen“ (Kunde, Leistungen, Vertrag, SEPA, Unterschrift) → „Abschicken“ legt den Kunden an, schreibt das Angebot fest und schickt die Mappe von hello@.
 - **Angebot verschickt**: Die Unterschrift auf sign.grid-agency.de schiebt den Lead automatisch auf „Kunde gewonnen“, eine Ablehnung nimmt ihn als verloren heraus.
 - **Kunde gewonnen**: „Onboarding starten“ legt in Aufgaben den Abschnitt „Onboarding“ mit Standard-To-dos an, erzeugt die Serienrechnung aus den monatlichen Positionen des Angebots (ab Vertragsbeginn, läuft sofort) und schickt die Einladung zum Kick-off (60 Min, Buchungslink).
 
-Kontaktformular und Buchung der Website gehen über `/api/public/kontakt` und `/api/public/termin` des Intranets und sind mit ALTCHA geschützt (Proof of Work, `src/lib/server/altcha.ts`; Schlüssel `ALTCHA_HMAC_KEY` oder aus dem Service-Key abgeleitet, jede Lösung gilt einmal). Braucht in Entra die Anwendungsberechtigungen `Calendars.ReadWrite` und `Mail.Send`.
+Kontaktformular und Buchung der Website gehen über `/api/public/kontakt` und `/api/public/booking` des Intranets und sind mit ALTCHA geschützt (Proof of Work, `src/lib/server/altcha.ts`; Schlüssel `ALTCHA_HMAC_KEY` oder aus dem Service-Key abgeleitet, jede Lösung gilt einmal). Braucht in Entra die Anwendungsberechtigungen `Calendars.ReadWrite` und `Mail.Send`.
 
 ## Angebote und Unterschrift (sign.grid-agency.de)
 

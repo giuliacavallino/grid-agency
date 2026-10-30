@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { RevealObserver } from "@/components/ui/RevealObserver";
 
 const readex = localFont({
   src: "./fonts/ReadexPro-Variable.ttf",
@@ -30,9 +31,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="de" className={`${readex.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-sky text-snow font-sans">
+    <html lang="de" className={`${readex.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/* Vor dem ersten Paint: Mit JS starten .reveal-Elemente unsichtbar
+            und blenden beim Scrollen ein; ohne JS bleibt alles sichtbar. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+      </head>
+      <body className="flex min-h-full flex-col bg-sky font-sans text-snow">
+        <div aria-hidden className="ambient" />
         {children}
+        <RevealObserver />
       </body>
     </html>
   );

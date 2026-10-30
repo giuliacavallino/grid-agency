@@ -1,34 +1,44 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/app/PageShell";
-import { BookingWidget } from "@/components/BookingWidget";
+import { BookingWidget } from "@/components/app/BookingWidget";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata: Metadata = {
   title: "Termin buchen | GRID Agency",
-  description: "Buch dir ein unverbindliches Erstgespräch mit GRID Agency: 30 Minuten per Teams, direkt im Kalender.",
+  description: "Buch dir ein kostenloses Erstgespräch mit GRID Agency: 30 Minuten per Teams, direkt im Kalender.",
   referrer: "no-referrer",
+  robots: { index: false, follow: false },
 };
 
-/** Terminbuchung als eigene Seite: ohne Link das Erstgespräch, mit
- * Einladungslink (?l=…) vorausgefüllt, mit &art=kickoff der Kick-off. */
+/** Terminbuchung aus Einladungsmails: mit Link (?l=…) vorausgefüllt fürs
+ * Erstgespräch, mit &art=kickoff für den Kick-off nach der Unterschrift. */
 export default async function TerminPage({ searchParams }: PageProps<"/termin">) {
   const params = await searchParams;
   const token = typeof params.l === "string" ? params.l : null;
   const kind = params.art === "kickoff" && token ? "kickoff" : "erstgespraech";
   return (
     <PageShell>
-      <div className="mx-auto max-w-xl">
-        <p className="text-[0.6875rem] font-medium uppercase tracking-[0.25em] text-dune">
-          {kind === "kickoff" ? "Kick-off · 60 Minuten" : "Erstgespräch · 30 Minuten"}
-        </p>
-        <h1 className="mt-2 text-3xl font-medium tracking-tight text-snow lg:text-4xl">
-          {kind === "kickoff" ? "Lass uns starten." : "Boost your Socials."}
-        </h1>
-        <p className="mt-3 text-sm font-light leading-relaxed text-snow/70">
-          {kind === "kickoff"
-            ? "Such dir einen Termin für den Kick-off aus. Wir gehen Ziele, Zugänge, Content-Plan und Abläufe durch."
-            : "Unverbindlich und per Teams: Erzähl uns, was du vorhast, und wir zeigen dir, wie wir dich unterstützen können."}
-        </p>
-        <div className="mt-6 flex min-h-[28rem] flex-col overflow-hidden rounded-2xl bg-white">
+      <div className="mx-auto max-w-2xl">
+        <PageHeader
+          eyebrow={kind === "kickoff" ? "Kick-off" : "Erstgespräch"}
+          title={
+            kind === "kickoff" ? (
+              <>
+                Lass uns <span className="text-aurora">starten</span>.
+              </>
+            ) : (
+              <>
+                Boost your <span className="text-aurora">Socials</span>.
+              </>
+            )
+          }
+          text={
+            kind === "kickoff"
+              ? "Such dir einen Termin für den Kick-off aus. Wir gehen Ziele, Zugänge, Content-Plan und Abläufe durch."
+              : "Erzähl uns, was du vorhast, und wir zeigen dir, wie wir dich unterstützen können."
+          }
+        />
+        <div className="rise glass mt-8 rounded-[1.75rem] p-5 sm:p-7">
           <BookingWidget kind={kind} token={token} />
         </div>
       </div>

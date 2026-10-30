@@ -367,13 +367,26 @@ export function Field({
 
 // ---------- Overlays ----------
 
+/** Offene Overlays in Öffnungsreihenfolge: Escape schließt nur das oberste
+ * (z. B. das Popup, nicht auch das Seitenpanel darunter). */
+const escapeStack: symbol[] = [];
+
 function useEscape(onClose: () => void, active = true) {
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  });
   useEffect(() => {
     if (!active) return;
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
+    const me = Symbol();
+    escapeStack.push(me);
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && escapeStack.at(-1) === me && close.current();
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, active]);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      escapeStack.splice(escapeStack.indexOf(me), 1);
+    };
+  }, [active]);
 }
 
 function Portal({ children }: { children: React.ReactNode }) {

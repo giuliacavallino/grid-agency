@@ -528,7 +528,6 @@ export const clients: Client[] = [
 /** Name of the client shown as "Newest Collaboration" on the homepage. */
 export const newestCollab = "480 GRADI";
 
-
 export const heroStats = [
   { value: 30, suffix: "+", label: "Marken" },
   { value: 6098, suffix: "+", label: "Reichweite/Monat" },
