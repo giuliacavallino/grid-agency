@@ -1,7 +1,8 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import { CommunicationIdentityClient } from "@azure/communication-identity";
-import { sb } from "./db";
+import { lastOccurrence, nextOccurrence, rhythmLabel, type Recurrence } from "@/lib/jourfix";
+import { db, sb } from "./db";
 
 // Video-Calls unter meet.grid-agency.de über Azure Communication Services
 // (ACS): Termine bekommen einen Raum mit kurzem Code statt eines
@@ -26,9 +27,9 @@ export class MeetError extends Error {
 
 export const meetEnabled = () => !!process.env.ACS_CONNECTION_STRING;
 
-const meetUrl = (code: string) => `${MEET_URL}/${code}`;
+export const meetUrl = (code: string) => `${MEET_URL}/${code}`;
 
-function newCode() {
+export function newCode() {
   const chars = Array.from({ length: 10 }, () => ALPHABET[randomInt(ALPHABET.length)]).join("");
   return `${chars.slice(0, 3)}-${chars.slice(3, 7)}-${chars.slice(7)}`;
 }
@@ -60,30 +61,69 @@ export async function linkRoom(code: string, link: RoomLink) {
   if (error) console.error(error);
 }
 
-async function room(code: string) {
-  if (!CODE.test(code)) throw new MeetError("Diesen Link gibt es nicht.");
-  const { data, error } = await sb().from("meetings").select("*").eq("code", code).maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new MeetError("Diesen Link gibt es nicht.");
-  if (Date.parse(data.ends_at) + GRACE_MS < Date.now()) throw new MeetError("Dieser Call ist vorbei.", 410);
-  return data as {
-    id: string;
-    code: string;
-    group_id: string;
-    title: string;
-    starts_at: string;
-    ends_at: string;
-    host_name: string | null;
-    participants: { name: string; at: string }[] | null;
-  };
+/** Zusätze einer Jour-fixe-Serie im Feld recurrence (neben pattern/range) */
+export type SeriesRecurrence = Recurrence & { video?: boolean; location?: string | null };
+
+type Room = {
+  id: string;
+  code: string;
+  group_id: string;
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  host_name: string | null;
+  participants: { name: string; at: string }[] | null;
+  recurrence: SeriesRecurrence | null;
+  valid_until: string | null;
+  cancelled_at: string | null;
+};
+
+/** Bis wann der Raum offen ist (ms). Einzeltermin: Ende + 7 Tage.
+ * Serie: valid_until + 7 Tage, ohne valid_until unbegrenzt; beendete Serie
+ * (cancelled_at) nur bis valid_until, also ab dem Beenden zu. */
+export function openUntil(room: Pick<Room, "ends_at" | "recurrence" | "valid_until" | "cancelled_at">) {
+  if (!room.recurrence) return Date.parse(room.ends_at) + GRACE_MS;
+  if (room.cancelled_at) return Date.parse(room.valid_until ?? room.cancelled_at);
+  return room.valid_until ? Date.parse(room.valid_until) + GRACE_MS : Infinity;
 }
 
-export type RoomView = { title: string; starts_at: string; ends_at: string; host_name: string | null };
+async function room(code: string) {
+  if (!CODE.test(code)) throw new MeetError("Diesen Link gibt es nicht.");
+  const [data] = (await db().list("meetings", { code })) as unknown as Room[];
+  if (!data) throw new MeetError("Diesen Link gibt es nicht.");
+  // Jour fixe ohne Video-Call: Termin mit Ort, der Raum ist nicht in Gebrauch
+  if (data.recurrence?.video === false) throw new MeetError("Diesen Link gibt es nicht.");
+  if (openUntil({ ...data, recurrence: data.recurrence ?? null, valid_until: data.valid_until ?? null, cancelled_at: data.cancelled_at ?? null }) < Date.now()) {
+    throw new MeetError("Dieser Call ist vorbei.", 410);
+  }
+  return data;
+}
+
+/** series: Rhythmus einer Jour-fixe-Serie, z. B. „Jeden Dienstag, 10:00“;
+ * starts_at/ends_at sind dann der nächste (oder zuletzt der letzte) Termin. */
+export type RoomView = { title: string; starts_at: string; ends_at: string; host_name: string | null; series?: string | null };
+
+/** Nächster Termin einer Serie (bzw. der letzte, wenn keiner mehr kommt) */
+export function seriesSlot(room: Pick<Room, "starts_at" | "ends_at" | "recurrence">, now = Date.now()) {
+  const minutes = Math.round((Date.parse(room.ends_at) - Date.parse(room.starts_at)) / 60_000);
+  if (!room.recurrence) return { start: Date.parse(room.starts_at), minutes };
+  const start = nextOccurrence(room.recurrence, room.starts_at, now, minutes) ?? lastOccurrence(room.recurrence, room.starts_at) ?? Date.parse(room.starts_at);
+  return { start, minutes };
+}
 
 /** Öffentliche Angaben zum Raum für die Vorschau vor dem Beitreten */
 export async function roomView(code: string): Promise<RoomView> {
-  const { title, starts_at, ends_at, host_name } = await room(code);
-  return { title, starts_at, ends_at, host_name };
+  const data = await room(code);
+  const { title, host_name } = data;
+  if (!data.recurrence) return { title, starts_at: data.starts_at, ends_at: data.ends_at, host_name };
+  const { start, minutes } = seriesSlot(data);
+  return {
+    title,
+    starts_at: new Date(start).toISOString(),
+    ends_at: new Date(start + minutes * 60_000).toISOString(),
+    host_name,
+    series: rhythmLabel(data.recurrence, data.starts_at),
+  };
 }
 
 /** ID des Raums für die Aufnahme (wirft, wenn es ihn nicht gibt) */

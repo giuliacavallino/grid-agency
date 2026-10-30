@@ -11,7 +11,7 @@ import type {
   VideoDeviceInfo,
   VideoStreamRenderer,
 } from "@azure/communication-calling";
-import { CalendarClock, Check, Copy, Mic, MicOff, MonitorUp, PhoneOff, Users, Video, VideoOff } from "lucide-react";
+import { CalendarClock, Check, Copy, Mic, MicOff, MonitorUp, PhoneOff, Repeat, Users, Video, VideoOff } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
 import { Avatar, Button, Input, Spinner } from "@/components/ui";
 import { MeetMark, MeetShell } from "./brand";
@@ -23,7 +23,8 @@ import { WaitingStage } from "./waiting";
 // SDK läuft nur im Browser und wird erst hier nachgeladen.
 
 /** recording: Calls werden aufgezeichnet und transkribiert (Hinweis unter „Jetzt beitreten“) */
-type View = { title: string; starts_at: string; ends_at: string; host_name: string | null; recording?: boolean };
+/** series: Jour fixe, z. B. „Jeden Dienstag, 10:00“; starts_at ist dann der nächste Termin */
+type View = { title: string; starts_at: string; ends_at: string; host_name: string | null; recording?: boolean; series?: string | null };
 type Phase = "lobby" | "joining" | "call" | "left";
 
 const TZ = "Europe/Berlin";
@@ -388,7 +389,7 @@ export function MeetRoom({ code }: { code: string }) {
             </div>
           )}
           {waiting ? (
-            <WaitingStage hostName={view.host_name} selfView={selfView} />
+            <WaitingStage hostName={view.host_name} selfView={selfView} series={view.series} />
           ) : alone ? (
             <EmptyRoom selfView={selfView} />
           ) : people.length === 0 ? (
@@ -493,8 +494,15 @@ export function MeetRoom({ code }: { code: string }) {
         <div>
           <p className="text-xs font-medium tracking-[0.25em] text-snow/55 uppercase">Video-Call</p>
           <h1 className="mt-3 text-2xl leading-tight font-semibold tracking-tight md:text-3xl">{view.title}</h1>
-          <p className="mt-3 inline-flex items-center gap-2 text-sm text-snow/65">
+          {view.series && (
+            <p className="mt-3 flex items-center gap-2 text-sm font-medium text-snow/80">
+              <Repeat className="h-4 w-4" />
+              {view.series}
+            </p>
+          )}
+          <p className={clsx("inline-flex items-center gap-2 text-sm text-snow/65", view.series ? "mt-1.5" : "mt-3")}>
             <CalendarClock className="h-4 w-4" />
+            {view.series && "Nächster Termin: "}
             {day.format(start)} · {time.format(start)}–{time.format(new Date(view.ends_at))} Uhr
           </p>
           <form
