@@ -1,31 +1,11 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Image from "next/image";
-import { CalendarDays, MessageSquareText } from "lucide-react";
+import { ArrowRight, BadgeCheck, Clock, Video } from "lucide-react";
 import { ContactForm } from "@/components/ContactForm";
-import { BookingWidget } from "@/components/app/BookingWidget";
-import { CONTACT_TAB_EVENT, popContactTab, type ContactTab } from "@/lib/scroll";
+import { ContactLink } from "@/components/ui/ContactLink";
 
-const tabs: { id: ContactTab; label: string; icon: typeof CalendarDays }[] = [
-  { id: "termin", label: "Termin buchen", icon: CalendarDays },
-  { id: "nachricht", label: "Nachricht", icon: MessageSquareText },
-];
-
-/** „Slide in die DMs“: Erstgespräch direkt in Giulias Kalender buchen oder
- * eine Nachricht schreiben. Beides landet als Lead in Sales → Pipeline. */
+/** „Slide in die DMs“: links das Erstgespräch (öffnet das Buchungs-Popup),
+ * rechts die Nachricht. Beides landet als Lead in Sales → Pipeline. */
 export function Contact() {
-  const [tab, setTab] = useState<ContactTab>("termin");
-
-  useEffect(() => {
-    const stashed = popContactTab();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- einmalig aus sessionStorage übernehmen
-    if (stashed) setTab(stashed);
-    const onSelect = (e: Event) => setTab((e as CustomEvent<ContactTab>).detail);
-    window.addEventListener(CONTACT_TAB_EVENT, onSelect);
-    return () => window.removeEventListener(CONTACT_TAB_EVENT, onSelect);
-  }, []);
-
   return (
     <section id="dm" className="relative py-20 lg:py-32">
       <div aria-hidden className="aurora absolute inset-0 opacity-70" />
@@ -36,9 +16,29 @@ export function Contact() {
             Slide in die <span className="text-aurora">DMs</span>.
           </h2>
           <p className="mt-5 max-w-md text-base font-light leading-relaxed text-snow/70 lg:text-lg">
-            30 Minuten mit Giulia, kostenlos und ehrlich: Wo steht dein Feed, was bringt ihn nach vorn. Lieber schreiben? Wir
-            melden uns innerhalb von zwei Werktagen.
+            30 Minuten mit Giulia, kostenlos und ehrlich: Wo steht dein Feed, was bringt ihn nach vorn. Direkt im Kalender
+            buchen, Einladung mit Teams-Link inklusive.
           </p>
+          <ul className="mt-6 space-y-2.5 text-sm font-light text-snow/80">
+            <li className="flex items-center gap-3">
+              <Clock className="h-4 w-4 text-snow/60" strokeWidth={1.8} />
+              30 Minuten
+            </li>
+            <li className="flex items-center gap-3">
+              <Video className="h-4 w-4 text-snow/60" strokeWidth={1.8} />
+              Online per Teams
+            </li>
+            <li className="flex items-center gap-3">
+              <BadgeCheck className="h-4 w-4 text-snow/60" strokeWidth={1.8} />
+              Kostenlos und unverbindlich
+            </li>
+          </ul>
+          <ContactLink tab="termin" className="btn btn-primary mt-8 py-2 pl-6 pr-2 text-[0.9375rem]">
+            Erstgespräch buchen
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky text-snow">
+              <ArrowRight className="h-4 w-4" strokeWidth={2.4} />
+            </span>
+          </ContactLink>
           <div className="mt-8 flex items-center gap-3">
             <span className="story-ring flex h-12 w-12 shrink-0 rounded-full p-[2px]">
               <Image src="/team/giulia-avatar.jpg" alt="" width={44} height={44} className="h-full w-full rounded-full border-2 border-sky object-cover" />
@@ -57,33 +57,10 @@ export function Contact() {
         </div>
 
         <div className="reveal glass rounded-[2rem] p-5 sm:p-7 lg:p-9" style={{ "--d": "100ms" } as React.CSSProperties}>
-          <div role="tablist" aria-label="Kontaktweg" className="grid grid-cols-2 gap-1 rounded-full bg-sky/50 p-1">
-            {tabs.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={tab === id}
-                aria-controls={`kontakt-${id}`}
-                onClick={() => setTab(id)}
-                className={`flex items-center justify-center gap-2 rounded-full py-2.5 text-sm font-medium transition-all ${
-                  tab === id ? "bg-snow text-sky shadow-lg" : "text-snow/70 hover:text-snow"
-                }`}
-              >
-                <Icon className="h-4 w-4" strokeWidth={2} />
-                {label}
-              </button>
-            ))}
-          </div>
-
+          <p className="text-xl font-semibold tracking-tight text-snow">Lieber schreiben?</p>
+          <p className="mt-1 text-sm font-light text-snow/60">Wir melden uns innerhalb von zwei Werktagen.</p>
           <div className="mt-6">
-            {/* Beide bleiben gemountet, damit Eingaben beim Wechseln nicht verloren gehen */}
-            <div id="kontakt-termin" role="tabpanel" hidden={tab !== "termin"}>
-              <BookingWidget onUnavailable={() => setTab("nachricht")} />
-            </div>
-            <div id="kontakt-nachricht" role="tabpanel" hidden={tab !== "nachricht"}>
-              <ContactForm />
-            </div>
+            <ContactForm />
           </div>
         </div>
       </div>

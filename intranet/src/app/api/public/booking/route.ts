@@ -29,6 +29,13 @@ export async function POST(request: Request) {
     company: text(input.company, 160),
     phone: text(input.phone, 60),
     message: text(input.message, 4000),
+    address: {
+      street: text(input.street, 160),
+      number: text(input.number, 20),
+      zip: text(input.zip, 20),
+      city: text(input.city, 120),
+      country: text(input.country, 80),
+    },
   };
   if (!booking.name || !EMAIL.test(booking.email) || Number.isNaN(Date.parse(booking.start))) {
     return Response.json({ error: "Bitte Name, gültige E-Mail und eine Uhrzeit angeben." }, { status: 400 });
