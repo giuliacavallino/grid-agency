@@ -10,6 +10,8 @@
     { "path": "/api/cron/bank?slot=15&zeit=winter", "schedule": "0 14 * * *" },
     { "path": "/api/cron/bank?slot=15&zeit=sommer", "schedule": "0 13 * * *" },
     { "path": "/api/cron/bank?slot=20&zeit=winter", "schedule": "0 19 * * *" },
-    { "path": "/api/cron/bank?slot=20&zeit=sommer", "schedule": "0 18 * * *" }
+    { "path": "/api/cron/bank?slot=20&zeit=sommer", "schedule": "0 18 * * *" },
+    { "path": "/api/cron/updates?kind=weekly", "schedule": "0 13 * * 5" },
+    { "path": "/api/cron/updates?kind=monthly", "schedule": "0 8 1-3 * *" }
   ]
 }

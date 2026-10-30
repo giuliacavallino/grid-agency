@@ -3,18 +3,20 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
-import { CalendarClock, Mail, Paperclip, Search } from "lucide-react";
+import { CalendarClock, Download, ExternalLink, Globe, Mail, Paperclip, Search } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 import { mailboxLabel } from "@/lib/config";
 import { createRow, deleteRow, updateRow, useRows } from "@/lib/data";
 import { formatDateTime, relativeTime } from "@/lib/format";
-import { APPLICATION_STAGES, topPosition, type Application, type ApplicationStage } from "@/lib/sales/types";
+import { APPLICATION_STAGES, topPosition, type Application, type ApplicationFile, type ApplicationStage } from "@/lib/sales/types";
 import { Board, BoardCard } from "@/components/board";
 import { Button, Dialog, Empty, Field, Input, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
+import { formatSize } from "@/components/sales/mail/format";
 import { Attachments } from "@/components/sales/mail/reading-pane";
 import { PageBar } from "@/components/sales/shell";
 
-/** Bewerbungen als Kanban: Neue Bewerbung (automatisch aus den Postfächern)
- * → Gespräch → Case Study → Zusage / Absage. */
+/** Bewerbungen als Kanban: Neue Bewerbung (automatisch aus dem Formular der
+ * Website und aus den Postfächern) → Gespräch → Case Study → Zusage / Absage. */
 export function Applications() {
   const { data: applications, loading, error } = useRows<Application>("applications");
   const toast = useToast();
@@ -92,7 +94,13 @@ function ApplicationCard({ application: a, overlay }: { application: Application
           {relativeTime(a.received_at ?? a.created_at)}
           {!!a.attachment_names?.length && <Paperclip className="h-3 w-3" aria-label="mit Anhang" />}
         </span>
-        {a.mailbox && <span>{mailboxLabel(a.mailbox)}</span>}
+        {a.source === "website" ? (
+          <span className="flex items-center gap-1">
+            <Globe className="h-3 w-3" /> Website
+          </span>
+        ) : (
+          a.mailbox && <span>{mailboxLabel(a.mailbox)}</span>
+        )}
       </div>
     </BoardCard>
   );
@@ -217,6 +225,32 @@ function ApplicationDetail({ application: a, onClose }: { application: Applicati
         </div>
       </div>
 
+      {a.source === "website" && (
+        <div>
+          <p className="text-xs font-medium text-snow/60">Unterlagen</p>
+          {a.files?.length ? (
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {a.files.map((file, i) => (
+                <FileChip key={file.path} applicationId={a.id} index={i} file={file} />
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-[13px] text-snow/45">Keine Dateien</p>
+          )}
+          {a.link && (
+            <a
+              href={/^https?:\/\//i.test(a.link) ? a.link : `https://${a.link}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 flex items-center gap-1.5 text-[13px] break-all text-snow/75 underline-offset-2 hover:underline"
+            >
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" /> {a.link}
+            </a>
+          )}
+          <p className="mt-2 text-[12px] text-snow/45">Eingegangen über das Bewerbungsformular der Website</p>
+        </div>
+      )}
+
       {a.mailbox && a.graph_id && (
         <div>
           <p className="text-xs font-medium text-snow/60">Unterlagen</p>
@@ -284,9 +318,52 @@ function ApplicationDetail({ application: a, onClose }: { application: Applicati
           </>
         }
       >
-        <p className="text-sm text-snow/60">Die Karte wird entfernt. Die Mail im Postfach bleibt erhalten.</p>
+        <p className="text-sm text-snow/60">
+          {a.source === "website"
+            ? "Die Karte und die hochgeladenen Unterlagen werden endgültig gelöscht."
+            : "Die Karte wird entfernt. Die Mail im Postfach bleibt erhalten."}
+        </p>
       </Dialog>
     </div>
+  );
+}
+
+/** Unterlage aus dem Website-Formular; lädt über die API (privater Bucket). */
+function FileChip({ applicationId, index, file }: { applicationId: string; index: number; file: ApplicationFile }) {
+  const [busy, setBusy] = useState(false);
+  const toast = useToast();
+  async function download() {
+    setBusy(true);
+    try {
+      const response = await apiFetch(`/api/personal/applications/${applicationId}/files/${index}`);
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file.name;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      toast("Download fehlgeschlagen", "error");
+    }
+    setBusy(false);
+  }
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={download}
+        disabled={busy}
+        aria-busy={busy || undefined}
+        className="flex max-w-72 items-center gap-2.5 rounded-xl border border-snow/12 bg-surface px-3 py-2 text-left hover:border-snow/25 disabled:cursor-progress"
+      >
+        {busy ? <Spinner className="h-4 w-4" /> : <Paperclip className="h-4 w-4 shrink-0 text-snow/55" />}
+        <span className="min-w-0">
+          <span className="block truncate text-[13px]">{file.name}</span>
+          <span className="block text-[11px] text-snow/45">{busy ? "Wird geladen …" : formatSize(file.size)}</span>
+        </span>
+        <Download className="h-4 w-4 shrink-0 text-snow/40" />
+      </button>
+    </li>
   );
 }
 

@@ -59,8 +59,9 @@ const customers: Row[] = [
   ["Sajent Club", "Aylin Demir", "Nightlife", "Berlin", 300],
   ["Lovebirds", "Sophie Wagner", "Fashion", "Frankfurt", 120],
   ["Smash Burger Co.", "Jonas Hartmann", "Gastronomie", "Berlin", 60],
-].map(([name, contact, industry, city, since]) => ({
+].map(([name, contact, industry, city, since], i) => ({
   id: uid(),
+  customer_number: String(i + 1),
   created_at: ago(Number(since)),
   updated_at: ago(3),
   name,
@@ -214,6 +215,10 @@ function application(stage: string, name: string, title: string, daysAgo: number
     position_title: title,
     message,
     attachment_names: ["Lebenslauf.pdf"],
+    source: null,
+    job_slug: null,
+    link: null,
+    files: [],
     owner: null,
     next_step: null,
     next_step_at: null,
@@ -224,6 +229,19 @@ function application(stage: string, name: string, title: string, daysAgo: number
 }
 
 const applications: Row[] = [
+  application("neu", "Nora Albrecht", "Video Content Creator / Videographer (w/m/d)", 0, "Ich filme seit zwei Jahren Reels für Cafés in Leipzig und schneide in Premiere und CapCut. Showreel ist verlinkt.", {
+    source: "website",
+    source_ref: "demo-web-1",
+    mailbox: null,
+    job_slug: "video-content-creator",
+    phone: "0176 1234567",
+    link: "https://instagram.com/nora.films",
+    attachment_names: ["Lebenslauf_Nora_Albrecht.pdf", "Portfolio.pdf"],
+    files: [
+      { path: "demo-web-1/0-Lebenslauf_Nora_Albrecht.pdf", name: "Lebenslauf_Nora_Albrecht.pdf", type: "application/pdf", size: 182_000 },
+      { path: "demo-web-1/1-Portfolio.pdf", name: "Portfolio.pdf", type: "application/pdf", size: 2_400_000 },
+    ],
+  }),
   application("neu", "Max Meyer", "Content Creator", 1, "Ich produziere seit drei Jahren Reels für Gastro-Accounts und würde gern Teil des Teams werden.", { source_ref: "demo-mail-2", graph_id: "demo-msg-2" }),
   application("neu", "Jana Peters", "Werkstudentin Social Media", 6, "Ich studiere Medienmanagement im 5. Semester."),
   application("gespraech", "Lea Schmitt", "Praktikum Content Creation", 4, "Über Google bin ich auf euch gestoßen.", { mailbox: "google@grid-agency.de", next_step: "Kennenlernen", next_step_at: ago(-2) }),
@@ -279,6 +297,12 @@ const tables: Record<string, Row[]> = {
   bank_accounts: [],
   bank_transactions: [],
   applications,
+  job_postings: [
+    ["social-media-manager", "Social Media Manager (w/m/d)", true],
+    ["video-content-creator", "Video Content Creator / Videographer (w/m/d)", true],
+    ["werkstudent-social-media", "Werkstudent (w/m/d) Social Media Marketing", true],
+    ["praktikum-social-media", "Praktikum (w/m/d) Social Media Marketing", false],
+  ].map(([slug, title, active], i) => ({ id: `demo-job-${i + 1}`, created_at: ago(90), updated_at: ago(10), slug, title, active, position: i + 1 })),
   task_projects: taskProjects,
   task_sections: taskSections,
   tasks,
@@ -315,6 +339,7 @@ export const demoStore: Store = {
     }
     if (table === "task_projects") Object.assign(row, { color: row.color ?? "#afaaa0", archived: row.archived ?? false, briefing: row.briefing ?? null, customer_id: null, position: row.position ?? Date.now() / 1000 });
     if (table === "task_sections") Object.assign(row, { position: row.position ?? Date.now() / 1000 });
+    if (table === "customers" && !row.customer_number) row.customer_number = String(Math.max(0, ...tables.customers.map((c) => Number(c.customer_number) || 0)) + 1);
     tables[table].push(row);
     return structuredClone(row);
   },
@@ -336,7 +361,7 @@ export const demoStore: Store = {
       if (patch.stage === "gewonnen" && !row.won_at) row.won_at = now();
     }
     if (table === "tasks" && "done" in patch) row.done_at = patch.done ? (row.done_at ?? now()) : null;
-    Object.assign(row, patch, ["leads", "customers", "invoices", "applications", "tasks"].includes(table) ? { updated_at: now() } : {});
+    Object.assign(row, patch, ["leads", "customers", "invoices", "applications", "tasks", "job_postings"].includes(table) ? { updated_at: now() } : {});
     return structuredClone(row);
   },
   async upsertEasybill(table, rows) {

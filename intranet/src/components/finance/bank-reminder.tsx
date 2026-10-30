@@ -54,7 +54,7 @@ export function BankReminder() {
   }
 
   return (
-    <div className={`glass mt-6 flex flex-wrap items-center gap-3 rounded-3xl p-4 ${expired ? "border-error/40" : ""}`} role="status">
+    <div className={`glass mt-4 flex flex-wrap items-center gap-3 rounded-3xl p-4 ${expired ? "border-error/40" : ""}`} role="status">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[12px] border border-snow/12 bg-snow/10">
         <Landmark className="h-5 w-5" strokeWidth={1.8} />
       </span>

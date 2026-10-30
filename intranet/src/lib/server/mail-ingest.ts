@@ -1,6 +1,8 @@
 import "server-only";
 import { PREPAID_METHODS } from "@/lib/sales/types";
+import { matchPayables } from "./bank";
 import { getBeleg } from "./beleg";
+import { readInvoice } from "./extract";
 import { classifyMail } from "./classify";
 import { db } from "./db";
 import { attachmentNames, moveToInvoiceFolder, type GraphMail } from "./graph-app";
@@ -104,7 +106,7 @@ export async function ingestMail(mail: GraphMail) {
       currency: invoice?.currency || "EUR",
       payment_method: method,
       category: invoice?.category ?? null,
-      // Karte, PayPal, Lastschrift: meist schon abgebucht
+      // Karte, PayPal: schon bezahlt; Lastschrift erst mit dem Bank-Abgleich
       paid: !!method && PREPAID_METHODS.includes(method),
       description: invoice?.description ?? mail.subject,
       attachment_names: attachments,
@@ -114,10 +116,15 @@ export async function ingestMail(mail: GraphMail) {
       const movedId = await fileInvoiceMail(mail.mailbox, mail.id);
       if (movedId) await store.update("invoices", row.id, { graph_id: movedId });
       await store.update("inbound_messages", key, { invoice_id: row.id, ...(movedId && { graph_id: movedId }) });
-      // Beleg gleich ablegen, damit die Vorschau in der Freigabe sofort da ist
-      await getBeleg({ ...row, graph_id: movedId ?? row.graph_id }).catch((error) =>
-        console.error("Beleg nicht abgelegt:", error)
-      );
+      // Beleg ablegen und auslesen (Beträge, Fälligkeit, bezahlt), dann mit
+      // den Kontoumsätzen abgleichen
+      try {
+        await getBeleg({ ...row, graph_id: movedId ?? row.graph_id });
+        await readInvoice((await store.get("invoices", row.id))!);
+        await matchPayables();
+      } catch (error) {
+        console.error("Beleg nicht ausgelesen:", error);
+      }
     }
   }
 

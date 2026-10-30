@@ -59,6 +59,8 @@ export type OpenItem = {
   amount: number;
   date: string | null;
   due_date: string | null;
+  /** Währung der Rechnung; bei Fremdwährung passt der Betrag nie genau */
+  currency?: string;
 };
 
 /** Umsatz noch ohne Zuordnung? (Eine gelöschte Eingangsrechnung gibt ihn frei.) */
@@ -113,14 +115,38 @@ export function suggestions(tx: BankTransaction, items: OpenItem[]) {
     .sort((a, b) => b.score - a.score);
 }
 
-/** Eindeutiger Treffer für den automatischen Abgleich: Betrag gleich und
- * Rechnungsnummer im Verwendungszweck (Eingangsrechnungen: oder Name). */
-export function autoMatch(tx: BankTransaction, items: OpenItem[]) {
-  const hits = suggestions(tx, items).filter((s) => s.amount && (s.number || (s.item.kind === "invoice" && s.name)));
-  if (hits.length === 1) return hits[0].item;
-  // Mehrere gleich hohe Rechnungen: nur die mit Nummer im Zweck zählt
-  const withNumber = hits.filter((s) => s.number);
-  return withNumber.length === 1 ? withNumber[0].item : null;
+const day = 86_400_000;
+const shift = (date: string, days: number) => new Date(new Date(`${date}T12:00:00Z`).getTime() + days * day).toISOString().slice(0, 10);
+
+/** Buchung im plausiblen Zeitraum der Rechnung: kurz vor dem Rechnungsdatum
+ * (Kartenzahlung, Vorkasse) bis einige Wochen nach der Fälligkeit. */
+function inWindow(tx: BankTransaction, item: OpenItem, before = 7, after = 45) {
+  const start = item.date ?? item.due_date;
+  if (!start) return true;
+  const end = item.due_date && item.due_date > start ? item.due_date : start;
+  return tx.booking_date >= shift(start, -before) && tx.booking_date <= shift(end, after);
+}
+
+/** Eindeutiger Treffer für den automatischen Abgleich, in dieser Reihenfolge:
+ * 1. Betrag und Rechnungsnummer im Verwendungszweck
+ * 2. Rechnungsnummer allein (Eingangsrechnungen; Betrag weicht z. B. durch Skonto ab)
+ * 3. Betrag und Name im passenden Zeitraum (Eingangsrechnungen)
+ * 4. Fremdwährung: Name und Buchung nah am Rechnungsdatum
+ * 5. Betrag allein, wenn er nur bei dieser Rechnung und nur bei diesem Umsatz
+ *    vorkommt (uniqueAmount) und der Zeitraum passt.
+ * Mehrere Treffer in einer Stufe → keine Zuordnung, lieber von Hand. */
+export function autoMatch(tx: BankTransaction, items: OpenItem[], uniqueAmount?: (item: OpenItem) => boolean) {
+  const all = suggestions(tx, items);
+  const one = (hits: Scored[]) => (hits.length === 1 ? hits[0].item : null);
+  const invoice = (s: Scored) => s.item.kind === "invoice";
+  const foreign = (s: Scored) => !!s.item.currency && s.item.currency !== tx.currency;
+  return (
+    one(all.filter((s) => s.amount && s.number)) ??
+    one(all.filter((s) => invoice(s) && s.number)) ??
+    one(all.filter((s) => invoice(s) && s.amount && s.name && inWindow(tx, s.item))) ??
+    one(all.filter((s) => invoice(s) && foreign(s) && s.name && inWindow(tx, s.item, 3, 10))) ??
+    (uniqueAmount ? one(all.filter((s) => invoice(s) && s.amount && !foreign(s) && inWindow(tx, s.item, 3, 30) && uniqueAmount(s.item))) : null)
+  );
 }
 
 /** IBAN in Vierergruppen, Mitte gekürzt: DE23 •••• 1234 */

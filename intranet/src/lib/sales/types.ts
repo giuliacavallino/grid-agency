@@ -55,6 +55,8 @@ export type Activity = {
 
 export type Customer = {
   id: string;
+  /** Fortlaufende Kundennummer (aus easybill bzw. höchste + 1) */
+  customer_number: string | null;
   created_at: string;
   updated_at: string;
   name: string;
@@ -134,8 +136,9 @@ export const PAYMENT_METHODS = [
   { id: "bar", label: "Bar" },
 ] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]["id"];
-/** Zahlungsarten, bei denen die Rechnung meist schon bezahlt ist */
-export const PREPAID_METHODS: readonly PaymentMethod[] = ["lastschrift", "karte", "paypal", "bar"];
+/** Zahlungsarten, bei denen die Rechnung schon bezahlt ist. Lastschriften
+ * nicht: die gelten erst als bezahlt, wenn der Bank-Abgleich sie findet. */
+export const PREPAID_METHODS: readonly PaymentMethod[] = ["karte", "paypal", "bar"];
 
 export const INVOICE_CATEGORIES = [
   "Software & Abos",
@@ -172,6 +175,11 @@ export type Invoice = {
   payment_method: PaymentMethod | null;
   category: string | null;
   paid: boolean;
+  /** Buchungsdatum der zugeordneten Abbuchung (Bank-Abgleich) */
+  paid_at: string | null;
+  bank_transaction_id: string | null;
+  /** Beleg ausgelesen (Beträge, Fälligkeit, bezahlt); leer = steht noch aus */
+  extracted_at: string | null;
   description: string | null;
   attachment_names: string[] | null;
   approved_by: string | null;
@@ -208,11 +216,22 @@ export type Application = {
   position_title: string | null;
   message: string | null;
   attachment_names: string[] | null;
+  /** "website" bei Bewerbungen über das Formular der Website */
+  source: string | null;
+  job_slug: string | null;
+  link: string | null;
+  /** Hochgeladene Unterlagen (Bucket „bewerbungen“) */
+  files: ApplicationFile[];
   owner: string | null;
   next_step: string | null;
   next_step_at: string | null;
   notes: string | null;
 };
+
+export type ApplicationFile = { path: string; name: string; type: string; size: number };
+
+/** Offene Stelle auf der Website; Texte stehen in der Website, hier nur An/Aus */
+export type JobPosting = { id: string; slug: string; title: string; active: boolean; position: number; updated_at: string };
 
 export type Settings = { capacity: { team_hours_per_month: number }; datev: { upload_address: string } };
 

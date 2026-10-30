@@ -14,6 +14,7 @@ import { signOut, useAuth } from "@/lib/auth";
 import { BankReminder } from "./finance/bank-reminder";
 import { Logo } from "./logo";
 import { Button, Popover } from "./ui";
+import { KpiList, useKpis } from "./kpis";
 
 /** Bereiche, die das angemeldete Konto sehen darf */
 function useAreas() {
@@ -104,6 +105,7 @@ function AccountPopover({
 export function TopBar() {
   const pathname = usePathname();
   const areas = useAreas();
+  const kpis = useKpis();
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-6">
       <div className="mx-auto w-full max-w-frame-lg px-5">
@@ -119,20 +121,11 @@ export function TopBar() {
             </span>
           </Link>
 
-          <nav className="relative hidden items-center gap-6 text-[15px] font-normal lg:flex" aria-label="Bereiche">
-            {areas.map((area) => (
-              <AreaLink
-                key={area.id}
-                area={area}
-                className={clsx(
-                  "nav-rainbow whitespace-nowrap",
-                  pathname.startsWith(area.href) && !area.external ? "font-medium text-snow" : "text-snow/80"
-                )}
-              >
-                {area.title}
-              </AreaLink>
-            ))}
-          </nav>
+          {kpis && kpis.length > 0 && (
+            <nav className="relative hidden min-w-0 lg:block" aria-label="Kennzahlen">
+              <KpiList kpis={kpis} className="gap-1 xl:gap-3" />
+            </nav>
+          )}
 
           <div className="relative flex items-center gap-1.5">
             <TeamsButton className="h-9 w-9 rounded-full" />
@@ -185,16 +178,24 @@ export function TopBar() {
   );
 }
 
-function HubFrame({ children }: { children: React.ReactNode }) {
+/** fit: alles auf einer Bildschirmhöhe, ohne Scrollen (Übersicht) */
+function HubFrame({ children, fit = false }: { children: React.ReactNode; fit?: boolean }) {
   return (
-    <div className="relative flex min-h-dvh flex-col">
+    <div className={clsx("relative flex flex-col", fit ? "h-dvh overflow-hidden" : "min-h-dvh")}>
       <div className="pattern-bg pointer-events-none fixed inset-0 opacity-25" aria-hidden />
       <div className="pointer-events-none fixed inset-0 bg-gradient-to-b from-sky/85 via-sky/55 to-sky/80" aria-hidden />
       <TopBar />
-      <main className="relative mx-auto w-full max-w-frame-lg flex-1 px-5 pt-[calc(env(safe-area-inset-top)+100px)] pb-12 lg:pt-36">
+      <main
+        className={clsx(
+          "relative mx-auto w-full max-w-frame-lg flex-1 px-5",
+          fit
+            ? "flex min-h-0 flex-col pt-[calc(env(safe-area-inset-top)+84px)] pb-4 lg:pt-[118px] lg:pb-6"
+            : "pt-[calc(env(safe-area-inset-top)+100px)] pb-12 lg:pt-36"
+        )}
+      >
         {children}
       </main>
-      <footer className="relative flex justify-center gap-4 px-5 pb-[calc(24px+env(safe-area-inset-bottom))] text-[11px]">
+      <footer className={clsx("relative flex shrink-0 justify-center gap-4 px-5 text-[11px]", fit ? "pb-[calc(12px+env(safe-area-inset-bottom))]" : "pb-[calc(24px+env(safe-area-inset-bottom))]")}>
         {[
           ["https://grid-agency.de", "grid-agency.de"],
           ["https://grid-agency.de/impressum", "Impressum"],
@@ -219,43 +220,66 @@ function greeting(hour: number) {
 export function Hub() {
   const auth = useAuth();
   const areas = useAreas();
+  const kpis = useKpis();
   const firstName = auth.status === "signed-in" ? auth.account.name.split(" ")[0] : "";
   // Datum und Tageszeit erst im Browser, damit Server und Client gleich rendern
   const [now, setNow] = useState<Date | null>(null);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- Uhrzeit gibt es nur im Browser
   useEffect(() => setNow(new Date()), []);
 
-  return (
-    <HubFrame>
-      <p className="mb-2.5 h-4 text-[11px] font-medium uppercase tracking-[0.3em] text-snow/50">
-        {now?.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}
-      </p>
-      <h1 className="text-[clamp(30px,7vw,48px)] leading-[1.1] font-medium tracking-tight">
-        {now ? greeting(now.getHours()) : "Hallo"}, {firstName}
-      </h1>
-      <p className="mt-2.5 text-[15px] text-snow/60">Wohin geht’s heute?</p>
-      <BankReminder />
+  // Bei ungerader Anzahl wird die erste Kachel breit, damit die Reihen aufgehen
+  const featured = areas.length % 2 === 1;
+  const rows = { mobile: Math.ceil((areas.length + (featured ? 1 : 0)) / 2), desktop: Math.ceil((areas.length + (featured ? 1 : 0)) / 4) };
 
-      {/* Sales ist die breite Hauptkachel: 7 Bereiche gehen in 2 und 4 Spalten glatt auf */}
-      <ul className="mt-8 grid grid-cols-2 gap-3 lg:mt-10 lg:grid-cols-4 lg:gap-4">
+  return (
+    <HubFrame fit>
+      <div className="shrink-0">
+        <p className="mb-1.5 h-4 text-[11px] font-medium uppercase tracking-[0.3em] text-snow/50">
+          {now?.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}
+        </p>
+        <h1 className="text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
+          {now ? greeting(now.getHours()) : "Hallo"}, {firstName}
+        </h1>
+      </div>
+
+      <div className="shrink-0">
+        <BankReminder />
+      </div>
+
+      {kpis && kpis.length > 0 && (
+        <div className="mt-3 shrink-0 lg:hidden">
+          <KpiList kpis={kpis} compact className="glass w-full justify-between rounded-2xl p-1" />
+        </div>
+      )}
+
+      {/* Kacheln teilen sich die restliche Höhe: die Übersicht passt immer auf einen Bildschirm */}
+      <ul
+        className="mt-4 grid min-h-0 flex-1 grid-cols-2 gap-2.5 [grid-template-rows:var(--rows-m)] lg:mt-6 lg:grid-cols-4 lg:gap-4 lg:[grid-template-rows:var(--rows-d)] [max-height:var(--max-m)] lg:[max-height:var(--max-d)]"
+        style={
+          {
+            "--rows-m": `repeat(${rows.mobile}, minmax(0, 1fr))`,
+            "--rows-d": `repeat(${rows.desktop}, minmax(0, 1fr))`,
+            "--max-m": `${rows.mobile * 170}px`,
+            "--max-d": `${rows.desktop * 250}px`,
+          } as React.CSSProperties
+        }
+      >
         {areas.map((area, index) => {
           const Icon = area.icon;
-          const featured = index === 0;
+          const wide = featured && index === 0;
           return (
-            <li key={area.id} className={clsx(featured && "col-span-2")}>
+            <li key={area.id} className={clsx("min-h-0", wide && "col-span-2")}>
               <AreaLink
                 area={area}
-                className="glass group relative flex h-full min-h-[150px] flex-col rounded-3xl p-[18px] transition-[transform,border-color,box-shadow] duration-250 hover:-translate-y-[3px] hover:border-snow/30 hover:shadow-[inset_0_1px_0_var(--glass-shine),0_14px_40px_var(--shadow-strong)] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-snow lg:min-h-[190px] lg:p-[22px]"
+                className="glass group relative flex h-full flex-col overflow-hidden rounded-3xl p-3.5 transition-[transform,border-color,box-shadow] duration-250 hover:-translate-y-[3px] hover:border-snow/30 hover:shadow-[inset_0_1px_0_var(--glass-shine),0_14px_40px_var(--shadow-strong)] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-snow lg:p-[22px]"
               >
-                <span className="grid h-11 w-11 place-items-center rounded-[14px] border border-snow/12 bg-snow/10 transition-colors group-hover:bg-snow group-hover:text-sky">
-                  <Icon className="h-[22px] w-[22px]" strokeWidth={1.8} />
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] border border-snow/12 bg-snow/10 transition-colors group-hover:bg-snow group-hover:text-sky lg:h-11 lg:w-11 lg:rounded-[14px]">
+                  <Icon className="h-[19px] w-[19px] lg:h-[22px] lg:w-[22px]" strokeWidth={1.8} />
                 </span>
-                <ArrowUpRight className="absolute top-[18px] right-[18px] h-[18px] w-[18px] opacity-40 transition-[opacity,transform] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100 lg:top-[22px] lg:right-[22px]" />
-                <span className="mt-auto pt-5">
-                  <span className={clsx("block font-medium tracking-tight", featured ? "text-[22px]" : "text-lg")}>{area.title}</span>
-                  <span className={clsx("mt-1 block leading-snug text-snow/55", featured ? "text-sm" : "min-h-[2.8em] text-[13px]")}>
-                    {area.text}
-                  </span>
+                <ArrowUpRight className="absolute top-3.5 right-3.5 h-[18px] w-[18px] opacity-40 transition-[opacity,transform] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100 lg:top-[22px] lg:right-[22px]" />
+                <span className="mt-auto min-h-0 pt-2">
+                  <span className={clsx("block font-medium tracking-tight", wide ? "text-[20px] lg:text-[22px]" : "text-base lg:text-lg")}>{area.title}</span>
+                  <span className="mt-0.5 line-clamp-2 hidden text-[13px] leading-snug text-snow/55 sm:block [@media(max-height:640px)]:hidden">{area.text}</span>
                 </span>
               </AreaLink>
             </li>

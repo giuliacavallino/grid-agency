@@ -284,11 +284,13 @@ export function EventsView() {
         <ArrowDown className="h-4 w-4" strokeWidth={2} />
       </button>
 
-      <div id="vergangene-events" className="mt-10 scroll-mt-24">
+      <div id="vergangene-events" className="mt-10 scroll-mt-24 lg:scroll-mt-32">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
           Vergangene Events
         </p>
-        <div className="mt-4 space-y-4">
+        {/* Ab Desktop zweispaltig, sonst werden die Titelbilder auf der
+            vollen Seitenbreite riesig. */}
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {/* Grand Opening Casa Beef: dokumentiert auf der Kundenseite. */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}

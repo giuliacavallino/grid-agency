@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalShell } from "@/components/app/LegalShell";
+import { PageShell } from "@/components/app/PageShell";
 import { FaqView } from "@/components/app/FaqView";
 import { faq } from "@/lib/content";
 
@@ -32,12 +32,12 @@ function faqJsonLd() {
 
 export default function FaqPage() {
   return (
-    <LegalShell title="FAQ">
+    <PageShell>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd()) }}
       />
       <FaqView />
-    </LegalShell>
+    </PageShell>
   );
 }
