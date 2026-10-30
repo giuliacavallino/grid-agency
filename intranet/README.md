@@ -20,6 +20,8 @@ Für die lokale Vorschau ohne Login und Datenbank `NEXT_PUBLIC_INTRANET_DEMO=1` 
 - `/aufgaben` – To-dos je Kunde (ersetzt Asana): Kacheln aller Kunden, je Kunde eine Liste wie in Asana (Themen als Gruppen, alles direkt in der Zeile bearbeitbar, speichert automatisch), „Meine To-dos“ über alle Kunden, Briefing je Kunde (Zugänge, Ansprechpartner, Postingplan), ehemalige Kunden im Archiv
 - `/admin` – Admin-Konsole (nur Rolle Admin): Passwort-Tresor (Kunden-Zugänge sehen alle mit Aufgaben, interne nur Admins; AES-256-GCM-verschlüsselt, Anzeigen/Kopieren/Ändern im Protokoll), Benutzer & Rechte (wer ins Intranet darf, Rolle Admin oder Mitarbeiter*in mit freigegebenen Bereichen; Tabelle `intranet_users`), Firmendaten, Protokoll
 
+Teams: Über das Sprechblasen-Symbol (Hub oben rechts, Seitenleiste „Teams“) öffnen sich die eigenen Teams-Chats: lesen, antworten, neuer 1:1-Chat mit dem Team. Aus einem To-do heraus schickt „Per Teams schicken“ es an die zuständige Person (Nachricht vorausgefüllt, gesendet wird erst auf Knopfdruck). Alles läuft mit dem Microsoft-Login der Person (`Chat.ReadWrite`), Nachrichten kommen also von ihr selbst.
+
 Zugang: Nur Microsoft-Konten, die in Admin → Benutzer & Rechte aktiv sind, kommen hinein. Jede API-Route prüft das (`withUser` in `src/lib/server/auth.ts`); welche Tabelle zu welchem Bereich gehört, steht in `TABLE_AREAS` in `src/lib/server/db.ts`. Aufgaben-Listen mit `restricted` (z. B. „Geschäftsführung“) sehen nur Admins.
 
 Welche Postfächer wo erscheinen, steht in `MAILBOXES` in `src/lib/config.ts`.
@@ -53,7 +55,7 @@ Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in 
 
 **Microsoft Entra** (App „GRID Intranet“):
 
-1. API-Berechtigungen, delegiert: `Mail.ReadWrite.Shared`, `Mail.Send.Shared`, `Calendars.ReadWrite.Shared` (Posteingang und Kalender im Sales). Nach Möglichkeit Administratorzustimmung erteilen.
+1. API-Berechtigungen, delegiert: `Mail.ReadWrite.Shared`, `Mail.Send.Shared`, `Calendars.ReadWrite.Shared` (Posteingang und Kalender im Sales), `Chat.ReadWrite` (Teams-Chats), `User.ReadBasic.All` (Profilbilder). Nach Möglichkeit Administratorzustimmung erteilen, sonst stimmt jede Person beim ersten Mal selbst zu.
 2. Anwendungsberechtigung `Mail.Read` mit Administratorzustimmung (Mail-Eingang). Am besten per Application Access Policy auf hello@ beschränken.
 3. Unter „Zertifikate & Geheimnisse“ ein Client-Secret anlegen und als `MS_CLIENT_SECRET` hinterlegen.
 4. Exchange: Vollzugriff und „Senden als“ auf jedes geteilte Postfach aus `MAILBOXES` (hello@, buchhaltung@, google@). Der DATEV-Versand läuft über „Senden als“ von buchhaltung@.
