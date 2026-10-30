@@ -20,7 +20,7 @@ const TILES = [
 
 function CallPreview() {
   return (
-    <div className="meet-hover mx-auto w-full max-w-sm" aria-hidden>
+    <div className="meet-hover mx-auto w-full max-w-[min(24rem,calc((100dvh-31rem)*1.1))]" aria-hidden>
       <p className="mx-auto mb-3 flex w-fit items-center gap-1.5 rounded-full border border-snow/12 bg-surface/80 px-3.5 py-1.5 font-mono text-xs text-snow/70 shadow-sm backdrop-blur">
         <Lock className="h-3 w-3" /> meet.grid-agency.de/<span className="font-semibold text-snow">abc-defg-hjk</span>
       </p>
@@ -64,9 +64,9 @@ export function MeetLanding() {
 
   return (
     <MeetShell>
-      <div className="flex flex-col items-center py-8 text-center md:py-12">
+      <div className="flex flex-col items-center py-4 text-center md:py-6">
         <CallPreview />
-        <h1 className="rise-in mt-10 text-[2.6rem] leading-[1.02] font-semibold tracking-tight md:text-7xl">
+        <h1 className="rise-in mt-8 text-[2.6rem] leading-[1.02] font-semibold tracking-tight md:text-7xl [@media(max-height:760px)]:mt-5 [@media(max-height:760px)]:md:text-6xl">
           Ein Link. Und ihr seid <span className="text-aurora">live.</span>
         </h1>
         <p className="rise-in mt-4 max-w-lg text-base text-snow/65 md:text-lg" style={{ "--delay": "80ms" } as React.CSSProperties}>

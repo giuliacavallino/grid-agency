@@ -360,7 +360,7 @@ export function MeetRoom({ code }: { code: string }) {
             </div>
           )}
           {waiting ? (
-            <WaitingStage isHost={isHost} selfView={selfView} />
+            <WaitingStage isHost={isHost} hostName={view.host_name} selfView={selfView} />
           ) : people.length === 0 ? (
             <div className="grid place-items-center rounded-3xl border border-snow/10 bg-surface/60 p-6 text-center">
               <div>
@@ -431,8 +431,8 @@ export function MeetRoom({ code }: { code: string }) {
   const joining = phase === "joining";
   return (
     <MeetShell>
-      <div className="grid gap-8 py-6 md:grid-cols-[1.4fr_1fr] md:items-center md:py-14">
-        <div className="relative aspect-video overflow-hidden rounded-3xl bg-surface ring-1 ring-snow/10">
+      <div className="grid gap-5 py-4 md:grid-cols-[1.4fr_1fr] md:items-center md:gap-8 md:py-6">
+        <div className="relative mx-auto aspect-video w-full max-w-[calc(42dvh*16/9)] overflow-hidden rounded-3xl bg-surface ring-1 ring-snow/10">
           {camOn && camera && phase !== "left" ? (
             <StreamView key={camera.source.id} stream={camera} mirrored />
           ) : (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Eye, Heart, Play, Share2, TrendingUp, UserPlus } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
+import { Avatar } from "@/components/ui";
 import { EbookCard, LogoMarquee } from "./brand";
 
 // Warteseite im Call, solange noch niemand sonst da ist: Motion Graphics zu
@@ -136,14 +137,31 @@ const FLOATERS = [
   { left: "90%", drift: "-8px", duration: "4.6s", delay: "4.1s", size: "h-5 w-5" },
 ];
 
+/** Wartezeit seit dem Beitreten als m:ss */
+function WaitTimer() {
+  const [start] = useState(() => Date.now());
+  const [now, setNow] = useState(start);
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const seconds = Math.max(0, Math.floor((now - start) / 1000));
+  return (
+    <span className="tabular-nums">
+      {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+    </span>
+  );
+}
+
 /** Bühne der Warteseite. `selfView` ist das eigene Kamerabild (oder ein Platzhalter). */
-export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: React.ReactNode }) {
+export function WaitingStage({ isHost, hostName, selfView }: { isHost: boolean; hostName: string | null; selfView: React.ReactNode }) {
   const [round, setRound] = useState(0);
   useEffect(() => {
     const id = window.setInterval(() => setRound((r) => r + 1), CYCLE_MS);
     return () => window.clearInterval(id);
   }, []);
   const stat = STATS[round % STATS.length];
+  const host = hostName?.split(" ")[0] || "GRID";
 
   return (
     <div className="relative isolate h-full min-h-0 overflow-hidden rounded-3xl border border-snow/10 bg-canvas">
@@ -157,26 +175,58 @@ export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: 
 
       <div className="flex h-full flex-col overflow-hidden">
         <div className="grid min-h-0 flex-1 grid-cols-1 items-center gap-8 p-5 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] md:gap-12 md:p-10 lg:px-14 [@media(max-height:700px)]:md:py-5">
-          {/* Links: Status, Kennzahl, eigenes Bild */}
+          {/* Links: Wartebereich (Status, Wartezeit), darunter Kennzahl und eigenes Bild */}
           <div className="min-w-0">
             <p className="inline-flex items-center gap-2 rounded-full border border-snow/15 bg-sky/40 px-3 py-1 text-[11px] font-medium tracking-[0.22em] text-snow/70 uppercase backdrop-blur">
               <span className="relative flex h-2 w-2">
-                <span className="meet-ping absolute inset-0 rounded-full bg-success" />
-                <span className="relative h-2 w-2 rounded-full bg-success" />
+                <span className="meet-ping absolute inset-0 rounded-full bg-[#fa7e1e]" />
+                <span className="relative h-2 w-2 rounded-full bg-[#fa7e1e]" />
               </span>
-              Du bist drin
+              Wartebereich
             </p>
             <h2 className="mt-4 text-[2.5rem] leading-[1.02] font-semibold tracking-tight md:text-6xl [@media(max-height:700px)]:text-4xl">
-              Gleich geht&apos;s <span className="text-aurora">los.</span>
+              {isHost ? (
+                <>
+                  Warte auf deinen <span className="text-aurora">Gast.</span>
+                </>
+              ) : (
+                <>
+                  Gleich geht&apos;s <span className="text-aurora">los.</span>
+                </>
+              )}
             </h2>
-            <p className="mt-3 max-w-md text-[15px] text-snow/65">
-              {isHost ? "Sobald dein Gast da ist, startet der Call." : "Du wirst gleich in den Call geholt."} Bis dahin: So sieht Wachstum bei uns
-              aus.
-            </p>
 
-            <div className="mt-7 md:mt-10 [@media(max-height:700px)]:mt-5">
+            <div role="status" className="mt-5 flex items-center gap-4 rounded-2xl border border-snow/12 bg-sky/60 p-4 shadow-xl backdrop-blur-xl">
+              <span className="relative grid h-12 w-12 shrink-0 place-items-center">
+                <span className="meet-ping absolute inset-0 rounded-full bg-[#fa7e1e]/35" />
+                <span className="meet-ping absolute inset-0 rounded-full bg-[#d62976]/25" style={{ animationDelay: "0.8s" }} />
+                <Avatar name={isHost ? "Gast" : (hostName ?? "GRID")} className="relative h-12 w-12 text-base ring-2 ring-sky" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] leading-snug font-medium">
+                  {isHost ? "Dein Gast ist noch nicht da" : `Du bist im Wartebereich – ${host} holt dich gleich in den Call`}
+                </p>
+                <p className="mt-0.5 text-[13px] text-snow/60">
+                  {isHost ? "Sobald jemand beitritt, startet der Call automatisch." : "Bleib einfach auf dieser Seite, es geht automatisch los."}
+                </p>
+              </div>
+              <div className="hidden shrink-0 text-right sm:block">
+                <p className="text-[11px] tracking-[0.18em] text-snow/45 uppercase">Wartezeit</p>
+                <p className="mt-0.5 flex items-center justify-end gap-2 text-lg font-semibold">
+                  <span className="flex gap-1" aria-hidden>
+                    {[0, 0.15, 0.3].map((delay) => (
+                      <span key={delay} className="h-1.5 w-1.5 animate-bounce rounded-full bg-snow/60 motion-reduce:animate-none" style={{ animationDelay: `${delay}s` }} />
+                    ))}
+                  </span>
+                  <WaitTimer />
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-7 text-[11px] font-medium tracking-[0.2em] text-snow/45 uppercase md:mt-9 [@media(max-height:700px)]:mt-5">Bis dahin: So sieht Wachstum bei uns aus</p>
+            <div className="mt-3">
               <div key={round} className="meet-stat">
-                <p className="text-[2.75rem] leading-none font-semibold tracking-tight md:text-7xl [@media(max-height:700px)]:text-5xl">
+                <p className="text-[2.5rem] leading-none font-semibold tracking-tight md:text-6xl [@media(max-height:700px)]:text-4xl">
                   <CountUp stat={stat} />
                 </p>
                 <p className="mt-2 text-lg font-medium md:text-xl">{stat.label}</p>
