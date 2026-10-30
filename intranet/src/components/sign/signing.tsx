@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, Check, CircleCheck, Download, FileText, Lock, PenLine, ShieldCheck } from "lucide-react";
+import { ArrowDown, Check, FileText, Lock, Mail, PenLine, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatIban, SEPA_TEXT, SIGN_FIELD_LABEL, signFields, validIban, type SignField } from "@/lib/contract";
 import { money } from "@/lib/billing";
@@ -18,6 +18,7 @@ type View = {
   status: "versendet" | "geoeffnet" | "unterschrieben" | "abgelehnt" | "widerrufen" | "abgelaufen";
   company: { name: string; street: string; zip: string; city: string; email: string; creditor_id: string; managing_director: string };
   signer_name: string;
+  signer_email: string;
   grid_signer: string;
   grid_signature: string;
   grid_id: string;
@@ -61,7 +62,7 @@ const newVerifyId = () =>
     .join("-");
 
 // Papier: Dokumente sehen in beiden Modi aus wie das PDF
-const PAPER = "rounded-md bg-white px-5 py-7 text-[#2b2926] shadow-[0_1px_2px_rgba(0,0,0,0.10),0_10px_30px_rgba(0,0,0,0.10)] md:px-12 md:py-12";
+const PAPER = "rise-in rounded-2xl bg-white px-5 py-7 text-[#2b2926] shadow-[0_1px_2px_rgba(0,0,0,0.10),0_10px_30px_rgba(0,0,0,0.10)] md:px-12 md:py-12";
 const PAPER_INPUT = "h-9 w-full rounded-md border border-[#d8d5cf] bg-white px-2.5 text-[13px] text-[#2b2926] outline-none focus:border-[#2b2926]";
 
 async function call<T>(token: string, body?: unknown): Promise<T> {
@@ -114,9 +115,9 @@ export function Signing({ token }: { token: string }) {
   }
 
   /** Nächste offene Stelle: SEPA-Angaben oder ein Unterschriftsfeld */
-  function next() {
+  function next(current = stamps) {
     const open: string | undefined = fields
-      .flatMap((f) => (f === "sepa" ? [!sepa.holder.trim() && "sepa-holder", !ibanOk && "sepa-iban", !stamps.sepa && "feld-sepa"] : [!stamps[f] && `feld-${f}`]))
+      .flatMap((f) => (f === "sepa" ? [!sepa.holder.trim() && "sepa-holder", !ibanOk && "sepa-iban", !current.sepa && "feld-sepa"] : [!current[f] && `feld-${f}`]))
       .find((id): id is string => !!id);
     const id = open ?? "fertigstellen";
     const element = document.getElementById(id);
@@ -125,9 +126,12 @@ export function Signing({ token }: { token: string }) {
     setTarget(id);
   }
 
+  /** Unterschrift setzen und – nach kurzer Animation – zur nächsten Stelle springen */
   function stamp(field: SignField) {
-    setStamps((s) => ({ ...s, [field]: newVerifyId() }));
+    const updated = { ...stamps, [field]: newVerifyId() };
+    setStamps(updated);
     setTarget(null);
+    window.setTimeout(() => next(updated), 650);
   }
 
   async function sign() {
@@ -163,15 +167,28 @@ export function Signing({ token }: { token: string }) {
   );
 
   return (
-    <div className="min-h-dvh bg-canvas">
-      <header className="border-b border-snow/[0.08] bg-sky">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-3">
-            <Logo className="h-6" priority />
+    <div className="relative min-h-dvh overflow-x-clip bg-sky text-snow">
+      {/* Hintergrund wie auf der Website: Aurora, die langsam driftet, und feines Grid */}
+      <div aria-hidden className="pointer-events-none fixed inset-0">
+        <div className="login-aurora aurora absolute -inset-[10%]" />
+        <div className="sign-grid absolute inset-x-0 top-0 h-[40rem]" />
+      </div>
+
+      <header className="sticky top-0 z-30 px-3 pt-3 md:px-6">
+        <div className="glass mx-auto flex h-14 max-w-5xl items-center justify-between rounded-full pr-2 pl-5">
+          <a href="https://grid-agency.de" className="group flex items-center gap-3" aria-label="GRID Agency">
+            <span className="logo-rainbow">
+              <Logo className="h-5" priority />
+            </span>
             <span className="rounded-full border border-snow/15 px-2.5 py-0.5 text-[11px] tracking-[0.2em] text-snow/60 uppercase">sign</span>
-          </div>
-          {view && view.status !== "widerrufen" && (
-            <a href={pdf} target="_blank" rel="noopener" className="flex items-center gap-1.5 text-[13px] text-snow/70 hover:text-snow">
+          </a>
+          {view && !["widerrufen", "unterschrieben"].includes(view.status) && (
+            <a
+              href={pdf}
+              target="_blank"
+              rel="noopener"
+              className="flex h-10 items-center gap-1.5 rounded-full border border-snow/12 bg-snow/[0.06] px-4 text-[13px] text-snow/80 transition-colors hover:bg-snow/[0.12] hover:text-snow"
+            >
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">Alle Unterlagen als PDF</span>
               <span className="sm:hidden">PDF</span>
@@ -180,7 +197,7 @@ export function Signing({ token }: { token: string }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10">
+      <main className="relative mx-auto max-w-5xl px-4 pt-10 pb-16 md:px-6 md:pt-14">
         {error ? (
           <Message title="Dieser Link funktioniert nicht." text={`${error} Bitte wenden Sie sich an GRID AGENCY.`} />
         ) : !view ? (
@@ -188,7 +205,7 @@ export function Signing({ token }: { token: string }) {
             <Spinner />
           </div>
         ) : view.status === "unterschrieben" ? (
-          <Done view={view} pdf={pdf} />
+          <Done view={view} />
         ) : view.status === "abgelehnt" ? (
           <Message title="Sie haben die Unterlagen abgelehnt." text={`${view.grid_signer} von ${view.company.name} ist informiert und meldet sich bei Ihnen.`} />
         ) : view.status === "widerrufen" ? (
@@ -198,20 +215,22 @@ export function Signing({ token }: { token: string }) {
         ) : (
           <>
             {/* Schritte */}
-            <ol aria-label="Schritte" className="mb-8 flex gap-1 overflow-x-auto">
+            <ol aria-label="Schritte" className="glass rise-in mb-10 inline-flex max-w-full gap-1 overflow-x-auto rounded-full p-1">
               {STEPS.map((s, i) => (
                 <li key={s.id} className="shrink-0">
                   <span
                     aria-current={s.id === step ? "step" : undefined}
                     className={cn(
                       "flex h-9 items-center gap-2 rounded-full px-3 text-[13px]",
-                      s.id === step ? "bg-snow/[0.12] font-medium text-snow" : i < index ? "text-snow/70" : "text-snow/35"
+                      "transition-colors duration-300",
+                      s.id === step ? "bg-snow font-medium text-sky" : i < index ? "text-snow/75" : "text-snow/40"
                     )}
                   >
                     <span
+                      style={s.id === step ? { backgroundImage: "var(--aurora)" } : undefined}
                       className={cn(
                         "grid h-5 w-5 place-items-center rounded-full text-[10px]",
-                        i < index ? "bg-success/20 text-success" : s.id === step ? "bg-snow text-sky" : "border border-snow/20"
+                        i < index ? "bg-success/20 text-success" : s.id === step ? "text-snow" : "border border-snow/20"
                       )}
                     >
                       {i < index ? <Check className="h-3 w-3" /> : i + 1}
@@ -225,27 +244,30 @@ export function Signing({ token }: { token: string }) {
             {step === "angebot" && (
               <div className="flex max-w-3xl flex-col gap-6">
                 <div>
-                  <p className="text-[11px] tracking-[0.25em] text-snow/50 uppercase">{view.offer.label} für</p>
-                  <h1 className="mt-2 text-3xl font-medium tracking-tight md:text-4xl">
-                    {view.customer.name.replace(/\.$/, "")}
-                    <span className="text-dune">.</span>
+                  <span className="sign-eyebrow rise-in">{view.offer.label}</span>
+                  <h1 className="rise-in mt-5 text-[2.5rem] leading-[1.02] font-semibold tracking-[-0.035em] md:text-6xl" style={{ "--delay": "80ms" } as React.CSSProperties}>
+                    Für <span className="text-aurora">{view.customer.name.replace(/\.$/, "")}</span>.
                   </h1>
-                  <p className="mt-3 text-[13px] text-snow/55">
+                  <p className="rise-in mt-4 text-[13px] text-snow/55" style={{ "--delay": "160ms" } as React.CSSProperties}>
                     von {view.grid_signer}, {view.company.name} · vom {date(view.offer.date)}
                     {view.offer.valid_until ? ` · gültig bis ${date(view.offer.valid_until)}` : ""}
                   </p>
                 </div>
-                {view.offer.intro && <p className="max-w-2xl text-[15px] leading-relaxed whitespace-pre-line text-snow/75">{view.offer.intro}</p>}
-                <ul className="divide-y divide-snow/[0.08] rounded-2xl border border-snow/10 bg-surface">
+                {view.offer.intro && (
+                  <p className="rise-in max-w-2xl text-[15px] leading-relaxed whitespace-pre-line text-snow/75" style={{ "--delay": "220ms" } as React.CSSProperties}>
+                    {view.offer.intro}
+                  </p>
+                )}
+                <ul className="glass rise-in divide-y divide-snow/[0.08] overflow-hidden rounded-3xl" style={{ "--delay": "280ms" } as React.CSSProperties}>
                   {view.offer.items.map((item, i) =>
                     item.kind === "text" ? (
                       <li key={i} className="px-4 py-3 text-[13px] whitespace-pre-line text-snow/60">
                         {item.description}
                       </li>
                     ) : (
-                      <li key={i} className="flex gap-4 px-4 py-3">
+                      <li key={i} className="flex gap-4 px-5 py-4 transition-colors hover:bg-snow/[0.03]">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[14px] font-medium">{item.description.split("\n")[0]}</p>
+                          <p className="text-[15px] font-medium">{item.description.split("\n")[0]}</p>
                           {item.description.includes("\n") && (
                             <p className="mt-1 text-[13px] whitespace-pre-line text-snow/60">{item.description.split("\n").slice(1).join("\n")}</p>
                           )}
@@ -258,8 +280,8 @@ export function Signing({ token }: { token: string }) {
                     )
                   )}
                 </ul>
-                <div className="grid gap-3 sm:grid-cols-[1fr_minmax(0,18rem)]">
-                  <div className="rounded-2xl border border-snow/10 bg-surface p-4 text-[13px] leading-relaxed text-snow/65">
+                <div className="rise-in grid gap-3 sm:grid-cols-[1fr_minmax(0,18rem)]" style={{ "--delay": "340ms" } as React.CSSProperties}>
+                  <div className="glass rounded-3xl p-5 text-[13px] leading-relaxed text-snow/65">
                     <p className="text-[11px] tracking-[0.2em] text-snow/50 uppercase">Zahlungsart</p>
                     <p className="mt-1 text-[15px] font-medium text-snow">{view.sepa_required ? "SEPA-Lastschrift" : "Überweisung"}</p>
                     <p className="mt-1">
@@ -268,23 +290,24 @@ export function Signing({ token }: { token: string }) {
                         : "Sie erhalten Rechnungen per E-Mail und überweisen den Betrag."}
                     </p>
                   </div>
-                  <dl className="rounded-2xl bg-sky p-4 text-[13px] text-snow">
-                    <div className="flex justify-between text-snow/60">
+                  <dl className="glass relative overflow-hidden rounded-3xl p-5 text-[13px] text-snow">
+                    <div aria-hidden className="absolute -inset-px opacity-25" style={{ backgroundImage: "var(--aurora)" }} />
+                    <div className="relative flex justify-between text-snow/60">
                       <dt>Netto</dt>
                       <dd className="tabular-nums">{money(view.offer.amount_net, view.offer.currency)}</dd>
                     </div>
-                    <div className="mt-1 flex justify-between text-snow/60">
+                    <div className="relative mt-1 flex justify-between text-snow/60">
                       <dt>USt</dt>
                       <dd className="tabular-nums">{money(view.offer.amount_vat, view.offer.currency)}</dd>
                     </div>
-                    <div className="mt-3 flex items-baseline justify-between">
+                    <div className="relative mt-3 flex items-baseline justify-between">
                       <dt className="text-[11px] tracking-[0.2em] text-snow/50 uppercase">Gesamt</dt>
-                      <dd className="text-xl font-medium tabular-nums">{money(view.offer.amount_gross, view.offer.currency)}</dd>
+                      <dd className="text-2xl font-semibold tracking-tight tabular-nums">{money(view.offer.amount_gross, view.offer.currency)}</dd>
                     </div>
                   </dl>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="primary" icon={<Check className="h-4 w-4" />} loading={accepting} loadingText="Einen Moment …" onClick={accept}>
+                <div className="rise-in flex flex-wrap gap-2" style={{ "--delay": "400ms" } as React.CSSProperties}>
+                  <Button variant="primary" className="h-12 px-6 text-[15px]" icon={<Check className="h-4 w-4" />} loading={accepting} loadingText="Einen Moment …" onClick={accept}>
                     Angebot annehmen
                   </Button>
                   <Button variant="ghost" onClick={() => setDeclining(true)}>
@@ -301,15 +324,16 @@ export function Signing({ token }: { token: string }) {
             {step === "erstellen" && (
               <div className="flex max-w-2xl flex-col gap-5">
                 <div>
-                  <h2 className="text-2xl font-medium tracking-tight md:text-3xl">
-                    Unterschrift erstellen<span className="text-dune">.</span>
+                  <span className="sign-eyebrow rise-in">Schritt 2 von 3</span>
+                  <h2 className="rise-in mt-5 text-4xl leading-[1.05] font-semibold tracking-[-0.03em] md:text-5xl" style={{ "--delay": "80ms" } as React.CSSProperties}>
+                    Unterschrift <span className="text-aurora">erstellen</span>.
                   </h2>
                   <p className="mt-2 text-[14px] leading-relaxed text-snow/65">
                     Sie erstellen Ihre Unterschrift einmal und setzen sie dann mit einem Klick an jeder markierten Stelle. Jede gesetzte Unterschrift bekommt eine
                     eigene Prüf-ID.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-snow/10 bg-surface p-4">
+                <div className="glass rise-in rounded-3xl p-5" style={{ "--delay": "160ms" } as React.CSSProperties}>
                   <p className="mb-3 text-[13px] text-snow/60">
                     Unterschrift von <span className="text-snow">{view.signer_name}</span>
                   </p>
@@ -317,11 +341,11 @@ export function Signing({ token }: { token: string }) {
                 </div>
                 <div className="flex flex-col gap-2">
                   <p className="text-[11px] tracking-[0.2em] text-snow/50 uppercase">Vorschau</p>
-                  <div className="w-fit rounded-xl bg-white px-4 py-3">
+                  <div className="w-fit rounded-2xl bg-white px-5 py-3 shadow-[0_10px_40px_rgb(0_0_0/0.25)]">
                     {signature ? <Stamp image={signature} verifyId="XXXX-XXXX-XXXX-XXXX" /> : <p className="py-6 text-[13px] text-[#8c867c]">Noch keine Unterschrift</p>}
                   </div>
                 </div>
-                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-snow/10 bg-surface p-4 text-[13px] leading-relaxed text-snow/75">
+                <label className="glass flex cursor-pointer items-start gap-3 rounded-3xl p-5 text-[13px] leading-relaxed text-snow/75">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
                     Ich bin einverstanden, die Unterlagen elektronisch zu unterschreiben. Meine elektronische Unterschrift ist so verbindlich wie eine
@@ -350,7 +374,7 @@ export function Signing({ token }: { token: string }) {
             {step === "dokumente" && (
               <div className="flex flex-col gap-6">
                 {/* Leiste wie bei DocuSign: Fortschritt, Weiter, Fertigstellen */}
-                <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-snow/[0.08] bg-canvas/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
+                <div className="glass sticky top-[4.75rem] z-20 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-3xl px-4 py-3 md:px-5">
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] text-snow/80">
                       <span className="hidden sm:inline">
@@ -359,8 +383,11 @@ export function Signing({ token }: { token: string }) {
                       <span className="sm:hidden">{complete ? "Bereit zum Fertigstellen" : "Felder unterschreiben"}</span>
                     </p>
                     <div className="mt-1.5 flex items-center gap-2 whitespace-nowrap">
-                      <div className="h-1 w-24 overflow-hidden rounded-full bg-snow/10 sm:w-40">
-                        <div className="h-full rounded-full bg-success transition-[width]" style={{ width: `${(done / fields.length) * 100}%` }} />
+                      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-snow/10 sm:w-48">
+                        <div
+                          className="h-full rounded-full transition-[width] duration-700 ease-out"
+                          style={{ width: `${(done / fields.length) * 100}%`, backgroundImage: "var(--aurora)", backgroundSize: "200% 100%" }}
+                        />
                       </div>
                       <span className="text-[12px] text-snow/50 tabular-nums">
                         {done} von {fields.length}
@@ -379,7 +406,7 @@ export function Signing({ token }: { token: string }) {
                       Fertigstellen
                     </Button>
                   ) : (
-                    <Button variant="primary" icon={<ArrowDown className="h-4 w-4" />} onClick={next}>
+                    <Button variant="primary" icon={<ArrowDown className="h-4 w-4" />} onClick={() => next()}>
                       {done === 0 ? "Start" : "Weiter"}
                     </Button>
                   )}
@@ -580,16 +607,7 @@ export function Signing({ token }: { token: string }) {
         )}
       </main>
 
-      <footer className="mx-auto max-w-5xl px-4 pb-10 text-[12px] text-snow/40 md:px-6">
-        {view?.company.name ?? "GRID AGENCY UG"} · sign.grid-agency.de ·{" "}
-        <a href="https://grid-agency.de/datenschutz" className="underline hover:text-snow/70">
-          Datenschutz
-        </a>{" "}
-        ·{" "}
-        <a href="https://grid-agency.de/impressum" className="underline hover:text-snow/70">
-          Impressum
-        </a>
-      </footer>
+      <SiteFooter />
 
       {view && <DeclineDialog token={token} open={declining} onClose={() => setDeclining(false)} onDone={() => setView({ ...view, status: "abgelehnt" })} />}
     </div>
@@ -628,11 +646,11 @@ function PaperField({ label, hint, className, children }: { label: string; hint?
 /** Gesetzte elektronische Unterschrift: Klammer, Bild, Prüf-ID */
 function Stamp({ image, verifyId }: { image: string; verifyId: string }) {
   return (
-    <div className="relative flex h-[78px] w-[250px] max-w-full flex-col justify-between py-px pl-3 text-[#2b2926]">
+    <div className="stamp-in relative flex h-[78px] w-[250px] max-w-full flex-col justify-between py-px pl-3 text-[#2b2926]">
       <span aria-hidden className="absolute top-[5px] bottom-[5px] left-0 w-5 rounded-l-lg border-y-[1.5px] border-l-[1.5px] border-[#2b2926]" />
       <span className="ml-4 text-[9px] leading-none tracking-wide text-[#676159]">Elektronisch unterschrieben · GRID sign</span>
       {/* eslint-disable-next-line @next/next/no-img-element -- data-URL der Unterschrift */}
-      <img src={image} alt="Unterschrift" className="h-[46px] w-full object-contain object-left" />
+      <img src={image} alt="Unterschrift" className="ink-in h-[46px] w-full object-contain object-left" />
       <span className="ml-4 font-mono text-[10px] leading-none">{verifyId}</span>
     </div>
   );
@@ -670,10 +688,13 @@ function SignHere({
           aria-label={`Unterschreiben: ${SIGN_FIELD_LABEL[field]}`}
           className={cn(
             "relative flex h-[78px] w-[250px] max-w-full items-center gap-3 rounded-lg border-2 border-dashed border-[#2b2926]/45 bg-[#f2f1ef] px-3 text-left transition hover:border-[#2b2926] hover:bg-[#ebe9e5]",
-            active && "border-[#2b2926] ring-4 ring-[#afaaa0]/60"
+            active && "field-glow border-[#2b2926]"
           )}
         >
-          <span className={cn("flex shrink-0 items-center gap-1.5 rounded-full bg-[#2b2926] px-3 py-1.5 text-[12px] font-medium text-white", active && "animate-pulse")}>
+          <span
+            style={active ? { backgroundImage: "var(--aurora)", backgroundSize: "200% 100%" } : undefined}
+            className={cn("flex shrink-0 items-center gap-1.5 rounded-full bg-[#2b2926] px-3 py-1.5 text-[12px] font-medium text-white", active && "animate-[rainbow-slide_1.6s_linear_infinite]")}
+          >
             <PenLine className="h-3.5 w-3.5" />
             Unterschreiben
           </span>
@@ -686,33 +707,184 @@ function SignHere({
 
 function Message({ title, text }: { title: string; text: string }) {
   return (
-    <div className="mx-auto max-w-xl py-16 text-center">
-      <h1 className="text-2xl font-medium tracking-tight">{title}</h1>
+    <div className="glass rise-in mx-auto max-w-xl rounded-3xl px-6 py-14 text-center">
+      <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
       <p className="mt-3 text-[15px] text-snow/65">{text}</p>
     </div>
   );
 }
 
-function Done({ view, pdf }: { view: View; pdf: string }) {
+// Konfetti in den Aurora-Farben; Position, Drehung und Tempo je Stück fest verteilt
+const CONFETTI = Array.from({ length: 56 }, (_, i) => ({
+  x: (i * 37) % 100,
+  delay: (i % 14) * 90,
+  duration: 2600 + ((i * 53) % 1400),
+  rotate: (i * 47) % 360,
+  drift: ((i * 29) % 120) - 60,
+  color: ["#feda75", "#fa7e1e", "#d62976", "#962fbf", "#4f5bd5"][i % 5],
+  wide: i % 3 === 0,
+}));
+
+/** Abschluss: große Erfolgsanimation, Unterlagen kommen per Mail */
+function Done({ view }: { view: View }) {
+  const docs = [view.offer.label, view.contract.title, ...(view.sepa_required ? ["SEPA-Lastschriftmandat"] : [])];
+  const first = view.signer_name.split(" ")[0];
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center py-12 text-center">
-      <CircleCheck className="h-12 w-12 text-success" strokeWidth={1.5} />
-      <h1 className="mt-5 text-3xl font-medium tracking-tight">
-        Vielen Dank, {view.signer_name.split(" ")[0]}
-        <span className="text-dune">.</span>
-      </h1>
-      <p className="mt-3 text-[15px] leading-relaxed text-snow/70">
-        {view.offer.label}, {view.contract.title}
-        {view.sepa_required ? " und SEPA-Lastschriftmandat" : ""} sind von beiden Seiten unterschrieben
-        {view.customer_signed_at ? ` (${date(view.customer_signed_at)})` : ""}. Die versiegelten Unterlagen kommen gleich per E-Mail.
-      </p>
-      <a href={`${pdf}?download=1`} className="mt-6">
-        <Button variant="primary" icon={<Download className="h-4 w-4" />}>
-          Unterlagen herunterladen
-        </Button>
-      </a>
-      <p className="mt-8 text-[13px] text-snow/50">Wir freuen uns auf die Zusammenarbeit!</p>
+    <div className="relative">
+      {/* Konfetti über die ganze Seite */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-40 overflow-hidden">
+        {CONFETTI.map((c, i) => (
+          <span
+            key={i}
+            className="confetti absolute top-0 block rounded-[2px]"
+            style={
+              {
+                left: `${c.x}%`,
+                width: c.wide ? 12 : 7,
+                height: c.wide ? 6 : 12,
+                background: c.color,
+                "--delay": `${c.delay}ms`,
+                "--duration": `${c.duration}ms`,
+                "--rotate": `${c.rotate}deg`,
+                "--drift": `${c.drift}px`,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
+
+      <div className="glass relative mx-auto max-w-3xl overflow-hidden rounded-[2.25rem] px-6 pt-16 pb-14 text-center md:px-14 md:pt-20">
+        <div aria-hidden className="login-aurora aurora absolute -inset-[20%]" />
+
+        {/* Haken mit Lichtringen */}
+        <div className="relative mx-auto h-32 w-32">
+          <span className="success-ring absolute inset-0 rounded-full" style={{ backgroundImage: "var(--aurora)" }} />
+          <span className="success-ring absolute inset-0 rounded-full" style={{ backgroundImage: "var(--aurora)", "--delay": "1.1s" } as React.CSSProperties} />
+          <span className="success-core absolute inset-3 rounded-full" style={{ backgroundImage: "var(--aurora)", backgroundSize: "200% 100%" }} />
+          <svg viewBox="0 0 80 80" className="relative h-32 w-32 text-white" aria-hidden>
+            <path
+              d="M24 41 l11 11 l22 -24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="draw"
+              style={{ "--length": 50, "--delay": "550ms" } as React.CSSProperties}
+            />
+          </svg>
+        </div>
+
+        <span className="sign-eyebrow rise-in relative mt-9" style={{ "--delay": "650ms" } as React.CSSProperties}>
+          Unterschrieben und versiegelt
+        </span>
+        <h1
+          className="rise-in relative mt-5 text-[2.6rem] leading-[1] font-semibold tracking-[-0.04em] md:text-7xl"
+          style={{ "--delay": "750ms" } as React.CSSProperties}
+        >
+          Willkommen bei GRID,
+          <br />
+          <span className="text-aurora">{first}!</span>
+        </h1>
+        <p className="rise-in relative mx-auto mt-6 max-w-xl text-lg leading-relaxed text-snow/75 md:text-xl" style={{ "--delay": "900ms" } as React.CSSProperties}>
+          Wir freuen uns riesig auf die Zusammenarbeit mit {view.customer.name.replace(/\.$/, "")}.
+        </p>
+
+        {/* Unterlagen fliegen ins Postfach */}
+        <div className="rise-in relative mx-auto mt-10 max-w-md" style={{ "--delay": "1050ms" } as React.CSSProperties}>
+          <p className="text-center text-[13px] text-snow/60">
+            <Mail className="mail-fly mr-1.5 inline-block h-4 w-4 align-[-3px] text-snow" />
+            Kommt gleich per E-Mail an <span className="text-snow/85">{view.signer_email}</span>
+          </p>
+          <ul className="mt-4 flex flex-col gap-2 text-left">
+            {docs.map((label, i) => (
+              <li
+                key={label}
+                className="rise-in flex items-center gap-3 rounded-2xl border border-snow/10 bg-snow/[0.06] px-4 py-3 text-[14px] backdrop-blur"
+                style={{ "--delay": `${1150 + i * 120}ms` } as React.CSSProperties}
+              >
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+                  <Check className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1 truncate">{label}</span>
+                <span className="text-[11px] text-snow/45">PDF · versiegelt</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="rise-in relative mt-10 text-[13px] text-snow/50" style={{ "--delay": "1600ms" } as React.CSSProperties}>
+          Als Nächstes melden wir uns für den Kick-off. Bis gleich!
+        </p>
+      </div>
     </div>
+  );
+}
+
+const FOOTER_LINKS: { title: string; links: [string, string][] }[] = [
+  {
+    title: "Agentur",
+    links: [
+      ["Leistungen", "https://grid-agency.de/#leistungen"],
+      ["Projekte", "https://grid-agency.de/projekte"],
+      ["Events", "https://grid-agency.de/events"],
+      ["Jobs", "https://grid-agency.de/jobs"],
+      ["FAQ", "https://grid-agency.de/faq"],
+    ],
+  },
+  {
+    title: "Kontakt",
+    links: [
+      ["Erstgespräch buchen", "https://grid-agency.de/termin"],
+      ["hello@grid-agency.de", "mailto:hello@grid-agency.de"],
+    ],
+  },
+  {
+    title: "Rechtliches",
+    links: [
+      ["Impressum", "https://grid-agency.de/impressum"],
+      ["Datenschutz", "https://grid-agency.de/datenschutz"],
+      ["AGB", "https://grid-agency.de/agb"],
+    ],
+  },
+];
+
+/** Footer wie auf der Website: Marke, Standorte, Navigation, Rechtliches */
+function SiteFooter() {
+  return (
+    <footer className="relative mx-auto w-full max-w-5xl px-4 pt-6 pb-10 md:px-6">
+      <div className="glass rounded-[2rem] p-7 md:p-10">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
+          <div>
+            <Logo className="h-6" />
+            <p className="mt-4 max-w-xs text-sm font-light leading-relaxed text-snow/55">Social-Media-Agentur für Marken, die man nicht wegscrollen kann.</p>
+            <p className="mt-4 text-xs font-light leading-relaxed text-snow/40">
+              Sömmeringstraße 37, 10589 Berlin
+              <br />
+              Eichendorffstraße 32, 60320 Frankfurt am Main
+            </p>
+          </div>
+          {FOOTER_LINKS.map((col) => (
+            <nav key={col.title} aria-label={col.title}>
+              <p className="text-xs font-medium tracking-[0.2em] text-snow/40 uppercase">{col.title}</p>
+              <ul className="mt-4 space-y-2.5 text-sm font-light text-snow/70">
+                {col.links.map(([label, href]) => (
+                  <li key={label}>
+                    <a href={href} className="nav-rainbow transition-colors hover:text-snow">
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+        </div>
+        <div className="mt-10 flex flex-col gap-2 border-t border-snow/10 pt-6 text-xs font-light text-snow/35 sm:flex-row sm:justify-between">
+          <p>© {new Date().getFullYear()} GRID Agency UG (haftungsbeschränkt) · sign.grid-agency.de</p>
+          <p>Made with ♥ in Berlin &amp; Frankfurt</p>
+        </div>
+      </div>
+    </footer>
   );
 }
 

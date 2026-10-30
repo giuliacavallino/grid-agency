@@ -50,7 +50,7 @@ export type Attachment = { id: string; name: string; contentType: string; size: 
 
 export type Page<T> = { items: T[]; next: string | null };
 
-export type Draft = { to: string[]; cc: string[]; subject: string; body: string };
+export type Draft = { to: string[]; cc: string[]; subject: string; body: string; /** body ist HTML */ html?: boolean };
 
 /** Dateianhang mit Inhalt (Base64), z. B. zum Weiterleiten an DATEV */
 export type FileAttachment = { name: string; contentType: string; contentBytes: string };
@@ -241,7 +241,7 @@ function realGraph(mailbox: string): GraphApi {
         body: JSON.stringify({
           message: {
             subject: draft.subject,
-            body: { contentType: "Text", content: draft.body },
+            body: { contentType: draft.html ? "HTML" : "Text", content: draft.body },
             toRecipients: recipients(draft.to),
             ccRecipients: recipients(draft.cc),
             attachments: attachments.map((a) => ({ "@odata.type": "#microsoft.graph.fileAttachment", ...a })),

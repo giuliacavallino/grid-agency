@@ -369,3 +369,24 @@ export function renderBundle(input: BundleInput) {
     </Document>
   );
 }
+
+export type BundlePart = "angebot" | "vertrag" | "sepa";
+
+export const PART_FILE: Record<BundlePart, string> = { angebot: "Angebot", vertrag: "Agenturvertrag", sepa: "SEPA-Mandat" };
+
+/** Ein Dokument der Mappe als eigenes PDF (für Abschlussmail und Kundenakte),
+ * nach der Unterschrift mit dem Abschlussprotokoll am Ende */
+export function renderPart(input: BundleInput, part: BundlePart) {
+  const c = input.settings.company;
+  const title = part === "angebot" ? `Angebot ${input.offer.number ?? ""}` : part === "vertrag" ? input.contract.title : "SEPA-Lastschriftmandat";
+  return renderToBuffer(
+    <Document title={title} author={c.name} creator={c.name} producer="GRID sign" language="de-DE">
+      {part === "angebot" && (
+        <InvoicePage doc={input.offer} settings={input.settings} payment={input.sepa_required ? "sepa" : "ueberweisung"} extra={<Acceptance input={input} />} />
+      )}
+      {part === "vertrag" && <ContractPages input={input} />}
+      {part === "sepa" && <SepaPage input={input} />}
+      {input.final && <ProtocolPage input={input} />}
+    </Document>
+  );
+}
