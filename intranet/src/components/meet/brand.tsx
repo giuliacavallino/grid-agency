@@ -105,8 +105,8 @@ export function EbookCard({ className }: { className?: string }) {
 
 export function MeetFooter() {
   return (
-    <footer className="border-t border-snow/[0.08] bg-snow/[0.04]">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-4 text-xs text-snow/60 md:px-6">
+    <footer className="shrink-0 border-t border-snow/[0.08] bg-snow/[0.04]">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-3 text-xs text-snow/60 md:px-6">
         <p>
           <span className="font-medium text-snow/85">GRID Agency</span> · Social-Media-Agentur
         </p>
@@ -126,14 +126,18 @@ export function MeetFooter() {
 /** Seitenrahmen wie die Raumseite: Marke oben, Inhalt mittig, Marken-Leiste
  * und Fußleiste unten */
 export function MeetShell({ children, strip = true, center }: { children: React.ReactNode; strip?: boolean; center?: boolean }) {
+  // Eine Seite ohne Scrollen: fest auf den Bildschirm, Inhalt mittig; die
+  // Marken-Leiste nur, wenn genug Höhe da ist
   return (
-    <div className="aurora flex min-h-dvh flex-col bg-sky text-snow">
-      <header className="mx-auto flex h-16 w-full max-w-6xl items-center px-4 md:px-6">
+    <div className="aurora fixed inset-0 flex flex-col overflow-hidden overscroll-none bg-sky text-snow">
+      <header className="mx-auto flex h-16 w-full max-w-6xl shrink-0 items-center px-4 md:px-6">
         <MeetMark />
       </header>
-      <main className={clsx("mx-auto w-full max-w-6xl flex-1 px-4 md:px-6", center && "grid place-items-center")}>{children}</main>
+      <main className={clsx("mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col justify-center overflow-hidden px-4 md:px-6", center && "items-center")}>
+        {children}
+      </main>
       {strip && (
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-end gap-6 px-4 pt-6 pb-8 md:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] md:px-6">
+        <div className="mx-auto hidden w-full max-w-6xl shrink-0 grid-cols-[minmax(0,1fr)_minmax(0,26rem)] items-end gap-6 px-6 pt-4 pb-6 md:grid [@media(max-height:860px)]:hidden">
           <LogoMarquee />
           <EbookCard />
         </div>
