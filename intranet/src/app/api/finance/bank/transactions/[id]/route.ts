@@ -1,14 +1,14 @@
 import type { BankTransaction, OpenItem } from "@/lib/bank";
 import { withUser } from "@/lib/server/auth";
-import { assignEasybill, assignInvoice, clearMatch, ignore } from "@/lib/server/bank";
+import { assignInvoice, assignReceivable, clearMatch, ignore } from "@/lib/server/bank";
 import { db } from "@/lib/server/db";
 import { BankError } from "@/lib/server/enable-banking";
-import { EasybillError, openInvoices } from "@/lib/server/easybill";
+import { openReceivables } from "@/lib/server/receivables";
 
 type Context = { params: Promise<{ id: string }> };
 
 /** Umsatz zuordnen, ignorieren, Zuordnung lösen oder Notiz speichern.
- * Body: { action: "invoice", invoice_id } | { action: "easybill", document_id }
+ * Body: { action: "invoice", invoice_id } | { action: "receivable", document_id }
  * | { action: "ignore" } | { action: "clear" } | { action: "note", note } */
 export const POST = withUser(async (user, request, { params }: Context) => {
   const { id } = await params;
@@ -24,11 +24,11 @@ export const POST = withUser(async (user, request, { params }: Context) => {
         if (tx.match_type && tx.match_type !== "invoice") return busy();
         if (tx.invoice_id) await clearMatch(tx);
         return Response.json(await assignInvoice(tx, String(body.invoice_id), user.name));
-      case "easybill": {
+      case "receivable": {
         if (tx.match_type) return busy();
-        const item = (await openInvoices()).find((d: OpenItem) => d.id === String(body.document_id));
-        if (!item) return Response.json({ error: "Rechnung in easybill nicht (mehr) offen" }, { status: 409 });
-        return Response.json(await assignEasybill(tx, item, user.name));
+        const item = (await openReceivables()).find((d: OpenItem) => d.id === String(body.document_id));
+        if (!item) return Response.json({ error: "Rechnung ist nicht (mehr) offen" }, { status: 409 });
+        return Response.json(await assignReceivable(tx, item, user.name));
       }
       case "ignore":
         if (tx.match_type) return busy();
@@ -41,7 +41,7 @@ export const POST = withUser(async (user, request, { params }: Context) => {
         return Response.json({ error: "Unbekannte Aktion" }, { status: 400 });
     }
   } catch (error) {
-    if (error instanceof BankError || error instanceof EasybillError) return Response.json({ error: error.message }, { status: 502 });
+    if (error instanceof BankError) return Response.json({ error: error.message }, { status: 502 });
     throw error;
   }
-}, ["finance"]);
+}, ["admin"]);

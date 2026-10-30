@@ -22,7 +22,7 @@ import { cn as clsx } from "@/lib/cn";
 import { createRow, deleteRow, updateRow } from "@/lib/data";
 import { topPosition } from "@/lib/sales/types";
 import { dueLabel, isOverdue, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
-import { Button, Dialog, IconButton, Spinner, useToast } from "@/components/ui";
+import { Button, Dialog, IconButton, Select, Spinner, useToast } from "@/components/ui";
 import { accentFill } from "@/lib/theme";
 import { PersonAvatar } from "@/components/person";
 import { DoneToggle } from "./task";
@@ -328,23 +328,25 @@ export function TaskRow({
           <ProjectLabel project={project} />
         </span>
       )}
-      <label className="relative hidden w-44 shrink-0 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-snow/[0.06] md:flex">
-        {task.assignee ? <PersonAvatar name={task.assignee} className="h-6 w-6 text-[10px]" /> : <span className="h-6 w-6 rounded-full border border-dashed border-snow/35" />}
-        <span className={clsx("truncate text-[13px]", task.assignee ? "text-snow/80" : "text-snow/50")}>{task.assignee ?? "Niemand"}</span>
-        <select
-          value={task.assignee ?? ""}
-          onChange={(e) => save({ assignee: e.target.value || null })}
-          aria-label="Zuständig"
-          className="absolute inset-0 cursor-pointer opacity-0"
-        >
-          <option value="">Niemand</option>
-          {people.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        value={task.assignee ?? ""}
+        onChange={(e) => save({ assignee: e.target.value || null })}
+        aria-label="Zuständig"
+        className="hidden w-44 shrink-0 items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-snow/[0.06] md:flex"
+        renderButton={() => (
+          <>
+            {task.assignee ? <PersonAvatar name={task.assignee} className="h-6 w-6 text-[10px]" /> : <span className="h-6 w-6 rounded-full border border-dashed border-snow/35" />}
+            <span className={clsx("truncate text-[13px]", task.assignee ? "text-snow/80" : "text-snow/50")}>{task.assignee ?? "Niemand"}</span>
+          </>
+        )}
+      >
+        <option value="">Niemand</option>
+        {people.map((p) => (
+          <option key={p} value={p}>
+            {p}
+          </option>
+        ))}
+      </Select>
       <DueField task={task} onChange={(due_on) => save({ due_on })} />
 
       <IconButton

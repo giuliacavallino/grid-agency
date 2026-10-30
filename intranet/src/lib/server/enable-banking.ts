@@ -56,6 +56,10 @@ export type EbTransaction = {
   remittance_information?: string[] | null;
 };
 
+/** Angaben zur Person am Bildschirm (manueller Abgleich). Mit ihnen zählt
+ * der Abruf nicht gegen das PSD2-Limit von 4 automatischen Abrufen am Tag. */
+export type Psu = { ip: string; userAgent: string };
+
 let key: KeyObject | null = null;
 
 export const bankConfigured = () => DEMO || (!!process.env.ENABLE_BANKING_APP_ID && !!process.env.ENABLE_BANKING_PRIVATE_KEY);
@@ -75,7 +79,7 @@ async function jwt() {
     .sign(key);
 }
 
-async function call<T>(method: "GET" | "POST" | "DELETE", path: string, body?: unknown): Promise<T> {
+async function call<T>(method: "GET" | "POST" | "DELETE", path: string, body?: unknown, psu?: Psu): Promise<T> {
   if (DEMO) return demoEnableBanking(method, path, body) as T;
   const response = await fetch(`${API}${path}`, {
     method,
@@ -83,6 +87,7 @@ async function call<T>(method: "GET" | "POST" | "DELETE", path: string, body?: u
       Authorization: `Bearer ${await jwt()}`,
       Accept: "application/json",
       ...(body ? { "Content-Type": "application/json" } : {}),
+      ...(psu ? { "Psu-Ip-Address": psu.ip, "Psu-User-Agent": psu.userAgent } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
@@ -124,13 +129,13 @@ export const createSession = (code: string) => call<EbSession>("POST", "/session
 
 export const deleteSession = (id: string) => call<void>("DELETE", `/sessions/${encodeURIComponent(id)}`);
 
-export async function balances(uid: string) {
-  const { balances } = await call<{ balances: EbBalance[] }>("GET", `/accounts/${encodeURIComponent(uid)}/balances`);
+export async function balances(uid: string, psu?: Psu) {
+  const { balances } = await call<{ balances: EbBalance[] }>("GET", `/accounts/${encodeURIComponent(uid)}/balances`, undefined, psu);
   return balances;
 }
 
 /** Alle Umsätze ab dateFrom (yyyy-mm-dd), seitenweise */
-export async function transactions(uid: string, dateFrom: string) {
+export async function transactions(uid: string, dateFrom: string, psu?: Psu) {
   const out: EbTransaction[] = [];
   let continuation: string | null = null;
   for (let page = 0; page < 50; page++) {
@@ -138,7 +143,9 @@ export async function transactions(uid: string, dateFrom: string) {
     if (continuation) query.set("continuation_key", continuation);
     const result: { transactions: EbTransaction[]; continuation_key?: string | null } = await call(
       "GET",
-      `/accounts/${encodeURIComponent(uid)}/transactions?${query}`
+      `/accounts/${encodeURIComponent(uid)}/transactions?${query}`,
+      undefined,
+      psu
     );
     out.push(...result.transactions);
     continuation = result.continuation_key ?? null;

@@ -26,7 +26,8 @@ export const TABLES = {
   customers: {
     columns: [
       "name", "contact_name", "email", "phone", "website", "industry", "city", "status",
-      "source", "notes", "lead_id",
+      "source", "notes", "lead_id", "customer_number", "street", "zip", "country", "vat_id",
+      "billing_email", "payment_terms_days",
     ],
     filters: ["status"],
     order: { column: "name", ascending: true },
@@ -112,8 +113,9 @@ const TABLE_AREAS: Record<keyof typeof TABLES, string[]> = {
   invoices: ["finance"],
   applications: ["personal"],
   job_postings: ["personal"],
-  bank_accounts: ["finance"],
-  bank_transactions: ["finance"],
+  // Bank nur für die Geschäftsführung (Admin)
+  bank_accounts: ["admin"],
+  bank_transactions: ["admin"],
   task_projects: ["aufgaben", "admin"],
   task_sections: ["aufgaben"],
   tasks: ["aufgaben"],

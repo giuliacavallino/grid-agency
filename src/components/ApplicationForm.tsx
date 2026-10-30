@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Check, ChevronDown, CircleCheck, LoaderCircle, Paperclip } from "lucide-react";
+import { Check, ChevronDown, LoaderCircle, Paperclip } from "lucide-react";
 import {
   submitApplication,
   type ApplicationFormState,
@@ -189,6 +189,40 @@ function JobSelect({
   );
 }
 
+/** Grüner Haken nach dem Absenden: Kreis und Haken zeichnen sich nach,
+ * dazu ein kurzer Puls. */
+function SuccessCheck() {
+  return (
+    <div className="relative h-16 w-16 [animation:pop-in_0.5s_var(--ease-spring)_backwards]">
+      <span aria-hidden className="absolute inset-0 rounded-full bg-emerald-400/25 [animation:pulse-out_0.9s_0.55s_ease-out_both]" />
+      <svg viewBox="0 0 64 64" className="relative h-16 w-16" aria-hidden>
+        <g transform="rotate(-90 32 32)">
+          <circle
+            cx="32"
+            cy="32"
+            r="29"
+            fill="rgb(52 211 153 / 0.12)"
+            stroke="rgb(52 211 153)"
+            strokeWidth="3"
+            pathLength={1}
+            className="[stroke-dasharray:1] [animation:draw_0.5s_ease-in-out_both]"
+          />
+        </g>
+        <path
+          d="M20 33 l8 8 l16 -18"
+          fill="none"
+          stroke="rgb(52 211 153)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          pathLength={1}
+          className="[stroke-dasharray:1] [animation:draw_0.35s_0.4s_ease-out_both]"
+        />
+      </svg>
+    </div>
+  );
+}
+
 /** Bewerbungsformular auf /jobs: Angaben und Unterlagen gehen direkt als
  * Karte in Personal → Bewerbungen im Intranet. */
 export function ApplicationForm({
@@ -248,8 +282,11 @@ export function ApplicationForm({
   if (state.status === "success") {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-snow/10 bg-snow/[0.04] px-6 py-10 text-center">
-        <CircleCheck className="h-8 w-8 text-dune" strokeWidth={1.75} />
-        <p className="max-w-md text-sm font-light leading-relaxed text-snow/80">
+        <SuccessCheck />
+        <p
+          style={{ "--d": "600ms" } as React.CSSProperties}
+          className="rise max-w-md text-sm font-light leading-relaxed text-snow/80"
+        >
           {state.message ?? "Danke für deine Bewerbung!"}
         </p>
       </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/app/PageShell";
 import { LegalArticle, LegalHeading } from "@/components/app/LegalArticle";
+import { ConsentSettings } from "@/components/app/ConsentSettings";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | GRID Agency",
@@ -67,8 +68,9 @@ export default function DatenschutzPage() {
           <LegalHeading>3. Cookies und lokale Speicherung</LegalHeading>
           <p>
             Wir setzen keine Cookies und verwenden keine Analyse-, Tracking-
-            oder Werbewerkzeuge. Deshalb brauchen wir auch kein
-            Cookie-Banner.
+            oder Werbewerkzeuge. Einzige Ausnahme ist das Meta-Pixel auf
+            unserer E-Book-Seite, das nur mit deiner Einwilligung lädt
+            (siehe Abschnitt 7).
           </p>
           <p className="mt-2">
             Für den Betrieb der Seite speichern wir wenige technische
@@ -83,7 +85,11 @@ export default function DatenschutzPage() {
             <li>
               ob du im Kontaktbereich &bdquo;Termin buchen&ldquo; oder
               &bdquo;Nachricht&ldquo; gewählt hast, wenn du von einer
-              Unterseite kommst (wird sofort danach gelöscht).
+              Unterseite kommst (wird sofort danach gelöscht),
+            </li>
+            <li>
+              deine Entscheidung zum Meta-Pixel auf der E-Book-Seite (siehe
+              Abschnitt 7), damit wir nicht bei jedem Besuch erneut fragen.
             </li>
           </ul>
           <p className="mt-2">
@@ -94,7 +100,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading id="kontaktformular">4. Kontaktformular, E-Mail und Telefon</LegalHeading>
+          <LegalHeading id="kontaktformular">4. Kontaktformular, E-Book, E-Mail und Telefon</LegalHeading>
           <p>
             Wenn du uns über das Kontaktformular schreibst, verarbeiten wir
             die Angaben, die du machst (Name, E-Mail-Adresse, optional
@@ -115,6 +121,20 @@ export default function DatenschutzPage() {
             Interesse an der Beantwortung von Anfragen (Art. 6 Abs. 1 lit. f
             DSGVO). Wir löschen die Daten, sobald deine Anfrage erledigt ist
             und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
+          </p>
+          <p id="ebook" className="mt-2 scroll-mt-24 lg:scroll-mt-32">
+            Wenn du auf unserer Website unser E-Book anforderst, verarbeiten
+            wir Name, E-Mail-Adresse, optional dein Unternehmen sowie die
+            Kampagnen-Angaben aus dem Link, über den du gekommen bist (z. B.
+            utm-Parameter oder die Klick-ID einer Meta-Anzeige). Wir
+            speichern sie wie beim Kontaktformular bei Supabase, um dir das
+            E-Book bereitzustellen und dich, wie von dir erlaubt, per E-Mail
+            oder Telefon zu Social Media und einer kostenlosen Erstberatung zu
+            kontaktieren. Rechtsgrundlage ist deine Einwilligung
+            (Art. 6 Abs. 1 lit. a DSGVO), die du jederzeit mit Wirkung für
+            die Zukunft widerrufen kannst, etwa per E-Mail an uns. Nach einem
+            Widerruf oder spätestens zwei Jahre nach dem letzten Kontakt
+            löschen wir die Daten.
           </p>
         </section>
 
@@ -174,17 +194,50 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading id="einstellungen">7. Keine Einwilligungen nötig</LegalHeading>
+          <LegalHeading id="meta-pixel">7. Meta-Pixel auf der E-Book-Seite</LegalHeading>
           <p>
-            Auf unserer Website laden wir keine Inhalte, Skripte oder
-            Schriften von Drittanbietern und setzen keine Cookies. Es gibt
-            deshalb keine Einwilligungen, die du verwalten oder widerrufen
-            müsstest.
+            Auf unserer E-Book-Seite (/ebook) nutzen wir mit deiner
+            Einwilligung das Meta-Pixel der Meta Platforms Ireland Ltd.,
+            Merrion Road, Dublin 4, D04 X2K5, Irland. Ohne Einwilligung wird
+            es nicht geladen; auf allen anderen Seiten setzen wir es nicht
+            ein. Mit dem Pixel messen wir, ob Menschen über unsere Anzeigen
+            auf Facebook und Instagram zu uns kommen und das E-Book
+            anfordern, und können unsere Anzeigen entsprechend aussteuern.
+          </p>
+          <p className="mt-2">
+            Dabei überträgt dein Browser deine IP-Adresse, technische Daten
+            zu Browser und Gerät, die aufgerufene Seite und die Ereignisse
+            &bdquo;Seitenaufruf&ldquo; und &bdquo;E-Book angefordert&ldquo;
+            an Meta. Meta setzt dafür Cookies (z. B. _fbp) und kann die
+            Daten deinem Facebook- oder Instagram-Konto zuordnen. Name und
+            E-Mail-Adresse aus dem Formular übermitteln wir nicht an Meta.
+            Für die Erhebung und Übermittlung sind wir mit Meta gemeinsam
+            verantwortlich (Art. 26 DSGVO); die Vereinbarung dazu stellt
+            Meta unter facebook.com/legal/controller_addendum bereit. Meta
+            verarbeitet Daten auch in den USA und ist unter dem EU-US Data
+            Privacy Framework zertifiziert.
+          </p>
+          <p className="mt-2">
+            Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a
+            DSGVO, § 25 Abs. 1 TDDDG). Du kannst sie jederzeit unten in den
+            Datenschutz-Einstellungen widerrufen. Weitere Informationen
+            findest du in der Datenschutzrichtlinie von Meta unter
+            facebook.com/privacy/policy.
           </p>
         </section>
 
         <section>
-          <LegalHeading>8. Links zu sozialen Netzwerken und Google</LegalHeading>
+          <LegalHeading id="einstellungen">8. Datenschutz-Einstellungen</LegalHeading>
+          <p>
+            Hier siehst du, ob du eine Einwilligung gespeichert hast, und
+            kannst sie jederzeit mit Wirkung für die Zukunft widerrufen
+            (Art. 7 Abs. 3 DSGVO).
+          </p>
+          <ConsentSettings />
+        </section>
+
+        <section>
+          <LegalHeading>9. Links zu sozialen Netzwerken und Google</LegalHeading>
           <p>
             Auf unserer Website verlinken wir auf Instagram-Profile und auf
             unsere Google-Bewertungen. Das sind einfache Links: Es werden
@@ -196,7 +249,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading>9. Veranstaltungen</LegalHeading>
+          <LegalHeading>10. Veranstaltungen</LegalHeading>
           <p>
             Die Informationen zu unseren Events laden wir serverseitig aus
             unserer Datenbank. Dein Browser spricht dabei nur mit unserer
@@ -206,7 +259,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading>10. Deine Rechte</LegalHeading>
+          <LegalHeading>11. Deine Rechte</LegalHeading>
           <p>Du hast jederzeit das Recht auf</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>Auskunft über deine bei uns gespeicherten Daten (Art. 15 DSGVO),</li>
@@ -236,7 +289,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading>11. Keine automatisierte Entscheidungsfindung</LegalHeading>
+          <LegalHeading>12. Keine automatisierte Entscheidungsfindung</LegalHeading>
           <p>
             Wir setzen keine automatisierte Entscheidungsfindung
             einschließlich Profiling im Sinne von Art. 22 DSGVO ein.
