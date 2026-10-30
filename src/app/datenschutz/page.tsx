@@ -122,12 +122,15 @@ export default function DatenschutzPage() {
             wir Name, E-Mail-Adresse, optional dein Unternehmen sowie die
             Kampagnen-Angaben aus dem Link, über den du gekommen bist (z. B.
             utm-Parameter oder die Klick-ID einer Meta-Anzeige). Wir
-            speichern sie wie beim Kontaktformular bei Supabase, um dir das
-            E-Book bereitzustellen und dich, wie von dir erlaubt, per E-Mail
-            oder Telefon zu Social Media und einer kostenlosen Erstberatung zu
-            kontaktieren. Rechtsgrundlage ist deine Einwilligung
-            (Art. 6 Abs. 1 lit. a DSGVO), die du jederzeit mit Wirkung für
-            die Zukunft widerrufen kannst, etwa per E-Mail an uns. Nach einem
+            speichern sie wie beim Kontaktformular bei Supabase und schicken
+            dir das E-Book per E-Mail über unser Postfach bei Microsoft 365
+            (Microsoft Ireland Operations Ltd.). Mit dem Absenden des
+            Formulars willigst du ein, dass wir dir das E-Book schicken und
+            dich per E-Mail oder Telefon zu Social Media und einer
+            kostenlosen Erstberatung kontaktieren. Rechtsgrundlage ist diese
+            Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die du jederzeit mit
+            Wirkung für die Zukunft widerrufen kannst, etwa per E-Mail an
+            uns. Nach einem
             Widerruf oder spätestens zwei Jahre nach dem letzten Kontakt
             löschen wir die Daten.
           </p>

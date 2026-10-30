@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, Menu } from "lucide-react";
 import { ContactLink, SectionLink } from "@/components/ui/ContactLink";
+import { EbookShelf } from "./EbookShelf";
 import { MainMenu } from "./MainMenu";
 
 const pages = [
@@ -13,7 +14,6 @@ const pages = [
   { href: "/events", label: "Events" },
   { href: "/jobs", label: "Jobs" },
   { href: "/faq", label: "FAQ" },
-  { href: "/ebook", label: "E-Book" },
 ];
 
 /** Kopfleiste als schwebende Liquid-Glass-Pille, auf allen Seiten gleich.
@@ -64,6 +64,7 @@ export function TopBar() {
                   </Link>
                 );
               })}
+              <EbookShelf current={pathname.startsWith("/ebook")} />
               <SectionLink id="team" className="nav-rainbow rounded-full px-3 py-2 xl:px-4">
                 Über uns
               </SectionLink>

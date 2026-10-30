@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <title>Social Media 2027 – Der Fahrplan für Unternehmer:innen | GRID Agency</title>
 <style>
-@font-face {
-  font-family: "Readex Pro";
-  src: url("../src/app/fonts/ReadexPro-Variable.ttf") format("truetype");
-  font-weight: 160 700;
-}
+/* Feste Schnitte statt der variablen Schrift: Chromium bettet variable
+   Schriften als Type 3 ein, das bläht das PDF auf (Versand per Mail). */
+@font-face { font-family: "Readex Pro"; src: url("../intranet/src/lib/server/fonts/ReadexPro-300.ttf") format("truetype"); font-weight: 300; }
+@font-face { font-family: "Readex Pro"; src: url("../intranet/src/lib/server/fonts/ReadexPro-400.ttf") format("truetype"); font-weight: 400; }
+@font-face { font-family: "Readex Pro"; src: url("../intranet/src/lib/server/fonts/ReadexPro-500.ttf") format("truetype"); font-weight: 500; }
 @page { size: A4; margin: 0; }
 :root {
   --sky: #2b2926;
@@ -286,7 +286,7 @@ table.kpi td:first-child { font-weight: 500; color: var(--snow); white-space: no
 
 <!-- 6 · Opener Kapitel 2 -->
 <section class="page opener">
-  <img class="bg" src="../public/referenzen/480-gradi/21.webp" alt="">
+  <img class="bg" src="img/480-gradi-21.jpg" alt="">
   <div class="shade"></div>
   <div class="inner">
     <span class="num grad">02</span>
@@ -337,7 +337,7 @@ table.kpi td:first-child { font-weight: 500; color: var(--snow); white-space: no
 
 <!-- 9 · Opener Kapitel 3 -->
 <section class="page opener">
-  <img class="bg" src="../public/referenzen/casa-beef/events-20.webp" alt="">
+  <img class="bg" src="img/casa-beef-events-20.jpg" alt="">
   <div class="shade"></div>
   <div class="inner">
     <span class="num grad">03</span>

@@ -1,5 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { DEMO, SHARED_MAILBOX } from "@/lib/config";
 import { OFFER_TEXTS, todayBerlin, type ItemInput } from "@/lib/billing";
 import type { ContractTerms } from "@/lib/contract";
@@ -200,6 +202,78 @@ export async function contact(input: { name: string; email: string; company: str
       .from("contact_submissions")
       .insert({ name, email, company: input.company.trim().slice(0, 160) || null, message, budget: input.budget.trim().slice(0, 40) || null })
   );
+}
+
+// ---------- E-Book (Leadmagnet, Website /ebook) ----------
+
+/** Gerendert mit ebook/render.mjs; muss unter 3 MB bleiben (Graph-Anhang). */
+const EBOOK_PDF = path.join(process.cwd(), "src/lib/server/ebook/social-media-2027.pdf");
+const META_SOURCES = ["facebook", "fb", "instagram", "ig", "meta"];
+
+/** E-Book-Anforderung: Lead in „Neuer Lead“ (Quelle meta bei Anzeigen-
+ * Traffic, sonst website, je E-Mail und Quelle nur einmal) und das PDF als
+ * Anhang von hello@. Wer zweimal anfordert, bekommt es erneut. */
+export async function requestEbook(input: { name: string; email: string; company: string; tracking: Record<string, string>; altcha: string }) {
+  await verifyAltcha(input.altcha);
+  const name = input.name.trim().slice(0, 120);
+  const email = input.email.trim().slice(0, 200);
+  if (!name || !EMAIL.test(email)) throw new FlowError("Bitte gib deinen Namen und eine gültige E-Mail-Adresse ein.");
+  const tracking = Object.fromEntries(
+    Object.entries(input.tracking ?? {})
+      .filter(([key, value]) => /^(utm_[a-z]+|fbclid)$/.test(key) && typeof value === "string" && value)
+      .map(([key, value]) => [key, value.slice(0, 200)])
+  );
+  const fromMeta = Boolean(tracking.fbclid) || META_SOURCES.includes((tracking.utm_source ?? "").toLowerCase());
+
+  const html = buttonMail({
+    eyebrow: "Dein E-Book",
+    title: "Social Media 2027 ist da.",
+    paragraphs: [
+      `Hallo ${firstName(name)},`,
+      "im Anhang findest du unser E-Book „Social Media 2027“: der Wandel bis 2027 und was du jetzt tun musst, um auf Social Media mehr Umsatz, zufriedenere Kund:innen und mehr Bewerbungen zu gewinnen. Mit echten Zahlen aus unseren Projekten und einem 90-Tage-Fahrplan zum Abhaken.",
+      "Wenn du den Fahrplan nicht allein umsetzen willst: In einem kostenlosen Erstgespräch schauen wir uns deine Kanäle an und zeigen dir, wo dein größtes Potenzial liegt.",
+    ],
+    button: "Kostenloses Erstgespräch buchen",
+    link: `${WEBSITE_URL}/termin`,
+    sender: HOST_NAME,
+  });
+  if (DEMO) {
+    console.info(`[Vorschau] E-Book an ${email}`);
+    return;
+  }
+
+  const inserted = check(
+    await sb()
+      .from("leads")
+      .upsert(
+        {
+          source: fromMeta ? "meta" : "website",
+          source_ref: `ebook:${email.toLowerCase()}`,
+          name,
+          email,
+          company: input.company.trim().slice(0, 160) || null,
+          message: "Hat das E-Book „Social Media 2027“ angefordert und der Kontaktaufnahme zugestimmt.",
+          raw: { ebook: "social-media-2027", consent_at: new Date().toISOString(), tracking },
+        },
+        { onConflict: "source,source_ref", ignoreDuplicates: true }
+      )
+      .select("id")
+  ) as { id: string }[];
+
+  const pdf = await readFile(EBOOK_PDF);
+  try {
+    await sendAppMail(SHARED_MAILBOX, {
+      to: [email],
+      subject: `${firstName(name)}, hier ist dein E-Book „Social Media 2027“`,
+      body: html,
+      html: true,
+      attachments: [{ name: "GRID – Social Media 2027.pdf", contentType: "application/pdf", contentBytes: pdf.toString("base64") }],
+    });
+  } catch (error) {
+    console.error(error);
+    throw new FlowError("Das E-Book konnte gerade nicht verschickt werden. Bitte versuch es später erneut.");
+  }
+  if (inserted[0]) await note(inserted[0].id, "email", "E-Book „Social Media 2027“ per Mail verschickt");
 }
 
 // ---------- Angebot erstellen und abschicken ----------
