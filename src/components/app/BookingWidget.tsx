@@ -26,7 +26,7 @@ function SubmitButton() {
 }
 
 /** Erstgespräch buchen, direkt in Giulias Kalender: Tag und Uhrzeit wählen,
- * Kontaktdaten eintragen, Einladung mit Teams-Link kommt per Mail. Freie
+ * Kontaktdaten eintragen, Einladung mit Link zum Video-Call kommt per Mail. Freie
  * Zeiten werden erst geladen, wenn der Kalender ins Bild kommt. Mit
  * Einladungslink (`token`) sind die Angaben vorausgefüllt; `kickoff` bucht
  * den Kick-off nach der Unterschrift. */
@@ -91,7 +91,7 @@ export function BookingWidget({
           <p className="text-xl font-semibold tracking-tight text-snow">Du bist im Kalender. 🎉</p>
           <p className="mt-2 max-w-md text-sm font-light leading-relaxed text-snow/70">
             {long.format(new Date(done.start))} um {time.format(new Date(done.start))} Uhr. Die Einladung
-            mit Teams-Link kommt gleich per Mail von hello@grid-agency.de. Giulia freut sich auf dich.
+            mit Link zum Video-Call kommt gleich per Mail von hello@grid-agency.de. Giulia freut sich auf dich.
           </p>
         </div>
       </div>
@@ -107,11 +107,11 @@ export function BookingWidget({
         <p>
           {kind === "kickoff" ? (
             <>
-              <span className="font-medium text-snow">Kick-off mit Giulia</span> · {info?.minutes ?? 60} Min · Teams
+              <span className="font-medium text-snow">Kick-off mit Giulia</span> · {info?.minutes ?? 60} Min · Video-Call
             </>
           ) : (
             <>
-              <span className="font-medium text-snow">Erstgespräch mit Giulia</span> · 30 Min · Teams · kostenlos
+              <span className="font-medium text-snow">Erstgespräch mit Giulia</span> · 30 Min · Video-Call · kostenlos
             </>
           )}
         </p>

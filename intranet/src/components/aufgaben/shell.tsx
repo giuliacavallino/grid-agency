@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, LayoutGrid, UserRound } from "lucide-react";
+import { Archive, LayoutGrid, UserRound, Video } from "lucide-react";
 import { useRows } from "@/lib/data";
 import type { TaskProject } from "@/lib/tasks";
 import { AreaShell, type NavItem } from "@/components/sales/shell";
@@ -8,6 +8,7 @@ import { AreaShell, type NavItem } from "@/components/sales/shell";
 const FIXED: NavItem[] = [
   { href: "/aufgaben", label: "Alle Kunden", icon: LayoutGrid },
   { href: "/aufgaben/meine", label: "Meine To-dos", icon: UserRound },
+  { href: "/aufgaben/calls", label: "Aus Calls", icon: Video, counter: "proposals" },
 ];
 
 /** Seitenleiste der Aufgaben: Übersicht, eigene To-dos, je aktivem Kunden

@@ -7,7 +7,7 @@ import type {} from "altcha";
 // Captcha (ALTCHA): löst im Hintergrund eine kleine Rechenaufgabe, sobald
 // das Formular sichtbar ist. Keine Cookies, kein Drittanbieter – die Aufgabe
 // kommt über /api/altcha vom Intranet. Das Ergebnis steht im Formularfeld
-// „altcha“ bzw. kommt über onChange.
+// „altcha“ bzw. kommt über onChange. Unsichtbar: Nutzer müssen nichts tun.
 
 const STRINGS = {
   label: "Ich bin kein Roboter",
@@ -20,7 +20,7 @@ const STRINGS = {
   footer: "",
 };
 
-export function Altcha({ onChange, light }: { onChange?: (payload: string | null) => void; light?: boolean }) {
+export function Altcha({ onChange }: { onChange?: (payload: string | null) => void }) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -38,25 +38,17 @@ export function Altcha({ onChange, light }: { onChange?: (payload: string | null
     return () => el.removeEventListener("statechange", handler);
   }, [onChange]);
 
-  const colors = light ? ["rgba(43,41,38,0.15)", "#2b2926"] : ["rgba(228,226,231,0.15)", "#e4e2e7"];
   return (
-    <altcha-widget
-      ref={ref}
-      challengeurl="/api/altcha"
-      name="altcha"
-      auto="onload"
-      hidelogo
-      hidefooter
-      strings={JSON.stringify(STRINGS)}
-      style={
-        {
-          "--altcha-color-base": "transparent",
-          "--altcha-color-border": colors[0],
-          "--altcha-color-text": colors[1],
-          "--altcha-border-radius": "0.5rem",
-          "--altcha-max-width": "100%",
-        } as AltchaWidgetCSSProperties
-      }
-    />
+    <div aria-hidden className="sr-only">
+      <altcha-widget
+        ref={ref}
+        challengeurl="/api/altcha"
+        name="altcha"
+        auto="onload"
+        hidelogo
+        hidefooter
+        strings={JSON.stringify(STRINGS)}
+      />
+    </div>
   );
 }

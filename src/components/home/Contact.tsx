@@ -17,7 +17,7 @@ export function Contact() {
           </h2>
           <p className="mt-5 max-w-md text-base font-light leading-relaxed text-snow/70 lg:text-lg">
             30 Minuten mit Giulia, kostenlos und ehrlich: Wo steht dein Feed, was bringt ihn nach vorn. Direkt im Kalender
-            buchen, Einladung mit Teams-Link inklusive.
+            buchen, Einladung mit Link zum Video-Call inklusive.
           </p>
           <ul className="mt-6 space-y-2.5 text-sm font-light text-snow/80">
             <li className="flex items-center gap-3">
@@ -26,7 +26,7 @@ export function Contact() {
             </li>
             <li className="flex items-center gap-3">
               <Video className="h-4 w-4 text-snow/60" strokeWidth={1.8} />
-              Online per Teams
+              Online per Video-Call
             </li>
             <li className="flex items-center gap-3">
               <BadgeCheck className="h-4 w-4 text-snow/60" strokeWidth={1.8} />

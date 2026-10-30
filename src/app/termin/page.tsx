@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 
 export const metadata: Metadata = {
   title: "Termin buchen | GRID Agency",
-  description: "Buch dir ein kostenloses Erstgespräch mit GRID Agency: 30 Minuten per Teams, direkt im Kalender.",
+  description: "Buch dir ein kostenloses Erstgespräch mit GRID Agency: 30 Minuten per Video-Call, direkt im Kalender.",
   referrer: "no-referrer",
   robots: { index: false, follow: false },
 };

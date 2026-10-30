@@ -13,7 +13,7 @@ import { brandedMail, senderFor } from "./mail-template";
 import { createEnvelope, markEnvelopeSent, revokeEnvelope } from "./sign";
 import { createMeeting, freeSlots, type Busy, type SlotRules } from "./slots";
 import { verifyAltcha } from "./altcha";
-import { book as bookErstgespraech, freeSlots as freeErstgespraech, type Slot } from "./booking";
+import { book as bookErstgespraech, freeSlots as freeErstgespraech, type BookingInput as ErstgespraechInput, type Slot } from "./booking";
 
 // Pipeline-Automatik: Neuer Lead → Erstgespräch (Lead bucht selbst auf der
 // Website, mit oder ohne Einladungslink) → Angebot verschickt (Angebot +
@@ -142,7 +142,17 @@ export async function bookingView(kind: MeetingKind, token: string | null): Prom
   };
 }
 
-export type BookingInput = { kind: MeetingKind; token: string; start: string; name: string; email: string; company: string; phone: string; message: string };
+export type BookingInput = {
+  kind: MeetingKind;
+  token: string;
+  start: string;
+  name: string;
+  email: string;
+  company: string;
+  phone: string;
+  message: string;
+  address?: ErstgespraechInput["address"];
+};
 
 /** Buchung über einen Einladungslink: Erstgespräch über die Website-Buchung
  * (hello@ als Organisator), Kick-off im Kalender von BOOKING_MAILBOX */
@@ -154,7 +164,7 @@ export async function bookWithLink(input: BookingInput) {
   const email = String(lead.email ?? input.email).trim();
 
   if (kind === "erstgespraech") {
-    return bookErstgespraech({ start: input.start, name, email, company: input.company, phone: input.phone, message: input.message }, lead.id);
+    return bookErstgespraech({ start: input.start, name, email, company: input.company, phone: input.phone, message: input.message, address: input.address }, lead.id);
   }
 
   const start = Date.parse(input.start);
@@ -163,10 +173,12 @@ export async function bookWithLink(input: BookingInput) {
   if (!slot) return null;
   const event = await createMeeting(HOST_MAILBOX, {
     subject: `Kick-off GRID × ${lead.company || name}`,
-    text: `Hi ${firstName(name)},\n\nwir freuen uns auf den Start! Im Kick-off gehen wir Ziele, Zugänge, Content-Plan und Abläufe durch. Den Teams-Link findest du in diesem Termin.\n\nBis bald\n${HOST_NAME}\nGRID Agency`,
+    text: `Hi ${firstName(name)},\n\nwir freuen uns auf den Start! Im Kick-off gehen wir Ziele, Zugänge, Content-Plan und Abläufe durch. Den Link zum Video-Call findest du in diesem Termin.\n\nBis bald\n${HOST_NAME}\nGRID Agency`,
     start,
     minutes: RULES.kickoff.minutes,
     attendee: { email, name },
+    hostName: HOST_NAME,
+    link: { lead_id: lead.id as string, customer_id: (lead.customer_id as string | null) ?? null },
   });
   await db().update("leads", lead.id, { kickoff_at: slot.start, kickoff_event_id: event.id, kickoff_url: event.joinUrl });
   await note(lead.id, "termin", `Kick-off gebucht: ${dateTimeDe(start)}`, name);
@@ -522,7 +534,7 @@ export async function startOnboarding(id: string, user: { email: string; name: s
         title: `Hi ${firstName(signer)}, los geht's!`,
         paragraphs: [
           `danke für dein Vertrauen – wir freuen uns riesig auf die Zusammenarbeit mit ${customer.name}!`,
-          `Im Kick-off (${RULES.kickoff.minutes} Minuten, per Teams) gehen wir Ziele, Zugänge, Content-Plan und Abläufe durch. Such dir einfach einen Termin aus.`,
+          `Im Kick-off (${RULES.kickoff.minutes} Minuten, per Video-Call) gehen wir Ziele, Zugänge, Content-Plan und Abläufe durch. Such dir einfach einen Termin aus.`,
         ],
         button: { label: "Kick-off-Termin wählen", href: link },
         sender: senderFor(user.name, user.email),

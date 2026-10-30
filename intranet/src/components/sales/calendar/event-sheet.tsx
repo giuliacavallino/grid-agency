@@ -80,7 +80,7 @@ export function EventSheet({
               rel="noopener"
               className="inline-flex h-10 w-fit items-center gap-2 rounded-full bg-snow px-4 font-medium text-sky hover:opacity-90"
             >
-              <Video className="h-4 w-4" /> An Teams-Besprechung teilnehmen
+              <Video className="h-4 w-4" /> {event.joinUrl.includes("teams.microsoft") ? "An Teams-Besprechung teilnehmen" : "Am Video-Call teilnehmen"}
             </a>
           )}
           {event.organizer && <Row icon={CalendarDays}>Organisiert von {event.organizer}</Row>}

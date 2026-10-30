@@ -31,7 +31,7 @@ import { hasArea } from "@/lib/access";
 import { useRows } from "@/lib/data";
 
 /** Zähler „neu“ an einem Menüpunkt (Leads, Bewerbungen, Rechnungen) */
-type Counter = "leads" | "applications" | "invoices";
+type Counter = "leads" | "applications" | "invoices" | "proposals";
 
 /** color: farbiger Punkt statt Icon (Kunden in Aufgaben); group: Zwischenüberschrift davor */
 /** area: nur sichtbar, wer diesen Bereich darf (z. B. "admin" für Bank) */
@@ -75,12 +75,15 @@ const COUNTER_QUERY: Record<Counter, [string, string]> = {
   leads: ["leads", "status=offen"],
   applications: ["applications", "stage=neu"],
   invoices: ["invoices", "stage=neu"],
+  proposals: ["meeting_tasks", "status=vorschlag"],
 };
 
-/** Anzahl neuer Einträge (Leads in „Neuer Lead“, neue Bewerbungen, neue Rechnungen) */
+/** Anzahl neuer Einträge (Leads in „Neuer Lead“, neue Bewerbungen, neue
+ * Rechnungen, offene Vorschläge aus Calls) */
 function useNewCount(counter: Counter) {
   const [table, query] = COUNTER_QUERY[counter];
-  const { data } = useRows<{ stage: string }>(table, query);
+  const { data } = useRows<{ stage?: string }>(table, query);
+  if (counter === "proposals") return data?.length ?? 0;
   return data?.filter((row) => row.stage === "neu").length ?? 0;
 }
 

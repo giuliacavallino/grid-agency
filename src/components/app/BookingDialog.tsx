@@ -97,7 +97,7 @@ function Stepper({ step, done }: { step: number; done: boolean }) {
 
 /** Erstgespräch buchen als Popup in drei Schritten: Daten, Termin,
  * Bestätigung. Freie Zeiten kommen aus Giulias Kalender, gebucht wird bei
- * hello@ mit Teams-Link, die Anfrage landet als Lead in der Pipeline.
+ * hello@ mit Link zum Video-Call, die Anfrage landet als Lead in der Pipeline.
  * Öffnet sich auf jeder Seite über `openBooking()`. */
 export function BookingDialog() {
   const mounted = useSyncExternalStore(
@@ -257,14 +257,14 @@ export function BookingDialog() {
             </li>
             <li className="flex items-center gap-3">
               <Video className="h-4 w-4 text-snow/60" strokeWidth={1.8} />
-              Online per Teams
+              Online per Video-Call
             </li>
             <li className="flex items-center gap-3">
               <BadgeCheck className="h-4 w-4 text-snow/60" strokeWidth={1.8} />
               Kostenlos und unverbindlich
             </li>
           </ul>
-          <p className="mt-1 text-sm font-light text-snow/60 lg:hidden">30 Min · per Teams · kostenlos</p>
+          <p className="mt-1 text-sm font-light text-snow/60 lg:hidden">30 Min · per Video-Call · kostenlos</p>
           <div className="mt-5 lg:mt-7 lg:border-t lg:border-snow/10 lg:pt-7">
             <Stepper step={step} done={Boolean(booked)} />
           </div>
@@ -280,7 +280,7 @@ export function BookingDialog() {
                 <h3 className="text-3xl font-semibold tracking-[-0.03em] text-snow">Du bist im Kalender. 🎉</h3>
                 <p className="mt-3 max-w-md text-base font-light leading-relaxed text-snow/70">
                   {long.format(new Date(booked.start))} um {time.format(new Date(booked.start))} Uhr. Die Einladung mit
-                  Teams-Link kommt gleich per Mail von hello@grid-agency.de an {details.email}. Giulia freut sich auf dich.
+                  Link zum Video-Call kommt gleich per Mail von hello@grid-agency.de an {details.email}. Giulia freut sich auf dich.
                 </p>
               </div>
               <button type="button" onClick={close} className="btn btn-primary mt-2 px-7 py-3.5 text-sm" data-autofocus>
@@ -354,7 +354,7 @@ export function BookingDialog() {
           ) : step === 1 ? (
             <div>
               <h3 className="text-3xl font-semibold tracking-[-0.03em] text-snow">Wann passt&apos;s dir?</h3>
-              <p className="mt-2 text-base font-light text-snow/65">Alle Zeiten in deutscher Zeit, 30 Minuten per Teams.</p>
+              <p className="mt-2 text-base font-light text-snow/65">Alle Zeiten in deutscher Zeit, 30 Minuten per Video-Call.</p>
               {error && <p className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
               {slots === undefined && (
@@ -463,7 +463,7 @@ export function BookingDialog() {
                   <dd className="mt-1.5 text-lg font-semibold text-snow">
                     {picked && `${long.format(new Date(picked.start))}, ${time.format(new Date(picked.start))} Uhr`}
                   </dd>
-                  <dd className="text-sm font-light text-snow/60">30 Minuten mit Giulia per Teams</dd>
+                  <dd className="text-sm font-light text-snow/60">30 Minuten mit Giulia per Video-Call</dd>
                 </div>
                 <div className="rounded-2xl bg-snow/[0.06] p-5">
                   <dt className="text-xs font-semibold uppercase tracking-[0.2em] text-snow/50">Ansprechpartner</dt>
@@ -493,9 +493,7 @@ export function BookingDialog() {
                 />
               </label>
 
-              <div className="mt-5">
-                <Altcha key={attempt} onChange={setAltcha} />
-              </div>
+              <Altcha key={attempt} onChange={setAltcha} />
 
               {error && <p className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 

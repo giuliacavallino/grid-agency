@@ -89,11 +89,7 @@ export function EbookForm() {
           <input name="email" type="email" required autoComplete="email" placeholder="E-Mail *" className={inputClasses} />
           <input name="company" type="text" autoComplete="organization" placeholder="Unternehmen" className={inputClasses} />
 
-          {/* Captcha löst sich beim Laden selbst; unsichtbar, damit kein
-              zweiter Haken neben der Zustimmung per Button steht. */}
-          <div aria-hidden className="sr-only">
-            <Altcha />
-          </div>
+          <Altcha />
 
           {/* Honeypot gegen Bots */}
           <input

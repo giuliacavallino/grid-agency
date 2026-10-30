@@ -2,10 +2,12 @@ import "server-only";
 import { DEMO, DOMAIN, SHARED_MAILBOX } from "@/lib/config";
 import { appGraph, mailboxPath } from "./graph-app";
 import { db, sb } from "./db";
+import { createRoom, linkRoom, meetEnabled } from "./meet";
 
 // Erstgespräch-Buchung von der Website (statt Calendly). Freie Zeiten kommen
 // aus Giulias Kalender und dem von hello@; gebucht wird im Kalender von
-// hello@ als Organisator, Giulia und der Kunde werden eingeladen (Teams-Link),
+// hello@ als Organisator, Giulia und der Kunde werden eingeladen (Link zum
+// Video-Call unter meet.grid-agency.de, ohne ACS-Zugang Teams),
 // die Anfrage landet als Lead in Sales → Pipeline (Stage „Erstgespräch“).
 // Braucht in Entra zusätzlich die Anwendungsberechtigung Calendars.ReadWrite
 // mit Admin-Zustimmung (am besten per Application Access Policy auf hello@
@@ -180,11 +182,20 @@ export async function book(input: BookingInput, leadId: string | null = null) {
   ].join("");
 
   let eventId = `demo-${slot.start}`;
-  let joinUrl: string | null = DEMO ? "https://teams.microsoft.com/l/meetup-join/demo" : null;
+  let joinUrl: string | null = DEMO ? "https://meet.grid-agency.de/demo" : null;
+  let room: { code: string; url: string } | null = null;
   if (!DEMO) {
+    const subject = `Erstgespräch GRID × ${who}`;
+    room = meetEnabled()
+      ? await createRoom({ title: subject, start: Date.parse(slot.start), minutes: (Date.parse(slot.end) - Date.parse(slot.start)) / 60_000, host: BOOKING.host, hostName: BOOKING.hostName })
+      : null;
     const event = {
-      subject: `Erstgespräch GRID × ${who}`,
-      body: { contentType: "HTML", content: body },
+      subject,
+      body: {
+        contentType: "HTML",
+        content: room ? `<p>Zum Video-Call: <a href="${room.url}">${room.url}</a></p>${body}` : body,
+      },
+      ...(room ? { location: { displayName: room.url, locationUri: room.url } } : {}),
       start: { dateTime: slot.start.slice(0, 19), timeZone: "UTC" },
       end: { dateTime: slot.end.slice(0, 19), timeZone: "UTC" },
       attendees: [
@@ -202,9 +213,9 @@ export async function book(input: BookingInput, leadId: string | null = null) {
       });
     // Ohne Teams-Lizenz am Organisator-Postfach scheitert der Teams-Link;
     // dann gibt es den Termin ohne und den Link schickt Giulia nach.
-    const created = await create(true).catch(() => create(false));
+    const created = room ? await create(false) : await create(true).catch(() => create(false));
     eventId = created.id;
-    joinUrl = created.onlineMeeting?.joinUrl ?? null;
+    joinUrl = room?.url ?? created.onlineMeeting?.joinUrl ?? null;
   }
 
   const meeting = {
@@ -228,6 +239,7 @@ export async function book(input: BookingInput, leadId: string | null = null) {
       ...(!lead.phone && input.phone ? { phone: input.phone } : {}),
       ...(!lead.company && input.company ? { company: input.company } : {}),
       ...(!lead.message && note ? { message: note } : {}),
+      ...(input.address ? { raw: { ...(lead.raw as object | null), booking: { address: input.address } } } : {}),
     });
   } else {
     lead = await db().insertIgnore("leads", {
@@ -244,6 +256,7 @@ export async function book(input: BookingInput, leadId: string | null = null) {
       owner: BOOKING.host,
     });
   }
+  if (lead && room) await linkRoom(room.code, { lead_id: String(lead.id), customer_id: (lead.customer_id as string | null) ?? null });
   if (lead) {
     await db().insert("lead_activities", {
       lead_id: lead.id,

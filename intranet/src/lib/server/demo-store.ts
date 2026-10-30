@@ -301,6 +301,33 @@ const tasks: Row[] = [
   task("demo-tp-2", "demo-ts-5", "Auf Content von Creator warten", { due_on: inDays(3) }),
 ];
 
+// Calls (meet.grid-agency.de): ein ausgewerteter Call, einer in Auswertung
+const meetings: Row[] = [
+  { id: "demo-meet-1", created_at: ago(3), code: "kfd-mqtr-x2p", group_id: "demo-group-1", title: "Monatsreporting Frittenwerk", starts_at: ago(1), ends_at: ago(1), host: "giulia.cavallino@grid-agency.de", host_name: "Giulia Cavallino", lead_id: null, customer_id: null, application_id: null, participants: [{ name: "Giulia Cavallino" }, { name: "Jan Becker" }] },
+  { id: "demo-meet-2", created_at: ago(0), code: "pwx-hhab-7rn", group_id: "demo-group-2", title: "Erstgespräch GRID × Meinberg Finance GmbH", starts_at: ago(0), ends_at: ago(0), host: "giulia.cavallino@grid-agency.de", host_name: "Giulia Cavallino", lead_id: null, customer_id: null, application_id: null, participants: [{ name: "Giulia Cavallino" }, { name: "Simon Meinberg" }] },
+];
+const meetingRecordings: Row[] = [
+  {
+    id: "demo-rec-2", created_at: ago(0), meeting_id: "demo-meet-2", server_call_id: "demo-2", recording_id: "demo", status: "verarbeitung", error: null, duration_ms: 1_740_000, chunks: null, transcript: null, summary: null, processed_at: null,
+  },
+  {
+    id: "demo-rec-1", created_at: ago(1), meeting_id: "demo-meet-1", server_call_id: "demo-1", recording_id: "demo", status: "fertig", error: null, duration_ms: 2_280_000, chunks: null,
+    summary: "Reporting Oktober: Reels laufen deutlich besser als Karussells, vor allem die Store-Eröffnungen. Frittenwerk will im Dezember eine Weihnachtsaktion mit Gutschein-Gewinnspiel. Offen ist noch, wer die Fotos der neuen Filiale in Köln liefert.",
+    transcript: { phrases: [
+      { speaker: 1, offset_ms: 4000, duration_ms: 6000, text: "Hi Jan, schön dass es klappt. Ich hab das Reporting für Oktober mitgebracht." },
+      { speaker: 2, offset_ms: 11000, duration_ms: 4000, text: "Super, bin gespannt. Wie liefen die Reels von der Eröffnung?" },
+      { speaker: 1, offset_ms: 16000, duration_ms: 9000, text: "Richtig gut, das Reel aus Düsseldorf hat fast dreimal so viele Aufrufe wie der Schnitt." },
+      { speaker: 2, offset_ms: 26000, duration_ms: 8000, text: "Für Dezember hätten wir gern ein Gewinnspiel mit Gutscheinen. Könnt ihr bis zum fünfzehnten einen Vorschlag schicken?" },
+    ] },
+    processed_at: ago(1),
+  },
+];
+const meetingTasks: Row[] = [
+  { id: "demo-mt-1", created_at: ago(1), recording_id: "demo-rec-1", title: "Konzept Weihnachts-Gewinnspiel schicken", notes: "Gutscheine als Preis, Mechanik über Kommentare. Jan will bis zum 15. einen Vorschlag.", owner: "grid", due_on: inDays(10), status: "vorschlag", project_id: "demo-tp-1", task_id: null, decided_by: null, decided_at: null, position: 1 },
+  { id: "demo-mt-2", created_at: ago(1), recording_id: "demo-rec-1", title: "Fotos der neuen Filiale Köln liefern", notes: "Frittenwerk klärt intern, wer fotografiert; sonst plant GRID einen Content Day.", owner: "kunde", due_on: null, status: "vorschlag", project_id: "demo-tp-1", task_id: null, decided_by: null, decided_at: null, position: 2 },
+  { id: "demo-mt-3", created_at: ago(1), recording_id: "demo-rec-1", title: "Mehr Reels statt Karussells einplanen", notes: "Reels von Store-Eröffnungen performen am besten.", owner: "grid", due_on: null, status: "uebernommen", project_id: "demo-tp-1", task_id: null, decided_by: "Giulia Cavallino", decided_at: ago(0), position: 3 },
+];
+
 const tables: Record<string, Row[]> = {
   leads,
   lead_activities: activities,
@@ -321,6 +348,9 @@ const tables: Record<string, Row[]> = {
   task_projects: taskProjects,
   task_sections: taskSections,
   tasks,
+  meetings,
+  meeting_recordings: meetingRecordings,
+  meeting_tasks: meetingTasks,
 };
 const settings: Record<string, unknown> = {
   capacity: { team_hours_per_month: 480 },
