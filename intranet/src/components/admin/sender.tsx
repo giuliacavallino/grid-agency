@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, MessagesSquare, RefreshCw, Send, Unplug } from "lucide-react";
+import { CalendarClock, CirclePause, MessagesSquare, RefreshCw, Send, Unplug } from "lucide-react";
 import { api } from "@/lib/api";
 import { mutate, revalidate, useResource, useRows } from "@/lib/data";
 import { cn as clsx } from "@/lib/cn";
@@ -18,7 +18,12 @@ const URL_PROJECTS = "/api/sales/task_projects";
 
 type Kind = "weekly" | "monthly";
 type Sender = { email: string; name: string; connected_at: string; connected_by: string } | null;
-type Status = { sender: Sender; ready: { secret: boolean; vault: boolean; claude: boolean } };
+type Status = {
+  sender: Sender;
+  ready: { secret: boolean; vault: "ok" | "missing" | "invalid"; claude: boolean };
+  /** Grund, warum gerade nichts gesendet wird (null = aktiv) */
+  paused: string | null;
+};
 type SenderChat = { id: string; title: string; chatType: string; members: string[]; lastAt: string | null };
 type SenderMessage = { id: string; at: string; from: string | null; text: string; mine: boolean };
 type UpdateLog = {
@@ -81,6 +86,7 @@ export function SenderSettings() {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto pb-12">
+          <PausedNotice status={status.data} />
           <SenderCard status={status.data} />
           <Customers status={status.data} />
           <History />
@@ -99,17 +105,49 @@ function SectionTitle({ children, meta }: { children: React.ReactNode; meta?: Re
   );
 }
 
+/** Was fehlt, bevor Updates rausgehen. Solange etwas fehlt, sendet der
+ * Server nichts und ruft auch Claude nicht auf. */
+function setupSteps({ sender, ready }: Status) {
+  return [
+    { done: ready.vault === "ok", text: ready.vault === "invalid" ? "VAULT_KEY in Vercel ist ungültig (32 Byte, base64)" : "VAULT_KEY in Vercel anlegen und neu deployen" },
+    { done: ready.secret, text: "MS_CLIENT_SECRET in Vercel anlegen" },
+    { done: ready.claude, text: "ANTHROPIC_API_KEY in Vercel anlegen (für die Texte)" },
+    { done: !!sender, text: "Absender-Konto mit Teams-Lizenz verbinden (kein geteiltes Postfach)" },
+  ];
+}
+
+function PausedNotice({ status }: { status: Status }) {
+  const steps = setupSteps(status);
+  if (!status.paused && steps.every((s) => s.done)) return null;
+  return (
+    <section className="px-4 pt-5 md:px-6">
+      <div className="max-w-3xl rounded-2xl px-4 py-3.5 md:px-5" style={{ background: accentFill("#f5a524", 14) }} role="status">
+        <p className="flex items-center gap-2 text-[15px] font-medium">
+          <CirclePause className="h-[18px] w-[18px]" />
+          Updates pausiert: Es wird nichts gesendet
+        </p>
+        <ul className="mt-2 space-y-1 text-[13px] text-snow/75">
+          {steps.map((step) => (
+            <li key={step.text} className={clsx("flex gap-2", step.done && "text-snow/45 line-through")}>
+              <span aria-hidden>{step.done ? "✓" : "○"}</span>
+              {step.text}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-[12.5px] text-snow/60">Anleitung: docs/absender-setup.md im Intranet-Repository.</p>
+      </div>
+    </section>
+  );
+}
+
 function SenderCard({ status }: { status: Status }) {
   const toast = useToast();
   const [hint, setHint] = useState("");
   const [busy, setBusy] = useState<"connect" | "disconnect" | null>(null);
   const [confirm, setConfirm] = useState(false);
   const { sender, ready } = status;
-  const missing = [
-    !ready.secret && "MS_CLIENT_SECRET",
-    !ready.vault && "VAULT_KEY",
-    !ready.claude && "ANTHROPIC_API_KEY",
-  ].filter(Boolean) as string[];
+  // Verbinden geht erst, wenn das Konto verschlüsselt gespeichert werden kann
+  const canConnect = ready.vault === "ok" && ready.secret;
 
   async function connect() {
     setBusy("connect");
@@ -149,7 +187,7 @@ function SenderCard({ status }: { status: Status }) {
                 {sender.email} · verbunden am {dateTime(sender.connected_at)}
               </p>
             </div>
-            <Button size="sm" icon={<RefreshCw className="h-4 w-4" />} loading={busy === "connect"} loadingText="Weiterleiten …" onClick={connect}>
+            <Button size="sm" icon={<RefreshCw className="h-4 w-4" />} loading={busy === "connect"} loadingText="Weiterleiten …" disabled={!canConnect} onClick={connect}>
               Neu verbinden
             </Button>
             <Button size="sm" variant="ghost" icon={<Unplug className="h-4 w-4" />} onClick={() => setConfirm(true)}>
@@ -167,21 +205,23 @@ function SenderCard({ status }: { status: Status }) {
               <Input
                 value={hint}
                 onChange={(e) => setHint(e.target.value)}
-                placeholder="E-Mail des Kontos, z. B. lena@grid-agency.de"
+                placeholder="E-Mail des Kontos, z. B. sophia.conti@grid-agency.de"
                 aria-label="E-Mail des Absender-Kontos"
                 className="h-10 min-w-0 flex-1 basis-64"
               />
-              <Button variant="primary" icon={<Send className="h-4 w-4" />} loading={busy === "connect"} loadingText="Weiterleiten …" onClick={connect}>
+              <Button
+                variant="primary"
+                icon={<Send className="h-4 w-4" />}
+                loading={busy === "connect"}
+                loadingText="Weiterleiten …"
+                disabled={!canConnect}
+                onClick={connect}
+              >
                 Mit Microsoft verbinden
               </Button>
             </div>
+            {!canConnect && <p className="text-[12.5px] text-snow/60">Verbinden geht erst, wenn VAULT_KEY und MS_CLIENT_SECRET in Vercel gesetzt sind.</p>}
           </div>
-        )}
-        {missing.length > 0 && (
-          <p className="mt-3 rounded-xl px-3 py-2 text-[12.5px] text-snow/75" style={{ background: accentFill("#f5a524", 14) }}>
-            In Vercel fehlt noch: {missing.join(", ")}.
-            {!ready.claude && " Ohne ANTHROPIC_API_KEY geht kein Update raus."}
-          </p>
         )}
       </div>
 

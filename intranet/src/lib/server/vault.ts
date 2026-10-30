@@ -14,12 +14,25 @@ const VERSION = "v1";
 
 function key() {
   const raw = process.env.VAULT_KEY;
-  if (DEMO && !raw) return Buffer.alloc(32, 7);
+  if (DEMO && (!raw || vaultStatus() !== "ok")) return Buffer.alloc(32, 7);
   if (!raw) throw new Error("VAULT_KEY fehlt");
   const buf = Buffer.from(raw, "base64");
   if (buf.length !== 32) throw new Error("VAULT_KEY muss 32 Byte (base64) lang sein");
   return buf;
 }
+
+/** Zustand von VAULT_KEY, ohne den Wert preiszugeben. Ohne gültigen
+ * Schlüssel bleibt alles beim Alten: übernommene Passwörter bleiben
+ * „plain:…“, neue Passwörter lassen sich nicht speichern. */
+export type VaultStatus = "ok" | "missing" | "invalid";
+
+export function vaultStatus(): VaultStatus {
+  const raw = process.env.VAULT_KEY;
+  if (!raw) return DEMO ? "ok" : "missing";
+  return Buffer.from(raw, "base64").length === 32 ? "ok" : "invalid";
+}
+
+export const VAULT_NOT_READY = "Passwörter lassen sich erst speichern, wenn VAULT_KEY in Vercel gesetzt ist (Anleitung: docs/absender-setup.md).";
 
 export function encrypt(plain: string) {
   const iv = randomBytes(12);
@@ -82,7 +95,7 @@ export async function listItems(user: User): Promise<VaultItem[]> {
 
 /** Verschlüsselt noch offen gespeicherte Passwörter, sobald VAULT_KEY da ist. */
 async function sealPlain(rows: Row[]) {
-  if (!process.env.VAULT_KEY) return;
+  if (vaultStatus() !== "ok") return;
   for (const row of rows) {
     if (!row.secret?.startsWith(PLAIN)) continue;
     const secret = encrypt(decrypt(row.secret));

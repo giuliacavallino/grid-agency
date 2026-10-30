@@ -15,7 +15,8 @@ export async function GET(request: Request) {
   if (kind !== "weekly" && kind !== "monthly") return Response.json({ error: "kind fehlt" }, { status: 400 });
   const now = new Date();
   if (kind === "monthly" && !isFirstWorkday(now)) return Response.json({ skipped: "Kein erster Werktag" });
-  const results = await runDue(kind, now);
+  const { paused, results } = await runDue(kind, now);
+  if (paused) return Response.json({ paused });
   const summary = results.map((r) => ({ project_id: r.project_id, status: r.status, error: r.error }));
   return Response.json({ count: results.length, sent: results.filter((r) => r.status === "sent").length, results: summary });
 }
