@@ -14,7 +14,7 @@ Für die lokale Vorschau ohne Login und Datenbank `NEXT_PUBLIC_INTRANET_DEMO=1` 
 
 - `/` – Login und Hub mit den Bereichskacheln
 - `/sales` – Pipeline (Kanban), Posteingang und Kalender von hello@ und giulia@, Kunden, Auftragsbuch, Artikel, Analytics
-- `/finance` – Eingangsrechnungen als Kanban (Neu → Freigegeben → An DATEV gesendet), Posteingang von buchhaltung@, Einstellungen (DATEV-Upload-Adresse)
+- `/finance` – Eingangsrechnungen als Kanban (Neu → Freigegeben → An DATEV gesendet), Ausgangsrechnungen (alle Belege aus easybill: Rechnungen, Stornos, Angebote, Serien, Mahnwesen; Kennzahlen, Beleg mit Positionen, Zahlungen und PDF), Posteingang von buchhaltung@, Einstellungen (DATEV-Upload-Adresse)
 - `/personal` – Bewerbungen als Kanban (Neue Bewerbung → Gespräch → Case Study → Zusage / Absage)
 - `/mail` – Posteingang und Kalender aller Postfächer (hello@, giulia@, buchhaltung@, google@)
 - `/aufgaben` – To-dos je Kunde (ersetzt Asana): Kacheln aller Kunden, je Kunde eine Liste wie in Asana (Themen als Gruppen, alles direkt in der Zeile bearbeitbar, speichert automatisch), „Meine To-dos“ über alle Kunden, Briefing je Kunde (Zugänge, Ansprechpartner, Postingplan), ehemalige Kunden im Archiv

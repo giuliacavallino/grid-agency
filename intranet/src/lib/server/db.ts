@@ -119,7 +119,7 @@ export interface Store {
 
 let supabase: SupabaseClient | null = null;
 
-function sb() {
+export function sb() {
   if (!supabase) {
     const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
