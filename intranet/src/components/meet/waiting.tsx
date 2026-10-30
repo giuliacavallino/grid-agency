@@ -153,8 +153,8 @@ function WaitTimer() {
   );
 }
 
-/** Bühne der Warteseite. `selfView` ist das eigene Kamerabild (oder ein Platzhalter). */
-export function WaitingStage({ isHost, hostName, selfView }: { isHost: boolean; hostName: string | null; selfView: React.ReactNode }) {
+/** Wartebereich für Gäste, bis die Gastgeber*in da ist. `selfView` ist das eigene Kamerabild (oder ein Platzhalter). */
+export function WaitingStage({ hostName, selfView }: { hostName: string | null; selfView: React.ReactNode }) {
   const [round, setRound] = useState(0);
   useEffect(() => {
     const id = window.setInterval(() => setRound((r) => r + 1), CYCLE_MS);
@@ -185,29 +185,21 @@ export function WaitingStage({ isHost, hostName, selfView }: { isHost: boolean; 
               Wartebereich
             </p>
             <h2 className="mt-4 text-[2.5rem] leading-[1.02] font-semibold tracking-tight md:text-6xl [@media(max-height:700px)]:text-4xl">
-              {isHost ? (
-                <>
-                  Warte auf deinen <span className="text-aurora">Gast.</span>
-                </>
-              ) : (
-                <>
-                  Gleich geht&apos;s <span className="text-aurora">los.</span>
-                </>
-              )}
+              Gleich geht&apos;s <span className="text-aurora">los.</span>
             </h2>
 
             <div role="status" className="mt-5 flex items-center gap-4 rounded-2xl border border-snow/12 bg-sky/60 p-4 shadow-xl backdrop-blur-xl">
               <span className="relative grid h-12 w-12 shrink-0 place-items-center">
                 <span className="meet-ping absolute inset-0 rounded-full bg-[#fa7e1e]/35" />
                 <span className="meet-ping absolute inset-0 rounded-full bg-[#d62976]/25" style={{ animationDelay: "0.8s" }} />
-                <Avatar name={isHost ? "Gast" : (hostName ?? "GRID")} className="relative h-12 w-12 text-base ring-2 ring-sky" />
+                <Avatar name={hostName ?? "GRID"} className="relative h-12 w-12 text-base ring-2 ring-sky" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] leading-snug font-medium">
-                  {isHost ? "Dein Gast ist noch nicht da" : `Du bist im Wartebereich – ${host} holt dich gleich in den Call`}
+                  Du bist im Wartebereich – {host} holt dich gleich in den Call
                 </p>
                 <p className="mt-0.5 text-[13px] text-snow/60">
-                  {isHost ? "Sobald jemand beitritt, startet der Call automatisch." : "Bleib einfach auf dieser Seite, es geht automatisch los."}
+                  Bleib einfach auf dieser Seite, es geht automatisch los.
                 </p>
               </div>
               <div className="hidden shrink-0 text-right sm:block">

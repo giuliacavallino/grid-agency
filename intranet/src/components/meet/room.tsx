@@ -11,7 +11,7 @@ import type {
   VideoDeviceInfo,
   VideoStreamRenderer,
 } from "@azure/communication-calling";
-import { CalendarClock, Mic, MicOff, MonitorUp, PhoneOff, Users, Video, VideoOff } from "lucide-react";
+import { CalendarClock, Check, Copy, Mic, MicOff, MonitorUp, PhoneOff, Users, Video, VideoOff } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
 import { Avatar, Button, Input, Spinner } from "@/components/ui";
 import { MeetMark, MeetShell } from "./brand";
@@ -92,6 +92,32 @@ function Tile({ participant, className }: { participant: RemoteParticipant; clas
         {participant.isMuted && <MicOff className="h-3.5 w-3.5 shrink-0" aria-label="stumm" />}
         {name}
       </span>
+    </div>
+  );
+}
+
+/** Gastgeber*in allein im Call: eigenes Bild groß, Hinweis und Link zum Teilen */
+function EmptyRoom({ selfView }: { selfView: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(window.location.href.split("?")[0]);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Zwischenablage gesperrt: Link steht ohnehin in der Adresszeile
+    }
+  }
+  return (
+    <div className="relative min-h-0 overflow-hidden rounded-3xl bg-ink">
+      {selfView}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-2 bg-gradient-to-t from-sky/90 via-sky/60 to-transparent px-6 pt-20 pb-6 text-center">
+        <p className="text-lg font-semibold">Du bist im Call. Noch ist niemand da.</p>
+        <p className="max-w-md text-sm text-snow/70">Gäste warten im Wartebereich und kommen automatisch dazu, sobald du da bist.</p>
+        <Button size="sm" variant="secondary" className="mt-2" icon={copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} onClick={copy}>
+          {copied ? "Link kopiert" : "Einladungslink kopieren"}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -320,9 +346,11 @@ export function MeetRoom({ code }: { code: string }) {
       .find(({ stream }) => stream.mediaStreamType === "ScreenSharing" && stream.isAvailable);
     const own = call.localVideoStreams.find((s) => s.mediaStreamType === "Video");
     const connecting = call.state !== "Connected";
-    const waiting = people.length === 0 && !connecting;
     const hostFirst = view.host_name?.split(" ")[0]?.toLowerCase();
     const isHost = !!hostFirst && name.trim().toLowerCase().startsWith(hostFirst);
+    // Wartebereich nur für Gäste; wer den Call organisiert, ist direkt im Call
+    const alone = people.length === 0 && !connecting;
+    const waiting = alone && !isHost;
     const selfView = own ? (
       <StreamView key={own.source.id} stream={own} mirrored />
     ) : (
@@ -360,7 +388,9 @@ export function MeetRoom({ code }: { code: string }) {
             </div>
           )}
           {waiting ? (
-            <WaitingStage isHost={isHost} hostName={view.host_name} selfView={selfView} />
+            <WaitingStage hostName={view.host_name} selfView={selfView} />
+          ) : alone ? (
+            <EmptyRoom selfView={selfView} />
           ) : people.length === 0 ? (
             <div className="grid place-items-center rounded-3xl border border-snow/10 bg-surface/60 p-6 text-center">
               <div>
@@ -384,8 +414,8 @@ export function MeetRoom({ code }: { code: string }) {
             </div>
           )}
 
-          {/* Eigenes Bild klein in der Ecke (beim Warten steckt es in der Bühne) */}
-          {!waiting && (
+          {/* Eigenes Bild klein in der Ecke (beim Warten und allein steckt es in der Bühne) */}
+          {!alone && (
             <div className="absolute right-6 bottom-6 aspect-video w-32 overflow-hidden rounded-xl bg-surface shadow-lg ring-1 ring-snow/15 md:w-48">
               {selfView}
               <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full bg-sky/75 px-2 py-0.5 text-[11px] backdrop-blur">
