@@ -1,23 +1,44 @@
--- Fortlaufende Kundennummer: bestehende Kund*innen nach Anlagedatum
--- durchnummeriert (ab 1001), neue bekommen die nächste Nummer aus der
--- Sequenz – egal ob manuell, aus gewonnenem Lead oder über easybill.
-create sequence public.customers_number_seq start 1001;
+-- Fortlaufende Kundennummer. customer_number (text) kommt aus easybill
+-- (siehe Rechnungsausgang) und behält dort vergebene Nummern; neue
+-- Kund*innen ohne Nummer bekommen die nächste freie (höchste + 1) – egal ob
+-- manuell, aus gewonnenem Lead oder über den easybill-Abgleich angelegt.
+alter table public.customers add column if not exists customer_number text;
 
-alter table public.customers add column customer_number integer;
-
-update public.customers c
-set customer_number = n.nr
-from (
-  select id, 1000 + row_number() over (order by created_at, name, id) as nr
+create or replace function public.next_customer_number()
+returns text
+language sql
+volatile
+set search_path = public
+as $$
+  select (coalesce(max(customer_number::bigint), 0) + 1)::text
   from public.customers
-) n
-where c.id = n.id;
+  where customer_number ~ '^[0-9]+$'
+$$;
 
-select setval('public.customers_number_seq', coalesce((select max(customer_number) from public.customers), 1000));
+create or replace function public.set_customer_number()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if new.customer_number is null or btrim(new.customer_number) = '' then
+    -- Gleichzeitige Anlagen nacheinander nummerieren
+    perform pg_advisory_xact_lock(hashtext('customers.customer_number'));
+    new.customer_number := public.next_customer_number();
+  end if;
+  return new;
+end;
+$$;
 
-alter table public.customers
-  alter column customer_number set default nextval('public.customers_number_seq'),
-  alter column customer_number set not null,
-  add constraint customers_customer_number_key unique (customer_number);
+create trigger customers_set_number
+  before insert on public.customers
+  for each row execute function public.set_customer_number();
 
-alter sequence public.customers_number_seq owned by public.customers.customer_number;
+-- Falls Bestandskund*innen noch keine Nummer haben: nach Anlagedatum auffüllen
+do $$
+declare c record;
+begin
+  for c in select id from public.customers where customer_number is null or btrim(customer_number) = '' order by created_at, name loop
+    update public.customers set customer_number = public.next_customer_number() where id = c.id;
+  end loop;
+end $$;

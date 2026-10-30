@@ -37,8 +37,7 @@ function Source({ source }: { source: string | null }) {
   return isSource(source) ? <SourceBadge source={source} /> : <span className="text-snow/70">{source}</span>;
 }
 
-/** Kundennummer für die Anzeige; vor der Migration noch leer */
-const customerNo = (c: Customer) => (c.customer_number ? String(c.customer_number) : "–");
+const customerNo = (c: Customer) => c.customer_number ?? "–";
 
 type SortKey = "number" | "name" | "contact" | "email" | "status" | "source" | "mrr" | "since";
 type Sort = { key: SortKey; dir: 1 | -1 };
@@ -123,7 +122,7 @@ export function Customers() {
       })[sort.key];
     return (customers ?? [])
       .filter((c) => !status || c.status === status)
-      .filter((c) => !q || [String(c.customer_number ?? ""), c.name, c.contact_name, c.email, c.city, c.industry].some((v) => v?.toLowerCase().includes(q)))
+      .filter((c) => !q || [c.customer_number, c.name, c.contact_name, c.email, c.city, c.industry].some((v) => v?.toLowerCase().includes(q)))
       .sort((a, b) => compare(value(a), value(b), sort.dir) || a.name.localeCompare(b.name, "de"));
   }, [customers, query, status, sort, mrr]);
 

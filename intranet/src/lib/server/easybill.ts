@@ -16,6 +16,7 @@ type Page<T> = { page: number; pages: number; items: T[] };
 
 export type EbCustomer = {
   id: number;
+  number: string | null;
   company_name: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -179,6 +180,7 @@ export async function syncEasybill(): Promise<SyncResult> {
     customers.map((c) => ({
       easybill_id: c.id,
       name: customerName(c),
+      customer_number: c.number || null,
       contact_name: [c.first_name, c.last_name].filter(Boolean).join(" ").trim() || null,
       email: c.emails?.[0] ?? null,
       phone: c.phone_1 || c.mobile || null,
@@ -188,7 +190,7 @@ export async function syncEasybill(): Promise<SyncResult> {
       source: c.acquire_options === 1 ? "empfehlung" : null,
       status: c.archived ? "ehemalig" : "aktiv",
     })),
-    ["status", "notes", "source"]
+    ["status", "notes", "source", "customer_number"]
   );
   const customerId = (id: number | null) => (id == null ? null : (customerSync.byEasybill.get(id)?.id ?? null));
 
