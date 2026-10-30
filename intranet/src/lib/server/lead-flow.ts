@@ -304,6 +304,13 @@ export async function createOffer(id: string, input: OfferInput, user: { email: 
   if (!EMAIL.test(input.signer_email.trim())) throw new FlowError("Bitte eine gültige E-Mail für die Unterschrift angeben");
   const items = input.items.filter((i) => (i.description ?? "").trim() && Number(i.quantity) > 0);
   if (!items.length) throw new FlowError("Bitte mindestens eine Leistung eintragen");
+  // Kein zweites Angebot, solange eine Mappe für diesen Lead offen ist
+  if (lead.offer_id) {
+    const open = check(
+      await sb().from("sign_envelopes").select("id").eq("document_id", lead.offer_id).in("status", ["versendet", "geoeffnet"]).limit(1)
+    ) as { id: string }[];
+    if (open.length) throw new FlowError("Für diesen Lead ist schon ein Angebot unterwegs. Erst die Mappe zurückziehen.");
+  }
 
   // Kunde: aus dem Lead anlegen bzw. Anschrift aktualisieren
   const customerData = {
@@ -316,9 +323,23 @@ export async function createOffer(id: string, input: OfferInput, user: { email: 
     city: c.city.trim(),
     country: "DE",
   };
-  const customer = lead.customer_id
-    ? await db().update("customers", String(lead.customer_id), customerData)
+  // Vorhandenen Kunden nehmen (am Lead, sonst gleiche E-Mail oder gleicher Name), nie doppelt anlegen
+  let existingId = (lead.customer_id as string | null) ?? null;
+  if (!existingId) {
+    const email = customerData.billing_email ?? (lead.email as string | null);
+    const byEmail = email
+      ? (check(await sb().from("customers").select("id").or(`email.ilike.${email},billing_email.ilike.${email}`).limit(1)) as { id: string }[])
+      : [];
+    const byName = byEmail.length
+      ? byEmail
+      : (check(await sb().from("customers").select("id").ilike("name", customerData.name).order("created_at").limit(1)) as { id: string }[]);
+    existingId = byName[0]?.id ?? null;
+  }
+  const customer = existingId
+    ? await db().update("customers", existingId, customerData)
     : await db().insert("customers", { ...customerData, phone: lead.phone ?? null, source: lead.source, lead_id: lead.id, status: "aktiv" });
+  // Sofort am Lead merken, damit ein zweiter Versuch denselben Kunden nimmt
+  if (lead.customer_id !== customer.id) await db().update("leads", id, { customer_id: customer.id });
 
   const offerId = await saveDraft(null, {
     kind: "angebot",
