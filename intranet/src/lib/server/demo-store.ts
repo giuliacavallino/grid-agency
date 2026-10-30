@@ -235,7 +235,7 @@ const inbound: Row[] = [
 // Aufgaben: zwei aktive Kunden, ein archivierter
 const inDays = (days: number) => new Date(Date.now() + days * day).toISOString().slice(0, 10);
 const taskProjects: Row[] = [
-  { id: "demo-tp-1", created_at: ago(60), name: "Bäckerei Sonne", color: "#eda100", customer_id: null, position: 1, archived: false, briefing: "Familienbäckerei mit 6 Filialen in Frankfurt.\n\nZugänge:\n\nInstagram\nBenutzername: baeckerei.sonne\nE-Mail: social@baeckerei-sonne.de\nPasswort: Beispiel123!\n\nTikTok\nBenutzername: baeckereisonne\nPasswort: Beispiel456!\n\nInspo Accounts\n\nhttps://www.instagram.com/beispiel.baeckerei/ → findet der Kunde toll\n\nAnsprechpartnerin: Anna Sonne +49 170 0000000\n\nPostingplan\n\n- 3 Posts / Woche\n- 10 Storys / Woche" },
+  { id: "demo-tp-1", created_at: ago(60), name: "Bäckerei Sonne", color: "#eda100", customer_id: null, position: 1, archived: false, briefing: "Familienbäckerei mit 6 Filialen in Frankfurt.\n\nZugänge: siehe oben (Admin → Passwörter)\n\nInspo Accounts\n\nhttps://www.instagram.com/beispiel.baeckerei/ → findet der Kunde toll\n\nAnsprechpartnerin: Anna Sonne +49 170 0000000\n\nPostingplan\n\n- 3 Posts / Woche\n- 10 Storys / Woche" },
   { id: "demo-tp-2", created_at: ago(40), name: "Pizzeria Forno", color: "#e5484d", customer_id: null, position: 2, archived: false, briefing: null },
   { id: "demo-tp-3", created_at: ago(400), name: "Café Lumen", color: "#afaaa0", customer_id: null, position: 20, archived: true, briefing: "Frühstückscafé in Berlin-Mitte.\n\nPostingplan: 2 Posts / Woche" },
 ];

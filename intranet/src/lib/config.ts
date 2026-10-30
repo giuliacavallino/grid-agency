@@ -45,3 +45,8 @@ export const CALENDAR_SCOPES = ["Calendars.ReadWrite.Shared"];
  * NEXT_PUBLIC_INTRANET_DEMO=1 und nie im Produktions-Build. */
 export const DEMO =
   process.env.NEXT_PUBLIC_INTRANET_DEMO === "1" && process.env.NODE_ENV !== "production";
+
+/** Geschäftsführung: sieht im Tresor auch die internen GRID-Passwörter
+ * und das Zugriffsprotokoll. */
+export const MANAGEMENT = [`giulia.cavallino@${DOMAIN}`, ...(DEMO ? [`vorschau@${DOMAIN}`] : [])];
+export const isManagement = (email: string) => MANAGEMENT.includes(email.toLowerCase());
