@@ -22,7 +22,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { FINANCE_MAILBOX } from "@/lib/config";
-import { createRow, deleteRow, updateRow, useResource, useRows } from "@/lib/data";
+import { createRow, deleteRow, replaceRow, updateRow, useResource, useRows } from "@/lib/data";
 import { formatDate, relativeTime } from "@/lib/format";
 import { api, apiFetch } from "@/lib/api";
 import { graphErrorMessage, graphFor, type FileAttachment } from "@/lib/graph";
@@ -66,6 +66,26 @@ async function release(invoice: Invoice, datevAddress: string): Promise<"datev" 
 const releasedText = (invoice: Invoice, result: "datev" | "freigegeben") =>
   result === "datev" ? `${invoice.vendor}: an DATEV gesendet` : `${invoice.vendor}: freigegeben (kein Beleg, nicht an DATEV)`;
 
+/** Belege, die noch nicht ausgelesen sind, nacheinander im Hintergrund
+ * auslesen lassen (Beträge, Fälligkeit, bezahlt) – auch für ältere Rechnungen. */
+const reading = new Set<string>();
+function useReadBelege(invoices: Invoice[] | undefined) {
+  useEffect(() => {
+    const todo = (invoices ?? []).filter((i) => !i.extracted_at && i.graph_id && i.stage !== "abgelehnt" && !reading.has(i.id));
+    if (!todo.length) return;
+    todo.forEach((i) => reading.add(i.id));
+    (async () => {
+      for (const invoice of todo) {
+        try {
+          replaceRow("invoices", await api<Invoice>(`/api/finance/belege/${invoice.id}/auslesen`, { method: "POST" }));
+        } catch (error) {
+          console.error(`Beleg ${invoice.vendor} nicht ausgelesen:`, error);
+        }
+      }
+    })();
+  }, [invoices]);
+}
+
 /** Fällige zuerst, Rechnungen ohne Fälligkeit nach Eingang */
 const byDue = (a: Invoice, b: Invoice) =>
   (a.due_date ?? "9999").localeCompare(b.due_date ?? "9999") ||
@@ -80,6 +100,7 @@ type View = "freigabe" | "alle";
 export function Invoices() {
   const { data: invoices, loading, error } = useRows<Invoice>("invoices");
   const { data: settings } = useResource<Settings>("/api/sales/settings");
+  useReadBelege(invoices);
   const [view, setView] = useState<View>("freigabe");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -454,7 +475,7 @@ function PaidCheckbox({ invoice }: { invoice: Invoice }) {
         }
         className="h-4 w-4 accent-snow"
       />
-      Schon bezahlt <span className="text-snow/50">(Karte, PayPal, Lastschrift)</span>
+      Schon bezahlt <span className="text-snow/50">(Karte, PayPal; sonst über den Bank-Abgleich)</span>
     </label>
   );
 }

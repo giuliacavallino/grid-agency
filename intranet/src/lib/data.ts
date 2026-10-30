@@ -129,6 +129,11 @@ export async function updateRow<T extends WithId>(table: string, id: string, pat
   }
 }
 
+/** Zeile, die der Server geändert hat, in alle geladenen Listen übernehmen */
+export function replaceRow<T extends WithId>(table: string, row: T) {
+  mutate<T[]>(base(table), (rows) => rows.map((r) => (r.id === row.id ? row : r)));
+}
+
 export async function deleteRow(table: string, id: string) {
   await api(`${base(table)}/${id}`, { method: "DELETE" });
   mutate<WithId[]>(base(table), (rows) => rows.filter((row) => row.id !== id));

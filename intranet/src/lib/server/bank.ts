@@ -159,7 +159,34 @@ export async function openPayables(): Promise<OpenItem[]> {
       amount: Math.abs(Number(i.amount)),
       date: (i.invoice_date as string | null) ?? null,
       due_date: (i.due_date as string | null) ?? null,
+      currency: (i.currency as string | null) ?? "EUR",
     }));
+}
+
+/** Abbuchungen der letzten 180 Tage den offenen Eingangsrechnungen zuordnen.
+ * Läuft beim Bank-Abgleich und sobald eine Rechnung ausgelesen wurde. */
+export async function matchPayables() {
+  const since = daysAgo(180);
+  const debits = (await db().list("bank_transactions"))
+    .filter((t) => isOpen(t as unknown as BankTransaction) && String(t.booking_date) >= since && Number(t.amount) < 0)
+    .map((t) => t as unknown as BankTransaction & Row);
+  let payables = await openPayables();
+  let matched = 0;
+  for (const tx of debits) {
+    // Betrag allein reicht nur, wenn er unter den offenen Rechnungen und
+    // Umsätzen jeweils genau einmal vorkommt
+    const uniqueAmount = (item: OpenItem) =>
+      payables.filter((p) => Math.abs(p.amount - item.amount) < 0.005).length === 1 &&
+      debits.filter((d) => isOpen(d) && Math.abs(Math.abs(d.amount) - item.amount) < 0.005).length === 1;
+    const item = autoMatch(tx, payables, uniqueAmount);
+    if (!item) continue;
+    await assignInvoice(tx, item.id, "automatisch");
+    tx.match_type = "invoice";
+    tx.invoice_id = item.id;
+    payables = payables.filter((p) => p.id !== item.id);
+    matched++;
+  }
+  return matched;
 }
 
 export const easybillConfigured = () => DEMO || !!process.env.EASYBILL_API_KEY;
@@ -171,16 +198,7 @@ async function matchOpen(errors: string[]) {
   const open = (await store.list("bank_transactions"))
     .filter((t) => isOpen(t as unknown as BankTransaction) && String(t.booking_date) >= since)
     .map((t) => t as unknown as BankTransaction & Row);
-  const matched = { invoices: 0, easybill: 0 };
-
-  let payables = await openPayables();
-  for (const tx of open.filter((t) => t.amount < 0)) {
-    const item = autoMatch(tx, payables);
-    if (!item) continue;
-    await assignInvoice(tx, item.id, "automatisch");
-    payables = payables.filter((p) => p.id !== item.id);
-    matched.invoices++;
-  }
+  const matched = { invoices: await matchPayables(), easybill: 0 };
 
   const credits = open.filter((t) => t.amount > 0);
   if (credits.length && easybillConfigured()) {
