@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, CircleCheck, LoaderCircle, Paperclip } from "lucide-react";
 import {
   submitApplication,
@@ -21,13 +20,12 @@ import {
   APPLICATION_MAX_FILES,
 } from "@/lib/application";
 import { SearchedChip } from "@/components/SearchedChip";
+import { inputClasses } from "@/components/ContactForm";
 
 const initialState: ApplicationFormState = { status: "idle" };
 
 const INITIATIVE = "initiativ";
 
-const inputClasses =
-  "w-full rounded-lg border border-snow/15 bg-transparent px-4 py-3 text-sm text-snow placeholder:text-snow/40 outline-none transition-colors focus:border-dune";
 
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024
@@ -40,7 +38,7 @@ function SubmitButton({ pending }: { pending: boolean }) {
       type="submit"
       disabled={pending}
       aria-busy={pending}
-      className="btn-rainbow inline-flex w-full items-center justify-center gap-2 rounded-full bg-snow px-7 py-3.5 text-sm font-medium text-sky disabled:cursor-progress disabled:opacity-80 sm:w-auto"
+      className="btn btn-primary w-full px-7 py-3.5 text-sm sm:w-auto"
     >
       {pending && (
         <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
@@ -148,9 +146,8 @@ function JobSelect({
         />
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.ul
+      {open && (
+          <ul
             ref={list}
             id={`${id}-list`}
             role="listbox"
@@ -158,11 +155,7 @@ function JobSelect({
             aria-label="Stelle"
             aria-activedescendant={`${id}-${active}`}
             onKeyDown={onListKey}
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-dark absolute inset-x-0 top-full z-30 mt-2 max-h-80 overflow-y-auto rounded-2xl p-1.5 shadow-2xl outline-none"
+            className="[animation:rise_0.2s_var(--ease-spring)_backwards] glass-dark absolute inset-x-0 top-full z-30 mt-2 max-h-80 overflow-y-auto rounded-2xl p-1.5 shadow-2xl outline-none"
           >
             {options.map((option, i) => {
               const isSelected = option.value === value;
@@ -190,9 +183,8 @@ function JobSelect({
                 </li>
               );
             })}
-          </motion.ul>
+          </ul>
         )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -340,7 +332,7 @@ export function ApplicationForm({
 
       <div>
         <label
-          className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-6 text-center transition-colors focus-within:border-dune hover:border-snow/35 ${
+          className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl border border-dashed px-4 py-6 text-center transition-colors focus-within:border-dune hover:border-snow/35 ${
             fileError ? "border-red-400/70" : "border-snow/20"
           }`}
         >

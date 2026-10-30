@@ -1,35 +1,20 @@
+import { PageHeader } from "@/components/ui/PageHeader";
+
 /** Kopf und Satzspiegel der Rechtstexte (Impressum, Datenschutz, AGB). */
-export function LegalArticle({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+export function LegalArticle({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <article className="max-w-3xl">
-      <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
-        Rechtliches
-      </p>
-      <h1 className="mb-8 mt-2 text-3xl font-medium tracking-tight text-snow lg:text-4xl">
-        {title}
-      </h1>
-      <div className="space-y-8 text-sm font-light leading-relaxed text-snow/70 lg:text-[0.9375rem]">
-        {children}
+    <article>
+      <PageHeader eyebrow="Rechtliches" title={title} />
+      <div className="rise glass mt-10 max-w-4xl rounded-[2rem] p-6 sm:p-8 lg:mt-14 lg:p-12" style={{ "--d": "120ms" } as React.CSSProperties}>
+        <div className="space-y-8 text-sm font-light leading-relaxed text-snow/70 lg:text-[0.9375rem]">{children}</div>
       </div>
     </article>
   );
 }
 
-export function LegalHeading({
-  id,
-  children,
-}: {
-  id?: string;
-  children: React.ReactNode;
-}) {
+export function LegalHeading({ id, children }: { id?: string; children: React.ReactNode }) {
   return (
-    <h2 id={id} className="mb-2 scroll-mt-24 text-base font-medium text-snow lg:scroll-mt-32">
+    <h2 id={id} className="mb-2 scroll-mt-28 text-lg font-semibold tracking-tight text-snow">
       {children}
     </h2>
   );

@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, Heart, Menu, Send } from "lucide-react";
-import { motion } from "framer-motion";
-import { scrollToId, stashScrollTarget } from "@/lib/scroll";
+import { usePathname } from "next/navigation";
+import { ArrowRight, Menu } from "lucide-react";
+import { ContactLink, SectionLink } from "@/components/ui/ContactLink";
 import { MainMenu } from "./MainMenu";
 
 const pages = [
@@ -16,74 +15,41 @@ const pages = [
   { href: "/faq", label: "FAQ" },
 ];
 
-/** Kopfleiste als schwebende Glas-Pill auf der Frame-Breite, auf der
- * Startseite und allen Unterseiten gleich. Desktop: Logo mit Subline
- * links, Navigation und große CTA-Pill mit Pfeil-Badge rechts. Mobile:
- * Logo plus die drei Icons. */
+/** Kopfleiste als schwebende Liquid-Glass-Pille, auf allen Seiten gleich.
+ * Beim Scrollen wird sie kompakter und dichter. Desktop: Logo, Navigation,
+ * CTA. Mobil: Logo, Termin-Pille, Menü. */
 export function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
-  const onHome = pathname === "/";
 
-  // Sektionen liegen auf der Startseite; von Unterseiten aus geht es erst
-  // dorthin, die AppShell scrollt dann zur gemerkten Sektion.
-  const jump = (id: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (onHome) {
-      scrollToId(id);
-    } else {
-      stashScrollTarget(id);
-      router.push("/");
-    }
-  };
-  const sectionHref = (id: string) => (onHome ? `#${id}` : "/");
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <>
-      <motion.header
-        initial={{ y: -72, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-6"
-      >
-        <div className="mx-auto w-full max-w-frame px-5 lg:max-w-frame-wide lg:px-gutter">
-          <div className="glass pointer-events-auto relative flex h-12 w-full items-center justify-between overflow-hidden rounded-full px-5 lg:h-[4.25rem] lg:px-7">
-            <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
+      <header className="rise pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+10px)] lg:pt-4">
+        <div className="mx-auto w-full max-w-frame px-4 lg:max-w-frame-wide lg:px-gutter">
+          <div
+            className={`glass pointer-events-auto flex w-full items-center justify-between rounded-full pl-5 pr-2 transition-all duration-500 ${
+              scrolled ? "h-14 bg-sky/40 lg:h-14" : "h-14 lg:h-16"
+            }`}
+          >
+            <SectionLink id="home" className="logo-rainbow flex items-center gap-2" >
+              <Image src="/brand/grid_logo_snow.png" alt="GRID Agency, zur Startseite" width={96} height={25} priority className="h-[1.1875rem] w-auto lg:h-[1.375rem]" />
+            </SectionLink>
 
-            <a
-              href={sectionHref("home")}
-              aria-label={onHome ? "Nach oben" : "Zur Startseite"}
-              className="relative flex flex-col items-start"
-              onClick={jump("home")}
-            >
-              {/* Hover-Verlauf nur über dem Wortmarken-Bild, nicht über der
-                  Subline, sonst erscheint das Logo doppelt. */}
-              <span className="logo-rainbow">
-                <Image
-                  src="/brand/grid_logo_snow.png"
-                  alt="GRID"
-                  width={96}
-                  height={25}
-                  priority
-                  className="h-[1.1875rem] w-auto lg:h-[1.4375rem]"
-                />
-              </span>
-              <span className="-mt-[3px] hidden pl-[3px] text-[0.625rem] font-medium uppercase tracking-[0.32em] text-snow/70 lg:block">
-                Agency
-              </span>
-            </a>
-
-            {/* Ab 800px greift die Desktop-Nav; bis xl enger gesetzt, damit
-                Logo, Links und CTA auch im halbbreiten Fenster in eine
-                Zeile passen. */}
-            <nav className="relative hidden items-center gap-4 whitespace-nowrap text-[0.875rem] font-normal text-snow/80 lg:flex xl:gap-8 xl:text-[0.9375rem]">
-              <a href={sectionHref("leistungen")} onClick={jump("leistungen")} className="nav-rainbow">
+            <nav aria-label="Hauptmenü" className="hidden items-center gap-1 text-sm font-normal text-snow/75 lg:flex">
+              <SectionLink id="leistungen" className="nav-rainbow rounded-full px-3 py-2 xl:px-4">
                 Leistungen
-              </a>
-              <a href={sectionHref("team")} onClick={jump("team")} className="nav-rainbow">
-                Über uns
-              </a>
+              </SectionLink>
+              <SectionLink id="cases" className="nav-rainbow rounded-full px-3 py-2 xl:px-4">
+                Cases
+              </SectionLink>
               {pages.map((page) => {
                 const current = pathname.startsWith(page.href);
                 return (
@@ -91,53 +57,38 @@ export function TopBar() {
                     key={page.href}
                     href={page.href}
                     aria-current={current ? "page" : undefined}
-                    className={`nav-rainbow ${current ? "font-medium text-snow" : ""}`}
+                    className={`nav-rainbow rounded-full px-3 py-2 xl:px-4 ${current ? "bg-snow/10 text-snow" : ""}`}
                   >
                     {page.label}
                   </Link>
                 );
               })}
-              <a
-                href={sectionHref("dm")}
-                onClick={jump("dm")}
-                className="btn-rainbow ml-1 flex items-center gap-2.5 rounded-full bg-snow py-2.5 pl-4 pr-2.5 text-[0.875rem] font-medium text-sky active:scale-95 xl:ml-2 xl:pl-5 xl:text-[0.9375rem]"
-              >
-                Slide in die DMs
+              <SectionLink id="team" className="nav-rainbow rounded-full px-3 py-2 xl:px-4">
+                Über uns
+              </SectionLink>
+            </nav>
+
+            <div className="flex items-center gap-1.5">
+              <ContactLink tab="termin" className="btn btn-primary py-1.5 pl-4 pr-1.5 text-sm">
+                <span className="hidden sm:inline">Erstgespräch buchen</span>
+                <span className="sm:hidden">Termin</span>
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky text-snow">
                   <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
                 </span>
-              </a>
-            </nav>
-
-            <div className="relative flex items-center gap-5 lg:hidden">
-              {/* Herz = Aktivität: führt zu den Events, was gerade los ist. */}
-              <Link
-                href="/events"
-                aria-label="Events"
-                className="relative text-snow transition-transform active:scale-90"
-              >
-                <Heart className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.8} />
-                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-dune" />
-              </Link>
-              <a
-                href={sectionHref("dm")}
-                aria-label="Nachricht schreiben"
-                className="text-snow transition-transform active:scale-90"
-                onClick={jump("dm")}
-              >
-                <Send className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.8} />
-              </a>
+              </ContactLink>
               <button
+                type="button"
                 aria-label="Menü öffnen"
+                aria-expanded={menuOpen}
                 onClick={() => setMenuOpen(true)}
-                className="text-snow transition-transform active:scale-90"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-snow transition hover:bg-snow/10 active:scale-90 lg:hidden"
               >
                 <Menu className="h-[1.375rem] w-[1.375rem]" strokeWidth={1.8} />
               </button>
             </div>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       <MainMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </>

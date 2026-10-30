@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/app/PageShell";
 import { LegalArticle, LegalHeading } from "@/components/app/LegalArticle";
-import { ConsentSettings } from "@/components/app/ConsentSettings";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | GRID Agency",
@@ -78,16 +77,13 @@ export default function DatenschutzPage() {
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>
-              ob die Intro-Animation in diesem Besuch schon lief (wird beim
-              Schließen des Tabs gelöscht),
-            </li>
-            <li>
               zu welchem Abschnitt der Startseite du aus dem Menü springen
               wolltest (wird sofort nach dem Sprung gelöscht),
             </li>
             <li>
-              falls du es ausdrücklich wählst: deine Einwilligung für
-              Calendly (siehe Abschnitt 6), bis du sie widerrufst.
+              ob du im Kontaktbereich &bdquo;Termin buchen&ldquo; oder
+              &bdquo;Nachricht&ldquo; gewählt hast, wenn du von einer
+              Unterseite kommst (wird sofort danach gelöscht).
             </li>
           </ul>
           <p className="mt-2">
@@ -146,38 +142,45 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading id="calendly">6. Terminbuchung über Calendly</LegalHeading>
+          <LegalHeading id="termine">6. Terminbuchung</LegalHeading>
           <p>
-            Für die Buchung eines Erstgesprächs nutzen wir Calendly der
-            Calendly LLC, 115 E Main St, Ste A1B, Buford, GA 30518, USA. Beim
-            Aufruf unserer Seite wird keine Verbindung zu Calendly
-            hergestellt. Erst wenn du auf einen Buchungs-Button klickst und
-            im folgenden Hinweis &bdquo;Kalender laden&ldquo; wählst, wird der
-            Kalender von Calendly eingebunden. Dabei überträgt dein Browser
-            deine IP-Adresse und technische Daten an Calendly, Calendly kann
-            Cookies setzen, und die Angaben, die du im Kalender machst (Name,
-            E-Mail-Adresse, gewählter Termin, optionale Angaben), werden von
-            Calendly verarbeitet.
+            Ein Erstgespräch kannst du direkt auf unserer Website buchen. Wir
+            nutzen dafür keinen externen Buchungsdienst: Beim Öffnen des
+            Kalenders fragt unser Server bei unserem internen System ab, zu
+            welchen Zeiten wir frei sind. Dabei werden keine Daten von dir
+            übertragen.
           </p>
           <p className="mt-2">
-            Rechtsgrundlage für das Laden ist deine Einwilligung (Art. 6 Abs.
-            1 lit. a DSGVO, § 25 Abs. 1 TDDDG), für die Terminbuchung selbst
-            die Anbahnung einer Zusammenarbeit (Art. 6 Abs. 1 lit. b DSGVO).
-            Calendly ist unter dem EU-US Data Privacy Framework zertifiziert.
-            Weitere Informationen findest du in der Datenschutzerklärung von
-            Calendly unter calendly.com/privacy. Alternativ kannst du einen
-            Termin per E-Mail oder Telefon vereinbaren.
+            Wenn du einen Termin buchst, verarbeiten wir die Angaben, die du
+            machst (Name, E-Mail-Adresse, gewählter Termin, optional
+            Unternehmen, Telefonnummer und Nachricht). Wir legen den Termin in
+            unserem Kalender bei Microsoft 365 (Microsoft Ireland Operations
+            Ltd., One Microsoft Place, South County Business Park,
+            Leopardstown, Dublin 18, Irland) an und schicken dir von dort die
+            Einladung mit einem Link zu Microsoft Teams. Deine Anfrage
+            speichern wir außerdem bei unserem Datenbank-Dienstleister
+            Supabase (siehe Abschnitt 4), um das Gespräch vorzubereiten. Mit
+            Microsoft und Supabase bestehen Verträge zur
+            Auftragsverarbeitung; für Übermittlungen in Drittländer gelten die
+            EU-Standardvertragsklauseln bzw. das EU-US Data Privacy Framework.
+          </p>
+          <p className="mt-2">
+            Rechtsgrundlage ist die Anbahnung einer Zusammenarbeit (Art. 6
+            Abs. 1 lit. b DSGVO). Für das Gespräch in Microsoft Teams gelten
+            zusätzlich die Datenschutzbestimmungen von Microsoft. Wir löschen
+            deine Angaben, sobald sie für die Anbahnung nicht mehr nötig sind
+            und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
           </p>
         </section>
 
         <section>
-          <LegalHeading id="einstellungen">7. Datenschutz-Einstellungen</LegalHeading>
+          <LegalHeading id="einstellungen">7. Keine Einwilligungen nötig</LegalHeading>
           <p>
-            Hier siehst du, ob du eine Einwilligung gespeichert hast, und
-            kannst sie jederzeit mit Wirkung für die Zukunft widerrufen
-            (Art. 7 Abs. 3 DSGVO).
+            Auf unserer Website laden wir keine Inhalte, Skripte oder
+            Schriften von Drittanbietern und setzen keine Cookies. Es gibt
+            deshalb keine Einwilligungen, die du verwalten oder widerrufen
+            müsstest.
           </p>
-          <ConsentSettings />
         </section>
 
         <section>
@@ -240,7 +243,7 @@ export default function DatenschutzPage() {
           </p>
         </section>
 
-        <p className="text-xs text-snow/40">Stand: September 2026</p>
+        <p className="text-xs text-snow/40">Stand: Oktober 2026</p>
       </LegalArticle>
     </PageShell>
   );
