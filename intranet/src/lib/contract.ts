@@ -135,3 +135,12 @@ export function validIban(value: string) {
 }
 
 export const formatIban = (value: string) => value.replace(/\s+/g, "").toUpperCase().replace(/(.{4})/g, "$1 ").trim();
+
+/** Unterschriftsfelder der Mappe; jedes bekommt eine eigene Prüf-ID */
+export type SignField = "angebot" | "vertrag" | "sepa";
+export const SIGN_FIELD_LABEL: Record<SignField, string> = { angebot: "Annahme des Angebots", vertrag: "Agenturvertrag", sepa: "SEPA-Lastschriftmandat" };
+export const signFields = (sepa: boolean): SignField[] => (sepa ? ["angebot", "vertrag", "sepa"] : ["angebot", "vertrag"]);
+
+/** Prüf-ID wie 8F3A-1C2E-4B7D-90AF (64 Bit) */
+export const VERIFY_ID = /^[0-9A-F]{4}(-[0-9A-F]{4}){3}$/;
+export const formatVerifyId = (hex: string) => hex.slice(0, 16).toUpperCase().match(/.{4}/g)!.join("-");

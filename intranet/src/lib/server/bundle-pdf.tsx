@@ -1,6 +1,6 @@
 import "server-only";
 import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
-import { fillContract, formatIban, SEPA_TEXT, type ContractSnapshot } from "@/lib/contract";
+import { fillContract, formatIban, SEPA_TEXT, type ContractSnapshot, type SignField } from "@/lib/contract";
 import type { BillingDetail, BillingSettings } from "@/lib/billing";
 import { DAWN, DUNE, EARTH, InvoicePage, PALE, SKY } from "./invoice-pdf";
 import { LOGO_PNG, MONOGRAM_PNG } from "./pdf-logo";
@@ -8,12 +8,15 @@ import { LOGO_PNG, MONOGRAM_PNG } from "./pdf-logo";
 // Unterschriftsmappe: Angebot, Agenturvertrag, SEPA-Lastschriftmandat und –
 // nach der Unterschrift – das Abschlussprotokoll, in einem PDF.
 
-export type AuditEvent = { at: string; event: string; by?: string; ip?: string; ua?: string; detail?: string };
+export type AuditEvent = { at: string; event: string; by?: string; ip?: string; ua?: string; detail?: string; field?: string; ref?: string };
 
 export type SepaData = { holder: string; iban: string; bic?: string; bank?: string; street?: string; zip?: string; city?: string };
 
 export type BundleInput = {
   id: string;
+  /** Prüf-IDs: GRID und je Unterschriftsfeld des Kunden */
+  grid_id: string;
+  field_ids: Partial<Record<SignField, string>>;
   offer: BillingDetail;
   settings: BillingSettings;
   contract: ContractSnapshot;
@@ -53,6 +56,11 @@ const s = StyleSheet.create({
   signBox: { height: 54, borderBottomWidth: 0.8, borderBottomColor: SKY, justifyContent: "flex-end", paddingBottom: 3 },
   signImage: { height: 46, objectFit: "contain", objectPositionX: 0 },
   signPending: { fontSize: 7.5, color: DUNE },
+  stamp: { height: 62, justifyContent: "space-between", paddingLeft: 9, paddingVertical: 1 },
+  bracket: { position: "absolute", left: 0, top: 4, bottom: 4, width: 16, borderLeftWidth: 1, borderTopWidth: 1, borderBottomWidth: 1, borderColor: SKY, borderTopLeftRadius: 6, borderBottomLeftRadius: 6 },
+  stampLabel: { fontSize: 5.8, letterSpacing: 0.4, color: EARTH, marginLeft: 12, marginTop: 0.5 },
+  stampImage: { height: 38, objectFit: "contain", objectPositionX: 0 },
+  stampId: { fontFamily: "Courier", fontSize: 6.4, color: SKY, marginLeft: 12, marginBottom: 0.5 },
   signLabel: { fontSize: 7.2, color: EARTH, marginTop: 4, lineHeight: "10pt" },
   box: { borderWidth: 0.6, borderColor: DAWN, borderRadius: 10, padding: 12, marginBottom: 12 },
   row: { flexDirection: "row", paddingVertical: 3, borderBottomWidth: 0.5, borderBottomColor: DAWN },
@@ -95,14 +103,31 @@ function Chrome({ title, input }: { title: string; input: BundleInput }) {
   );
 }
 
+/** Elektronische Unterschrift: Klammer, Bild, Prüf-ID; offen nur eine Linie */
+function Stamp({ image, id }: { image?: string | null; id?: string }) {
+  if (!image || !id) {
+    return (
+      <View style={s.signBox}>
+        <Text style={s.signPending}>wird elektronisch unterschrieben</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={s.stamp}>
+      <View style={s.bracket} />
+      <Text style={s.stampLabel}>Elektronisch unterschrieben · GRID sign</Text>
+      {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf kennt kein alt */}
+      <Image src={image} style={s.stampImage} />
+      <Text style={s.stampId}>{id}</Text>
+    </View>
+  );
+}
+
 function Signatures({ input, place }: { input: BundleInput; place: string }) {
   return (
     <View style={s.signRow} wrap={false}>
       <View style={[s.signCol, { marginRight: 24 }]}>
-        <View style={s.signBox}>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf kennt kein alt */}
-          <Image src={input.grid_signature} style={s.signImage} />
-        </View>
+        <Stamp image={input.grid_signature} id={input.grid_id} />
         <Text style={s.signLabel}>
           Agentur: {input.settings.company.name}
           {"\n"}
@@ -110,20 +135,36 @@ function Signatures({ input, place }: { input: BundleInput; place: string }) {
         </Text>
       </View>
       <View style={s.signCol}>
-        <View style={s.signBox}>
-          {input.customer_signature ? (
-            // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf kennt kein alt
-            <Image src={input.customer_signature} style={s.signImage} />
-          ) : (
-            <Text style={s.signPending}>wird elektronisch unterschrieben</Text>
-          )}
-        </View>
+        <Stamp image={input.customer_signature} id={input.field_ids.vertrag} />
         <Text style={s.signLabel}>
           Kunde: {customerAddress(input.offer).name}
           {"\n"}
           {input.signer_name}
           {input.customer_signed_at ? ` · elektronisch, ${date(input.customer_signed_at)}` : ""}
         </Text>
+      </View>
+    </View>
+  );
+}
+
+/** Annahme unter dem Angebot */
+function Acceptance({ input }: { input: BundleInput }) {
+  return (
+    <View style={{ marginTop: 18 }} wrap={false}>
+      <Text style={[s.eyebrow, { marginBottom: 4 }]}>Annahme</Text>
+      <Text style={s.para}>
+        Hiermit nehme ich das Angebot {input.offer.number ?? ""} an. Es gilt der {input.contract.title}
+        {input.sepa_required ? "; gezahlt wird per SEPA-Lastschrift" : ""}.
+      </Text>
+      <View style={[s.signRow, { marginTop: 8 }]}>
+        <View style={[s.signCol, { marginRight: 24 }]} />
+        <View style={s.signCol}>
+          <Stamp image={input.customer_signature} id={input.field_ids.angebot} />
+          <Text style={s.signLabel}>
+            {customerAddress(input.offer).name} · {input.signer_name}
+            {input.customer_signed_at ? ` · ${date(input.customer_signed_at)}` : ""}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -241,14 +282,7 @@ function SepaPage({ input }: { input: BundleInput }) {
           <Text style={s.signLabel}>Ort, Datum</Text>
         </View>
         <View style={s.signCol}>
-          <View style={s.signBox}>
-            {input.customer_signature ? (
-              // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf kennt kein alt
-              <Image src={input.customer_signature} style={s.signImage} />
-            ) : (
-              <Text style={s.signPending}>wird elektronisch unterschrieben</Text>
-            )}
-          </View>
+          <Stamp image={input.customer_signature} id={input.field_ids.sepa} />
           <Text style={s.signLabel}>Unterschrift Kontoinhaber · {sepa?.holder || input.signer_name}</Text>
         </View>
       </View>
@@ -266,6 +300,8 @@ const EVENT_LABEL: Record<string, string> = {
   abgelehnt: "Abgelehnt",
   versiegelt: "Versiegelt und abgelegt",
 };
+
+const PROTOCOL_FIELD: Record<SignField, string> = { angebot: "Annahme", vertrag: "Vertrag", sepa: "SEPA-Mandat" };
 
 function ProtocolPage({ input }: { input: BundleInput }) {
   const signed = input.audit?.find((e) => e.event === "unterschrieben");
@@ -288,7 +324,9 @@ function ProtocolPage({ input }: { input: BundleInput }) {
             ["Mappe", input.id],
             ["Inhalt", `Angebot ${input.offer.number ?? ""}, ${input.contract.title}${input.sepa_required ? ", SEPA-Lastschriftmandat" : ""}`],
             ["Agentur", `${input.grid_signer} · ${dateTime(input.grid_signed_at)}`],
+            ["Prüf-ID Agentur", input.grid_id],
             ["Kunde", `${input.signer_name} · ${input.signer_email}`],
+            ...(Object.entries(input.field_ids) as [SignField, string][]).map(([field, id]) => [`Prüf-ID ${PROTOCOL_FIELD[field]}`, id] as [string, string]),
             ["Unterschrieben", signed ? `${dateTime(signed.at)} · IP ${signed.ip ?? "–"}` : "–"],
             ["SHA-256 vor Unterschrift", input.unsigned_hash ?? "–"],
             ["Siegel-Zertifikat (SHA-256)", input.seal_fingerprint ?? "–"],
@@ -296,7 +334,7 @@ function ProtocolPage({ input }: { input: BundleInput }) {
         ).map(([label, value]) => (
           <View key={label} style={s.row}>
             <Text style={s.label}>{label}</Text>
-            <Text style={[s.value, label.startsWith("SHA") || label.startsWith("Siegel") ? s.mono : {}]}>{value}</Text>
+            <Text style={[s.value, label.startsWith("SHA") || label.startsWith("Siegel") || label.startsWith("Prüf-ID") ? s.mono : {}]}>{value}</Text>
           </View>
         ))}
       </View>
@@ -307,10 +345,12 @@ function ProtocolPage({ input }: { input: BundleInput }) {
           <Text style={{ width: 110 }}>{dateTime(e.at)}</Text>
           <View style={{ flex: 1 }}>
             <Text style={{ fontWeight: 400 }}>
-              {EVENT_LABEL[e.event] ?? e.event}
+              {e.event === "feld" ? `Unterschrift gesetzt: ${e.detail} · ID ${e.ref}` : (EVENT_LABEL[e.event] ?? e.event)}
               {e.by ? ` · ${e.by}` : ""}
             </Text>
-            {(e.ip || e.ua || e.detail) && <Text style={{ color: EARTH, fontSize: 6.6 }}>{[e.detail, e.ip && `IP ${e.ip}`, e.ua].filter(Boolean).join(" · ")}</Text>}
+            {(e.ip || e.ua || e.detail) && (
+              <Text style={{ color: EARTH, fontSize: 6.6 }}>{[e.event === "feld" ? null : e.detail, e.ip && `IP ${e.ip}`, e.ua].filter(Boolean).join(" · ")}</Text>
+            )}
           </View>
         </View>
       ))}
@@ -322,7 +362,7 @@ export function renderBundle(input: BundleInput) {
   const c = input.settings.company;
   return renderToBuffer(
     <Document title={`Angebot ${input.offer.number ?? ""} · ${input.contract.title}`} author={c.name} creator={c.name} producer="GRID sign" language="de-DE">
-      <InvoicePage doc={input.offer} settings={input.settings} payment={input.sepa_required ? "sepa" : "ueberweisung"} />
+      <InvoicePage doc={input.offer} settings={input.settings} payment={input.sepa_required ? "sepa" : "ueberweisung"} extra={<Acceptance input={input} />} />
       <ContractPages input={input} />
       {input.sepa_required && <SepaPage input={input} />}
       {input.final && <ProtocolPage input={input} />}

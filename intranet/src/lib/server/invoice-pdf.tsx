@@ -117,10 +117,12 @@ export type PdfInput = {
   qr?: string | null;
   /** Zahlungsart im Angebot; Standard SEPA-Lastschrift */
   payment?: "sepa" | "ueberweisung";
+  /** Zusatz unter dem Schlusstext (Annahme in der Unterschriftsmappe) */
+  extra?: React.ReactNode;
 };
 
 /** Eine Belegseite (Rechnung, Storno, Gutschrift, Angebot); auch Teil der Unterschriftsmappe */
-export function InvoicePage({ doc, settings, reference, qr, payment = "sepa" }: PdfInput) {
+export function InvoicePage({ doc, settings, reference, qr, payment = "sepa", extra }: PdfInput) {
   const c = settings.company;
   const title = DOC_TITLE[doc.kind] ?? KIND_LABEL[doc.kind];
   const label = `${title} ${doc.number ?? "(Entwurf)"}`;
@@ -320,6 +322,7 @@ export function InvoicePage({ doc, settings, reference, qr, payment = "sepa" }: 
             {plain(fillText(doc.closing, context, c))}
           </Text>
         )}
+        {extra}
 
         <View style={s.footer} fixed>
           {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf kennt kein alt */}

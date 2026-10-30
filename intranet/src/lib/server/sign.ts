@@ -1,7 +1,19 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { DEMO, SHARED_MAILBOX } from "@/lib/config";
-import { DEFAULT_PURPOSE, fillContract, formatIban, validIban, type ContractSnapshot, type ContractTerms } from "@/lib/contract";
+import {
+  DEFAULT_PURPOSE,
+  fillContract,
+  formatIban,
+  formatVerifyId,
+  SIGN_FIELD_LABEL,
+  signFields,
+  validIban,
+  VERIFY_ID,
+  type ContractSnapshot,
+  type ContractTerms,
+  type SignField,
+} from "@/lib/contract";
 import { KIND_LABEL, money, plain, type BillingDetail } from "@/lib/billing";
 import { BUCKET, billingSettings, check, contractTemplate, getBilling } from "./billing";
 import { renderBundle, type AuditEvent, type BundleInput, type SepaData } from "./bundle-pdf";
@@ -79,8 +91,17 @@ const isoDate = (value: unknown) => (typeof value === "string" && /^\d{4}-\d{2}-
 
 export { contractTemplate } from "./billing";
 
+/** Prüf-ID der GRID-Unterschrift, aus der Mappe abgeleitet */
+const gridVerifyId = (id: string) => formatVerifyId(sha256(`${id}:grid`));
+
+/** Prüf-IDs der Kundenunterschriften stehen im Protokoll */
+const fieldIds = (audit: AuditEvent[]) =>
+  Object.fromEntries(audit.filter((e) => e.event === "feld" && e.field && e.ref).map((e) => [e.field, e.ref])) as Partial<Record<SignField, string>>;
+
 async function bundleInput(row: EnvelopeRow, offer: BillingDetail, final = false): Promise<BundleInput> {
   return {
+    grid_id: gridVerifyId(row.id),
+    field_ids: fieldIds(row.audit),
     id: row.id,
     offer,
     settings: await billingSettings(),
@@ -311,9 +332,19 @@ export async function publicView(token: string, client: Client) {
   const fill = (text: string) => fillContract(text, { terms: row.contract.terms, offerNumber: offer.number, offerDate: offer.document_date });
   return {
     status: expired(row) ? ("abgelaufen" as const) : row.status,
-    company: { name: settings.company.name, city: settings.company.city, email: settings.company.email, creditor_id: settings.company.creditor_id },
+    company: {
+      name: settings.company.name,
+      street: settings.company.street,
+      zip: settings.company.zip,
+      city: settings.company.city,
+      email: settings.company.email,
+      creditor_id: settings.company.creditor_id,
+      managing_director: settings.company.managing_director.replace(/^(Frau|Herr)\s+/, ""),
+    },
     signer_name: row.signer_name,
     grid_signer: row.grid_signer,
+    grid_signature: row.grid_signature,
+    grid_id: gridVerifyId(row.id),
     grid_signed_at: row.grid_signed_at,
     customer_signed_at: row.customer_signed_at,
     expires_at: row.expires_at,
@@ -376,7 +407,7 @@ export async function decline(token: string, reason: string, client: Client) {
   check(await sb().from("billing_documents").update({ status: "abgelehnt" }).eq("id", row.document_id).eq("status", "offen"));
 }
 
-export type SignInput = { consent: boolean; signature: string; sepa?: SepaData | null };
+export type SignInput = { consent: boolean; signature: string; sepa?: SepaData | null; fields?: Partial<Record<SignField, string>> };
 
 export async function signEnvelope(token: string, input: SignInput, client: Client) {
   if (DEMO) return { signed_at: new Date().toISOString() };
@@ -386,6 +417,10 @@ export async function signEnvelope(token: string, input: SignInput, client: Clie
   if (expired(row)) throw new SignError("Der Link ist abgelaufen. Bitte fordern Sie einen neuen an.");
   if (!input.consent) throw new SignError("Bitte der elektronischen Unterschrift zustimmen");
   if (!isPng(input.signature)) throw new SignError("Bitte unterschreiben");
+  const fields = signFields(row.sepa_required);
+  const ids = fields.map((f) => input.fields?.[f]);
+  if (ids.some((id) => !id || !VERIFY_ID.test(id))) throw new SignError("Bitte an allen markierten Stellen unterschreiben");
+  if (new Set(ids).size !== ids.length) throw new SignError("Prüf-IDs sind nicht eindeutig");
 
   let sepa: SepaData | null = null;
   if (row.sepa_required) {
@@ -412,6 +447,7 @@ export async function signEnvelope(token: string, input: SignInput, client: Clie
   const mandate = row.sepa_required ? `GRID-${customer?.customer_number || row.customer_id?.slice(0, 8).toUpperCase() || "KUNDE"}-${stamp}` : null;
   const events: AuditEvent[] = [
     { at: now.toISOString(), event: "zugestimmt", ...client },
+    ...fields.map((field, i) => ({ at: now.toISOString(), event: "feld", field, ref: ids[i], by: row.signer_name, detail: SIGN_FIELD_LABEL[field], ...client })),
     { at: now.toISOString(), event: "unterschrieben", by: row.signer_name, detail: row.signer_email, ...client },
   ];
 

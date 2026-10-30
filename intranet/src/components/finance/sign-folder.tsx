@@ -29,7 +29,7 @@ type Envelope = {
   grid_signer: string;
   customer_signed_at: string | null;
   decline_reason: string | null;
-  audit: { at: string; event: string; by?: string; ip?: string; detail?: string }[];
+  audit: { at: string; event: string; by?: string; ip?: string; detail?: string; ref?: string }[];
   sent_at: string | null;
   viewed_at: string | null;
   expires_at: string;
@@ -49,6 +49,8 @@ const EVENT: Record<string, string> = {
   erstellt: "Erstellt und von GRID unterschrieben",
   versendet: "Versendet",
   geoeffnet: "Geöffnet",
+  angenommen: "Angebot bestätigt",
+  feld: "Unterschrift gesetzt",
   zugestimmt: "Elektronischer Unterschrift zugestimmt",
   unterschrieben: "Vom Kunden unterschrieben",
   versiegelt: "Versiegelt und in der Kundenakte abgelegt",
@@ -292,6 +294,7 @@ export function SignFolders({ doc }: { doc: BillingDetail }) {
                 {e.audit.map((a, i) => (
                   <li key={i} className="text-snow/65">
                     <span className="tabular-nums text-snow/45">{formatDateTime(a.at)}</span> · {EVENT[a.event] ?? a.event}
+                    {a.event === "feld" && a.detail ? `: ${a.detail} · ID ${a.ref}` : ""}
                     {a.by ? ` · ${a.by}` : ""}
                     {a.detail && a.event !== "erstellt" ? ` · ${a.detail}` : ""}
                     {a.ip ? ` · IP ${a.ip}` : ""}
