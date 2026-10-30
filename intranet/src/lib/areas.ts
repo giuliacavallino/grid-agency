@@ -23,7 +23,7 @@ export type Area = {
 // Bereiche des Hubs: Navbar, Mobile-Menü und Kacheln entstehen aus dieser Liste.
 export const AREAS: Area[] = [
   { id: "sales", title: "Sales", text: "Pipeline, Kund*innen, Auftragsbuch, hello@ und giulia@", icon: TrendingUp, href: "/sales" },
-  { id: "finance", title: "Finance", text: "Eingangsrechnungen, Freigabe, DATEV und buchhaltung@", icon: Receipt, href: "/finance" },
+  { id: "finance", title: "Finance", text: "Eingangs- und Ausgangsrechnungen, DATEV und buchhaltung@", icon: Receipt, href: "/finance" },
   { id: "personal", title: "Personal", text: "Bewerbungen von der ersten Mail bis zur Zusage", icon: Users, href: "/personal" },
   { id: "marketing", title: "Marketing", text: "Eigene Kanäle, Content und Kampagnen", icon: Megaphone, href: "/marketing" },
   { id: "mail", title: "Mail", text: "Alle Postfächer und Kalender an einem Ort", icon: Mail, href: "/mail" },

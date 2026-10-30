@@ -9,6 +9,7 @@ import { createRow, deleteRow, revalidate, updateRow, useRows } from "@/lib/data
 import { euro, formatDate, num } from "@/lib/format";
 import { SOURCES, type Customer, type Lead, type Retainer } from "@/lib/sales/types";
 import { Avatar, Badge, Button, Dialog, Empty, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
+import { CustomerFiles } from "./customer-files";
 import { EasybillSync } from "./easybill-sync";
 import { PageBar } from "./shell";
 import { SourceBadge } from "./source";
@@ -434,6 +435,8 @@ function CustomerDetail({ customer, retainers, onClose }: { customer: Customer; 
           </ul>
         )}
       </section>
+
+      <CustomerFiles customer={customer} />
 
       {customer.lead_id && (
         <Link href="/sales" className="inline-flex items-center gap-2 text-sm text-snow/70 hover:text-snow">

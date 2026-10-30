@@ -70,6 +70,17 @@ export type Customer = {
   source: string | null;
   notes: string | null;
   lead_id: string | null;
+  /** Rechnungsdaten (aus easybill übernommen oder im Intranet gepflegt) */
+  street?: string | null;
+  zip?: string | null;
+  country?: string | null;
+  vat_id?: string | null;
+  billing_email?: string | null;
+  payment_terms_days?: number | null;
+  sepa_mandate_reference?: string | null;
+  sepa_holder?: string | null;
+  sepa_iban?: string | null;
+  sepa_signed_at?: string | null;
 };
 
 export const UNITS = [
@@ -89,6 +100,8 @@ export type Article = {
   unit: (typeof UNITS)[number]["id"];
   hours: number;
   active: boolean;
+  number?: string | null;
+  vat_percent?: number;
 };
 
 export type Retainer = {
@@ -233,7 +246,13 @@ export type ApplicationFile = { path: string; name: string; type: string; size: 
 /** Offene Stelle auf der Website; Texte stehen in der Website, hier nur An/Aus */
 export type JobPosting = { id: string; slug: string; title: string; active: boolean; position: number; updated_at: string };
 
-export type Settings = { capacity: { team_hours_per_month: number }; datev: { upload_address: string } };
+export type Settings = {
+  capacity: { team_hours_per_month: number };
+  datev: { upload_address: string };
+  billing: import("@/lib/billing").BillingSettings;
+  contract: import("@/lib/contract").ContractTemplate;
+  grid_signature: { signer: string; image: string } | null;
+};
 
 /** Position für „ganz oben“ in einer Pipeline-Spalte (absteigend sortiert). */
 export const topPosition = () => Date.now() / 1000;

@@ -18,6 +18,7 @@ import {
   LayoutGrid,
   Menu,
   Package,
+  ReceiptText,
   Settings,
   X,
   type LucideIcon,
@@ -48,6 +49,7 @@ export const SALES_NAV: NavItem[] = [
 
 export const FINANCE_NAV: NavItem[] = [
   { href: "/finance", label: "Eingangsrechnungen", icon: Columns3, counter: "invoices" },
+  { href: "/finance/ausgangsrechnungen", label: "Ausgangsrechnungen", icon: ReceiptText },
   { href: "/finance/bank", label: "Bank", icon: Landmark, area: "admin" },
   { href: "/finance/posteingang", label: "Posteingang", icon: Inbox },
   { href: "/finance/einstellungen", label: "Einstellungen", icon: Settings },
