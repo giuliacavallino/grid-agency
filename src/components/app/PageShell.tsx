@@ -1,4 +1,4 @@
-import { CalendlyProvider } from "./CalendlyProvider";
+import { BookingProvider } from "./BookingProvider";
 import { SiteFooter } from "./SiteFooter";
 import { TabBar } from "./TabBar";
 import { TopBar } from "./TopBar";
@@ -8,9 +8,9 @@ import { TopBar } from "./TopBar";
  * der Startseite, auf derselben Breite. */
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    // Calendly-Buttons auf Unterseiten (FAQ …) öffnen dasselbe Fenster mit
-    // Einwilligungshinweis wie auf der Startseite statt eines neuen Tabs.
-    <CalendlyProvider>
+    // Buchungs-Buttons auf Unterseiten (FAQ …) öffnen dasselbe Fenster
+    // wie auf der Startseite statt eines neuen Tabs.
+    <BookingProvider>
       <div className="relative flex min-h-dvh w-full flex-col overflow-x-clip">
         <TopBar />
         <main className="mx-auto w-full max-w-frame flex-1 px-5 pb-16 pt-28 lg:max-w-frame-wide lg:px-gutter lg:pt-36">
@@ -22,6 +22,6 @@ export function PageShell({ children }: { children: React.ReactNode }) {
         </footer>
         <TabBar />
       </div>
-    </CalendlyProvider>
+    </BookingProvider>
   );
 }

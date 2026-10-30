@@ -528,10 +528,6 @@ export const clients: Client[] = [
 /** Name of the client shown as "Newest Collaboration" on the homepage. */
 export const newestCollab = "480 GRADI";
 
-/** Calendly booking link, opened in a new tab (no embed, so no
- * third-party scripts load and the Datenschutzerklärung stays as is). */
-export const calendlyUrl =
-  "https://calendly.com/giulia_cavallino/boost-your-socials";
 
 export const heroStats = [
   { value: 30, suffix: "+", label: "Marken" },

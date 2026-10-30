@@ -15,7 +15,7 @@ export const TABLES = {
       "phone", "message", "budget", "value", "owner", "next_step", "next_step_at",
       "customer_id", "lost_reason",
     ],
-    filters: ["status", "stage", "customer_id", "source_ref"],
+    filters: ["status", "stage", "customer_id", "source_ref", "offer_id"],
     order: { column: "position", ascending: true },
   },
   lead_activities: {

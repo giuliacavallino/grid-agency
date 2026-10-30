@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { LoaderCircle } from "lucide-react";
 import { submitContactForm, type ContactFormState } from "@/app/actions/contact";
+import { Altcha } from "@/components/Altcha";
 
 const initialState: ContactFormState = { status: "idle" };
 
@@ -85,6 +86,8 @@ export function ContactForm() {
         placeholder="Erzähl uns von deiner Marke *"
         className={inputClasses}
       />
+
+      <Altcha />
 
       <div className="flex flex-col items-start gap-4 pt-2 sm:flex-row sm:items-center">
         <SubmitButton />

@@ -1,6 +1,6 @@
 "use server";
 
-import { getSupabase } from "@/lib/supabase";
+import { intranet } from "@/lib/intranet";
 
 export type ContactFormState = {
   status: "idle" | "success" | "error";
@@ -11,11 +11,10 @@ export async function submitContactForm(
   _prevState: ContactFormState,
   formData: FormData
 ): Promise<ContactFormState> {
-  const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
-  const company = String(formData.get("company") ?? "").trim();
-  const message = String(formData.get("message") ?? "").trim();
-  const budget = String(formData.get("budget") ?? "").trim();
+  const field = (key: string) => String(formData.get(key) ?? "").trim();
+  const name = field("name");
+  const email = field("email");
+  const message = field("message");
 
   if (!name || !email || !message) {
     return { status: "error", message: "Bitte fülle alle Pflichtfelder aus." };
@@ -26,26 +25,23 @@ export async function submitContactForm(
     return { status: "error", message: "Bitte gib eine gültige E-Mail-Adresse ein." };
   }
 
-  const supabase = getSupabase();
-  if (!supabase) {
+  // Das Intranet prüft das Captcha und legt die Anfrage als Lead an.
+  try {
+    await intranet("/api/public/kontakt", {
+      method: "POST",
+      body: JSON.stringify({
+        name,
+        email,
+        company: field("company"),
+        budget: field("budget"),
+        message,
+        altcha: field("altcha"),
+      }),
+    });
+  } catch (error) {
     return {
       status: "error",
-      message: "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
-    };
-  }
-
-  const { error } = await supabase.from("contact_submissions").insert({
-    name,
-    email,
-    company: company || null,
-    message,
-    budget: budget || null,
-  });
-
-  if (error) {
-    return {
-      status: "error",
-      message: "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
+      message: error instanceof Error ? error.message : "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
     };
   }
 

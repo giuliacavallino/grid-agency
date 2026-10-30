@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { roadmap } from "@/lib/content";
 import { SectionWatermark } from "./SectionWatermark";
 import { SnapRow } from "./SnapRow";
-import { CalendlyLink } from "./CalendlyProvider";
+import { BookingLink } from "./BookingProvider";
 
 /** Roadmap einer Zusammenarbeit, nach der Agentur-Präsentation:
  * fünf Stationen von der Terminanfrage bis zur laufenden Betreuung.
@@ -99,11 +99,11 @@ export function RoadmapSection() {
         transition={{ duration: 0.5 }}
         className="mt-[clamp(2rem,7svh,4.5rem)] flex flex-col items-center gap-4"
       >
-        <CalendlyLink
+        <BookingLink
           className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
         >
           Jetzt Erstgespräch buchen
-        </CalendlyLink>
+        </BookingLink>
         <p className="text-sm font-light text-snow/50">
           Noch Fragen?{" "}
           <Link

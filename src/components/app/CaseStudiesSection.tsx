@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { agencyResults, caseStudyTeasers, clientSlug } from "@/lib/content";
 import { SectionWatermark } from "./SectionWatermark";
-import { CalendlyLink } from "./CalendlyProvider";
+import { BookingLink } from "./BookingProvider";
 import { SnapRow } from "./SnapRow";
 
 /** Case Studies aus der Agentur-Präsentation auf der Startseite:
@@ -85,11 +85,11 @@ export function CaseStudiesSection() {
           <p className="text-sm font-light text-snow/65">
             Ergebnisse wie diese für deine Marke?
           </p>
-          <CalendlyLink
+          <BookingLink
             className="btn-rainbow flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3 text-sm font-medium text-sky active:scale-[0.97]"
           >
             Unverbindliches Erstgespräch buchen
-          </CalendlyLink>
+          </BookingLink>
         </motion.div>
       </div>
 

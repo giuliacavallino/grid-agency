@@ -1,8 +1,7 @@
 export const STAGES = [
   { id: "neu", label: "Neuer Lead" },
-  { id: "eingeladen", label: "Eingeladen" },
   { id: "erstgespraech", label: "Erstgespräch" },
-  { id: "angebot", label: "Angebot" },
+  { id: "angebot", label: "Angebot verschickt" },
   { id: "gewonnen", label: "Kunde gewonnen" },
 ] as const;
 export type Stage = (typeof STAGES)[number]["id"];
@@ -40,6 +39,15 @@ export type Lead = {
   customer_id: string | null;
   won_at: string | null;
   lost_reason: string | null;
+  /** Einladung zum Erstgespräch und gebuchter Termin */
+  invited_at: string | null;
+  meeting_at: string | null;
+  meeting_url: string | null;
+  /** Angebot (Unterschriftsmappe) und Onboarding */
+  offer_id: string | null;
+  onboarding_at: string | null;
+  kickoff_at: string | null;
+  kickoff_url: string | null;
 };
 
 export type Activity = {

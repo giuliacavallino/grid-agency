@@ -5,7 +5,7 @@ import Link from "next/link";
 import { animate, motion, useInView } from "framer-motion";
 import { clients, clientSlug, heroStats } from "@/lib/content";
 import { scrollToId } from "@/lib/scroll";
-import { CalendlyLink } from "./CalendlyProvider";
+import { BookingLink } from "./BookingProvider";
 import { EventTeaser } from "./EventTeaser";
 import { HeroVideo } from "./HeroVideo";
 
@@ -75,18 +75,18 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.55 }}
           className="mt-[clamp(1rem,3svh,1.75rem)] flex flex-wrap gap-2 lg:mx-auto lg:max-w-md"
         >
-          {/* Direkt zur Calendly-Buchung — unverbindliches Erstgespräch,
-              öffnet im neuen Tab statt zur DM-Sektion zu scrollen. Beide
+          {/* Direkt zur Terminbuchung — unverbindliches Erstgespräch,
+              öffnet das Buchungsfenster statt zur DM-Sektion zu scrollen. Beide
               Buttons bleiben einzeilig; wird es zu eng (sehr schmale
               Handys), rutschen sie untereinander statt umzubrechen. */}
-          <CalendlyLink
+          <BookingLink
             className="btn-rainbow flex flex-auto items-center justify-center gap-2 whitespace-nowrap rounded-full bg-snow px-5 py-3 text-center text-sm font-medium text-sky active:scale-[0.97] lg:flex-1"
           >
             <span>
               <span className="hidden sm:inline">Jetzt </span>Erstgespräch
               buchen
             </span>
-          </CalendlyLink>
+          </BookingLink>
           <a
             href="#cases"
             onClick={(e) => {

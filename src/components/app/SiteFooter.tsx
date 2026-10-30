@@ -36,9 +36,6 @@ export function SiteFooter({ className }: { className?: string }) {
         <Link href="/agb" className="hover:text-snow/60">
           AGB
         </Link>
-        <Link href="/datenschutz#einstellungen" className="hover:text-snow/60">
-          Datenschutz-Einstellungen
-        </Link>
         <a href="https://intranet.grid-agency.de" className="hover:text-snow/60">
           Login
         </a>

@@ -405,6 +405,7 @@ export async function decline(token: string, reason: string, client: Client) {
     decline_reason: reason.slice(0, 500) || null,
   });
   check(await sb().from("billing_documents").update({ status: "abgelehnt" }).eq("id", row.document_id).eq("status", "offen"));
+  await import("./lead-flow").then((flow) => flow.offerDeclined(row.document_id, reason.slice(0, 500))).catch(console.error);
 }
 
 export type SignInput = { consent: boolean; signature: string; sepa?: SepaData | null; fields?: Partial<Record<SignField, string>> };
@@ -485,6 +486,8 @@ export async function signEnvelope(token: string, input: SignInput, client: Clie
       .in("status", ["versendet", "geoeffnet"])
   );
   check(await sb().from("billing_documents").update({ status: "angenommen" }).eq("id", row.document_id));
+  // Pipeline: Lead auf „Kunde gewonnen“ (Fehler halten die Unterschrift nicht auf)
+  await import("./lead-flow").then((flow) => flow.offerSigned(row.document_id, row.customer_id)).catch(console.error);
   if (row.customer_id) {
     check(
       await sb()

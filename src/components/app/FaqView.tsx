@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { faq } from "@/lib/content";
-import { CalendlyLink } from "./CalendlyProvider";
+import { BookingLink } from "./BookingProvider";
 
 /** FAQ als Akkordeon: eine Frage pro Karte, die erste ist offen. Antworten
  * bestehen aus Fließtext, optionalen Stichpunkten und einem optionalen
@@ -129,9 +129,9 @@ export function FaqView() {
         <p className="mt-1 text-sm font-light text-snow/65">
           Dann klären wir sie im Erstgespräch, unverbindlich und in 30 Minuten.
         </p>
-        <CalendlyLink className="btn-rainbow mt-4 inline-flex items-center gap-2 rounded-full bg-snow px-6 py-3 text-sm font-medium text-sky active:scale-[0.97]">
+        <BookingLink className="btn-rainbow mt-4 inline-flex items-center gap-2 rounded-full bg-snow px-6 py-3 text-sm font-medium text-sky active:scale-[0.97]">
           Jetzt Erstgespräch buchen
-        </CalendlyLink>
+        </BookingLink>
       </motion.div>
     </div>
   );

@@ -48,6 +48,13 @@ function lead(
     customer_id: null,
     won_at: stage === "gewonnen" ? ago(Math.max(0, daysAgo - 20)) : null,
     lost_reason: null,
+    invited_at: null,
+    meeting_at: null,
+    meeting_url: null,
+    offer_id: null,
+    onboarding_at: null,
+    kickoff_at: null,
+    kickoff_url: null,
     ...extra,
   };
 }
@@ -127,14 +134,14 @@ const leads: Row[] = [
   lead("neu", "email", "Clara Neumann", "Studio Nord", 2490, 2, "Liebes GRID-Team, wir sind ein Interior-Studio und möchten unseren Auftritt neu aufsetzen. Habt ihr nächste Woche Zeit für ein Gespräch?"),
   lead("neu", "linkedin", "Felix Brandt", "Brandt Immobilien", 3990, 3, "LinkedIn Lead Gen: Employer Branding und LinkedIn-Content"),
   lead("neu", "meta", "Mia Hoffmann", "Yoga Loft", 890, 4, "Facebook Lead Ads: Paid Social"),
-  lead("eingeladen", "website", "Paul Richter", "Richter & Söhne Bäckerei", 1490, 6, "Wir möchten mehr junge Leute erreichen.", { next_step: "Erstgespräch bestätigen", next_step_at: ago(-2) }),
-  lead("eingeladen", "empfehlung", "Hannah Krüger", "Bloom Florist", 1490, 8, "Empfehlung von Goldies"),
-  lead("erstgespraech", "email", "Leon Wolf", "Wolf Fitness", 2490, 12, "Anfrage für Reels-Serie und Ads", { next_step: "Angebot schreiben", next_step_at: ago(-1) }),
-  lead("erstgespraech", "instagram", "Emma Schulz", "Pasta Madre", 2490, 15, "Instagram DM → Lead Ads"),
+  lead("erstgespraech", "website", "Paul Richter", "Richter & Söhne Bäckerei", 1490, 6, "Wir möchten mehr junge Leute erreichen.", { meeting_at: ago(-2), meeting_url: "https://teams.microsoft.com/l/meetup-join/demo" }),
+  lead("neu", "empfehlung", "Hannah Krüger", "Bloom Florist", 1490, 8, "Empfehlung von Goldies", { invited_at: ago(1) }),
+  lead("erstgespraech", "email", "Leon Wolf", "Wolf Fitness", 2490, 12, "Anfrage für Reels-Serie und Ads", { meeting_at: ago(1), meeting_url: "https://teams.microsoft.com/l/meetup-join/demo" }),
+  lead("erstgespraech", "instagram", "Emma Schulz", "Pasta Madre", 2490, 15, "Instagram DM → Lead Ads", { meeting_at: ago(3) }),
   lead("angebot", "website", "Lukas Zimmermann", "Urban Sneakers", 3990, 18, "Launch-Kampagne für neuen Store", { next_step: "Nachfassen", next_step_at: ago(-3) }),
   lead("angebot", "linkedin", "Sarah Braun", "Kanzlei Braun", 1490, 21, "LinkedIn-Betreuung für Partner*innen"),
   lead("gewonnen", "empfehlung", "Jonas Hartmann", "Smash Burger Co.", 2180, 40, "Neueröffnung Berlin-Mitte", { customer_id: customers[5].id }),
-  lead("gewonnen", "website", "Sophie Wagner", "Lovebirds", 1490, 95, "Fashion-Brand sucht Agentur", { customer_id: customers[4].id }),
+  lead("gewonnen", "website", "Sophie Wagner", "Lovebirds", 1490, 95, "Fashion-Brand sucht Agentur", { customer_id: customers[4].id, onboarding_at: ago(70) }),
 ];
 
 const activities: Row[] = leads.map((l) => ({

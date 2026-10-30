@@ -4,12 +4,12 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { CalendarClock } from "lucide-react";
 import { ContactForm } from "@/components/ContactForm";
-import { CalendlyLink } from "./CalendlyProvider";
+import { BookingLink } from "./BookingProvider";
 import { SiteFooter } from "./SiteFooter";
 
 /** Kontakt: Desktop links Überschrift und Kontaktdaten, rechts Formular
- * und Calendly, alles auf einem Bildschirm. Mobil füllt Überschrift plus
- * Formular einen Bildschirm, Calendly und Adressen laufen darunter aus.
+ * und Terminbuchung, alles auf einem Bildschirm. Mobil füllt Überschrift plus
+ * Formular einen Bildschirm, Terminbuchung und Adressen laufen darunter aus.
  * Die beiden Wrapper sind ab Desktop `contents`, ihre Kinder sitzen dann
  * direkt im Zwei-Spalten-Grid. */
 export function DmSection() {
@@ -68,8 +68,8 @@ export function DmSection() {
         </div>
 
         <div className="pb-[var(--screen-pb)] lg:contents">
-          {/* Calendly as a plain link in a new tab: booking without loading
-              any third-party script on the page itself. */}
+          {/* Eigene Terminbuchung im kleinen Fenster (freie Zeiten aus
+              unserem Kalender, kein Drittanbieter). */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -84,12 +84,12 @@ export function DmSection() {
               </span>
               <span className="h-px flex-1 bg-snow/10" />
             </div>
-            <CalendlyLink
+            <BookingLink
               className="btn-rainbow mt-4 flex items-center justify-center gap-2 rounded-full bg-snow py-3 text-sm font-medium text-sky active:scale-[0.97] lg:mx-auto lg:max-w-sm"
             >
               <CalendarClock className="h-4 w-4" strokeWidth={2} />
               Termin buchen: Boost your Socials
-            </CalendlyLink>
+            </BookingLink>
           </motion.div>
 
           {/* Desktop unten in der linken Spalte, mobil zentriert am Ende. */}

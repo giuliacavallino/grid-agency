@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/app/PageShell";
 import { LegalArticle, LegalHeading } from "@/components/app/LegalArticle";
-import { ConsentSettings } from "@/components/app/ConsentSettings";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | GRID Agency",
@@ -85,10 +84,6 @@ export default function DatenschutzPage() {
               zu welchem Abschnitt der Startseite du aus dem Menü springen
               wolltest (wird sofort nach dem Sprung gelöscht),
             </li>
-            <li>
-              falls du es ausdrücklich wählst: deine Einwilligung für
-              Calendly (siehe Abschnitt 6), bis du sie widerrufst.
-            </li>
           </ul>
           <p className="mt-2">
             Diese Speicherung ist für die von dir gewünschte Funktion
@@ -146,38 +141,40 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading id="calendly">6. Terminbuchung über Calendly</LegalHeading>
+          <LegalHeading id="terminbuchung">6. Terminbuchung</LegalHeading>
           <p>
-            Für die Buchung eines Erstgesprächs nutzen wir Calendly der
-            Calendly LLC, 115 E Main St, Ste A1B, Buford, GA 30518, USA. Beim
-            Aufruf unserer Seite wird keine Verbindung zu Calendly
-            hergestellt. Erst wenn du auf einen Buchungs-Button klickst und
-            im folgenden Hinweis &bdquo;Kalender laden&ldquo; wählst, wird der
-            Kalender von Calendly eingebunden. Dabei überträgt dein Browser
-            deine IP-Adresse und technische Daten an Calendly, Calendly kann
-            Cookies setzen, und die Angaben, die du im Kalender machst (Name,
-            E-Mail-Adresse, gewählter Termin, optionale Angaben), werden von
-            Calendly verarbeitet.
+            Ein Erstgespräch oder Kick-off kannst du direkt auf unserer Seite
+            buchen. Dafür zeigen wir freie Zeiten aus unserem Kalender an. Wenn
+            du einen Termin buchst, verarbeiten wir die Angaben, die du machst
+            (Name, E-Mail-Adresse, optional Unternehmen, Telefonnummer und
+            Nachricht) sowie den gewählten Termin. Sie werden über unseren
+            Server in unserer Datenbank bei Supabase (siehe Abschnitt 4)
+            gespeichert und als Termin mit Microsoft-Teams-Link in unseren
+            Kalender bei Microsoft 365 (Microsoft Ireland Operations Ltd.,
+            Dublin, Irland) eingetragen; Microsoft verschickt die Einladung an
+            deine E-Mail-Adresse. Mit Microsoft besteht ein Vertrag zur
+            Auftragsverarbeitung. Ein Dienst eines Drittanbieters wird in
+            deinem Browser dafür nicht geladen.
           </p>
           <p className="mt-2">
-            Rechtsgrundlage für das Laden ist deine Einwilligung (Art. 6 Abs.
-            1 lit. a DSGVO, § 25 Abs. 1 TDDDG), für die Terminbuchung selbst
-            die Anbahnung einer Zusammenarbeit (Art. 6 Abs. 1 lit. b DSGVO).
-            Calendly ist unter dem EU-US Data Privacy Framework zertifiziert.
-            Weitere Informationen findest du in der Datenschutzerklärung von
-            Calendly unter calendly.com/privacy. Alternativ kannst du einen
-            Termin per E-Mail oder Telefon vereinbaren.
+            Rechtsgrundlage ist die Anbahnung einer Zusammenarbeit (Art. 6
+            Abs. 1 lit. b DSGVO). Wir löschen die Angaben, wenn keine
+            Zusammenarbeit zustande kommt und keine gesetzlichen
+            Aufbewahrungspflichten entgegenstehen.
           </p>
         </section>
 
         <section>
-          <LegalHeading id="einstellungen">7. Datenschutz-Einstellungen</LegalHeading>
+          <LegalHeading id="captcha">7. Schutz vor Spam (Captcha)</LegalHeading>
           <p>
-            Hier siehst du, ob du eine Einwilligung gespeichert hast, und
-            kannst sie jederzeit mit Wirkung für die Zukunft widerrufen
-            (Art. 7 Abs. 3 DSGVO).
+            Kontaktformular und Terminbuchung schützen wir mit ALTCHA vor
+            automatisierten Einsendungen. Dein Browser löst dabei im
+            Hintergrund eine kleine Rechenaufgabe, die unser Server stellt und
+            prüft. Es werden keine Cookies gesetzt, keine Daten an Dritte
+            übertragen und keine Profile gebildet. Rechtsgrundlage ist unser
+            berechtigtes Interesse am Schutz vor Missbrauch (Art. 6 Abs. 1
+            lit. f DSGVO).
           </p>
-          <ConsentSettings />
         </section>
 
         <section>
