@@ -3,11 +3,28 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
-import { ArrowLeft, ArrowRight, CalendarClock, Check, CheckCheck, FileText, Inbox, Plus, Search, Send, Undo2, X, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarClock,
+  Check,
+  CheckCheck,
+  Download,
+  FileText,
+  Inbox,
+  Maximize2,
+  Plus,
+  Search,
+  Send,
+  Undo2,
+  X,
+  XCircle,
+} from "lucide-react";
 import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
 import { createRow, deleteRow, updateRow, useResource, useRows } from "@/lib/data";
 import { formatDate, relativeTime } from "@/lib/format";
-import { graphErrorMessage, graphFor, type Attachment, type Message } from "@/lib/graph";
+import { api, apiFetch } from "@/lib/api";
+import { graphErrorMessage, graphFor, type FileAttachment } from "@/lib/graph";
 import {
   INVOICE_CATEGORIES,
   INVOICE_STAGES,
@@ -38,7 +55,8 @@ async function release(invoice: Invoice, datevAddress: string): Promise<"datev" 
     return "freigegeben";
   }
   if (!datevAddress) throw new Error("Keine DATEV-Upload-Adresse hinterlegt");
-  const files = await graphFor(invoice.mailbox).files(invoice.graph_id);
+  // Belege per App-Zugriff vom Server, damit es nicht auf den Postfachzugriff der Person ankommt
+  const files = await api<FileAttachment[]>(`/api/finance/belege/${invoice.id}?alle=1`);
   if (!files.length) throw new Error("Die Mail hat keine Dateianhänge");
   const subject = [invoice.vendor, invoice.invoice_number].filter(Boolean).join(" · ");
   await graphFor(FINANCE_MAILBOX).send({ to: [datevAddress], cc: [], subject: subject || "Eingangsrechnung", body: "" }, files);
@@ -259,6 +277,7 @@ function ApprovalQueue({
     function onKey(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
       if ((event.target as HTMLElement).closest("input, textarea, select, [contenteditable=true]")) return;
+      if (document.querySelector("[role=dialog]")) return;
       if (!selected) return;
       const index = ready.indexOf(selected);
       if (event.key === "ArrowRight") {
@@ -337,7 +356,7 @@ function ApprovalQueue({
         </ul>
       </aside>
 
-      <section className={clsx("min-w-0 flex-1 overflow-y-auto", !paneOpen && "hidden md:block")}>
+      <section className={clsx("min-h-0 min-w-0 flex-1 overflow-y-auto", !paneOpen && "hidden md:block")}>
         {selected ? (
           <ApprovalPane
             key={selected.id}
@@ -390,133 +409,59 @@ function ApprovalPane({
   onDetails: () => void;
   onBack: () => void;
 }) {
-  const toast = useToast();
   const late = overdue(invoice);
-  const facts: [string, React.ReactNode, boolean?][] = [
-    ["Nr.", invoice.invoice_number ?? "–"],
-    ["Datum", formatDate(invoice.invoice_date)],
-    ["Fällig", formatDate(invoice.due_date), late],
-    ["Netto", money(invoice.net_amount, invoice.currency)],
-    ["USt", money(invoice.vat_amount, invoice.currency)],
-    ["Eingang", relativeTime(invoice.received_at ?? invoice.created_at)],
-    ["Von", invoice.vendor_email ?? (invoice.mailbox ? mailboxLabel(invoice.mailbox) : "manuell erfasst")],
-  ];
-  // Zahlung und Kategorie direkt hier ändern, ohne Details zu öffnen
-  const change = (patch: Partial<Invoice>) =>
-    updateRow<Invoice>("invoices", invoice.id, patch).catch(() => toast("Speichern fehlgeschlagen", "error"));
+  // Nur das Nötigste; alles Weitere unter „Details“
+  const facts: React.ReactNode[] = [
+    invoice.invoice_number && `Nr. ${invoice.invoice_number}`,
+    invoice.due_date && (
+      <span key="due" className={clsx(late && "text-error")}>
+        fällig {formatDate(invoice.due_date)}
+      </span>
+    ),
+    invoice.category,
+    invoice.paid && "bezahlt",
+  ].filter(Boolean);
   return (
-    <div className="flex min-h-full flex-col gap-4 p-3 md:p-5">
-      <div className="rounded-3xl border border-snow/10 bg-surface p-5 md:p-6">
-        <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-1.5 text-[13px] text-snow/60 md:hidden">
+    <div className="flex h-full flex-col gap-3 p-3 md:p-4">
+      <div className="shrink-0 rounded-3xl border border-snow/10 bg-surface px-5 py-4">
+        <button type="button" onClick={onBack} className="mb-2 inline-flex items-center gap-1.5 text-[13px] text-snow/60 md:hidden">
           <ArrowLeft className="h-4 w-4" /> Liste
         </button>
-        <div className="flex items-start gap-4">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-medium">{invoice.vendor}</h2>
-            {invoice.description && <p className="mt-0.5 truncate text-sm text-snow/55">{invoice.description}</p>}
-          </div>
-          <span className="shrink-0 text-2xl font-semibold tabular-nums">{money(invoice.amount, invoice.currency)}</span>
-        </div>
-
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <Button variant="danger" icon={<X className="h-4 w-4" />} onClick={onReject}>
-            Zurückweisen
-          </Button>
-          <Button variant="primary" icon={<Check className="h-4 w-4" />} onClick={onApprove} aria-keyshortcuts="ArrowRight" title="Pfeil rechts">
-            Freigeben
-          </Button>
-          <span className="ml-1 hidden items-center gap-1 text-[12px] text-snow/45 md:inline-flex">
-            oder
-            <kbd className="inline-grid h-5 min-w-5 place-items-center rounded-md border border-snow/15 px-1">
-              <ArrowRight className="h-3 w-3" />
-            </kbd>
-          </span>
-        </div>
-
-        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {facts.map(([label, value, alert]) => (
-            <div key={label} className="min-w-0">
-              <dt className="text-[11px] font-semibold tracking-[0.1em] text-snow/45 uppercase">{label}</dt>
-              <dd className={clsx("mt-1 truncate text-[14px] font-medium", alert && "text-error")}>{value}</dd>
+            <div className="flex items-baseline gap-3">
+              <h2 className="min-w-0 truncate text-lg font-medium">{invoice.vendor}</h2>
+              <span className="ml-auto shrink-0 text-lg font-semibold tabular-nums md:ml-0">{money(invoice.amount, invoice.currency)}</span>
             </div>
-          ))}
-          <div className="min-w-0">
-            <dt>
-              <label htmlFor={`pay-${invoice.id}`} className="text-[11px] font-semibold tracking-[0.1em] text-snow/45 uppercase">
-                Zahlung
-              </label>
-            </dt>
-            <dd className="mt-0.5">
-              <InlineSelect
-                id={`pay-${invoice.id}`}
-                value={invoice.payment_method ?? ""}
-                onChange={(value) => change({ payment_method: (value || null) as PaymentMethod | null })}
-                options={PAYMENT_METHODS.map((m) => [m.id, m.label])}
-              />
-            </dd>
+            <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] text-snow/55">
+              {facts.map((fact, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5">
+                  {i > 0 && <span aria-hidden>·</span>}
+                  {fact}
+                </span>
+              ))}
+              {facts.length > 0 && <span aria-hidden>·</span>}
+              <button type="button" onClick={onDetails} className="inline-flex items-center gap-1 text-snow/70 underline-offset-2 hover:text-snow hover:underline">
+                Details
+              </button>
+            </p>
           </div>
-          <div className="min-w-0">
-            <dt>
-              <label htmlFor={`cat-${invoice.id}`} className="text-[11px] font-semibold tracking-[0.1em] text-snow/45 uppercase">
-                Kategorie
-              </label>
-            </dt>
-            <dd className="mt-0.5">
-              <InlineSelect
-                id={`cat-${invoice.id}`}
-                value={invoice.category ?? ""}
-                onChange={(value) => change({ category: value || null })}
-                options={INVOICE_CATEGORIES.map((c) => [c, c])}
-              />
-            </dd>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="danger" icon={<X className="h-4 w-4" />} onClick={onReject}>
+              Zurückweisen
+            </Button>
+            <Button variant="primary" icon={<Check className="h-4 w-4" />} onClick={onApprove} aria-keyshortcuts="ArrowRight" title="Freigeben und an DATEV senden (Pfeil rechts)">
+              Freigeben
+            </Button>
+            <kbd className="hidden h-6 min-w-6 place-items-center rounded-md border border-snow/15 px-1 text-snow/45 lg:inline-grid" title="Pfeil rechts">
+              <ArrowRight className="h-3.5 w-3.5" />
+            </kbd>
           </div>
-        </dl>
-
-        <div className="mt-5">
-          <PaidCheckbox invoice={invoice} />
-        </div>
-
-        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-snow/[0.08] pt-4 text-[13px]">
-          <button type="button" onClick={onDetails} className="inline-flex items-center gap-1.5 text-snow/70 hover:text-snow">
-            Details bearbeiten <ArrowRight className="h-4 w-4" />
-          </button>
-          <span className="text-snow/45">
-            {invoice.graph_id ? "Freigeben schickt den Beleg von buchhaltung@ an DATEV Unternehmen online." : "Kein Beleg – wird nur freigegeben."}
-          </span>
         </div>
       </div>
 
       <BelegPreview key={invoice.id} invoice={invoice} />
     </div>
-  );
-}
-
-/** Auswahl, die wie ein Wert aussieht (für die Eckdaten in der Freigabe) */
-function InlineSelect({
-  id,
-  value,
-  onChange,
-  options,
-}: {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: [string, string][];
-}) {
-  return (
-    <select
-      id={id}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="-ml-1 max-w-full cursor-pointer truncate rounded-lg bg-transparent px-1 py-0.5 text-[14px] font-medium hover:bg-snow/[0.06] focus-visible:outline-2 focus-visible:outline-snow"
-    >
-      <option value="">–</option>
-      {options.map(([key, label]) => (
-        <option key={key} value={key}>
-          {label}
-        </option>
-      ))}
-    </select>
   );
 }
 
@@ -539,48 +484,31 @@ function PaidCheckbox({ invoice }: { invoice: Invoice }) {
 }
 
 // ---------- Beleg-Vorschau ----------
-// Belege werden für die ganze Freigabe-Liste vorab geladen und für die Sitzung
-// gemerkt, damit beim Wechsel der Rechnung der Beleg sofort dasteht.
+// Der Server holt den Beleg per App-Zugriff aus der Rechnungsmail und legt ihn
+// einmal ab. Hier werden die Belege der Freigabe-Liste vorab geladen und für
+// die Sitzung gemerkt, damit beim Wechsel der Rechnung der Beleg sofort dasteht.
 
-type Beleg =
-  | { kind: "file"; files: Attachment[]; file: Attachment; url: string }
-  | { kind: "mail"; files: Attachment[]; body: NonNullable<Message["body"]> | null };
-
-const isPdf = (a: Attachment) => a.contentType === "application/pdf" || /\.pdf$/i.test(a.name);
-const isImage = (a: Attachment) => a.contentType.startsWith("image/") || /\.(png|jpe?g|gif|webp)$/i.test(a.name);
+type Beleg = { kind: "file"; url: string; name: string; image: boolean } | { kind: "mail"; html: string } | { kind: "none" };
 
 const belegPromises = new Map<string, Promise<Beleg>>();
 const belege = new Map<string, Beleg>();
-const fileUrls = new Map<string, string>();
 
-async function fileUrl(mailbox: string, messageId: string, file: Attachment) {
-  const key = `${mailbox}:${messageId}:${file.id}`;
-  const known = fileUrls.get(key);
-  if (known) return known;
-  const blob = await graphFor(mailbox).download(messageId, file.id);
-  // Graph liefert oft application/octet-stream; mit dem richtigen Typ zeigt der Browser das PDF an
-  const url = URL.createObjectURL(new Blob([blob], { type: isPdf(file) ? "application/pdf" : blob.type || file.contentType }));
-  fileUrls.set(key, url);
-  return url;
-}
-
-/** Erster PDF- oder Bildanhang; ohne solchen Anhang der Mailtext als Beleg */
-function loadBeleg(mailbox: string, messageId: string) {
-  const key = `${mailbox}:${messageId}`;
-  let promise = belegPromises.get(key);
+function loadBeleg(invoice: Invoice) {
+  let promise = belegPromises.get(invoice.id);
   if (!promise) {
     promise = (async (): Promise<Beleg> => {
-      const files = (await graphFor(mailbox).attachments(messageId)).filter((a) => !a.isInline);
-      const file = files.find(isPdf) ?? files.find(isImage);
-      if (file) return { kind: "file", files, file, url: await fileUrl(mailbox, messageId, file) };
-      const message = await graphFor(mailbox).message(messageId);
-      return { kind: "mail", files, body: message.body ?? null };
+      if (!invoice.mailbox || !invoice.graph_id) return { kind: "none" };
+      const response = await apiFetch(`/api/finance/belege/${invoice.id}`);
+      const type = response.headers.get("Content-Type") ?? "";
+      if (type.startsWith("text/html")) return { kind: "mail", html: await response.text() };
+      const name = decodeURIComponent(response.headers.get("Content-Disposition")?.match(/filename\*=UTF-8''(.+)$/)?.[1] ?? "Beleg");
+      return { kind: "file", url: URL.createObjectURL(await response.blob()), name, image: type.startsWith("image/") };
     })();
     promise.then(
-      (beleg) => belege.set(key, beleg),
-      () => belegPromises.delete(key)
+      (beleg) => belege.set(invoice.id, beleg),
+      () => belegPromises.delete(invoice.id)
     );
-    belegPromises.set(key, promise);
+    belegPromises.set(invoice.id, promise);
   }
   return promise;
 }
@@ -588,128 +516,133 @@ function loadBeleg(mailbox: string, messageId: string) {
 /** Belege der nächsten Rechnungen im Hintergrund laden */
 function usePreloadBelege(invoices: Invoice[]) {
   useEffect(() => {
-    for (const invoice of invoices.slice(0, 12)) {
-      if (invoice.mailbox && invoice.graph_id) loadBeleg(invoice.mailbox, invoice.graph_id).catch(() => {});
-    }
+    for (const invoice of invoices.slice(0, 12)) loadBeleg(invoice).catch(() => {});
   }, [invoices]);
 }
 
 function BelegPreview({ invoice }: { invoice: Invoice }) {
-  const { mailbox, graph_id: messageId } = invoice;
-  const key = mailbox && messageId ? `${mailbox}:${messageId}` : null;
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const [failed, setFailed] = useState<string | null>(null);
-  const [picked, setPicked] = useState<Attachment | null>(null);
-  const beleg = key ? belege.get(key) : undefined;
+  const [attempt, retry] = useReducer((n: number) => n + 1, 0);
+  const [zoom, setZoom] = useState(false);
+  const beleg = belege.get(invoice.id);
 
   useEffect(() => {
-    if (!mailbox || !messageId || belege.has(`${mailbox}:${messageId}`)) return;
+    if (belege.has(invoice.id)) return;
     let live = true;
-    loadBeleg(mailbox, messageId).then(
+    loadBeleg(invoice).then(
       () => live && rerender(),
-      () => live && setFailed(`${mailbox}:${messageId}`)
+      (error) => live && setFailed(error instanceof Error ? error.message : "Unbekannter Fehler")
     );
     return () => {
       live = false;
     };
-  }, [mailbox, messageId]);
+    // invoice.id reicht: dieselbe Rechnung hat denselben Beleg
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice.id, attempt]);
 
-  // Weiterer Anhang gewählt → nachladen
-  const pickedKey = picked && key ? `${key}:${picked.id}` : null;
-  useEffect(() => {
-    if (!picked || !mailbox || !messageId || fileUrls.has(`${mailbox}:${messageId}:${picked.id}`)) return;
-    let live = true;
-    fileUrl(mailbox, messageId, picked).then(
-      () => live && rerender(),
-      () => live && setFailed(`${mailbox}:${messageId}:${picked.id}`)
-    );
-    return () => {
-      live = false;
-    };
-  }, [picked, mailbox, messageId]);
-
-  if (!key) {
+  if (failed) {
     return (
       <Frame>
+        <div className="grid h-full place-items-center p-8 text-center">
+          <div>
+            <p className="text-sm text-error">Beleg konnte nicht geladen werden: {failed}</p>
+            <Button
+              size="sm"
+              className="mt-3"
+              onClick={() => {
+                setFailed(null);
+                retry();
+              }}
+            >
+              Nochmal versuchen
+            </Button>
+          </div>
+        </div>
+      </Frame>
+    );
+  }
+
+  return (
+    <Frame>
+      {!beleg ? (
+        <div className="grid h-full place-items-center">
+          <Spinner />
+        </div>
+      ) : beleg.kind === "none" ? (
         <div className="grid h-full place-items-center p-8 text-center text-sm text-snow/55">
           <div>
             <FileText className="mx-auto mb-2 h-8 w-8 text-snow/30" />
             Kein Beleg – manuell erfasst.
           </div>
         </div>
-      </Frame>
-    );
-  }
-  if (failed === key || (pickedKey && failed === pickedKey)) {
-    return (
-      <Frame>
-        <p className="p-6 text-sm text-error">Beleg konnte nicht geladen werden.</p>
-      </Frame>
-    );
-  }
-  if (!beleg) {
-    return (
-      <Frame>
-        <div className="grid h-full place-items-center">
-          <Spinner />
-        </div>
-      </Frame>
-    );
-  }
-
-  const previewable = beleg.files.filter((f) => isPdf(f) || isImage(f));
-  const file = picked ?? (beleg.kind === "file" ? beleg.file : null);
-  const url = file ? (fileUrls.get(`${key}:${file.id}`) ?? null) : null;
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {previewable.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          {previewable.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setPicked(f)}
-              className={clsx(
-                "max-w-64 truncate rounded-full border px-3 py-1 text-[13px]",
-                f.id === file?.id ? "border-snow/25 bg-snow/[0.08]" : "border-snow/10 text-snow/60 hover:text-snow"
-              )}
-            >
-              {f.name}
-            </button>
-          ))}
-        </div>
+      ) : (
+        <>
+          <BelegContent beleg={beleg} fit />
+          {/* Über dem Beleg, damit der Klick nicht im PDF-Viewer landet */}
+          <button
+            type="button"
+            onClick={() => setZoom(true)}
+            aria-label="Beleg groß öffnen"
+            className="group absolute inset-0 cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-snow"
+          >
+            <span className="glass-solid absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              <Maximize2 className="h-3.5 w-3.5" /> Vergrößern
+            </span>
+          </button>
+          <Dialog
+            open={zoom}
+            onClose={() => setZoom(false)}
+            title={beleg.kind === "file" ? beleg.name : `${invoice.vendor} – Mail`}
+            width="max-w-5xl"
+            footer={
+              beleg.kind === "file" ? (
+                <a
+                  href={beleg.url}
+                  download={beleg.name}
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-snow/15 bg-snow/[0.06] px-4 text-sm font-medium hover:bg-snow/[0.12]"
+                >
+                  <Download className="h-4 w-4" /> Herunterladen
+                </a>
+              ) : undefined
+            }
+          >
+            <div className="h-[calc(90dvh-10rem)] overflow-hidden rounded-2xl border border-snow/10">
+              <BelegContent beleg={beleg} />
+            </div>
+          </Dialog>
+        </>
       )}
-      <Frame>
-        {file && url ? (
-          isImage(file) && !isPdf(file) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={url} alt={file.name} className="h-full w-full bg-white object-contain" />
-          ) : (
-            <iframe src={`${url}#view=FitH`} title={file.name} className="h-full w-full bg-white" />
-          )
-        ) : file ? (
-          <div className="grid h-full place-items-center">
-            <Spinner />
-          </div>
-        ) : beleg.kind === "mail" && beleg.body ? (
-          <div className="h-full overflow-y-auto bg-white">
-            <MailBody body={beleg.body} />
-          </div>
-        ) : (
-          <p className="p-6 text-sm text-snow/55">Die Mail hat keinen Beleg.</p>
-        )}
-      </Frame>
-      {beleg.kind === "mail" && beleg.files.length > 0 && (
-        <Attachments mailbox={mailbox!} messageId={messageId!} />
-      )}
-    </div>
+    </Frame>
   );
 }
 
-/** Fläche für den Beleg: füllt die restliche Höhe, mindestens 70 % des Fensters */
+/** PDF, Bild oder Mailtext; fit = ganze Seite in die Fläche einpassen */
+function BelegContent({ beleg, fit }: { beleg: Exclude<Beleg, { kind: "none" }>; fit?: boolean }) {
+  if (beleg.kind === "mail") {
+    return (
+      <div className="h-full overflow-y-auto bg-white">
+        <MailBody body={{ contentType: "html", content: beleg.html }} />
+      </div>
+    );
+  }
+  if (beleg.image) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={beleg.url} alt={beleg.name} className="h-full w-full bg-white object-contain" />;
+  }
+  return (
+    <iframe
+      src={`${beleg.url}#${fit ? "toolbar=0&navpanes=0&view=Fit" : "view=FitH"}`}
+      title={beleg.name}
+      tabIndex={fit ? -1 : undefined}
+      className="h-full w-full bg-white"
+    />
+  );
+}
+
+/** Fläche für den Beleg: füllt die restliche Höhe ohne Scrollen */
 function Frame({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-[70vh] flex-1 overflow-hidden rounded-3xl border border-snow/10 bg-surface">{children}</div>;
+  return <div className="relative min-h-80 flex-1 overflow-hidden rounded-3xl border border-snow/10 bg-surface">{children}</div>;
 }
 
 function InvoiceCard({ invoice, overlay }: { invoice: Invoice; overlay?: boolean }) {
