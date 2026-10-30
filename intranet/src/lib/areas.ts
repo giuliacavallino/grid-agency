@@ -29,5 +29,5 @@ export const AREAS: Area[] = [
   { id: "mail", title: "Mail", text: "Alle Postfächer und Kalender an einem Ort", icon: Mail, href: "/mail" },
   { id: "kalender", title: "Kalender", text: "Termine und Meetings in Outlook", icon: CalendarDays, href: "https://outlook.office.com/calendar/", external: true },
   { id: "aufgaben", title: "Aufgaben", text: "To-dos und Zuständigkeiten", icon: ListChecks, href: "/aufgaben" },
-  { id: "admin", title: "Admin", text: "Zugänge, Rechte und Einstellungen", icon: ShieldCheck, href: "/admin" },
+  { id: "admin", title: "Admin", text: "Passwörter und Zugänge für Kunden und intern", icon: ShieldCheck, href: "/admin" },
 ];

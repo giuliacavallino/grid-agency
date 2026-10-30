@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Personal" };
 
 export default function PersonalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RequireAuth>
+    <RequireAuth area="personal">
       <PersonalShell>{children}</PersonalShell>
     </RequireAuth>
   );

@@ -29,7 +29,7 @@ import { BillingEditor, type EditorKind } from "./billing-editor";
 import { DocumentActions, openPdf, removePayment } from "./billing-actions";
 import { SignFolders } from "./sign-folder";
 
-const LIST_URL = "/api/finance/belege";
+const LIST_URL = "/api/finance/ausgang";
 
 /** Umsatzwirksame Belege: Rechnungen abzüglich Gutschriften und Stornos */
 const REVENUE_KINDS: BillingKind[] = ["rechnung", "gutschrift", "storno", "storno_gutschrift"];

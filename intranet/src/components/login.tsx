@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { clsx } from "clsx";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Lock } from "lucide-react";
 import { authErrorMessage, signIn, useAuth } from "@/lib/auth";
+import { hasArea } from "@/lib/access";
 import { DOMAIN } from "@/lib/config";
+import { useMe } from "./access";
 import { Logo } from "./logo";
 
 function MicrosoftLogo() {
@@ -150,8 +153,35 @@ export function Login() {
 }
 
 /** Zeigt den Inhalt nur angemeldet, sonst die Loginseite (URL bleibt). */
-export function RequireAuth({ children }: { children: React.ReactNode }) {
+/** Nur für freigeschaltete GRID-Konten; mit area zusätzlich nur, wer den
+ * Bereich sehen darf (Admin → Benutzer & Rechte). */
+export function RequireAuth({ area, children }: { area?: string; children: React.ReactNode }) {
   const auth = useAuth();
-  if (auth.status === "signed-in") return <>{children}</>;
-  return <Login />;
+  const me = useMe();
+  if (auth.status !== "signed-in") return <Login />;
+  if (me.loading) {
+    return (
+      <div className="grid min-h-dvh place-items-center bg-canvas">
+        <LoaderCircle className="h-6 w-6 animate-spin text-snow/50" aria-label="Lädt" />
+      </div>
+    );
+  }
+  if (me.error) return <NoAccess text={me.error.message} />;
+  if (area && !hasArea(me.data, area)) return <NoAccess />;
+  return <>{children}</>;
+}
+
+function NoAccess({ text }: { text?: string }) {
+  return (
+    <div className="grid min-h-dvh place-items-center bg-canvas px-6 text-center">
+      <div className="flex flex-col items-center gap-3">
+        <Lock className="h-8 w-8 text-snow/40" />
+        <p className="text-lg font-medium">{text ? "Kein Zugang" : "Kein Zugriff auf diesen Bereich"}</p>
+        <p className="max-w-sm text-sm text-snow/60">{text ?? "Wenn du ihn brauchst, frag bitte Giulia."}</p>
+        <Link href="/" className="mt-2 rounded-full border border-snow/15 px-4 py-2 text-sm hover:bg-snow/[0.06]">
+          Zur Übersicht
+        </Link>
+      </div>
+    </div>
+  );
 }

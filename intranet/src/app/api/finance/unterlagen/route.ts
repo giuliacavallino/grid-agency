@@ -11,4 +11,4 @@ export const GET = withUser(async (_user, request) => {
     await sb().from("customer_documents").select("id,created_at,kind,title,envelope_id,document_id").eq("customer_id", customer).order("created_at", { ascending: false })
   );
   return Response.json(rows);
-});
+}, ["sales", "finance"]);

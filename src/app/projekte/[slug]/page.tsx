@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { LegalShell } from "@/components/app/LegalShell";
+import { PageShell } from "@/components/app/PageShell";
 import { ClientMediaTabs } from "@/components/app/ClientMediaTabs";
 import { EventTeaser } from "@/components/app/EventTeaser";
 import { InstagramIcon } from "@/components/app/InstagramIcon";
@@ -35,7 +35,7 @@ export default async function ClientPage({
   if (!client) notFound();
 
   return (
-    <LegalShell title={client.name}>
+    <PageShell>
       <div>
         <h1 className="flex min-h-24 items-center justify-center py-4">
           {client.logo ? (
@@ -195,6 +195,6 @@ export default async function ClientPage({
             </section>
           )}
       </div>
-    </LegalShell>
+    </PageShell>
   );
 }

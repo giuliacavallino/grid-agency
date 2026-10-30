@@ -1,13 +1,16 @@
-import { withUser } from "@/lib/server/auth";
-import { db, isTable, pick } from "@/lib/server/db";
+import { forbidden, withUser } from "@/lib/server/auth";
+import { removeApplicationFiles } from "@/lib/server/application-files";
+import { canUseTable, db, isTable, mayTouch, pick, READ_ONLY } from "@/lib/server/db";
 
 type Context = { params: Promise<{ table: string; id: string }> };
 
 export const PATCH = withUser(async (user, request, { params }: Context) => {
   const { table, id } = await params;
-  if (!isTable(table) || table === "inbound_messages") {
+  if (!isTable(table) || READ_ONLY.includes(table)) {
     return Response.json({ error: "Unbekannt" }, { status: 404 });
   }
+  if (!canUseTable(user, table)) return forbidden();
+  if (!(await mayTouch(user, table, await db().get(table, id)))) return forbidden();
   const patch = pick(table, await request.json());
   const store = db();
 
@@ -29,16 +32,19 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
     }
   }
 
-  // Eingangsrechnungen: Freigabe protokollieren; „An DATEV gesendet“ nur aus
-  // „Freigegeben“ (der Versand selbst läuft im Browser über buchhaltung@).
+  // Eingangsrechnungen: Freigabe und DATEV-Versand protokollieren. „Freigeben“
+  // geht mit einem Klick von „Neu“ direkt nach DATEV (der Versand selbst läuft
+  // im Browser über buchhaltung@) und zählt dann zugleich als Freigabe.
   if (table === "invoices" && patch.stage) {
     const invoice = await store.get("invoices", id);
     if (!invoice) return Response.json({ error: "Nicht gefunden" }, { status: 404 });
     if (patch.stage === "datev" && invoice.stage !== "datev") {
-      if (invoice.stage !== "freigegeben") {
-        return Response.json({ error: "Erst freigeben, dann an DATEV senden" }, { status: 409 });
+      if (invoice.stage !== "neu" && invoice.stage !== "freigegeben") {
+        return Response.json({ error: "Abgelehnte Rechnungen gehen nicht an DATEV" }, { status: 409 });
       }
-      Object.assign(patch, { datev_sent_at: new Date().toISOString(), datev_sent_by: user.name });
+      const now = new Date().toISOString();
+      Object.assign(patch, { datev_sent_at: now, datev_sent_by: user.name });
+      if (!invoice.approved_at) Object.assign(patch, { approved_at: now, approved_by: user.name });
     }
     if (patch.stage === "freigegeben" && invoice.stage !== "freigegeben") {
       Object.assign(patch, { approved_at: new Date().toISOString(), approved_by: user.name });
@@ -50,11 +56,15 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
   return Response.json(customer ? { ...row, _customer: customer } : row);
 });
 
-export const DELETE = withUser(async (_user, _request, { params }: Context) => {
+export const DELETE = withUser(async (user, _request, { params }: Context) => {
   const { table, id } = await params;
-  if (!isTable(table) || table === "inbound_messages") {
+  if (!isTable(table) || READ_ONLY.includes(table)) {
     return Response.json({ error: "Unbekannt" }, { status: 404 });
   }
+  if (!canUseTable(user, table)) return forbidden();
+  const row = await db().get(table, id);
+  if (!(await mayTouch(user, table, row))) return forbidden();
   await db().remove(table, id);
+  if (table === "applications" && row) await removeApplicationFiles(row);
   return new Response(null, { status: 204 });
 });

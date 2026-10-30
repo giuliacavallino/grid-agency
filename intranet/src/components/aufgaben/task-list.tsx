@@ -17,12 +17,14 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { CalendarDays, ChevronDown, ChevronRight, GripVertical, MoreHorizontal, PanelRightOpen, Plus } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronRight, GripVertical, MoreHorizontal, PanelRightOpen, Plus, Trash2 } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
-import { createRow, updateRow } from "@/lib/data";
+import { createRow, deleteRow, updateRow } from "@/lib/data";
 import { topPosition } from "@/lib/sales/types";
 import { dueLabel, isOverdue, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
-import { Avatar, IconButton, Spinner, useToast } from "@/components/ui";
+import { Button, Dialog, IconButton, Spinner, useToast } from "@/components/ui";
+import { accentFill } from "@/lib/theme";
+import { PersonAvatar } from "@/components/person";
 import { DoneToggle } from "./task";
 
 type Groups = Record<string, string[]>;
@@ -187,7 +189,7 @@ export function SectionedList({
                       {(handle) => <TaskRow task={task} people={people} onOpen={onOpen} handle={handle} />}
                     </SortableRow>
                   ))}
-                  <QuickAdd projectId={project.id} sectionId={section.id} />
+                  <QuickAdd projectId={project.id} sectionId={section.id} lowest={list.at(-1)?.position} />
                 </DropArea>
               </SortableContext>
             )}
@@ -249,6 +251,18 @@ export function TaskRow({
     setTitle(task.title);
   }
   const late = isOverdue(task);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function remove() {
+    setDeleting(true);
+    try {
+      await deleteRow("tasks", task.id);
+    } catch {
+      toast("Löschen fehlgeschlagen", "error");
+      setDeleting(false);
+    }
+  }
 
   async function save(patch: Partial<Task>) {
     try {
@@ -265,7 +279,10 @@ export function TaskRow({
   }
 
   return (
-    <div className="group flex min-h-11 items-start gap-1 border-b border-snow/[0.06] pr-2 pl-1 hover:bg-snow/[0.03] md:items-center md:pl-2">
+    <div
+      className="group flex min-h-11 items-start gap-1 border-b border-snow/[0.06] pr-2 pl-1 hover:bg-snow/[0.03] md:items-center md:pl-2"
+      style={task.done ? { background: accentFill("#30a46c", 9) } : undefined}
+    >
       {handle ? (
         <button
           type="button"
@@ -312,7 +329,7 @@ export function TaskRow({
         </span>
       )}
       <label className="relative hidden w-44 shrink-0 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-snow/[0.06] md:flex">
-        {task.assignee ? <Avatar name={task.assignee} className="h-6 w-6 text-[10px]" /> : <span className="h-6 w-6 rounded-full border border-dashed border-snow/35" />}
+        {task.assignee ? <PersonAvatar name={task.assignee} className="h-6 w-6 text-[10px]" /> : <span className="h-6 w-6 rounded-full border border-dashed border-snow/35" />}
         <span className={clsx("truncate text-[13px]", task.assignee ? "text-snow/80" : "text-snow/50")}>{task.assignee ?? "Niemand"}</span>
         <select
           value={task.assignee ?? ""}
@@ -321,7 +338,7 @@ export function TaskRow({
           className="absolute inset-0 cursor-pointer opacity-0"
         >
           <option value="">Niemand</option>
-          {[...new Set([...people, ...(task.assignee ? [task.assignee] : [])])].map((p) => (
+          {people.map((p) => (
             <option key={p} value={p}>
               {p}
             </option>
@@ -330,9 +347,34 @@ export function TaskRow({
       </label>
       <DueField task={task} onChange={(due_on) => save({ due_on })} />
 
+      <IconButton
+        label="To-do löschen"
+        className="mt-1.5 h-8 w-8 text-snow/50 hover:text-error md:mt-0 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
+        onClick={() => setConfirmDelete(true)}
+      >
+        <Trash2 className="h-4 w-4" />
+      </IconButton>
       <IconButton label="Details öffnen" className="mt-1.5 h-8 w-8 text-snow/50 md:mt-0" onClick={() => onOpen(task.id)}>
         <PanelRightOpen className="h-4 w-4" />
       </IconButton>
+
+      <Dialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title="To-do löschen?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+              Abbrechen
+            </Button>
+            <Button variant="danger" loading={deleting} loadingText="Wird gelöscht …" onClick={remove}>
+              Löschen
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-snow/60">„{task.title}“ wird endgültig entfernt.</p>
+      </Dialog>
     </div>
   );
 }
@@ -382,9 +424,9 @@ function DueField({ task, onChange }: { task: Task; onChange: (due: string | nul
   );
 }
 
-/** Letzte Zeile jedes Themas: Klick → Eingabefeld, Enter legt an und das
- * Feld bleibt für das nächste To-do offen. */
-function QuickAdd({ projectId, sectionId }: { projectId: string; sectionId: string }) {
+/** Letzte Zeile jedes Themas: Klick → Eingabefeld, Enter legt das To-do
+ * unten im Thema an und das Feld bleibt für das nächste offen. */
+function QuickAdd({ projectId, sectionId, lowest }: { projectId: string; sectionId: string; lowest?: number }) {
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -396,7 +438,8 @@ function QuickAdd({ projectId, sectionId }: { projectId: string; sectionId: stri
     if (!title.trim() || busy) return;
     setBusy(true);
     try {
-      await createRow<Task>("tasks", { project_id: projectId, section_id: sectionId, title: title.trim(), position: topPosition() });
+      const position = lowest === undefined ? topPosition() : lowest - 60;
+      await createRow<Task>("tasks", { project_id: projectId, section_id: sectionId, title: title.trim(), position });
       setTitle("");
     } catch {
       toast("Anlegen fehlgeschlagen", "error");

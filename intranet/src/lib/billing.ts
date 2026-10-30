@@ -94,7 +94,7 @@ export type BillingAddress = Partial<
   Record<"company_name" | "first_name" | "last_name" | "suffix_1" | "suffix_2" | "street" | "zip_code" | "city" | "country", string | null>
 >;
 
-/** has_pdf: PDF liegt im Bucket; den Link holt /api/finance/belege/[id]/pdf */
+/** has_pdf: PDF liegt im Bucket; den Link holt /api/finance/ausgang/[id]/pdf */
 export type BillingDetail = BillingDocument & {
   amount_vat: number;
   service_from: string | null;

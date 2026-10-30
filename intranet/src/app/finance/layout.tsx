@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Finance" };
 
 export default function FinanceLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RequireAuth>
+    <RequireAuth area="finance">
       <FinanceShell>{children}</FinanceShell>
     </RequireAuth>
   );

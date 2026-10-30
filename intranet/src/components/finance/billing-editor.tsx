@@ -19,7 +19,7 @@ import {
 import type { Article, Customer, Settings } from "@/lib/sales/types";
 import { Button, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 
-export const BILLING_URL = "/api/finance/belege";
+export const BILLING_URL = "/api/finance/ausgang";
 
 type Kind = DraftInput["kind"];
 export type EditorKind = Kind;

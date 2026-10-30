@@ -3,6 +3,9 @@
   "crons": [
     { "path": "/api/cron/mail", "schedule": "0 5 * * *" },
     { "path": "/api/cron/easybill", "schedule": "30 4 * * *" },
+    { "path": "/api/cron/bank", "schedule": "45 5 * * *" },
+    { "path": "/api/cron/updates?kind=weekly", "schedule": "0 13 * * 5" },
+    { "path": "/api/cron/updates?kind=monthly", "schedule": "0 8 1-3 * *" },
     { "path": "/api/cron/billing", "schedule": "0 6 * * *" }
   ]
 }

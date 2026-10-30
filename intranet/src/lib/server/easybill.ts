@@ -1,4 +1,5 @@
 import "server-only";
+import type { OpenItem } from "@/lib/bank";
 import { DEMO } from "@/lib/config";
 import { db, type EasybillTable, type Row } from "./db";
 import { demoEasybill } from "./easybill-demo";
@@ -15,6 +16,7 @@ type Page<T> = { page: number; pages: number; items: T[] };
 
 export type EbCustomer = {
   id: number;
+  number: string | null;
   company_name: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -50,6 +52,12 @@ export type EbDocument = {
   document_date: string | null;
   created_at: string;
   amount_net: number;
+  /** brutto in Cent */
+  amount?: number;
+  paid_amount?: number;
+  paid_at?: string | null;
+  due_date?: string | null;
+  cancel_id?: number | null;
   status: string | null;
   is_draft: boolean;
   is_archive?: boolean;
@@ -65,21 +73,29 @@ export type EbDocument = {
 
 export class EasybillError extends Error {}
 
-async function get<T>(path: string, attempt = 0): Promise<T> {
+async function call<T>(method: "GET" | "POST" | "DELETE", path: string, body?: unknown, attempt = 0): Promise<T> {
   const key = process.env.EASYBILL_API_KEY;
   if (!key) throw new EasybillError("EASYBILL_API_KEY fehlt");
   const response = await fetch(`${API}${path}`, {
-    headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
+    method,
+    headers: {
+      Authorization: `Bearer ${key}`,
+      Accept: "application/json",
+      ...(body ? { "Content-Type": "application/json" } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
   // easybill begrenzt die Anfragen pro Minute; einmal kurz warten
   if (response.status === 429 && attempt < 2) {
     await new Promise((resolve) => setTimeout(resolve, 6000));
-    return get(path, attempt + 1);
+    return call(method, path, body, attempt + 1);
   }
   if (!response.ok) throw new EasybillError(`easybill ${path}: ${response.status} ${await response.text()}`);
-  return response.json();
+  return response.status === 204 ? (undefined as T) : response.json();
 }
+
+const get = <T>(path: string) => call<T>("GET", path);
 
 async function all<T>(path: string): Promise<T[]> {
   if (DEMO) return demoEasybill(path) as T[];
@@ -164,6 +180,7 @@ export async function syncEasybill(): Promise<SyncResult> {
     customers.map((c) => ({
       easybill_id: c.id,
       name: customerName(c),
+      customer_number: c.number || null,
       contact_name: [c.first_name, c.last_name].filter(Boolean).join(" ").trim() || null,
       email: c.emails?.[0] ?? null,
       phone: c.phone_1 || c.mobile || null,
@@ -173,7 +190,7 @@ export async function syncEasybill(): Promise<SyncResult> {
       source: c.acquire_options === 1 ? "empfehlung" : null,
       status: c.archived ? "ehemalig" : "aktiv",
     })),
-    ["status", "notes", "source"]
+    ["status", "notes", "source", "customer_number"]
   );
   const customerId = (id: number | null) => (id == null ? null : (customerSync.byEasybill.get(id)?.id ?? null));
 
@@ -250,4 +267,47 @@ export async function syncEasybill(): Promise<SyncResult> {
   };
   await store.setSetting("easybill_sync", result);
   return result;
+}
+
+// ---------- Zahlungen (Finance → Bank) ----------
+
+/** Offene Ausgangsrechnungen der letzten 18 Monate: nicht storniert, nicht
+ * archiviert, noch nicht (voll) bezahlt. */
+export async function openInvoices(): Promise<OpenItem[]> {
+  const from = new Date(Date.now() - 548 * 86_400_000).toISOString().slice(0, 10);
+  const to = new Date(Date.now() + 31 * 86_400_000).toISOString().slice(0, 10);
+  const docs = await all<EbDocument>(`/documents?type=INVOICE&is_draft=0&document_date=${from},${to}`);
+  const names = new Map(
+    (await db().list("customers")).filter((c) => c.easybill_id != null).map((c) => [Number(c.easybill_id), String(c.name)])
+  );
+  return docs
+    .filter((d) => !d.cancel_id && !d.is_archive && !d.paid_at && (d.amount ?? 0) > (d.paid_amount ?? 0))
+    .map((d) => ({
+      id: String(d.id),
+      kind: "easybill" as const,
+      number: d.number,
+      name: (d.customer_id != null && names.get(d.customer_id)) || d.title || `Kunde ${d.customer_id ?? "?"}`,
+      amount: euros((d.amount ?? 0) - (d.paid_amount ?? 0)),
+      date: day(d.document_date),
+      due_date: day(d.due_date),
+    }));
+}
+
+/** Zahlung in easybill buchen; liefert die ID der Zahlung. */
+export async function addPayment(documentId: number, amount: number, date: string, reference: string): Promise<number> {
+  if (DEMO) return Math.floor(Math.random() * 1_000_000);
+  const payment = await call<{ id: number }>("POST", "/document-payments", {
+    document_id: documentId,
+    amount: Math.round(amount * 100),
+    payment_at: date,
+    provider: "Bank",
+    reference: reference.slice(0, 255),
+    notice: "Aus dem Intranet (Finance → Bank) zugeordnet",
+  });
+  return payment.id;
+}
+
+export async function removePayment(paymentId: number) {
+  if (DEMO) return;
+  await call("DELETE", `/document-payments/${paymentId}`);
 }

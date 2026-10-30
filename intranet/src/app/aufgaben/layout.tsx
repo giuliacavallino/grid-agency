@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Aufgaben" };
 
 export default function AufgabenLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RequireAuth>
+    <RequireAuth area="aufgaben">
       <AufgabenShell>{children}</AufgabenShell>
     </RequireAuth>
   );

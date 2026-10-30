@@ -18,7 +18,7 @@ export const GET = withUser(async () => {
     contract: await contractTemplate(),
     grid_signature: await store.getSetting("grid_signature"),
   });
-});
+}, ["sales", "finance"]);
 
 /** Nur bekannte Felder als Text übernehmen */
 function cleanBilling(input: Partial<BillingSettings>): BillingSettings {
@@ -96,4 +96,4 @@ export const PUT = withUser(async (_user, request) => {
     contract: await contractTemplate(),
     grid_signature: await store.getSetting("grid_signature"),
   });
-});
+}, ["sales", "finance"]);

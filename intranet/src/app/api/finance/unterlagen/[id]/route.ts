@@ -12,4 +12,4 @@ export const GET = withUser(async (_user, _request, { params }: Context) => {
   const { data, error } = await sb().storage.from(BUCKET).createSignedUrl(row.pdf_path, 600);
   if (error) throw new Error(error.message);
   return Response.json({ url: data.signedUrl });
-});
+}, ["sales", "finance"]);

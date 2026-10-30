@@ -82,10 +82,14 @@ export function authErrorMessage(error: unknown) {
   return "Anmeldung fehlgeschlagen. Bitte versuch es erneut.";
 }
 
+/** Profilbilder des Teams (wie in Teams); wird beim Login gleich mit
+ * zugestimmt, damit später keine Rückfrage kommt. */
+const PROFILE_SCOPES = ["User.ReadBasic.All"];
+
 /** Leitet zum Microsoft-Login weiter; danach geht es zur aktuellen Seite zurück. */
 export async function signIn(request: Partial<RedirectRequest> = {}) {
   await init();
-  await client().loginRedirect({ scopes: ["User.Read"], ...request });
+  await client().loginRedirect({ scopes: ["User.Read"], extraScopesToConsent: PROFILE_SCOPES, ...request });
 }
 
 export async function signOut() {
@@ -126,7 +130,7 @@ export async function getIdToken(forceRefresh = false) {
       if (!needsInteraction(error)) throw error;
       if (!redirecting) {
         redirecting = true;
-        await client().acquireTokenRedirect({ scopes: ["User.Read"], account });
+        await client().acquireTokenRedirect({ scopes: ["User.Read"], extraScopesToConsent: PROFILE_SCOPES, account });
       }
       // Die Seite wird gerade zum Login weitergeleitet.
       return new Promise<string>(() => {});

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalShell } from "@/components/app/LegalShell";
+import { PageShell } from "@/components/app/PageShell";
 import { ProjekteView } from "@/components/app/ProjekteView";
 
 export const metadata: Metadata = {
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function ProjektePage() {
   return (
-    <LegalShell title="Projekte">
+    <PageShell>
       <ProjekteView />
-    </LegalShell>
+    </PageShell>
   );
 }

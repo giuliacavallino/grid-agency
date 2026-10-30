@@ -1,20 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { cn as clsx } from "@/lib/cn";
 import { Check, Plus, Trash2, X } from "lucide-react";
 import { deleteRow, updateRow } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
-import type { ChecklistItem, Task, TaskProject, TaskSection } from "@/lib/tasks";
+import { dueLabel, type ChecklistItem, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
+import { useAuth } from "@/lib/auth";
+import { useTeam } from "@/components/access";
+import { SendViaTeams } from "@/components/teams";
 import { Button, Dialog, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 
-/** Abhaken direkt auf der Karte, ohne die Karte zu öffnen oder zu ziehen */
+/** Gerade abgehakte To-dos bleiben in der Liste stehen (grün, durchgestrichen),
+ * bis man die Seite verlässt – wie in Asana. Die Liste stellt die Funktion
+ * bereit, die sich ein abgehaktes To-do merkt. */
+export const KeepVisible = createContext<(id: string) => void>(() => {});
+
+/** Abhaken direkt in der Zeile, ohne sie zu öffnen oder zu ziehen */
 export function DoneToggle({ task, className }: { task: Task; className?: string }) {
   const toast = useToast();
+  const keep = useContext(KeepVisible);
   const [busy, setBusy] = useState(false);
 
   async function toggle(event: React.MouseEvent) {
     event.stopPropagation();
+    if (!task.done) keep(task.id);
     setBusy(true);
     try {
       await updateRow<Task>("tasks", task.id, { done: !task.done });
@@ -60,18 +70,33 @@ export function TaskSheet({
 }) {
   return (
     <Sheet open={!!task} onClose={onClose} title={project?.name ?? "To-do"} subtitle={task && sections.find((s) => s.id === task.section_id)?.name}>
-      {task && <TaskDetail key={task.id} task={task} sections={sections} people={people} onClose={onClose} />}
+      {task && <TaskDetail key={task.id} task={task} project={project} sections={sections} people={people} onClose={onClose} />}
     </Sheet>
   );
 }
 
 /** Detailansicht ohne Speichern-Knopf: Auswahlfelder und Checkliste
  * speichern sofort, Texte kurz nach dem Tippen und beim Verlassen. */
-function TaskDetail({ task, sections, people, onClose }: { task: Task; sections: TaskSection[]; people: string[]; onClose: () => void }) {
+function TaskDetail({
+  task,
+  project,
+  sections,
+  people,
+  onClose,
+}: {
+  task: Task;
+  project?: TaskProject;
+  sections: TaskSection[];
+  people: string[];
+  onClose: () => void;
+}) {
   const toast = useToast();
+  const auth = useAuth();
+  const team = useTeam();
+  const assigneeEmail = team.find((m) => m.name === task.assignee)?.email;
+  const isMe = auth.status === "signed-in" && assigneeEmail === auth.account.email.toLowerCase();
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes ?? "");
-  const [assignee, setAssignee] = useState(task.assignee ?? "");
   const [newItem, setNewItem] = useState("");
   const [saving, setSaving] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -165,22 +190,14 @@ function TaskDetail({ task, sections, people, onClose }: { task: Task; sections:
         <Field label="Zuständig" className="col-span-2">
           {(id) => (
             <>
-              <Input
-                id={id}
-                value={assignee}
-                onChange={(e) => {
-                  setAssignee(e.target.value);
-                  saveSoon({ assignee: e.target.value.trim() || null });
-                }}
-                onBlur={flush}
-                list={`${id}-people`}
-                placeholder="Name"
-              />
-              <datalist id={`${id}-people`}>
+              <Select id={id} value={task.assignee ?? ""} onChange={(e) => commit({ assignee: e.target.value || null })}>
+                <option value="">Niemand</option>
                 {people.map((p) => (
-                  <option key={p} value={p} />
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
                 ))}
-              </datalist>
+              </Select>
             </>
           )}
         </Field>
@@ -241,7 +258,27 @@ function TaskDetail({ task, sections, people, onClose }: { task: Task; sections:
             </>
           )}
         </p>
-        <Button variant="ghost" size="sm" className="ml-auto text-error" icon={<Trash2 className="h-4 w-4" />} onClick={() => setConfirmDelete(true)}>
+        {assigneeEmail && !isMe && (
+          <SendViaTeams
+            className="ml-auto"
+            email={assigneeEmail}
+            text={[
+              `📌 ${task.title}`,
+              project && `Kunde: ${project.name}`,
+              task.due_on && `Fällig: ${dueLabel(task.due_on)}`,
+              `${window.location.origin}/aufgaben/${task.project_id}`,
+            ]
+              .filter(Boolean)
+              .join("\n")}
+          />
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={clsx("text-error", (!assigneeEmail || isMe) && "ml-auto")}
+          icon={<Trash2 className="h-4 w-4" />}
+          onClick={() => setConfirmDelete(true)}
+        >
           Löschen
         </Button>
       </div>

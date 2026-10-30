@@ -59,8 +59,9 @@ const customers: Row[] = [
   ["Sajent Club", "Aylin Demir", "Nightlife", "Berlin", 300],
   ["Lovebirds", "Sophie Wagner", "Fashion", "Frankfurt", 120],
   ["Smash Burger Co.", "Jonas Hartmann", "Gastronomie", "Berlin", 60],
-].map(([name, contact, industry, city, since]) => ({
+].map(([name, contact, industry, city, since], i) => ({
   id: uid(),
+  customer_number: String(i + 1),
   created_at: ago(Number(since)),
   updated_at: ago(3),
   name,
@@ -169,6 +170,11 @@ function invoice(stage: string, vendor: string, number: string, amount: number, 
     due_date: new Date(Date.now() + dueInDays * day).toISOString().slice(0, 10),
     amount,
     currency: "EUR",
+    net_amount: Math.round((amount / 1.19) * 100) / 100,
+    vat_amount: Math.round((amount - amount / 1.19) * 100) / 100,
+    payment_method: "ueberweisung",
+    category: null,
+    paid: false,
     description: null,
     attachment_names: [`${number}.pdf`],
     approved_by: stage === "neu" ? null : "Giulia Cavallino",
@@ -176,15 +182,17 @@ function invoice(stage: string, vendor: string, number: string, amount: number, 
     datev_sent_at: stage === "datev" ? ago(Math.max(0, daysAgo - 2)) : null,
     datev_sent_by: stage === "datev" ? "Giulia Cavallino" : null,
     notes: null,
+    paid_at: null,
+    bank_transaction_id: null,
     raw: null,
     ...extra,
   };
 }
 
 const invoices: Row[] = [
-  invoice("neu", "Adobe Systems", "IE-2026-118422", 89.24, 1, 14, { source_ref: "demo-mail-3", graph_id: "demo-inv-adobe", vendor_email: "mail@mail.adobe.com", description: "Creative Cloud Oktober" }),
-  invoice("neu", "Steffen Video", "2026-041", 1428, 3, 11, { source_ref: "demo-mail-4", graph_id: "demo-inv-steffen", vendor_email: "rechnung@steffen-video.de", description: "Shooting Frittenwerk" }),
-  invoice("neu", "Telekom", "9087 1123 4410", 54.9, 6, -1, { description: "Mobilfunk" }),
+  invoice("neu", "Adobe Systems", "IE-2026-118422", 89.24, 1, 14, { source_ref: "demo-mail-3", graph_id: "demo-inv-adobe", vendor_email: "mail@mail.adobe.com", description: "Creative Cloud Oktober", payment_method: "karte", category: "Software & Abos", paid: true }),
+  invoice("neu", "Steffen Video", "2026-041", 1428, 3, 11, { source_ref: "demo-mail-4", graph_id: "demo-inv-steffen", vendor_email: "rechnung@steffen-video.de", description: "Shooting Frittenwerk", category: "Freelancer" }),
+  invoice("neu", "Telekom", "9087 1123 4410", 54.9, 6, -1, { description: "Mobilfunk", payment_method: "lastschrift", category: "Telefon & Internet", paid: true }),
   invoice("freigegeben", "Canva", "CV-55102", 119.99, 8, 6),
   invoice("datev", "Studio Kreuzberg", "R-2026-88", 650, 20, -6, { description: "Studiomiete Content Day" }),
   invoice("datev", "Hetzner", "R0012345678", 17.85, 25, -12),
@@ -207,6 +215,10 @@ function application(stage: string, name: string, title: string, daysAgo: number
     position_title: title,
     message,
     attachment_names: ["Lebenslauf.pdf"],
+    source: null,
+    job_slug: null,
+    link: null,
+    files: [],
     owner: null,
     next_step: null,
     next_step_at: null,
@@ -217,6 +229,19 @@ function application(stage: string, name: string, title: string, daysAgo: number
 }
 
 const applications: Row[] = [
+  application("neu", "Nora Albrecht", "Video Content Creator / Videographer (w/m/d)", 0, "Ich filme seit zwei Jahren Reels für Cafés in Leipzig und schneide in Premiere und CapCut. Showreel ist verlinkt.", {
+    source: "website",
+    source_ref: "demo-web-1",
+    mailbox: null,
+    job_slug: "video-content-creator",
+    phone: "0176 1234567",
+    link: "https://instagram.com/nora.films",
+    attachment_names: ["Lebenslauf_Nora_Albrecht.pdf", "Portfolio.pdf"],
+    files: [
+      { path: "demo-web-1/0-Lebenslauf_Nora_Albrecht.pdf", name: "Lebenslauf_Nora_Albrecht.pdf", type: "application/pdf", size: 182_000 },
+      { path: "demo-web-1/1-Portfolio.pdf", name: "Portfolio.pdf", type: "application/pdf", size: 2_400_000 },
+    ],
+  }),
   application("neu", "Max Meyer", "Content Creator", 1, "Ich produziere seit drei Jahren Reels für Gastro-Accounts und würde gern Teil des Teams werden.", { source_ref: "demo-mail-2", graph_id: "demo-msg-2" }),
   application("neu", "Jana Peters", "Werkstudentin Social Media", 6, "Ich studiere Medienmanagement im 5. Semester."),
   application("gespraech", "Lea Schmitt", "Praktikum Content Creation", 4, "Über Google bin ich auf euch gestoßen.", { mailbox: "google@grid-agency.de", next_step: "Kennenlernen", next_step_at: ago(-2) }),
@@ -235,7 +260,7 @@ const inbound: Row[] = [
 // Aufgaben: zwei aktive Kunden, ein archivierter
 const inDays = (days: number) => new Date(Date.now() + days * day).toISOString().slice(0, 10);
 const taskProjects: Row[] = [
-  { id: "demo-tp-1", created_at: ago(60), name: "Bäckerei Sonne", color: "#eda100", customer_id: null, position: 1, archived: false, briefing: "Familienbäckerei mit 6 Filialen in Frankfurt.\n\nZugänge:\n\nInstagram\nBenutzername: baeckerei.sonne\nE-Mail: social@baeckerei-sonne.de\nPasswort: Beispiel123!\n\nTikTok\nBenutzername: baeckereisonne\nPasswort: Beispiel456!\n\nInspo Accounts\n\nhttps://www.instagram.com/beispiel.baeckerei/ → findet der Kunde toll\n\nAnsprechpartnerin: Anna Sonne +49 170 0000000\n\nPostingplan\n\n- 3 Posts / Woche\n- 10 Storys / Woche" },
+  { id: "demo-tp-1", created_at: ago(60), name: "Bäckerei Sonne", color: "#eda100", customer_id: null, position: 1, archived: false, briefing: "Familienbäckerei mit 6 Filialen in Frankfurt.\n\nZugänge: siehe oben (Admin → Passwörter)\n\nInspo Accounts\n\nhttps://www.instagram.com/beispiel.baeckerei/ → findet der Kunde toll\n\nAnsprechpartnerin: Anna Sonne +49 170 0000000\n\nPostingplan\n\n- 3 Posts / Woche\n- 10 Storys / Woche" },
   { id: "demo-tp-2", created_at: ago(40), name: "Pizzeria Forno", color: "#e5484d", customer_id: null, position: 2, archived: false, briefing: null },
   { id: "demo-tp-3", created_at: ago(400), name: "Café Lumen", color: "#afaaa0", customer_id: null, position: 20, archived: true, briefing: "Frühstückscafé in Berlin-Mitte.\n\nPostingplan: 2 Posts / Woche" },
 ];
@@ -269,7 +294,15 @@ const tables: Record<string, Row[]> = {
   retainers,
   inbound_messages: inbound,
   invoices,
+  bank_accounts: [],
+  bank_transactions: [],
   applications,
+  job_postings: [
+    ["social-media-manager", "Social Media Manager (w/m/d)", true],
+    ["video-content-creator", "Video Content Creator / Videographer (w/m/d)", true],
+    ["werkstudent-social-media", "Werkstudent (w/m/d) Social Media Marketing", true],
+    ["praktikum-social-media", "Praktikum (w/m/d) Social Media Marketing", false],
+  ].map(([slug, title, active], i) => ({ id: `demo-job-${i + 1}`, created_at: ago(90), updated_at: ago(10), slug, title, active, position: i + 1 })),
   task_projects: taskProjects,
   task_sections: taskSections,
   tasks,
@@ -306,6 +339,7 @@ export const demoStore: Store = {
     }
     if (table === "task_projects") Object.assign(row, { color: row.color ?? "#afaaa0", archived: row.archived ?? false, briefing: row.briefing ?? null, customer_id: null, position: row.position ?? Date.now() / 1000 });
     if (table === "task_sections") Object.assign(row, { position: row.position ?? Date.now() / 1000 });
+    if (table === "customers" && !row.customer_number) row.customer_number = String(Math.max(0, ...tables.customers.map((c) => Number(c.customer_number) || 0)) + 1);
     tables[table].push(row);
     return structuredClone(row);
   },
@@ -327,7 +361,7 @@ export const demoStore: Store = {
       if (patch.stage === "gewonnen" && !row.won_at) row.won_at = now();
     }
     if (table === "tasks" && "done" in patch) row.done_at = patch.done ? (row.done_at ?? now()) : null;
-    Object.assign(row, patch, ["leads", "customers", "invoices", "applications", "tasks"].includes(table) ? { updated_at: now() } : {});
+    Object.assign(row, patch, ["leads", "customers", "invoices", "applications", "tasks", "job_postings"].includes(table) ? { updated_at: now() } : {});
     return structuredClone(row);
   },
   async upsertEasybill(table, rows) {
@@ -337,6 +371,15 @@ export const demoStore: Store = {
       // Datenbank-Standardwerte nachbilden, die der Abgleich nicht mitschickt
       const defaults = table === "retainers" ? { hours_per_month: 0, notes: null } : table === "articles" ? { hours: 0 } : { lead_id: null, industry: null };
       out.push(row ? await this.update(table, row.id, input) : await this.insert(table, { ...defaults, ...input }));
+    }
+    return out;
+  },
+  async upsert(table, rows, onConflict, ignoreDuplicates = false) {
+    const out: Row[] = [];
+    for (const input of rows) {
+      const row = tables[table].find((r) => r[onConflict] === input[onConflict]);
+      if (row && ignoreDuplicates) continue;
+      out.push(row ? await this.update(table, row.id, input) : await this.insert(table, { updated_at: now(), ...input }));
     }
     return out;
   },
