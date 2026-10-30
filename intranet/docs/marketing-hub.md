@@ -86,6 +86,27 @@ Alle Werte in Vercel als „Sensitive“ anlegen, für Production und Preview. D
 - Jede Kundenwelt bekommt `Kundenwelten/<Kunde>/<JJJJ-MM>/`. Alle Bilder und Videos eines Posts werden dort zusätzlich abgelegt.
 - „SharePoint“ auf der Kanäle-Seite öffnet den Ordner und legt ihn bei Bedarf an.
 
+## Video-Werkzeuge
+
+Für die Video-Werkzeuge braucht es nur je einen API-Schlüssel, keine App-Prüfung. Jeden Schlüssel in Vercel als „Sensitive“ anlegen, danach ein Redeploy auslösen. Was angebunden ist, zeigt Marketing → Agent & API.
+
+| Werkzeug | Wofür | Konto und Schlüssel | Vercel-Variable |
+| --- | --- | --- | --- |
+| Creatomate | Videos aus Vorlagen rendern (Motion Design), schneiden/kürzen, Untertitel einbrennen, Musik unterlegen; ersetzt ffmpeg | creatomate.com → Project settings → API Key | `CREATOMATE_API_KEY` |
+| OpenAI Whisper | Transkript und Untertitel (SRT/VTT) aus Video oder Audio, bis 25 MB | platform.openai.com → API keys (eigenes Projekt „GRID Intranet“) | `OPENAI_API_KEY` |
+| ElevenLabs | Voiceover (Text → Sprache) in der Stimme der Kundenwelt, Musik aus einer Beschreibung | elevenlabs.io → Profile → API Keys (Rechte: Text to Speech, Voices, Music) | `ELEVENLABS_API_KEY`, optional `ELEVENLABS_MODEL` |
+
+So arbeitet der Agent damit:
+
+1. **Motion Design:** Vorlagen werden einmal im Creatomate-Editor gebaut, je Kunde in seiner CI (z. B. „Reel 9:16 Huck“). Der Agent füllt sie mit `POST /api/marketing/video/render` und `{ template_id, modifications }`: Texte, Bilder, Video, Musik.
+2. **Schneiden:** `POST /api/marketing/video/render` mit `{ source }` (RenderScript). Ein Video-Element mit `trim_start` und `trim_duration` kürzt, mehrere Elemente hintereinander ergeben einen Zusammenschnitt.
+3. **Untertitel:** `POST /api/marketing/video/transcribe` mit `{ path, format: "srt" }`. Den Text dann als Untertitel in die Vorlage geben. Creatomate kann Untertitel auch selbst erzeugen.
+4. **Voiceover:** `POST /api/marketing/video/voiceover` mit `{ text, workspace_id }`. Ohne `voice_id` gilt die Stimme aus der CI-Welt (CI & Vorgaben → Stimme).
+5. **Musik:** `POST /api/marketing/video/music` mit `{ prompt, seconds }`.
+6. **Fertigstellen:** `GET /api/marketing/video/render/{id}?store=1` liefert das fertige Video als `media`. Damit geht es weiter mit `POST /api/marketing/posts`.
+
+Artlist hat keine öffentliche Schnittstelle, die ein Agent nutzen könnte. Musik kommt deshalb von ElevenLabs. Lizenzierte Artlist-Tracks lädt das Team selbst herunter und legt sie als Medien ab.
+
 ## Veröffentlichen
 
 - **Jetzt posten:** geht sofort an alle gewählten Kanäle. Das Ergebnis steht pro Kanal am Post.

@@ -7,6 +7,7 @@ import { mutate, revalidate, useResource } from "@/lib/data";
 import { COLOR_ROLES, type Brand, type BrandColor, type BrandFont } from "@/lib/marketing";
 import { Button, Dialog, Empty, Field, IconButton, Input, Select, Spinner, Textarea, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
+import { useMarketingStatus } from "./common";
 import { URL_WORKSPACES, useCurrentWorkspace, WorkspaceSwitcher } from "./workspace";
 
 type BrandResponse = { brand: Brand; brief: string };
@@ -127,6 +128,7 @@ function BrandEditor({ workspaceId, initial }: { workspaceId: string; initial: B
             <TextBlock label="Tonalität und Ansprache" value={brand.tone} onChange={(v) => set("tone", v)} onSave={(tone) => save({ tone })} placeholder="z. B. herzlich, nahbar, mit Augenzwinkern; wir duzen die Community" />
             <TextBlock label="Zielgruppe" value={brand.audience} onChange={(v) => set("audience", v)} onSave={(audience) => save({ audience })} />
             <TextBlock label="Bildsprache und Gestaltung" value={brand.imagery} onChange={(v) => set("imagery", v)} onSave={(imagery) => save({ imagery })} placeholder="z. B. warmes Tageslicht, echte Menschen, viel Weißraum, Logo unten rechts" />
+            <VoicePicker value={brand.voice_id ?? ""} onSave={(voice_id) => (set("voice_id", voice_id), save({ voice_id }))} />
           </section>
 
           <section className="grid gap-4 sm:grid-cols-2">
@@ -145,6 +147,35 @@ function BrandEditor({ workspaceId, initial }: { workspaceId: string; initial: B
       </div>
       {suggestion && <SuggestionDialog suggestion={suggestion} onClose={() => setSuggestion(null)} onAccept={accept} />}
     </div>
+  );
+}
+
+type Voice = { voice_id: string; name: string; labels: Record<string, string> };
+
+/** Stimme für Voiceovers (ElevenLabs); ohne Schlüssel als freies Feld */
+function VoicePicker({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+  const status = useMarketingStatus();
+  const ready = !!status.data?.tools.elevenlabs;
+  const voices = useResource<Voice[]>(ready ? "/api/marketing/video/voices" : null);
+  const [text, setText] = useState(value);
+  return (
+    <Field label="Stimme für Voiceover (ElevenLabs)">
+      {(id) =>
+        ready && voices.data ? (
+          <Select id={id} value={value} onChange={(e) => onSave(e.target.value)}>
+            <option value="">Keine feste Stimme</option>
+            {voices.data.map((v) => (
+              <option key={v.voice_id} value={v.voice_id}>
+                {v.name}
+                {Object.values(v.labels).length ? ` · ${Object.values(v.labels).join(", ")}` : ""}
+              </option>
+            ))}
+          </Select>
+        ) : (
+          <Input id={id} value={text} onChange={(e) => setText(e.target.value)} onBlur={() => text !== value && onSave(text.trim())} placeholder={ready ? "Stimmen werden geladen …" : "Voice-ID (ElevenLabs noch nicht verbunden)"} />
+        )
+      }
+    </Field>
   );
 }
 
