@@ -11,6 +11,7 @@ import { useMe } from "./access";
 import { TeamsButton } from "./teams";
 import { usePhoto } from "./person";
 import { signOut, useAuth } from "@/lib/auth";
+import { BankReminder } from "./finance/bank-reminder";
 import { Logo } from "./logo";
 import { Button, Popover } from "./ui";
 
@@ -233,6 +234,7 @@ export function Hub() {
         {now ? greeting(now.getHours()) : "Hallo"}, {firstName}
       </h1>
       <p className="mt-2.5 text-[15px] text-snow/60">Wohin geht’s heute?</p>
+      <BankReminder />
 
       {/* Sales ist die breite Hauptkachel: 7 Bereiche gehen in 2 und 4 Spalten glatt auf */}
       <ul className="mt-8 grid grid-cols-2 gap-3 lg:mt-10 lg:grid-cols-4 lg:gap-4">
