@@ -9,6 +9,7 @@ import { check, getBilling } from "./billing";
 import { finalize, saveDraft } from "./billing-write";
 import { db, sb, type Row } from "./db";
 import { sendAppMail } from "./graph-app";
+import { brandedMail, senderFor } from "./mail-template";
 import { createEnvelope, markEnvelopeSent, revokeEnvelope } from "./sign";
 import { createMeeting, freeSlots, type Busy, type SlotRules } from "./slots";
 import { verifyAltcha } from "./altcha";
@@ -36,7 +37,6 @@ const RULES: Record<MeetingKind, SlotRules> = {
 
 const sha256 = (data: string) => createHash("sha256").update(data).digest("hex");
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
-const escape = (text: string) => text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const dateTimeDe = (ms: number) =>
   new Date(ms).toLocaleString("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
@@ -52,21 +52,6 @@ async function leadById(id: string) {
 
 // ---------- Mails ----------
 
-function buttonMail(input: { eyebrow: string; title: string; paragraphs: string[]; button: string; link: string; sender: string }) {
-  const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:#2b2926;max-width:520px">
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin-bottom:28px"><tr>
-<td style="height:5px;background:#feda75"></td><td style="height:5px;background:#fa7e1e"></td><td style="height:5px;background:#d62976"></td><td style="height:5px;background:#962fbf"></td>
-</tr></table>
-<p style="margin:0 0 6px;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#fa7e1e;font-weight:600">${escape(input.eyebrow)}</p>
-<p style="margin:0 0 20px;font-size:26px;line-height:1.2;font-weight:700">${escape(input.title)}</p>
-${input.paragraphs.map((p) => `<p>${escape(p)}</p>`).join("\n")}
-<p style="margin:28px 0"><a href="${input.link}" style="display:inline-block;background:#2b2926;color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;padding:15px 30px;border-radius:999px;border-bottom:3px solid #fa7e1e">${escape(input.button)} &rarr;</a></p>
-<p style="font-size:13px;color:#676159">Oder diesen Link öffnen: <a href="${input.link}" style="color:#676159">${input.link}</a></p>
-<p>Viele Grüße<br><strong>${escape(input.sender)}</strong><br>GRID Agency</p>
-</div>`;
-  return html;
-}
-
 // ---------- Einladen zum Erstgespräch ----------
 
 /** Einladung mit persönlichem Buchungslink von hello@; der Lead bleibt in
@@ -78,16 +63,15 @@ export async function inviteLead(id: string, user: { email: string; name: string
   const token = randomBytes(24).toString("base64url");
   const link = `${WEBSITE_URL}/termin?l=${token}`;
   const name = firstName(String(lead.name));
-  const html = buttonMail({
+  const html = brandedMail({
     eyebrow: "Einladung zum Erstgespräch",
     title: `Hi ${name}, lass uns sprechen!`,
     paragraphs: [
       `danke für deine Anfrage${lead.company ? ` für ${lead.company}` : ""}! Am besten lernen wir uns kurz kennen: In ${RULES.erstgespraech.minutes} Minuten klären wir, was du vorhast und wie wir dich unterstützen können.`,
       `Such dir einfach einen freien Termin mit ${firstName(HOST_NAME)} aus, die Einladung kommt direkt in deinen Kalender.`,
     ],
-    button: "Termin wählen",
-    link,
-    sender: user.name,
+    button: { label: "Termin wählen", href: link },
+    sender: senderFor(user.name, user.email),
   });
   const updated = await db().update("leads", id, { invite_token_hash: sha256(token), invited_at: new Date().toISOString(), invited_by: user.email });
   if (DEMO) {
@@ -225,7 +209,7 @@ export async function requestEbook(input: { name: string; email: string; company
   );
   const fromMeta = Boolean(tracking.fbclid) || META_SOURCES.includes((tracking.utm_source ?? "").toLowerCase());
 
-  const html = buttonMail({
+  const html = brandedMail({
     eyebrow: "Dein E-Book",
     title: "Social Media 2027 ist da.",
     paragraphs: [
@@ -233,9 +217,8 @@ export async function requestEbook(input: { name: string; email: string; company
       "im Anhang findest du unser E-Book „Social Media 2027“: der Wandel bis 2027 und was du jetzt tun musst, um auf Social Media mehr Umsatz, zufriedenere Kund:innen und mehr Bewerbungen zu gewinnen. Mit echten Zahlen aus unseren Projekten und einem 90-Tage-Fahrplan zum Abhaken.",
       "Wenn du den Fahrplan nicht allein umsetzen willst: In einem kostenlosen Erstgespräch schauen wir uns deine Kanäle an und zeigen dir, wo dein größtes Potenzial liegt.",
     ],
-    button: "Kostenloses Erstgespräch buchen",
-    link: `${WEBSITE_URL}/termin`,
-    sender: HOST_NAME,
+    button: { label: "Kostenloses Erstgespräch buchen", href: `${WEBSITE_URL}/termin` },
+    sender: senderFor(HOST_NAME),
   });
   if (DEMO) {
     console.info(`[Vorschau] E-Book an ${email}`);
@@ -384,7 +367,7 @@ export async function createOffer(id: string, input: OfferInput, user: { email: 
     },
     user
   );
-  await sendAppMail(SHARED_MAILBOX, { to: [envelope.mail.to], subject: envelope.mail.subject, body: envelope.mail.body });
+  await sendAppMail(SHARED_MAILBOX, { to: [envelope.mail.to], subject: envelope.mail.subject, body: envelope.mail.body, html: envelope.mail.html });
   await markEnvelopeSent(envelope.id, user.name, envelope.mail.to);
 
   const value = items.filter((i) => monthly(i.unit)).reduce((sum, i) => sum + Number(i.quantity) * Number(i.unit_price_net), 0);
@@ -535,16 +518,15 @@ export async function startOnboarding(id: string, user: { email: string; name: s
       to: [to],
       subject: `Willkommen bei GRID – lass uns den Kick-off planen`,
       html: true,
-      body: buttonMail({
+      body: brandedMail({
         eyebrow: "Willkommen bei GRID",
         title: `Hi ${firstName(signer)}, los geht's!`,
         paragraphs: [
           `danke für dein Vertrauen – wir freuen uns riesig auf die Zusammenarbeit mit ${customer.name}!`,
           `Im Kick-off (${RULES.kickoff.minutes} Minuten, per Teams) gehen wir Ziele, Zugänge, Content-Plan und Abläufe durch. Such dir einfach einen Termin aus.`,
         ],
-        button: "Kick-off-Termin wählen",
-        link,
-        sender: user.name,
+        button: { label: "Kick-off-Termin wählen", href: link },
+        sender: senderFor(user.name, user.email),
       }),
     });
     done.push(`Kick-off-Einladung an ${to}`);
