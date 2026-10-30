@@ -115,7 +115,7 @@ function InviteButton({ application }: { application: Application }) {
       }}
       disabled={busy}
       aria-busy={busy || undefined}
-      className="mt-2.5 inline-flex h-7 items-center gap-1.5 rounded-full whitespace-nowrap border border-snow/15 bg-snow/[0.06] px-2.5 text-[12px] font-medium text-snow/85 transition-colors hover:bg-snow/12 hover:text-snow disabled:cursor-progress"
+      className="btn-rainbow mt-2.5 inline-flex h-7 items-center gap-1.5 rounded-full bg-snow px-3 text-[12px] font-medium whitespace-nowrap text-sky active:scale-95 disabled:cursor-progress disabled:opacity-80"
     >
       {busy ? <Spinner className="h-3.5 w-3.5" /> : <CalendarPlus className="h-3.5 w-3.5" />}
       {busy ? "Wird eingeladen …" : "Einladen"}

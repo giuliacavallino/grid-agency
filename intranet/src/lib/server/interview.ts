@@ -180,14 +180,18 @@ Bis bald
 ${inviter.name}
 GRID Agency`;
   const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:#2b2926;max-width:520px">
-<p>Hi ${escape(name)},</p>
-<p>danke für ${escape(role)}! Wir würden dich gern kennenlernen. Such dir einfach einen Termin für ein ${SLOT_MINUTES}-minütiges Gespräch per Teams mit ${escape(from)} aus:</p>
-<p style="margin:28px 0"><a href="${link}" style="display:inline-block;background:#2b2926;color:#e4e2e7;text-decoration:none;font-weight:600;padding:13px 26px;border-radius:999px">Termin wählen</a></p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin-bottom:28px"><tr>
+<td style="height:5px;background:#feda75"></td><td style="height:5px;background:#fa7e1e"></td><td style="height:5px;background:#d62976"></td><td style="height:5px;background:#962fbf"></td>
+</tr></table>
+<p style="margin:0 0 6px;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#fa7e1e;font-weight:600">Einladung zum Kennenlernen</p>
+<p style="margin:0 0 20px;font-size:26px;line-height:1.2;font-weight:700">Hi ${escape(name)}, lass uns quatschen!</p>
+<p>danke für ${escape(role)}! Sie hat uns gefallen und wir würden dich gern kennenlernen. Such dir einfach einen Termin für ein ${SLOT_MINUTES}-minütiges Gespräch per Teams mit ${escape(from)} aus:</p>
+<p style="margin:28px 0"><a href="${link}" style="display:inline-block;background:#2b2926;color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;padding:15px 30px;border-radius:999px;border-bottom:3px solid #fa7e1e">Termin wählen &rarr;</a></p>
 <p style="font-size:13px;color:#676159">Oder diesen Link öffnen: <a href="${link}" style="color:#676159">${link}</a></p>
 <p>Falls keiner der Termine passt, antworte einfach auf diese Mail.</p>
-<p>Bis bald<br>${escape(inviter.name)}<br>GRID Agency</p>
+<p>Bis bald<br><strong>${escape(inviter.name)}</strong><br>GRID Agency</p>
 </div>`;
-  return { subject: "Einladung zum Kennenlernen bei GRID", text, html };
+  return { subject: `${name}, lass uns kennenlernen! Einladung von GRID`, text, html };
 }
 
 /** Lädt zum Vorstellungsgespräch ein: neuer Link, Mail von hello@, Karte
