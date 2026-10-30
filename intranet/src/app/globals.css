@@ -34,13 +34,13 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    --color-sky: #f3f1f4;
+    --color-sky: #f7f6f8;
     --color-snow: #2b2926;
     --color-dune: #8c867c;
     --color-earth: #676159;
     --color-dawn: #d8d9d7;
     --color-ink: #ffffff;
-    --color-canvas: #eceaed;
+    --color-canvas: #ffffff;
     --color-surface: #ffffff;
     --color-panel: #fbfafc;
     --color-error: #b83a2e;

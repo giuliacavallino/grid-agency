@@ -63,12 +63,29 @@ export const TABLES = {
     filters: ["stage"],
     order: { column: "position", ascending: true },
   },
+  // Aufgaben: Kunde → Themen (Spalten) → To-dos (Karten)
+  task_projects: {
+    columns: ["name", "color", "customer_id", "position", "archived", "briefing"],
+    filters: ["archived"],
+    order: { column: "position", ascending: true },
+  },
+  task_sections: {
+    columns: ["project_id", "name", "position"],
+    filters: ["project_id"],
+    order: { column: "position", ascending: true },
+  },
+  tasks: {
+    columns: ["project_id", "section_id", "title", "notes", "done", "assignee", "due_on", "checklist", "position"],
+    filters: ["project_id", "done"],
+    order: { column: "position", ascending: false },
+  },
 } as const;
 
 /** Tabellen mit Herkunftsschlüssel (source_ref) aus dem Mail-Eingang */
 export type IngestTable = "leads" | "inbound_messages" | "invoices" | "applications";
 
 export type TableName = keyof typeof TABLES;
+export type EasybillTable = "customers" | "articles" | "retainers";
 export type Row = Record<string, unknown> & { id: string };
 
 export function isTable(name: string): name is TableName {
@@ -92,6 +109,9 @@ export interface Store {
   /** Insert, der bei bestehendem (source, source_ref) bzw. id nichts tut. */
   insertIgnore(table: IngestTable, row: Record<string, unknown>): Promise<Row | null>;
   update(table: TableName, id: string, patch: Record<string, unknown>): Promise<Row>;
+  /** Anlegen oder aktualisieren über die easybill-ID. Spalten, die in keiner
+   * Zeile vorkommen, bleiben bei bestehenden Zeilen unverändert. */
+  upsertEasybill(table: EasybillTable, rows: Record<string, unknown>[]): Promise<Row[]>;
   remove(table: TableName, id: string): Promise<void>;
   getSetting<T>(key: string): Promise<T | null>;
   setSetting(key: string, value: unknown): Promise<void>;
@@ -139,6 +159,10 @@ const supabaseStore: Store = {
   },
   async update(table, id, patch) {
     return check(await sb().from(table).update(patch).eq("id", id).select().single()) as Row;
+  },
+  async upsertEasybill(table, rows) {
+    if (!rows.length) return [];
+    return check(await sb().from(table).upsert(rows, { onConflict: "easybill_id" }).select()) as Row[];
   },
   async remove(table, id) {
     check(await sb().from(table).delete().eq("id", id));

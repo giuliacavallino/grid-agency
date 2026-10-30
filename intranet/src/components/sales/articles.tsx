@@ -7,6 +7,7 @@ import { createRow, deleteRow, updateRow, useRows } from "@/lib/data";
 import { euro, num } from "@/lib/format";
 import { UNITS, type Article, type Retainer } from "@/lib/sales/types";
 import { Button, Dialog, Empty, Field, Input, Select, Spinner, Textarea, useToast } from "@/components/ui";
+import { EasybillSync } from "./easybill-sync";
 import { PageBar } from "./shell";
 
 const unitLabel = (unit: Article["unit"]) => UNITS.find((u) => u.id === unit)?.label ?? unit;
@@ -54,6 +55,7 @@ export function Articles() {
           <span className="hidden sm:inline">Inaktive zeigen</span>
           <span className="sm:hidden">Inaktive</span>
         </label>
+        <EasybillSync />
         <Button variant="primary" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setEditing("new")}>
           <span className="sr-only sm:not-sr-only">Neuer Artikel</span>
         </Button>

@@ -9,6 +9,7 @@ import { createRow, deleteRow, mutate, updateRow, useResource, useRows } from "@
 import { euro, formatDate, isoDate, num, percent } from "@/lib/format";
 import type { Article, Customer, Retainer, Settings } from "@/lib/sales/types";
 import { Badge, Button, Dialog, Empty, Field, IconButton, Input, Select, Spinner, Textarea, useToast } from "@/components/ui";
+import { EasybillSync } from "./easybill-sync";
 import { PageBar } from "./shell";
 import { ChartCard } from "./charts/chart-card";
 import { ColumnChart, LineChart } from "./charts/charts";
@@ -369,6 +370,7 @@ export function OrderBook() {
             </option>
           ))}
         </Select>
+        <EasybillSync />
         <Button variant="primary" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setEditing("new")}>
           <span className="sr-only sm:not-sr-only">Neuer Retainer</span>
         </Button>
