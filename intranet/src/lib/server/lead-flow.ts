@@ -1,12 +1,14 @@
 import "server-only";
+import { after } from "next/server";
 import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { DEMO, SHARED_MAILBOX } from "@/lib/config";
 import { isMonthlyUnit, OFFER_TEXTS, todayBerlin, type ItemInput } from "@/lib/billing";
-import type { ContractTerms } from "@/lib/contract";
+import { billingNote, onceBillingDate, type ContractTerms } from "@/lib/contract";
 import { check, getBilling } from "./billing";
 import { finalize, saveDraft } from "./billing-write";
+import { runSeries } from "./billing-series";
 import { db, sb, type Row } from "./db";
 import { sendAppMail } from "./graph-app";
 import { brandedMail, senderFor } from "./mail-template";
@@ -350,7 +352,12 @@ export async function createOffer(id: string, input: OfferInput, user: { email: 
     service_to: null,
     title: input.title.trim() || null,
     intro: input.intro.trim() || OFFER_TEXTS.intro,
-    closing: OFFER_TEXTS.closing,
+    closing: [
+      billingNote(input.terms, { monthly: items.some((i) => isMonthlyUnit(i.unit)), once: items.some((i) => !isMonthlyUnit(i.unit)) }),
+      OFFER_TEXTS.closing,
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
     items: items.map((i) => ({
       kind: "position",
       article_id: i.article_id ?? null,
@@ -408,6 +415,79 @@ export async function offerSigned(documentId: string, customerId: string | null)
     });
     await note(lead.id, "system", "Angebot, Vertrag und SEPA-Mandat unterschrieben – Kunde gewonnen");
   }
+  const done = await scheduleInvoices(documentId);
+  for (const lead of leads) if (done.length) await note(lead.id, "system", `Abrechnung angelegt: ${done.join(", ")}`);
+}
+
+/** Nach der Unterschrift: Serienrechnung für die monatlichen Positionen
+ * (Leistungsmonat im Betreff) und eine einmalige Rechnung für den Rest zum
+ * vereinbarten Termin. Beide laufen über den Serien-Cron (festschreiben,
+ * PDF, Versand von buchhaltung@). Je Angebot nur einmal. */
+export async function scheduleInvoices(documentId: string): Promise<string[]> {
+  const existing = check(await sb().from("billing_documents").select("id").eq("kind", "serie").eq("ref_document_id", documentId).limit(1)) as { id: string }[];
+  if (existing.length) return [];
+  const offer = await getBilling(documentId);
+  if (!offer?.customer_id) return [];
+  const customer = await db().get("customers", offer.customer_id);
+  if (!customer) return [];
+  const envelope = check(
+    await sb().from("sign_envelopes").select("contract,signer_email").eq("document_id", documentId).eq("status", "unterschrieben").maybeSingle()
+  ) as { contract: { terms: ContractTerms }; signer_email: string } | null;
+  const terms = envelope?.contract.terms;
+  const today = todayBerlin();
+  const start = terms?.start_date || offer.service_from || nextMonthStart();
+  const onceOn = onceBillingDate(terms, today);
+  const positions = offer.items.filter((i) => i.kind === "position");
+  const monthly = positions.filter((i) => isMonthlyUnit(i.unit));
+  const once = positions.filter((i) => !isMonthlyUnit(i.unit));
+  const base = {
+    kind: "serie" as const,
+    customer_id: offer.customer_id,
+    ref_document_id: documentId,
+    address: offer.address ?? { company_name: String(customer.name) },
+    recipient_email: (customer.billing_email as string) || (customer.email as string) || envelope?.signer_email || null,
+    document_date: null,
+    payment_terms_days: Number(customer.payment_terms_days ?? 5),
+    service_from: null,
+    service_to: null,
+    intro: null,
+    closing: null,
+  };
+  const item = (i: (typeof positions)[number]) => ({
+    kind: "position" as const,
+    article_id: i.article_id,
+    number: i.number,
+    description: i.description,
+    quantity: i.quantity,
+    unit: i.unit,
+    unit_price_net: i.unit_price_net,
+    vat_percent: i.vat_percent,
+    discount: i.discount,
+    discount_type: i.discount_type,
+  });
+  const title = offer.title || "Social Media Betreuung";
+  const done: string[] = [];
+  if (monthly.length) {
+    await saveDraft(null, {
+      ...base,
+      title: `${title} {Monat}`,
+      items: monthly.map(item),
+      recurring: { frequency: "MONTHLY", interval: 1, next_date: start, end_date: null, status: "RUNNING" },
+    });
+    done.push(`Serienrechnung monatlich ab ${dateDe(start)}`);
+  }
+  if (once.length) {
+    await saveDraft(null, {
+      ...base,
+      title: `${title} – einmalige Leistungen`,
+      items: once.map(item),
+      recurring: { frequency: "MONTHLY", interval: 1, next_date: onceOn, end_date: onceOn, status: "RUNNING" },
+    });
+    done.push(`Einmalkosten am ${dateDe(onceOn)}`);
+  }
+  // Heute fällig (z. B. Einmalkosten bei Unterschrift): gleich nach der Antwort abrechnen
+  if ((monthly.length && start <= today) || (once.length && onceOn <= today)) after(() => runSeries().catch(console.error));
+  return done;
 }
 
 /** Mappe abgelehnt → Lead verloren (mit Grund) */
@@ -437,13 +517,15 @@ const addDays = (iso: string, days: number) => {
   return d.toISOString().slice(0, 10);
 };
 
+const dateDe = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" });
+
 /** Erster des nächsten Monats (Berlin) */
 function nextMonthStart() {
   const [y, m] = todayBerlin().split("-").map(Number);
   return new Date(Date.UTC(m === 12 ? y + 1 : y, m === 12 ? 0 : m, 1)).toISOString().slice(0, 10);
 }
 
-/** „Onboarding starten“: Aufgabenliste, Serienrechnung aus dem Angebot und
+/** „Onboarding starten“: Aufgabenliste, Abrechnung (falls noch nicht da) und
  * Einladung zum Kick-off (Buchungslink) an den Kunden */
 export async function startOnboarding(id: string, user: { email: string; name: string }) {
   if (DEMO) throw new FlowError("In der Vorschau startet kein Onboarding");
@@ -452,13 +534,11 @@ export async function startOnboarding(id: string, user: { email: string; name: s
   if (lead.onboarding_at) throw new FlowError("Das Onboarding läuft schon");
   const customer = await db().get("customers", String(lead.customer_id));
   if (!customer) throw new FlowError("Kunde nicht gefunden");
-  const offer = lead.offer_id ? await getBilling(String(lead.offer_id)) : null;
   const envelope = lead.offer_id
     ? (check(
-        await sb().from("sign_envelopes").select("contract,signer_name,signer_email").eq("document_id", lead.offer_id).eq("status", "unterschrieben").maybeSingle()
-      ) as { contract: { terms: ContractTerms }; signer_name: string; signer_email: string } | null)
+        await sb().from("sign_envelopes").select("signer_name,signer_email").eq("document_id", lead.offer_id).eq("status", "unterschrieben").maybeSingle()
+      ) as { signer_name: string; signer_email: string } | null)
     : null;
-  const start = envelope?.contract.terms.start_date || offer?.service_from || nextMonthStart();
   const done: string[] = [];
 
   // 1. Aufgaben: Projekt des Kunden (oder neu) mit Abschnitt „Onboarding“
@@ -483,40 +563,8 @@ export async function startOnboarding(id: string, user: { email: string; name: s
   );
   done.push(`${ONBOARDING_TASKS.length} Onboarding-Aufgaben`);
 
-  // 2. Serienrechnung aus den monatlichen Positionen des Angebots
-  if (offer) {
-    const positions = offer.items.filter((i) => i.kind === "position");
-    const lines = positions.filter((i) => isMonthlyUnit(i.unit));
-    if (lines.length) {
-      await saveDraft(null, {
-        kind: "serie",
-        customer_id: customer.id,
-        address: offer.address ?? { company_name: String(customer.name) },
-        recipient_email: (customer.billing_email as string) ?? (customer.email as string) ?? envelope?.signer_email ?? null,
-        document_date: null,
-        payment_terms_days: Number(customer.payment_terms_days ?? 5),
-        service_from: null,
-        service_to: null,
-        title: offer.title,
-        intro: null,
-        closing: null,
-        items: lines.map((i) => ({
-          kind: "position",
-          article_id: i.article_id,
-          number: i.number,
-          description: i.description,
-          quantity: i.quantity,
-          unit: i.unit,
-          unit_price_net: i.unit_price_net,
-          vat_percent: i.vat_percent,
-          discount: i.discount,
-          discount_type: i.discount_type,
-        })),
-        recurring: { frequency: "MONTHLY", interval: 1, next_date: start, end_date: null, status: "RUNNING" },
-      });
-      done.push(`Serienrechnung monatlich ab ${new Date(`${start}T12:00:00`).toLocaleDateString("de-DE")}`);
-    }
-  }
+  // 2. Abrechnung (entsteht normalerweise schon bei der Unterschrift)
+  if (lead.offer_id) done.push(...(await scheduleInvoices(String(lead.offer_id))));
 
   // 3. Kick-off: Buchungslink an die Person, die unterschrieben hat
   const to = envelope?.signer_email ?? (lead.email as string | null);

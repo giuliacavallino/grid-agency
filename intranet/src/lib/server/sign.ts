@@ -173,7 +173,16 @@ export async function createEnvelope(offerId: string, input: CreateInput, user: 
         token_hash: sha256(token),
         signer_name: input.signer_name.trim(),
         signer_email: input.signer_email.trim().toLowerCase(),
-        contract: { ...template, terms: { purpose: input.terms.purpose?.trim() || "", start_date: start, min_term_months: min, notice_months: notice } },
+        contract: {
+          ...template,
+          terms: {
+            purpose: input.terms.purpose?.trim() || "",
+            start_date: start,
+            min_term_months: min,
+            notice_months: notice,
+            once_billing: input.terms.once_billing === "unterschrift" || isoDate(input.terms.once_billing) ? input.terms.once_billing : "vertragsbeginn",
+          },
+        },
         sepa_required: !!input.sepa_required,
         grid_signer: input.grid_signer?.trim() || user.name,
         grid_signature: input.grid_signature,

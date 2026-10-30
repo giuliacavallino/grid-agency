@@ -72,6 +72,8 @@ async function createDue(series: Series, today: string, run: SeriesRun) {
     const following = addPeriod(next, frequency, interval);
     const end = new Date(`${following}T12:00:00Z`);
     end.setUTCDate(end.getUTCDate() - 1);
+    // Letzter Zeitraum endet spätestens am Enddatum (einmalige Rechnung: ein Tag)
+    const serviceTo = r.end_date && r.end_date < end.toISOString().slice(0, 10) ? r.end_date : end.toISOString().slice(0, 10);
     const { data: inserted, error } = await sb()
       .from("billing_documents")
       .upsert(
@@ -87,7 +89,7 @@ async function createDue(series: Series, today: string, run: SeriesRun) {
           payment_terms_days: series.payment_terms_days,
           document_date: next,
           service_from: next,
-          service_to: end.toISOString().slice(0, 10),
+          service_to: serviceTo,
           title: series.title,
           intro: series.intro,
           closing: series.closing,

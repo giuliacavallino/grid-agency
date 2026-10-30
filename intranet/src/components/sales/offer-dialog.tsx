@@ -5,7 +5,7 @@ import { Check, ChevronDown, PenLine, Plus, Send, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/lib/auth";
-import { DEFAULT_PURPOSE } from "@/lib/contract";
+import { billingNote, DEFAULT_PURPOSE } from "@/lib/contract";
 import { mutate, revalidate, useResource, useRows } from "@/lib/data";
 import { euro } from "@/lib/format";
 import { isMonthlyUnit, monthlyUnitFor, todayBerlin, UNIT_LABEL } from "@/lib/billing";
@@ -95,6 +95,8 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
   const [start, setStart] = useState(firstOfNextMonth());
   const [minTerm, setMinTerm] = useState("3");
   const [notice, setNotice] = useState("1");
+  const [onceMode, setOnceMode] = useState<"unterschrift" | "vertragsbeginn" | "datum">("vertragsbeginn");
+  const [onceDate, setOnceDate] = useState(todayBerlin());
   const [purpose, setPurpose] = useState(DEFAULT_PURPOSE);
   const [sepa, setSepa] = useState(true);
   const [signerName, setSignerName] = useState(lead.name);
@@ -133,6 +135,9 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
   const sum = (l: Line) => qty(l) * num(l.unit_price_net);
   const monthly = lines.filter((l) => isMonthlyUnit(l.unit)).reduce((s, l) => s + sum(l), 0);
   const once = lines.filter((l) => !isMonthlyUnit(l.unit)).reduce((s, l) => s + sum(l), 0);
+
+  const onceBilling = onceMode === "datum" ? onceDate : onceMode;
+  const note = billingNote({ start_date: start, once_billing: onceBilling }, { monthly: monthly > 0, once: once > 0 });
 
   const setLine = (key: string, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
@@ -182,7 +187,7 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
             unit_price_net: num(l.unit_price_net),
             vat_percent: l.vat_percent,
           })),
-          terms: { purpose, start_date: start, min_term_months: Number(minTerm), notice_months: Number(notice) },
+          terms: { purpose, start_date: start, min_term_months: Number(minTerm), notice_months: Number(notice), once_billing: onceBilling },
           sepa_required: sepa && !!creditor,
           signer_name: signerName,
           signer_email: signerEmail,
@@ -419,6 +424,36 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
               </div>
               <p className="col-span-3 text-[12px] text-snow/40">alle Beträge netto</p>
             </div>
+
+            {once > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="mr-1 text-[13px] text-snow/60">Einmalkosten berechnen</span>
+                {(
+                  [
+                    ["unterschrift", "Bei Unterschrift"],
+                    ["vertragsbeginn", "Zum Vertragsbeginn"],
+                    ["datum", "Am Datum"],
+                  ] as const
+                ).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={onceMode === id}
+                    onClick={() => setOnceMode(id)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-[13px] transition-colors",
+                      onceMode === id ? "border-snow bg-snow text-sky" : "border-snow/15 text-snow/85 hover:bg-snow/[0.08]"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+                {onceMode === "datum" && (
+                  <Input type="date" value={onceDate} min={todayBerlin()} onChange={(e) => setOnceDate(e.target.value)} aria-label="Datum der Einmalrechnung" className="h-9 w-40" />
+                )}
+              </div>
+            )}
+            {note && <p className="text-[12px] leading-relaxed text-snow/50">Im Angebot: {note.replace(/^Abrechnung: /, "")}</p>}
 
             <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
               <Field label="Titel">{(id) => <Input id={id} value={title} onChange={(e) => setTitle(e.target.value)} />}</Field>

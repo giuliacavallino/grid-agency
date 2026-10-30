@@ -13,7 +13,11 @@ export type ContractTerms = {
   start_date: string;
   min_term_months: number;
   notice_months: number;
+  /** Einmalkosten: bei Unterschrift, zum Vertragsbeginn (Standard) oder an einem Datum (yyyy-mm-dd) */
+  once_billing?: OnceBilling;
 };
+
+export type OnceBilling = "unterschrift" | "vertragsbeginn" | (string & {});
 
 /** Vertrag, wie er mit der Mappe verschickt wurde */
 export type ContractSnapshot = ContractTemplate & { terms: ContractTerms };
@@ -89,6 +93,29 @@ export const DEFAULT_CONTRACT: ContractTemplate = {
 
 const dateDe = (value: string | null | undefined) =>
   value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Rechnungsdatum der Einmalkosten (nie vor dem Tag der Unterschrift) */
+export function onceBillingDate(terms: Pick<ContractTerms, "once_billing" | "start_date"> | null | undefined, signedOn: string) {
+  const mode = terms?.once_billing;
+  const date = mode === "unterschrift" ? signedOn : mode && ISO_DATE.test(mode) ? mode : terms?.start_date || signedOn;
+  return date < signedOn ? signedOn : date;
+}
+
+/** Abrechnungshinweis im Angebot: Leistungsmonat und Termin der Einmalkosten */
+export function billingNote(terms: Pick<ContractTerms, "once_billing" | "start_date">, has: { monthly: boolean; once: boolean }) {
+  const lines: string[] = [];
+  if (has.monthly) {
+    lines.push(`Die monatlichen Leistungen berechnen wir monatlich im Voraus für den jeweiligen Leistungsmonat, erstmals zum Vertragsbeginn am ${dateDe(terms.start_date)}.`);
+  }
+  if (has.once) {
+    const mode = terms.once_billing;
+    const when = mode === "unterschrift" ? "mit der Unterschrift dieses Angebots" : mode && ISO_DATE.test(mode) ? `am ${dateDe(mode)}` : `zum Vertragsbeginn am ${dateDe(terms.start_date)}`;
+    lines.push(`Die einmaligen Leistungen berechnen wir ${when}.`);
+  }
+  return lines.length ? `Abrechnung: ${lines.join(" ")}` : "";
+}
 
 /** Platzhalter im Vertrag ausfüllen */
 export function fillContract(text: string, values: { terms: ContractTerms; offerNumber: string | null; offerDate: string | null }) {
