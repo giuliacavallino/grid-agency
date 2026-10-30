@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalShell } from "@/components/app/LegalShell";
+import { PageShell } from "@/components/app/PageShell";
 import { JobsView } from "@/components/app/JobsView";
 import { jobs } from "@/lib/content";
 import { searchedJobs } from "@/lib/jobs";
@@ -16,8 +16,8 @@ export const revalidate = 60;
 
 export default async function JobsPage() {
   return (
-    <LegalShell title="Jobs">
+    <PageShell>
       <JobsView jobs={jobs} searched={await searchedJobs()} />
-    </LegalShell>
+    </PageShell>
   );
 }

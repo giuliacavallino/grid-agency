@@ -145,6 +145,13 @@ export function MainMenu({
               >
                 Datenschutz
               </Link>
+              <Link
+                href="/agb"
+                onClick={onClose}
+                className="underline-offset-4 hover:underline"
+              >
+                AGB
+              </Link>
               <span className="ml-auto text-xs uppercase tracking-[0.2em] text-snow/30">
                 Berlin · Frankfurt
               </span>

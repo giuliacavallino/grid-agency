@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { LegalShell } from "@/components/app/LegalShell";
+import { PageShell } from "@/components/app/PageShell";
 
 export const metadata: Metadata = {
   title: "Seite nicht gefunden | GRID Agency",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 /** 404 im GRID-Look statt der englischen Standardseite. */
 export default function NotFound() {
   return (
-    <LegalShell title="404">
+    <PageShell>
       <div className="flex min-h-[55dvh] flex-col justify-center">
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
           404
@@ -40,6 +40,6 @@ export default function NotFound() {
           </Link>
         </div>
       </div>
-    </LegalShell>
+    </PageShell>
   );
 }

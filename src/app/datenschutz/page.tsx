@@ -1,29 +1,16 @@
 import type { Metadata } from "next";
-import { LegalShell } from "@/components/app/LegalShell";
+import { PageShell } from "@/components/app/PageShell";
+import { LegalArticle, LegalHeading } from "@/components/app/LegalArticle";
 import { ConsentSettings } from "@/components/app/ConsentSettings";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | GRID Agency",
 };
 
-function H({ id, children }: { id?: string; children: React.ReactNode }) {
-  return (
-    <h2 id={id} className="mb-2 scroll-mt-24 text-base font-medium text-snow">
-      {children}
-    </h2>
-  );
-}
-
 export default function DatenschutzPage() {
   return (
-    <LegalShell title="Datenschutz">
-      <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
-        Rechtliches
-      </p>
-      <h1 className="mb-8 mt-2 text-3xl font-medium tracking-tight text-snow">
-        Datenschutzerklärung
-      </h1>
-      <div className="space-y-8 text-sm font-light leading-relaxed text-snow/70">
+    <PageShell>
+      <LegalArticle title="Datenschutzerklärung">
         <section>
           <p>
             Der Schutz deiner Daten ist uns wichtig. Diese Website ist so
@@ -36,7 +23,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H>1. Verantwortlicher</H>
+          <LegalHeading>1. Verantwortlicher</LegalHeading>
           <p>
             GRID Agency UG (haftungsbeschränkt)
             <br />
@@ -51,7 +38,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H>2. Hosting und Server-Logfiles</H>
+          <LegalHeading>2. Hosting und Server-Logfiles</LegalHeading>
           <p>
             Diese Website wird bei Vercel Inc., 440 N Barranca Ave #4133,
             Covina, CA 91723, USA gehostet. Beim Aufruf der Website verarbeitet
@@ -78,7 +65,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H>3. Cookies und lokale Speicherung</H>
+          <LegalHeading>3. Cookies und lokale Speicherung</LegalHeading>
           <p>
             Wir setzen keine Cookies und verwenden keine Analyse-, Tracking-
             oder Werbewerkzeuge. Deshalb brauchen wir auch kein
@@ -111,7 +98,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H id="kontaktformular">4. Kontaktformular, E-Mail und Telefon</H>
+          <LegalHeading id="kontaktformular">4. Kontaktformular, E-Mail und Telefon</LegalHeading>
           <p>
             Wenn du uns über das Kontaktformular schreibst, verarbeiten wir
             die Angaben, die du machst (Name, E-Mail-Adresse, optional
@@ -136,7 +123,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H id="bewerbungen">5. Bewerbungen</H>
+          <LegalHeading id="bewerbungen">5. Bewerbungen</LegalHeading>
           <p>
             Wenn du dich über das Bewerbungsformular auf unserer Jobseite
             bewirbst, verarbeiten wir die Angaben, die du machst (Name,
@@ -159,7 +146,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H id="calendly">6. Terminbuchung über Calendly</H>
+          <LegalHeading id="calendly">6. Terminbuchung über Calendly</LegalHeading>
           <p>
             Für die Buchung eines Erstgesprächs nutzen wir Calendly der
             Calendly LLC, 115 E Main St, Ste A1B, Buford, GA 30518, USA. Beim
@@ -184,7 +171,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H id="einstellungen">7. Datenschutz-Einstellungen</H>
+          <LegalHeading id="einstellungen">7. Datenschutz-Einstellungen</LegalHeading>
           <p>
             Hier siehst du, ob du eine Einwilligung gespeichert hast, und
             kannst sie jederzeit mit Wirkung für die Zukunft widerrufen
@@ -194,7 +181,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H>8. Links zu sozialen Netzwerken und Google</H>
+          <LegalHeading>8. Links zu sozialen Netzwerken und Google</LegalHeading>
           <p>
             Auf unserer Website verlinken wir auf Instagram-Profile und auf
             unsere Google-Bewertungen. Das sind einfache Links: Es werden
@@ -206,7 +193,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H>9. Veranstaltungen</H>
+          <LegalHeading>9. Veranstaltungen</LegalHeading>
           <p>
             Die Informationen zu unseren Events laden wir serverseitig aus
             unserer Datenbank. Dein Browser spricht dabei nur mit unserer
@@ -216,7 +203,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H>10. Deine Rechte</H>
+          <LegalHeading>10. Deine Rechte</LegalHeading>
           <p>Du hast jederzeit das Recht auf</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>Auskunft über deine bei uns gespeicherten Daten (Art. 15 DSGVO),</li>
@@ -246,7 +233,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H>11. Keine automatisierte Entscheidungsfindung</H>
+          <LegalHeading>11. Keine automatisierte Entscheidungsfindung</LegalHeading>
           <p>
             Wir setzen keine automatisierte Entscheidungsfindung
             einschließlich Profiling im Sinne von Art. 22 DSGVO ein.
@@ -254,7 +241,7 @@ export default function DatenschutzPage() {
         </section>
 
         <p className="text-xs text-snow/40">Stand: September 2026</p>
-      </div>
-    </LegalShell>
+      </LegalArticle>
+    </PageShell>
   );
 }

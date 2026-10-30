@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CalendarClock } from "lucide-react";
 import { ContactForm } from "@/components/ContactForm";
 import { CalendlyLink } from "./CalendlyProvider";
+import { SiteFooter } from "./SiteFooter";
 
 /** Kontakt: Desktop links Überschrift und Kontaktdaten, rechts Formular
  * und Calendly, alles auf einem Bildschirm. Mobil füllt Überschrift plus
@@ -92,41 +93,7 @@ export function DmSection() {
           </motion.div>
 
           {/* Desktop unten in der linken Spalte, mobil zentriert am Ende. */}
-          <div className="mt-8 space-y-1 text-center text-[0.6875rem] font-light text-snow/35 lg:col-start-1 lg:row-start-2 lg:mt-0 lg:self-end lg:text-left">
-            {/* Beide Standorte; auf schmalen Screens bricht die Zeile zwischen
-                den Adressen um, nie mitten in einer Adresse. */}
-            <p>
-              <span className="whitespace-nowrap">Sömmeringstraße 37, 10589 Berlin</span>
-              <span className="hidden sm:inline lg:hidden">{" · "}</span>
-              <br className="sm:hidden lg:inline" />
-              <span className="whitespace-nowrap">
-                Eichendorffstraße 32, 60320 Frankfurt am Main
-              </span>
-            </p>
-            <p>
-              <a href="mailto:hello@grid-agency.de" className="hover:text-snow/60">
-                hello@grid-agency.de
-              </a>
-              {" · "}
-              <a href="tel:+4915122910161" className="hover:text-snow/60">
-                +49 1512 2910161
-              </a>
-            </p>
-            <p className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-1 lg:justify-start">
-              <a href="/impressum" className="hover:text-snow/60">
-                Impressum
-              </a>
-              <a href="/datenschutz" className="hover:text-snow/60">
-                Datenschutz
-              </a>
-              <a href="/datenschutz#einstellungen" className="hover:text-snow/60">
-                Datenschutz-Einstellungen
-              </a>
-              <a href="https://intranet.grid-agency.de" className="hover:text-snow/60">
-                Login
-              </a>
-            </p>
-          </div>
+          <SiteFooter className="mt-8 lg:col-start-1 lg:row-start-2 lg:mt-0 lg:self-end lg:text-left" />
         </div>
       </div>
     </div>
