@@ -58,6 +58,21 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
   const [drawn, setDrawn] = useState<string | null>(null);
   const [redraw, setRedraw] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Rückfragen statt Automatik: vorhandener Kunde? offenes Angebot ersetzen?
+  const [customerChoice, setCustomerChoice] = useState<string | null>(null);
+  const [replaceOpen, setReplaceOpen] = useState(false);
+  const openOffer = lead.stage === "angebot" && !!lead.offer_id;
+
+  // Passende Kunden (gleiche E-Mail oder gleicher Name), wenn der Lead noch keinen hat
+  const matches = useMemo(() => {
+    if (lead.customer_id) return [];
+    const name = customer.name.trim().toLowerCase();
+    const email = (customer.email || lead.email || "").trim().toLowerCase();
+    return (customers ?? []).filter(
+      (c) => (name && c.name.trim().toLowerCase() === name) || (email && [c.email, c.billing_email].some((e) => e?.trim().toLowerCase() === email))
+    );
+  }, [customers, customer.name, customer.email, lead.customer_id, lead.email]);
+  const choice = customerChoice ?? matches[0]?.id ?? null;
 
   const activeArticles = useMemo(() => (articles ?? []).filter((a) => a.active).sort((a, b) => a.name.localeCompare(b.name, "de")), [articles]);
   const saved = settings?.grid_signature ?? null;
@@ -84,6 +99,7 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
 
   const ready =
     !!signature &&
+    (!openOffer || replaceOpen) &&
     customer.name.trim() &&
     customer.street.trim() &&
     customer.zip.trim() &&
@@ -104,6 +120,8 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
         method: "POST",
         body: JSON.stringify({
           customer,
+          ...(matches.length ? (choice === "neu" ? { new_customer: true } : { customer_id: choice }) : {}),
+          replace_open: openOffer && replaceOpen,
           title,
           intro,
           valid_days: Number(validDays) || 14,
@@ -159,6 +177,33 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
             Angebot, Agenturvertrag{sepa && creditor ? " und SEPA-Mandat" : ""} gehen als Mappe von hello@ an den Kunden. Nach der Unterschrift springt der Lead
             auf „Kunde gewonnen“.
           </p>
+
+          {openOffer && (
+            <label className="flex items-start gap-3 rounded-2xl border border-error/30 bg-error/[0.06] p-3 text-[13px] text-snow/85">
+              <input type="checkbox" checked={replaceOpen} onChange={(e) => setReplaceOpen(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                Für diesen Lead ist schon ein Angebot unterwegs. Beim Abschicken wird es zurückgezogen; der alte Link zeigt dann „nicht mehr aktuell“.
+              </span>
+            </label>
+          )}
+
+          {matches.length > 0 && (
+            <section className="flex flex-col gap-2 rounded-2xl border border-snow/12 bg-snow/[0.04] p-3">
+              <p className="text-[13px] text-snow/80">Diesen Kunden gibt es schon. Welchen verwenden?</p>
+              {matches.map((c) => (
+                <label key={c.id} className="flex items-center gap-2.5 text-[13px]">
+                  <input type="radio" name="kunde" checked={choice === c.id} onChange={() => setCustomerChoice(c.id)} className="h-4 w-4" />
+                  {c.name}
+                  {c.customer_number && <span className="text-snow/50">Nr. {c.customer_number}</span>}
+                  {c.city && <span className="text-snow/50">· {c.city}</span>}
+                </label>
+              ))}
+              <label className="flex items-center gap-2.5 text-[13px]">
+                <input type="radio" name="kunde" checked={choice === "neu"} onChange={() => setCustomerChoice("neu")} className="h-4 w-4" />
+                Neuen Kunden anlegen
+              </label>
+            </section>
+          )}
 
           <section className="grid gap-3 sm:grid-cols-2">
             <h3 className="text-[12px] font-medium text-snow/50 sm:col-span-2">Kunde</h3>
