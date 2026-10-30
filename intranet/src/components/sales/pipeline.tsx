@@ -26,13 +26,13 @@ import { Button, Empty, Input, Select, Spinner, useToast } from "@/components/ui
 import { PageBar } from "./shell";
 import { SourceBadge } from "./source";
 import { LeadSheet, NewLeadDialog } from "./lead-sheet";
+import { LeadActions } from "./lead-actions";
 
 type Columns = Record<Stage, string[]>;
 
 // Akzent je Phase: von gedämpft (neu) zu Aurora-Gold (gewonnen)
 export const STAGE_COLOR: Record<Stage, string> = {
   neu: "#afaaa0",
-  eingeladen: "#7fa8ff",
   erstgespraech: "#b58cf0",
   angebot: "#fa9e4e",
   gewonnen: "#9fd8a8",
@@ -342,6 +342,11 @@ export function LeadCard({ lead, overlay }: { lead: Lead; overlay?: boolean }) {
         <span>{relativeTime(lead.created_at)}</span>
         {lead.value ? <span className="font-medium text-snow/80">{euro(lead.value)}/M</span> : null}
       </div>
+      {!overlay && (
+        <div className="mt-2.5 border-t border-snow/[0.06] pt-2.5">
+          <LeadActions lead={lead} />
+        </div>
+      )}
     </article>
   );
 }

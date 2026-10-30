@@ -13,7 +13,8 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { bookSlot, getSlots, type BookingRequest, type Slot } from "@/app/actions/booking";
+import { bookRequest, getSlots, type BookingRequest, type Slot } from "@/app/actions/booking";
+import { Altcha } from "@/components/Altcha";
 import { inputClasses } from "@/components/ContactForm";
 import { BOOKING_EVENT, scrollToId } from "@/lib/scroll";
 
@@ -28,7 +29,7 @@ const long = new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "long", d
 const STEPS = ["Deine Daten", "Termin wählen", "Bestätigung"];
 const COUNTRIES = ["Deutschland", "Österreich", "Schweiz", "Anderes Land"];
 
-type Details = Omit<BookingRequest, "start" | "message">;
+type Details = Omit<BookingRequest, "start" | "message" | "altcha">;
 const emptyDetails: Details = {
   firstName: "",
   lastName: "",
@@ -108,6 +109,9 @@ export function BookingDialog() {
   const [step, setStep] = useState(0);
   const [details, setDetails] = useState<Details>(emptyDetails);
   const [message, setMessage] = useState("");
+  const [altcha, setAltcha] = useState<string | null>(null);
+  // Captcha gilt nur einmal: nach einem Fehlversuch neu einhängen
+  const [attempt, setAttempt] = useState(0);
   const [slots, setSlots] = useState<Slot[] | null | undefined>(undefined);
   const [day, setDay] = useState<string | null>(null);
   const [picked, setPicked] = useState<Slot | null>(null);
@@ -119,7 +123,7 @@ export function BookingDialog() {
 
   const loadSlots = useCallback(() => {
     setSlots(undefined);
-    getSlots().then(setSlots);
+    getSlots().then((info) => setSlots(info ? info.slots : null));
   }, []);
 
   useEffect(() => {
@@ -182,12 +186,14 @@ export function BookingDialog() {
     if (!picked) return;
     setError(null);
     startTransition(async () => {
-      const result = await bookSlot({ ...details, start: picked.start, message });
+      const result = await bookRequest({ ...details, start: picked.start, message, altcha: altcha ?? "" });
       if (result.ok) {
         setBooked(result.slot);
         return;
       }
       setError(result.message);
+      setAltcha(null);
+      setAttempt((n) => n + 1);
       if (result.taken) {
         // Die Zeit war weg: zurück zur Auswahl mit frischen Zeiten
         setPicked(null);
@@ -487,6 +493,10 @@ export function BookingDialog() {
                 />
               </label>
 
+              <div className="mt-5">
+                <Altcha key={attempt} onChange={setAltcha} />
+              </div>
+
               {error && <p className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -494,7 +504,7 @@ export function BookingDialog() {
                   <ArrowLeft className="h-4 w-4" strokeWidth={2} />
                   Zurück
                 </button>
-                <button type="button" onClick={submit} disabled={pending} aria-busy={pending} className="btn btn-primary px-7 py-3.5 text-[0.9375rem]" data-autofocus>
+                <button type="button" onClick={submit} disabled={pending || !altcha} aria-busy={pending} className="btn btn-primary px-7 py-3.5 text-[0.9375rem] disabled:cursor-not-allowed" data-autofocus>
                   {pending && <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />}
                   {pending ? "Wird gebucht…" : "Termin verbindlich buchen"}
                 </button>

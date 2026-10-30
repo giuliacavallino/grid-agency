@@ -13,6 +13,7 @@ const pages = [
   { href: "/events", label: "Events" },
   { href: "/jobs", label: "Jobs" },
   { href: "/faq", label: "FAQ" },
+  { href: "/ebook", label: "E-Book" },
 ];
 
 /** Kopfleiste als schwebende Liquid-Glass-Pille, auf allen Seiten gleich.

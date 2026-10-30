@@ -1,7 +1,7 @@
 import "server-only";
 import { DEMO, DOMAIN, SHARED_MAILBOX } from "@/lib/config";
 import { appGraph, mailboxPath } from "./graph-app";
-import { db } from "./db";
+import { db, sb } from "./db";
 
 // Erstgespräch-Buchung von der Website (statt Calendly). Freie Zeiten kommen
 // aus Giulias Kalender und dem von hello@; gebucht wird im Kalender von
@@ -134,7 +134,7 @@ export type BookingInput = {
   company?: string;
   phone?: string;
   message?: string;
-  /** Firmenanschrift aus dem Buchungsdialog */
+  /** Firmenanschrift aus dem Buchungs-Popup */
   address?: { street?: string; number?: string; zip?: string; city?: string; country?: string };
 };
 
@@ -160,14 +160,17 @@ const localTime = (iso: string) =>
   }).format(new Date(iso));
 
 /** Bucht ein Erstgespräch: Termin bei hello@ mit Einladung an Giulia und
- * Kunde, danach Lead in der Pipeline. Liefert null, wenn die Zeit nicht
- * (mehr) frei ist. */
-export async function book(input: BookingInput) {
+ * Kunde, danach Lead in der Pipeline (Stage „Erstgespräch“). Mit `leadId`
+ * (Einladungslink) bzw. bei offenem Lead mit derselben E-Mail wird dieser
+ * Lead verschoben statt ein neuer angelegt. Liefert null, wenn die Zeit
+ * nicht (mehr) frei ist. */
+export async function book(input: BookingInput, leadId: string | null = null) {
   const slot = (await freeSlots()).find((s) => s.start === new Date(input.start).toISOString());
   if (!slot) return null;
 
   const who = input.company ? `${input.company} (${input.name})` : input.name;
   const address = addressLine(input.address);
+  const note = [input.message, address && `Anschrift: ${address}`].filter(Boolean).join("\n\n");
   const body = [
     `<p>Erstgespräch über grid-agency.de gebucht.</p>`,
     `<p><b>${escape(input.name)}</b>${input.company ? `, ${escape(input.company)}` : ""}<br>`,
@@ -177,6 +180,7 @@ export async function book(input: BookingInput) {
   ].join("");
 
   let eventId = `demo-${slot.start}`;
+  let joinUrl: string | null = DEMO ? "https://teams.microsoft.com/l/meetup-join/demo" : null;
   if (!DEMO) {
     const event = {
       subject: `Erstgespräch GRID × ${who}`,
@@ -192,30 +196,54 @@ export async function book(input: BookingInput) {
       transactionId: `website-${slot.start}-${input.email.toLowerCase()}`,
     };
     const create = (online: boolean) =>
-      appGraph<{ id: string }>(`${mailboxPath(BOOKING.organizer)}/calendar/events`, {
+      appGraph<{ id: string; onlineMeeting?: { joinUrl?: string } | null }>(`${mailboxPath(BOOKING.organizer)}/calendar/events`, {
         method: "POST",
         body: JSON.stringify(online ? { ...event, isOnlineMeeting: true, onlineMeetingProvider: "teamsForBusiness" } : event),
       });
     // Ohne Teams-Lizenz am Organisator-Postfach scheitert der Teams-Link;
     // dann gibt es den Termin ohne und den Link schickt Giulia nach.
-    eventId = (await create(true).catch(() => create(false))).id;
+    const created = await create(true).catch(() => create(false));
+    eventId = created.id;
+    joinUrl = created.onlineMeeting?.joinUrl ?? null;
   }
 
-  const lead = await db().insertIgnore("leads", {
-    source: "website",
-    source_ref: `termin:${eventId}`,
+  const meeting = {
     stage: "erstgespraech",
-    name: input.name,
-    email: input.email,
-    phone: input.phone || null,
-    company: input.company || null,
-    // Anschrift sichtbar in der Nachricht, strukturiert in raw (für den Kunden-Datensatz)
-    message: [input.message, address && `Anschrift: ${address}`].filter(Boolean).join("\n\n") || null,
-    raw: { booking: { address: input.address ?? null } },
-    owner: BOOKING.host,
+    position: Date.now() / 1000,
+    meeting_at: slot.start,
+    meeting_url: joinUrl,
+    meeting_event_id: eventId,
     next_step: "Erstgespräch",
     next_step_at: slot.start,
-  });
+  };
+  // Eingeladener oder schon bekannter Lead: verschieben statt doppelt anlegen
+  let lead = leadId ? await db().get("leads", leadId) : null;
+  if (!lead && !DEMO) {
+    const { data } = await sb().from("leads").select("*").eq("status", "offen").ilike("email", input.email).limit(1).maybeSingle();
+    lead = data ?? null;
+  }
+  if (lead) {
+    lead = await db().update("leads", lead.id, {
+      ...meeting,
+      ...(!lead.phone && input.phone ? { phone: input.phone } : {}),
+      ...(!lead.company && input.company ? { company: input.company } : {}),
+      ...(!lead.message && note ? { message: note } : {}),
+    });
+  } else {
+    lead = await db().insertIgnore("leads", {
+      ...meeting,
+      source: "website",
+      source_ref: `termin:${eventId}`,
+      name: input.name,
+      email: input.email,
+      phone: input.phone || null,
+      company: input.company || null,
+      // Anschrift sichtbar in der Nachricht, strukturiert in raw (für den Kunden-Datensatz)
+      message: note || null,
+      raw: { booking: { address: input.address ?? null } },
+      owner: BOOKING.host,
+    });
+  }
   if (lead) {
     await db().insert("lead_activities", {
       lead_id: lead.id,
@@ -224,5 +252,5 @@ export async function book(input: BookingInput) {
       body: `Erstgespräch gebucht für ${localTime(slot.start)} Uhr`,
     });
   }
-  return slot;
+  return { ...slot, url: joinUrl };
 }

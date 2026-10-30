@@ -186,6 +186,14 @@ export default function DatenschutzPage() {
             deine Angaben, sobald sie für die Anbahnung nicht mehr nötig sind
             und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
           </p>
+          <p id="captcha" className="mt-2">
+            Kontaktformular und Terminbuchung schützen wir mit ALTCHA vor
+            automatisierten Einsendungen: Dein Browser löst im Hintergrund
+            eine kleine Rechenaufgabe, die unser Server stellt und prüft. Es
+            werden keine Cookies gesetzt, keine Daten an Dritte übertragen und
+            keine Profile gebildet. Rechtsgrundlage ist unser berechtigtes
+            Interesse am Schutz vor Missbrauch (Art. 6 Abs. 1 lit. f DSGVO).
+          </p>
         </section>
 
         <section>

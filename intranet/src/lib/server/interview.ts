@@ -2,7 +2,8 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { DEMO, SHARED_MAILBOX } from "@/lib/config";
 import { db, type Row } from "./db";
-import { appGraph, mailboxPath, sendAppMail } from "./graph-app";
+import { sendAppMail } from "./graph-app";
+import { createMeeting, freeSlots as freeSlotsIn, type Busy, type SlotRules } from "./slots";
 
 // Einladung zum Vorstellungsgespräch: Ein Klick auf der Bewerbungskarte
 // schickt von hello@ eine Mail mit geheimem Link (nur dessen SHA-256 liegt in
@@ -18,11 +19,7 @@ export const INVITE_URL = process.env.SIGN_URL ?? "https://sign.grid-agency.de";
 
 /** Gesprächsdauer, Zeitfenster und Vorlauf der Slots (Zeiten in Berlin) */
 const SLOT_MINUTES = 30;
-const DAY_START = 9;
-const DAY_END = 17;
-const LEAD_HOURS = 18;
-const DAYS_AHEAD = 14;
-const TZ = "Europe/Berlin";
+const RULES: SlotRules = { minutes: SLOT_MINUTES, dayStart: 9, dayEnd: 17, leadHours: 18, daysAhead: 14 };
 
 const sha256 = (data: string) => createHash("sha256").update(data).digest("hex");
 
@@ -31,79 +28,7 @@ const escape = (text: string) =>
 
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 
-// ---------- Zeit in Berlin ----------
-
-const berlinParts = new Intl.DateTimeFormat("en-US", {
-  timeZone: TZ,
-  hourCycle: "h23",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-/** Wanduhrzeit in Berlin als UTC-Millisekunden gelesen */
-function berlinWall(ms: number) {
-  const p = Object.fromEntries(berlinParts.formatToParts(new Date(ms)).map((x) => [x.type, x.value]));
-  return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
-}
-
-/** Berliner Ortszeit → Zeitpunkt (inkl. Sommer-/Winterzeit) */
-function fromBerlin(year: number, month: number, day: number, hour: number, minute = 0) {
-  const wall = Date.UTC(year, month - 1, day, hour, minute);
-  let utc = wall - (berlinWall(wall) - wall);
-  utc = wall - (berlinWall(utc) - utc);
-  return utc;
-}
-
-/** Mögliche Slot-Anfänge der nächsten Werktage, ohne Rücksicht auf den Kalender */
-function candidateSlots(now = Date.now()) {
-  const today = new Date(berlinWall(now));
-  const earliest = now + LEAD_HOURS * 3_600_000;
-  const slots: number[] = [];
-  for (let offset = 1; offset <= DAYS_AHEAD; offset++) {
-    const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + offset));
-    const weekday = day.getUTCDay();
-    if (weekday === 0 || weekday === 6) continue;
-    for (let minutes = DAY_START * 60; minutes + SLOT_MINUTES <= DAY_END * 60; minutes += SLOT_MINUTES) {
-      const start = fromBerlin(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate(), Math.floor(minutes / 60), minutes % 60);
-      if (start >= earliest) slots.push(start);
-    }
-  }
-  return slots;
-}
-
 // ---------- Kalender ----------
-
-type Busy = { start: number; end: number };
-
-/** Belegte Zeiten im Outlook-Kalender (gebucht, mit Vorbehalt, abwesend) */
-async function busyTimes(mailbox: string, from: number, to: number): Promise<Busy[]> {
-  if (DEMO) {
-    // Vorschau: jeden Tag ein paar feste Termine
-    return candidateSlots(from - LEAD_HOURS * 3_600_000)
-      .filter((start) => new Date(start).getUTCHours() % 3 === 0)
-      .map((start) => ({ start, end: start + 60 * 60_000 }));
-  }
-  const iso = (ms: number) => new Date(ms).toISOString().slice(0, 19);
-  const data = await appGraph<{ value: { scheduleItems?: { status: string; start: { dateTime: string }; end: { dateTime: string } }[] }[] }>(
-    `${mailboxPath(mailbox)}/calendar/getSchedule`,
-    {
-      method: "POST",
-      headers: { Prefer: 'outlook.timezone="UTC"' },
-      body: JSON.stringify({
-        schedules: [mailbox],
-        startTime: { dateTime: iso(from), timeZone: "UTC" },
-        endTime: { dateTime: iso(to), timeZone: "UTC" },
-        availabilityViewInterval: SLOT_MINUTES,
-      }),
-    }
-  );
-  return (data.value[0]?.scheduleItems ?? [])
-    .filter((item) => item.status !== "free" && item.status !== "workingElsewhere")
-    .map((item) => ({ start: Date.parse(`${item.start.dateTime}Z`), end: Date.parse(`${item.end.dateTime}Z`) }));
-}
 
 /** Schon gebuchte Gespräche dieser Person, auch wenn Outlook sie noch nicht
  * als belegt meldet (zwei Buchungen kurz nacheinander) */
@@ -118,46 +43,19 @@ async function bookedInterviews(mailbox: string): Promise<Busy[]> {
 }
 
 async function freeSlots(mailbox: string) {
-  const candidates = candidateSlots();
-  if (!candidates.length) return [];
-  const [calendar, booked] = await Promise.all([
-    busyTimes(mailbox, candidates[0], candidates[candidates.length - 1] + SLOT_MINUTES * 60_000),
-    bookedInterviews(mailbox),
-  ]);
-  const busy = [...calendar, ...booked];
-  return candidates.filter((start) => {
-    const end = start + SLOT_MINUTES * 60_000;
-    return !busy.some((b) => b.start < end && b.end > start);
-  });
+  return freeSlotsIn(mailbox, RULES, await bookedInterviews(mailbox));
 }
 
 async function createEvent(application: Row, start: number) {
-  const mailbox = String(application.invited_by);
   const name = String(application.name);
-  if (DEMO) return { id: `demo-event-${start}`, joinUrl: "https://teams.microsoft.com/l/meetup-join/demo" };
-  const iso = (ms: number) => new Date(ms).toISOString().slice(0, 19);
   // Der Text geht mit der Einladung an die Person, daher nichts Internes
-  const event = await appGraph<{ id: string; onlineMeeting?: { joinUrl?: string } | null; webLink?: string }>(
-    `${mailboxPath(mailbox)}/events`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        subject: `Kennenlernen GRID × ${name}`,
-        body: {
-          contentType: "Text",
-          content: `Hi ${firstName(name)},\n\nschön, dass es klappt! Wir sprechen per Microsoft Teams, den Link findest du in diesem Termin.\n\nBis bald\n${application.invited_by_name ?? "GRID"}\nGRID Agency`,
-        },
-        start: { dateTime: iso(start), timeZone: "UTC" },
-        end: { dateTime: iso(start + SLOT_MINUTES * 60_000), timeZone: "UTC" },
-        attendees: [{ emailAddress: { address: application.email, name }, type: "required" }],
-        isOnlineMeeting: true,
-        onlineMeetingProvider: "teamsForBusiness",
-        allowNewTimeProposals: true,
-        showAs: "busy",
-      }),
-    }
-  );
-  return { id: event.id, joinUrl: event.onlineMeeting?.joinUrl ?? event.webLink ?? null };
+  return createMeeting(String(application.invited_by), {
+    subject: `Kennenlernen GRID × ${name}`,
+    text: `Hi ${firstName(name)},\n\nschön, dass es klappt! Wir sprechen per Microsoft Teams, den Link findest du in diesem Termin.\n\nBis bald\n${application.invited_by_name ?? "GRID"}\nGRID Agency`,
+    start,
+    minutes: SLOT_MINUTES,
+    attendee: { email: String(application.email), name },
+  });
 }
 
 // ---------- Einladen (Hub) ----------
