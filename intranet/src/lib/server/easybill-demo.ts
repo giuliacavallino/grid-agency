@@ -30,11 +30,18 @@ const offers = [
   { id: 5002, number: "AN-2026-020", title: "Abgeschlossen", customer_id: 9001, document_date: iso(-40).slice(0, 10), created_at: iso(-40), amount_net: 100000, status: "ACCEPT", is_draft: false, items: [] },
 ];
 
+const invoices = [
+  { id: 4001, number: "RE-2026-101", title: "Social Media Betreuung Oktober", customer_id: 9001, document_date: iso(-20).slice(0, 10), created_at: iso(-20), due_date: iso(-6).slice(0, 10), amount_net: 249000, amount: 296310, paid_amount: 0, paid_at: null, cancel_id: null, status: null, is_draft: false, items: [] },
+  { id: 4002, number: "RE-2026-102", title: "Google-Profile Pflege", customer_id: 9002, document_date: iso(-12).slice(0, 10), created_at: iso(-12), due_date: iso(2).slice(0, 10), amount_net: 270000, amount: 321300, paid_amount: 0, paid_at: null, cancel_id: null, status: null, is_draft: false, items: [] },
+  { id: 4003, number: "RE-2026-103", title: "Content Shooting", customer_id: 9002, document_date: iso(-3).slice(0, 10), created_at: iso(-3), due_date: iso(11).slice(0, 10), amount_net: 180000, amount: 214200, paid_amount: 0, paid_at: null, cancel_id: null, status: null, is_draft: false, items: [] },
+];
+
 export function demoEasybill(path: string): unknown[] {
   if (path.startsWith("/customers")) return customers;
   if (path.startsWith("/positions")) return positions;
   if (path.startsWith("/position-groups")) return groups;
   if (path.includes("type=RECURRING")) return recurring;
   if (path.includes("type=OFFER")) return offers;
+  if (path.includes("type=INVOICE")) return invoices;
   return [];
 }

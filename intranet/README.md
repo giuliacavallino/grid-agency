@@ -14,7 +14,7 @@ Für die lokale Vorschau ohne Login und Datenbank `NEXT_PUBLIC_INTRANET_DEMO=1` 
 
 - `/` – Login und Hub mit den Bereichskacheln
 - `/sales` – Pipeline (Kanban), Posteingang und Kalender von hello@ und giulia@, Kunden, Auftragsbuch, Artikel, Analytics
-- `/finance` – Eingangsrechnungen als Kanban (Neu → Freigegeben → An DATEV gesendet), Posteingang von buchhaltung@, Einstellungen (DATEV-Upload-Adresse)
+- `/finance` – Eingangsrechnungen als Kanban (Neu → Freigegeben → An DATEV gesendet), Bank (Saldo und Umsätze des Firmenkontos, Abbuchungen ↔ Eingangsrechnungen, Zahlungseingänge ↔ easybill-Rechnungen), Posteingang von buchhaltung@, Einstellungen (DATEV-Upload-Adresse)
 - `/personal` – Bewerbungen als Kanban (Neue Bewerbung → Gespräch → Case Study → Zusage / Absage)
 - `/mail` – Posteingang und Kalender aller Postfächer (hello@, giulia@, buchhaltung@, google@)
 - `/aufgaben` – To-dos je Kunde (ersetzt Asana): Kacheln aller Kunden, je Kunde eine Liste wie in Asana (Themen als Gruppen, alles direkt in der Zeile bearbeitbar, speichert automatisch), „Meine To-dos“ über alle Kunden, Briefing je Kunde (Zugänge, Ansprechpartner, Postingplan), ehemalige Kunden im Archiv
@@ -50,6 +50,7 @@ Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in 
 - `ANTHROPIC_API_KEY`: ohne Key ordnen einfache Stichwort-Regeln die Mails ein.
 - `VAULT_KEY`: Schlüssel des Passwort-Tresors, 32 Byte base64 (`openssl rand -base64 32`). Nie ändern oder löschen, sonst lassen sich gespeicherte Passwörter nicht mehr entschlüsseln. Bis er gesetzt ist, liegen die aus Asana übernommenen Passwörter unverschlüsselt vor; beim ersten Öffnen von Admin danach werden sie automatisch verschlüsselt.
 - `EASYBILL_API_KEY`: easybill → Einstellungen → API. Damit gleicht das Intranet Kunden, Artikel, Serienrechnungen (→ Retainer) und offene Angebote (→ Leads in „Angebot“) ab, täglich und per Knopf „easybill“ in Kunden, Auftragsbuch und Artikel.
+- `ENABLE_BANKING_APP_ID`, `ENABLE_BANKING_PRIVATE_KEY`: Bankanbindung (Finance → Bank), siehe unten.
 - `META_APP_SECRET`, `META_VERIFY_TOKEN`, `META_PAGE_ACCESS_TOKEN`
 - `LINKEDIN_CLIENT_SECRET`, `LINKEDIN_ACCESS_TOKEN`
 
@@ -66,6 +67,8 @@ Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in 
 **LinkedIn:** App mit Lead-Sync-API-Zugang, Webhook auf `https://intranet.grid-agency.de/api/webhooks/linkedin` registrieren und für die Lead-Formulare des Ad-Accounts abonnieren. Der Access Token braucht `r_marketing_leadgen_automation`.
 
 **DATEV:** Upload-Adresse (`…@uploadmail.datev.de`) in Finance → Einstellungen eintragen. „An DATEV senden“ holt die Anhänge der Rechnungsmail und schickt sie von buchhaltung@ an diese Adresse.
+
+**Bank (Enable Banking):** Unter [enablebanking.com](https://enablebanking.com) eine Production-App anlegen (eigene Konten verbinden ist ohne Vertrag möglich), Redirect-URL `https://intranet.grid-agency.de/api/finance/bank/callback` eintragen (für lokal zusätzlich `http://localhost:3000/api/finance/bank/callback`). App-ID als `ENABLE_BANKING_APP_ID`, den privaten Schlüssel (PEM) als `ENABLE_BANKING_PRIVATE_KEY` in Vercel. Dann in Finance → Bank „Konto verbinden“ → Commerzbank, Geschäftskonto → Login und photoTAN. Die Freigabe gilt bis zu 180 Tage; die Seite warnt zwei Wochen vorher, dann „Neu verbinden“ (Umsätze bleiben). Der Cron holt täglich Saldo und gebuchte Umsätze und ordnet automatisch zu, wenn Betrag und Rechnungsnummer (Eingangsrechnungen: oder Rechnungssteller) im Verwendungszweck passen. Zahlungseingänge werden in easybill als Zahlung gebucht; „Zuordnung lösen“ löscht sie dort wieder.
 
 **Mail-Abos:** Der Cron (täglich, `vercel.json`) legt je Postfach ein Graph-Abo an und verlängert es. Zum Start einmal manuell aufrufen:
 `curl -H "Authorization: Bearer $CRON_SECRET" https://intranet.grid-agency.de/api/cron/mail`
