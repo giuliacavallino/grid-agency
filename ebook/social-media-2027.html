@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Social Media 2027 – Der Fahrplan für Unternehmer:innen | GRID Agency</title>
+<style>
+@font-face {
+  font-family: "Readex Pro";
+  src: url("../src/app/fonts/ReadexPro-Variable.ttf") format("truetype");
+  font-weight: 160 700;
+}
+@page { size: A4; margin: 0; }
+:root {
+  --sky: #2b2926;
+  --sky-deep: #1f1d1b;
+  --snow: #e4e2e7;
+  --dune: #afaaa0;
+  --earth: #676159;
+  --line: rgba(228, 226, 231, 0.12);
+  --grad: linear-gradient(92deg, #feda75 0%, #fa7e1e 35%, #d62976 70%, #962fbf 100%);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--sky); }
+body {
+  font-family: "Readex Pro", sans-serif;
+  color: var(--snow);
+  font-weight: 300;
+  font-size: 11.5pt;
+  line-height: 1.55;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.page {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  padding: 22mm 20mm 24mm;
+  background: var(--sky);
+}
+.page:last-child { page-break-after: auto; break-after: auto; }
+strong, b { font-weight: 500; color: var(--snow); }
+/* Im Browser als CSS-Verlauf; render.mjs ersetzt es fürs PDF durch SVG,
+   weil Chromium um background-clip: text Haarlinien druckt. */
+.grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
+.eyebrow { font-size: 7.5pt; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--dune); }
+h2 { font-size: 30pt; font-weight: 500; line-height: 1.08; letter-spacing: -0.02em; margin-top: 4mm; }
+h3 { font-size: 14pt; font-weight: 500; letter-spacing: -0.01em; margin: 9mm 0 3mm; }
+p + p { margin-top: 3mm; }
+.lead { font-size: 14pt; line-height: 1.45; font-weight: 300; color: var(--snow); margin-top: 6mm; }
+.muted { color: rgba(228, 226, 231, 0.65); }
+.rule { height: 2px; width: 22mm; background: var(--grad); border-radius: 2px; margin-top: 6mm; }
+
+/* Fußzeile */
+.foot {
+  position: absolute; left: 20mm; right: 20mm; bottom: 10mm;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 7pt; letter-spacing: 0.18em; text-transform: uppercase; color: var(--earth);
+}
+.foot img { height: 9px; opacity: 0.55; }
+
+/* Cover */
+.cover { padding: 0; }
+.cover .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+.cover .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(31,29,27,0.85) 0%, rgba(31,29,27,0.15) 30%, rgba(31,29,27,0.75) 58%, #1f1d1b 78%); }
+.cover .inner { position: absolute; inset: 0; padding: 18mm 20mm 20mm; display: flex; flex-direction: column; }
+.cover .logo { height: 26px; width: auto; align-self: flex-start; }
+.cover .title { margin-top: auto; }
+.cover h1 { font-size: 66pt; font-weight: 500; line-height: 0.92; letter-spacing: -0.04em; }
+.cover h1 .year { display: block; font-size: 112pt; letter-spacing: -0.05em; padding-right: 4mm; }
+.cover .sub { margin-top: 7mm; font-size: 15pt; line-height: 1.35; max-width: 150mm; font-weight: 300; }
+.cover .pills { display: flex; gap: 3mm; margin-top: 9mm; flex-wrap: wrap; }
+.pill { border: 1px solid rgba(228,226,231,0.3); border-radius: 999px; padding: 2.2mm 5mm; font-size: 9pt; font-weight: 400; }
+.cover .by { margin-top: 12mm; display: flex; justify-content: space-between; font-size: 8pt; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dune); }
+
+/* Kapitel-Opener */
+.opener { padding: 0; }
+.opener .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.opener .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(31,29,27,0.2) 0%, rgba(31,29,27,0.35) 40%, rgba(31,29,27,0.92) 72%, #1f1d1b 100%); }
+.opener .inner { position: absolute; left: 20mm; right: 20mm; bottom: 22mm; }
+.opener .num { font-size: 150pt; font-weight: 500; line-height: 0.8; letter-spacing: -0.06em; padding-right: 3mm; display: inline-block; }
+.opener h2 { font-size: 36pt; margin-top: 6mm; max-width: 160mm; }
+.opener .lead { max-width: 150mm; color: rgba(228,226,231,0.85); }
+
+/* Karten */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; margin-top: 10mm; }
+.card { border: 1px solid var(--line); border-radius: 5mm; padding: 7mm 7mm; background: rgba(255,255,255,0.025); }
+.card .k { font-size: 8pt; font-weight: 500; letter-spacing: 0.2em; color: var(--dune); }
+.card h4 { font-size: 13pt; font-weight: 500; margin: 2mm 0 2mm; line-height: 1.25; }
+.card p { font-size: 10.4pt; line-height: 1.5; color: rgba(228,226,231,0.72); }
+.card.hl { border: none; background: linear-gradient(var(--sky), var(--sky)) padding-box, var(--grad) border-box; border: 1.5px solid transparent; }
+
+/* Aufzählungen mit Nummern */
+.actions { margin-top: 8mm; display: grid; gap: 4.2mm; }
+.action { display: grid; grid-template-columns: 11mm 1fr; gap: 2mm; padding-bottom: 4.2mm; border-bottom: 1px solid var(--line); }
+.action:last-child { border-bottom: none; }
+.action .n { font-size: 17pt; font-weight: 500; line-height: 1.1; }
+.action h4 { font-size: 12.5pt; font-weight: 500; line-height: 1.3; }
+.action p { font-size: 10.4pt; color: rgba(228,226,231,0.72); margin-top: 1mm; }
+
+/* Kennzahlen */
+.stat { border-radius: 5mm; padding: 6mm; background: var(--sky-deep); border: 1px solid var(--line); }
+.stat .v { font-size: 30pt; font-weight: 500; line-height: 1; letter-spacing: -0.03em; padding-right: 2mm; display: inline-block; }
+.stat .l { font-size: 11pt; font-weight: 500; margin-top: 2.5mm; }
+.stat .t { font-size: 9.6pt; color: rgba(228,226,231,0.6); margin-top: 1mm; line-height: 1.45; }
+.stats3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 7mm; }
+.stats3 .stat .v { font-size: 25pt; }
+.source { font-size: 7.5pt; color: var(--earth); margin-top: 3mm; }
+
+/* Vergleich */
+.vs { margin-top: 7mm; border-radius: 5mm; overflow: hidden; border: 1px solid var(--line); }
+.vs .row { display: grid; grid-template-columns: 1fr 9mm 1fr; align-items: center; padding: 5mm 6mm; border-top: 1px solid var(--line); font-size: 11.2pt; }
+.vs .row:first-child { border-top: none; background: var(--sky-deep); font-size: 7.5pt; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dune); }
+.vs .row .old { color: rgba(228,226,231,0.5); text-decoration: line-through; text-decoration-color: rgba(228,226,231,0.25); }
+.vs .row .arrow { color: #fa7e1e; font-weight: 500; }
+.vs .row .new { font-weight: 400; }
+
+/* Funnel */
+.funnel { margin-top: 12mm; display: grid; gap: 6mm; }
+.fstep { display: grid; grid-template-columns: 50mm 1fr; align-items: center; gap: 5mm; }
+.fbar { height: 19mm; border-radius: 3.5mm; display: flex; align-items: center; justify-content: center; font-size: 9.5pt; font-weight: 500; color: #1f1d1b; margin: 0 auto; }
+.fstep p { font-size: 11pt; color: rgba(228,226,231,0.75); }
+.fstep p b { color: var(--snow); }
+
+/* Zitat */
+.quote { margin-top: 8mm; padding: 8mm; border-radius: 5mm; background: var(--sky-deep); border: 1px solid var(--line); position: relative; }
+.quote .mark { font-size: 60pt; line-height: 0.6; font-weight: 500; display: block; height: 9mm; }
+.quote p { font-size: 14pt; line-height: 1.45; font-weight: 300; }
+.quote .who { margin-top: 5mm; font-size: 8.5pt; color: var(--dune); letter-spacing: 0.04em; }
+
+/* Vorher/Nachher */
+.growth { margin-top: 8mm; display: grid; grid-template-columns: 1fr auto 1fr; gap: 6mm; align-items: end; }
+.growth .col { text-align: left; }
+.growth .v { font-size: 52pt; font-weight: 500; letter-spacing: -0.04em; line-height: 1; padding-right: 2mm; display: inline-block; }
+.growth .l { font-size: 9pt; color: var(--dune); margin-top: 2mm; }
+.growth .to { font-size: 26pt; color: #fa7e1e; padding-bottom: 7mm; }
+.bars { margin-top: 6mm; display: grid; gap: 2.5mm; }
+.bars .b { height: 7mm; border-radius: 2mm; }
+
+/* Prozess (Recruiting) */
+.flow { margin-top: 7mm; display: grid; grid-template-columns: 44mm 8mm 1fr; gap: 0; align-items: center; }
+.flow .ins { display: grid; gap: 2.5mm; }
+.flow .in { border: 1px solid var(--line); border-radius: 3mm; padding: 4mm 4.5mm; font-size: 10.2pt; }
+.flow .arr { text-align: center; color: #fa7e1e; font-size: 16pt; }
+.flow .chain { display: grid; gap: 2.5mm; }
+.flow .st { border-radius: 3mm; padding: 4.2mm 5mm; font-size: 10.2pt; background: var(--sky-deep); border: 1px solid var(--line); }
+.flow .st b { display: block; font-size: 11.2pt; }
+.flow .st.hl { background: linear-gradient(var(--sky-deep), var(--sky-deep)) padding-box, var(--grad) border-box; border: 1.5px solid transparent; }
+
+/* Checklisten */
+.phase { margin-top: 7mm; }
+.phase .head { display: flex; align-items: baseline; gap: 4mm; padding-bottom: 3mm; border-bottom: 1px solid var(--line); }
+.phase .days { font-size: 20pt; font-weight: 500; letter-spacing: -0.02em; padding-right: 1mm; }
+.phase .name { font-size: 11pt; font-weight: 500; }
+.check { display: grid; grid-template-columns: 7mm 1fr; gap: 2mm; padding: 3.4mm 0; border-bottom: 1px dashed var(--line); font-size: 10.8pt; }
+.check:last-child { border-bottom: none; }
+.box { width: 4.2mm; height: 4.2mm; border: 1.3px solid var(--dune); border-radius: 1.2mm; margin-top: 0.8mm; }
+
+/* KPI-Tabelle */
+table.kpi { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 6mm; border: 1px solid var(--line); border-radius: 5mm; overflow: hidden; font-size: 10pt; }
+table.kpi th { text-align: left; background: var(--sky-deep); font-size: 7.5pt; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dune); padding: 3.5mm 4.5mm; }
+table.kpi td { padding: 4.5mm 4.5mm; border-top: 1px solid var(--line); vertical-align: top; color: rgba(228,226,231,0.8); }
+table.kpi td:first-child { font-weight: 500; color: var(--snow); white-space: nowrap; }
+
+/* Inhalt */
+.toc { margin-top: 8mm; }
+.toc a { display: grid; grid-template-columns: 14mm 1fr auto; align-items: baseline; padding: 3.8mm 0; border-bottom: 1px solid var(--line); color: var(--snow); text-decoration: none; }
+.toc .n { font-size: 11pt; font-weight: 500; }
+.toc .t { font-size: 11pt; font-weight: 400; }
+.toc .p { font-size: 9pt; color: var(--dune); }
+
+/* Promise */
+.promise { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 7mm; }
+.promise .card h4 { font-size: 12pt; }
+
+/* CTA */
+.cta { padding: 0; }
+.cta .photo { position: absolute; top: 0; left: 0; right: 0; height: 128mm; width: 100%; object-fit: cover; object-position: center 22%; }
+.cta .shade { position: absolute; top: 0; left: 0; right: 0; height: 130mm; background: linear-gradient(180deg, rgba(43,41,38,0) 45%, var(--sky) 100%); }
+.cta .inner { position: absolute; left: 20mm; right: 20mm; top: 112mm; bottom: 20mm; display: flex; flex-direction: column; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 8mm; }
+.btn { display: inline-flex; align-self: flex-start; align-items: center; gap: 3mm; margin-top: 9mm; padding: 4.5mm 9mm; border-radius: 999px; background: var(--grad); color: #1f1d1b; font-weight: 500; font-size: 12pt; text-decoration: none; }
+.contact { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 6mm; border-top: 1px solid var(--line); font-size: 8.5pt; color: var(--dune); }
+.contact a { color: var(--snow); text-decoration: none; }
+.contact img { height: 18px; }
+</style>
+</head>
+<body>
+
+<!-- 1 · Cover -->
+<section class="page cover">
+  <img class="bg" src="../public/jobs/bts-monitor.jpg" alt="">
+  <div class="shade"></div>
+  <div class="inner">
+    <img class="logo" src="../public/brand/grid_logo_snow.png" alt="GRID">
+    <div class="title">
+      <p class="eyebrow">E-Book für Unternehmer:innen</p>
+      <h1 style="margin-top:5mm">Social Media<span class="year grad">2027</span></h1>
+      <p class="sub">Der Wandel – und was du jetzt tun musst, um auf Social Media mehr Umsatz, zufriedenere Kund:innen und mehr Bewerbungen zu gewinnen.</p>
+      <div class="pills">
+        <span class="pill">6 Verschiebungen bis 2027</span>
+        <span class="pill">90-Tage-Fahrplan</span>
+        <span class="pill">Echte Cases &amp; Zahlen</span>
+      </div>
+      <div class="by"><span>GRID Agency</span><span>Berlin · Frankfurt</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · Vorwort + Inhalt -->
+<section class="page">
+  <p class="eyebrow">Vorwort</p>
+  <h2>2027 gewinnt, wer <span class="grad">heute</span> anfängt.</h2>
+  <div class="rule"></div>
+  <p class="lead">Social Media wird 2027 kein Kanal mehr sein, auf dem man „auch präsent“ ist. Es wird der Ort, an dem Kund:innen dich finden, prüfen, buchen und weiterempfehlen. Und der Ort, an dem Bewerber:innen entscheiden, ob sie für dich arbeiten wollen.</p>
+  <p style="margin-top:5mm" class="muted">Wir sind GRID, Social-Media-Agentur aus Berlin und Frankfurt. Wir betreuen über 30 Marken, von Frittenwerk über Goldies bis yousthetics. Was in diesem E-Book steht, kommt nicht aus Trendreports, sondern aus dem, was wir jeden Tag in Feeds, Insights und DMs sehen. Dieses E-Book ist für Unternehmer:innen, die Social Media nicht als Pflichtprogramm sehen, sondern als Wachstumskanal.</p>
+
+  <div class="promise">
+    <div class="card hl"><span class="k">01</span><h4>Mehr Umsatz</h4><p>aus Social Media, messbar statt gefühlt.</p></div>
+    <div class="card hl"><span class="k">02</span><h4>Zufriedenere Kund:innen</h4><p>die bleiben und dich weiterempfehlen.</p></div>
+    <div class="card hl"><span class="k">03</span><h4>Mehr Bewerbungen</h4><p>ohne teure Stellenportale.</p></div>
+  </div>
+
+  <div class="toc">
+    <a><span class="n grad">01</span><span class="t">Der Wandel – sechs Verschiebungen bis 2027</span><span class="p">S. 3</span></a>
+    <a><span class="n grad">02</span><span class="t">Umsatz steigern – vom Scrollen zum Kassenbon</span><span class="p">S. 6</span></a>
+    <a><span class="n grad">03</span><span class="t">Kundenzufriedenheit – Social Media als Service-Kanal</span><span class="p">S. 9</span></a>
+    <a><span class="n grad">04</span><span class="t">Mehr Bewerbungen – Employer Branding plus Prozess</span><span class="p">S. 12</span></a>
+    <a><span class="n grad">05</span><span class="t">Dein 90-Tage-Fahrplan bis 2027</span><span class="p">S. 15</span></a>
+  </div>
+  <p class="source" style="margin-top:6mm">Die Prognosen zu 2027 sind unsere Einschätzung auf Basis aktueller Entwicklungen. Die Zahlen aus unseren Cases sind echt und stammen aus der Meta Business Suite unserer Kund:innen.</p>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>02</span></div>
+</section>
+
+<!-- 3 · Opener Kapitel 1 -->
+<section class="page opener">
+  <img class="bg" src="../public/jobs/bts-lichter.jpg" alt="">
+  <div class="shade"></div>
+  <div class="inner">
+    <span class="num grad">01</span>
+    <p class="eyebrow" style="margin-top:6mm">Kapitel 1</p>
+    <h2>Der Wandel – sechs Verschiebungen bis 2027</h2>
+    <p class="lead">Reichweite wird billig, Vertrauen wird teuer. Wer 2027 gewinnt, hat nicht den lautesten Feed, sondern den glaubwürdigsten.</p>
+  </div>
+</section>
+
+<!-- 4 · Kapitel 1: sechs Verschiebungen -->
+<section class="page">
+  <p class="eyebrow">Kapitel 1 · Der Wandel</p>
+  <h2>Sechs Verschiebungen, die du <span class="grad">kennen musst</span>.</h2>
+  <div class="grid2">
+    <div class="card"><span class="k">01</span><h4>KI-Content flutet die Feeds</h4><p>Austauschbarer Content wird zur Massenware und verliert jeden Wert. Echte Menschen, Orte und Geschichten werden zum Unterscheidungsmerkmal. Ein Content Day in deinem Laden schlägt jedes generierte Stockvideo.</p></div>
+    <div class="card"><span class="k">02</span><h4>Social Media wird zur Suchmaschine</h4><p>Gerade jüngere Zielgruppen suchen auf TikTok und Instagram nach Restaurants, Behandlungen oder Arbeitgebern. Dein Profil ist deine neue Startseite: Captions, On-Screen-Text und Highlights müssen gefunden werden.</p></div>
+    <div class="card"><span class="k">03</span><h4>Der Algorithmus empfiehlt Inhalte, nicht Accounts</h4><p>Jedes Reel wird einzeln getestet und an Fremde ausgespielt. Follower-Zahlen verlieren an Bedeutung. Die Chance für kleine Marken: Entscheidend sind die ersten 1,5 Sekunden.</p></div>
+    <div class="card"><span class="k">04</span><h4>Community schlägt Reichweite</h4><p>Die Interaktion wandert in DMs, Kommentare, Broadcast-Kanäle und Gruppen. Marken, die antworten, werden empfohlen. Marken, die nur senden, werden überscrollt.</p></div>
+    <div class="card"><span class="k">05</span><h4>Creator ersetzen klassische Werbung</h4><p>Menschen vertrauen Menschen. Lokale Creator:innen mit 10.000 echten Fans bringen oft mehr Gäste als eine Kampagne mit Millionen Impressionen.</p></div>
+    <div class="card"><span class="k">06</span><h4>Arbeitgeber werden auf Social geprüft</h4><p>Bewerber:innen scrollen durch dein Profil, bevor sie sich bewerben. Ein Feed ohne Team, Einblicke und Haltung kostet Bewerbungen, die du nie zu sehen bekommst.</p></div>
+  </div>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>04</span></div>
+</section>
+
+<!-- 5 · Kapitel 1: Vorher/Nachher + Beweise -->
+<section class="page">
+  <p class="eyebrow">Kapitel 1 · Der Wandel</p>
+  <h2>Was gestern funktionierte – und was <span class="grad">ab 2027</span> zählt.</h2>
+  <div class="vs">
+    <div class="row"><span>Bis heute</span><span></span><span>Ab 2027</span></div>
+    <div class="row"><span class="old">Viele Follower sammeln</span><span class="arrow">→</span><span class="new">Vertrauen und Interaktion aufbauen</span></div>
+    <div class="row"><span class="old">Perfekt inszenierter Feed</span><span class="arrow">→</span><span class="new">Echte Menschen und Einblicke</span></div>
+    <div class="row"><span class="old">Posten und hoffen</span><span class="arrow">→</span><span class="new">Content für Suche und Empfehlung bauen</span></div>
+    <div class="row"><span class="old">Werbung schalten</span><span class="arrow">→</span><span class="new">Creator, Community und Ads kombinieren</span></div>
+    <div class="row"><span class="old">Stellenanzeige auf Portalen</span><span class="arrow">→</span><span class="new">Employer Branding im Feed plus Bewerbungsprozess</span></div>
+  </div>
+
+  <h3>Der Beweis aus unseren Projekten</h3>
+  <div class="stats3">
+    <div class="stat"><span class="v grad">633.000</span><p class="l">Aufrufe</p><p class="t">mit unserem ersten Reel für lovebirds. Kein großer Account nötig – nur der richtige Hook.</p></div>
+    <div class="stat"><span class="v grad">+70,5 %</span><p class="l">mehr Reichweite</p><p class="t">für The Dawn durch gezielte Kooperationen mit Food-Creator:innen.</p></div>
+    <div class="stat"><span class="v grad">3,9 Mio.</span><p class="l">Aufrufe</p><p class="t">für Frittenwerk mit Reels, Creator-Kooperationen und TikTok.</p></div>
+  </div>
+  <p class="source">Quelle: Meta Business Suite der jeweiligen Accounts.</p>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>05</span></div>
+</section>
+
+<!-- 6 · Opener Kapitel 2 -->
+<section class="page opener">
+  <img class="bg" src="../public/referenzen/480-gradi/21.webp" alt="">
+  <div class="shade"></div>
+  <div class="inner">
+    <span class="num grad">02</span>
+    <p class="eyebrow" style="margin-top:6mm">Kapitel 2</p>
+    <h2>Umsatz steigern – vom Scrollen zum Kassenbon</h2>
+    <p class="lead">Umsatz entsteht, wenn drei Dinge zusammenspielen: Inhalte, die stoppen. Ein Profil, das überzeugt. Und ein Weg zur Buchung, der keine Sekunde zu lang ist.</p>
+  </div>
+</section>
+
+<!-- 7 · Kapitel 2: Funnel -->
+<section class="page">
+  <p class="eyebrow">Kapitel 2 · Umsatz</p>
+  <h2>Der Weg vom Reel <span class="grad">zum Umsatz</span>.</h2>
+  <p class="lead">Jede Stufe verliert Menschen. Deine Aufgabe ist, an jeder Stufe weniger zu verlieren als die Konkurrenz.</p>
+  <div class="funnel">
+    <div class="fstep"><div class="fbar" style="width:50mm;background:#feda75">Aufmerksamkeit</div><p><b>Reels mit starkem Hook</b> in den ersten 1,5 Sekunden erreichen Menschen, die dich noch nicht kennen.</p></div>
+    <div class="fstep"><div class="fbar" style="width:42mm;background:#fcaa4a">Neugier</div><p><b>Wer interessiert ist, landet auf deinem Profil.</b> Bei lovebirds waren das 540.000 neue Profilaufrufe.</p></div>
+    <div class="fstep"><div class="fbar" style="width:34mm;background:#fa7e1e">Vertrauen</div><p><b>Highlights, Bewertungen und ein klares Grid</b> beantworten die Frage „Lohnt sich das?“.</p></div>
+    <div class="fstep"><div class="fbar" style="width:26mm;background:#d62976;color:var(--snow)">Klick</div><p><b>Ein Klick führt direkt</b> zu Reservierung, Shop, Termin oder Anfrage.</p></div>
+    <div class="fstep"><div class="fbar" style="width:18mm;background:#962fbf;color:var(--snow)">Treue</div><p><b>Stories und Community-Pflege</b> holen Kund:innen zurück und machen sie zu Stammkund:innen.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:14mm">
+    <div class="stat"><span class="v grad">540.000</span><p class="l">neue Profilaufrufe</p><p class="t">für lovebirds nach 3 Monaten Zusammenarbeit.</p></div>
+    <div class="stat"><span class="v grad">+2.199 %</span><p class="l">mehr Instagram-Reichweite</p><p class="t">für lovebirds im selben Zeitraum.</p></div>
+  </div>
+  <p class="source">Quelle: Meta Business Suite @lovebirds.berlin, Ergebnisse nach 3 Monaten Zusammenarbeit.</p>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>07</span></div>
+</section>
+
+<!-- 8 · Kapitel 2: Maßnahmen -->
+<section class="page">
+  <p class="eyebrow">Kapitel 2 · Umsatz</p>
+  <h2>Was du <span class="grad">jetzt</span> tun musst.</h2>
+  <div class="actions">
+    <div class="action"><span class="n grad">01</span><div><h4>Content auf Kaufmomente bauen</h4><p>Zeig das Produkt im Moment des Genusses oder Ergebnisses: das knusprige Close-up, das Vorher-Nachher, die volle Bar am Freitag.</p></div></div>
+    <div class="action"><span class="n grad">02</span><div><h4>Profil als Verkaufsseite optimieren</h4><p>Bio mit klarem Angebot und Ort, Link direkt zur Buchung, Highlights für Angebot, Preise, Bewertungen und Anfahrt.</p></div></div>
+    <div class="action"><span class="n grad">03</span><div><h4>Organisch testen, bezahlt skalieren</h4><p>Reels, die organisch gut laufen, werden zu Meta Ads. So zahlst du nur für Creatives, die bewiesen funktionieren.</p></div></div>
+    <div class="action"><span class="n grad">04</span><div><h4>Creator gezielt einsetzen</h4><p>Lokale Creator:innen bringen deine Marke in neue Feeds. Frittenwerk erreicht mit Kooperationen und TikTok über 125.000 Follower.</p></div></div>
+    <div class="action"><span class="n grad">05</span><div><h4>Google-Profil mitdenken</h4><p>Wer dich auf Social entdeckt, prüft danach oft dein Google-Profil. Aktuelle Bilder, Beiträge und beantwortete Bewertungen schließen die Lücke zur Buchung.</p></div></div>
+    <div class="action"><span class="n grad">06</span><div><h4>Umsatz messen, nicht Likes</h4><p>Tracke Link-Klicks, Reservierungen, Anfragen und Kosten pro Conversion. Nur so weißt du, welcher Content verkauft.</p></div></div>
+  </div>
+  <div class="card hl" style="margin-top:7mm;display:grid;grid-template-columns:auto 1fr;gap:7mm;align-items:center">
+    <span class="grad" style="font-size:34pt;font-weight:500;letter-spacing:-0.03em;padding-right:2mm">+875 %</span>
+    <p style="font-size:9.5pt;color:rgba(228,226,231,0.8)"><b>Realistische Erwartung:</b> Social Media ist kein Schalter, sondern ein System. Spürbar wird es meist ab dem dritten Monat. Im Schnitt steigern wir die Instagram-Reichweite unserer Kund:innen um 875 %.</p>
+  </div>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>08</span></div>
+</section>
+
+<!-- 9 · Opener Kapitel 3 -->
+<section class="page opener">
+  <img class="bg" src="../public/referenzen/casa-beef/events-20.webp" alt="">
+  <div class="shade"></div>
+  <div class="inner">
+    <span class="num grad">03</span>
+    <p class="eyebrow" style="margin-top:6mm">Kapitel 3</p>
+    <h2>Kundenzufriedenheit – Social Media als Service-Kanal</h2>
+    <p class="lead">Kund:innen erwarten, dass sie dich dort erreichen, wo sie ohnehin sind. Wer schnell und persönlich antwortet, gewinnt Stammkund:innen. Wer schweigt, verliert sie leise.</p>
+  </div>
+</section>
+
+<!-- 10 · Kapitel 3: Maßnahmen -->
+<section class="page">
+  <p class="eyebrow">Kapitel 3 · Kundenzufriedenheit</p>
+  <h2>Zufriedenheit ist <span class="grad">öffentlich</span>.</h2>
+  <p class="lead">Jede beantwortete Frage, jede Reaktion auf eine Story und jede gute Antwort auf Kritik sieht jeder. Sie wirkt auf deine Kund:innen – und auf alle, die es noch werden.</p>
+  <div class="actions">
+    <div class="action"><span class="n grad">01</span><div><h4>Community Management fest einplanen</h4><p>Kommentare und DMs werden täglich beantwortet, nicht „wenn Zeit ist“. Leg fest, wer zuständig ist und in welcher Zeit geantwortet wird.</p></div></div>
+    <div class="action"><span class="n grad">02</span><div><h4>Einen Tone of Voice definieren</h4><p>Deine Marke klingt in jeder Antwort gleich, egal wer schreibt. Das schafft Wiedererkennung und Vertrauen.</p></div></div>
+    <div class="action"><span class="n grad">03</span><div><h4>Bewertungen aktiv managen</h4><p>Auf jede Google-Bewertung antworten, auch auf die guten. Kritik sachlich und lösungsorientiert beantworten.</p></div></div>
+    <div class="action"><span class="n grad">04</span><div><h4>Kund:innen zu Mitwirkenden machen</h4><p>User-Generated Content teilen, per Umfrage nach Wunschprodukten fragen, zeigen, was du aus Feedback gemacht hast.</p></div></div>
+    <div class="action"><span class="n grad">05</span><div><h4>Häufige Fragen vorab beantworten</h4><p>Story-Highlights zu Öffnungszeiten, Preisen, Ablauf oder Anfahrt sparen dir Nachrichten und deinen Kund:innen Zeit.</p></div></div>
+    <div class="action"><span class="n grad">06</span><div><h4>Hinter die Kulissen blicken lassen</h4><p>Behind-the-Scenes, Team und Handwerk zeigen. Bei yousthetics ist so Vertrauen entstanden, lange bevor jemand die Praxis betreten hat.</p></div></div>
+  </div>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>10</span></div>
+</section>
+
+<!-- 11 · Kapitel 3: Beweis -->
+<section class="page">
+  <p class="eyebrow">Kapitel 3 · Der Beweis</p>
+  <h2>Eine Community, die <span class="grad">die Marke trägt</span>.</h2>
+  <p class="lead">Goldies, Kreuzberger Smashburger-Kult, kam mit einem Account weit unter seinem Potenzial zu uns. Mit Content-Plan, Kooperationen in der Gastro-Szene und Community-Events auf YouTube ist daraus eine echte Fanbase geworden.</p>
+  <div class="growth">
+    <div class="col"><span class="v" style="color:var(--dune)">6.000</span><p class="l">Follower beim Start</p></div>
+    <span class="to">→</span>
+    <div class="col"><span class="v grad">49.000+</span><p class="l">Follower heute</p></div>
+  </div>
+  <div class="bars">
+    <div class="b" style="width:12%;background:var(--earth)"></div>
+    <div class="b" style="width:100%;background:var(--grad)"></div>
+  </div>
+
+  <div class="quote">
+    <span class="mark grad">“</span>
+    <p>Das Team von GRID ist verantwortlich für unsere Social Media Kanäle von The Dawn. Das Team rund um Giulia hat mich mit seiner persönlichen Art und Nähe zum Kunden überzeugt. Ich bin allzeit zufrieden.</p>
+    <p class="who">Omar Alayoub · Geschäftsführer, The Dawn</p>
+  </div>
+  <div class="stats3" style="grid-template-columns:1fr 1fr">
+    <div class="stat"><span class="v grad">+5.199 %</span><p class="l">mehr Instagram-Reichweite</p><p class="t">für yousthetics nach 9 Monaten.</p></div>
+    <div class="stat"><span class="v grad">+6.500</span><p class="l">neue Follower</p><p class="t">für The Dawn durch Community Management und Kooperationen.</p></div>
+  </div>
+  <p class="source">Quelle: Meta Business Suite @goldies_smashburger, @yousthetics, @thedawn.berlin.</p>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>11</span></div>
+</section>
+
+<!-- 12 · Opener Kapitel 4 -->
+<section class="page opener">
+  <img class="bg" src="../public/jobs/bts-kamera.jpg" alt="">
+  <div class="shade"></div>
+  <div class="inner">
+    <span class="num grad">04</span>
+    <p class="eyebrow" style="margin-top:6mm">Kapitel 4</p>
+    <h2>Mehr Bewerbungen – Employer Branding plus Prozess</h2>
+    <p class="lead">Gute Leute suchen nicht mehr auf Stellenportalen, sie scrollen. Wer als Arbeitgeber im Feed sichtbar ist und es leicht macht, sich zu bewerben, bekommt die Bewerbungen, die anderen fehlen.</p>
+  </div>
+</section>
+
+<!-- 13 · Kapitel 4: Maßnahmen -->
+<section class="page">
+  <p class="eyebrow">Kapitel 4 · Bewerbungen</p>
+  <h2>Zwei Hebel, die <span class="grad">zusammengehören</span>.</h2>
+  <div class="grid2">
+    <div class="card hl"><span class="k">HEBEL 1</span><h4>Sichtbarkeit als Arbeitgeber</h4><p>Bewerber:innen müssen sehen, wie es bei dir ist, bevor sie sich bewerben.</p></div>
+    <div class="card hl"><span class="k">HEBEL 2</span><h4>Bewerben ohne Hürden</h4><p>In zwei Minuten bewerben, am Handy, ohne Anschreiben. Erst beides zusammen ergibt einen Bewerbungsstrom.</p></div>
+  </div>
+  <div class="actions">
+    <div class="action"><span class="n grad">01</span><div><h4>Dein Team zum Gesicht machen</h4><p>Mitarbeitende stellen sich vor, zeigen ihren Alltag, erzählen, warum sie geblieben sind.</p></div></div>
+    <div class="action"><span class="n grad">02</span><div><h4>Einblicke statt Floskeln</h4><p>„Flache Hierarchien“ glaubt niemand, ein Video vom Team-Event schon. Zeig Schichtbeginn, Teamessen, Aufstiegsgeschichten.</p></div></div>
+    <div class="action"><span class="n grad">03</span><div><h4>Recruiting-Kampagnen schalten</h4><p>Meta Ads mit Team-Videos erreichen passende Menschen in deiner Region, auch wenn sie gerade nicht aktiv suchen.</p></div></div>
+    <div class="action"><span class="n grad">04</span><div><h4>Bewerben so einfach wie eine DM</h4><p>Kurzes Formular, Upload vom Handy. QR-Codes in Filiale oder Laden führen direkt zur Speed-Bewerbung.</p></div></div>
+    <div class="action"><span class="n grad">05</span><div><h4>Alle Bewerbungen an einem Ort</h4><p>E-Mail, Social-Funnel und QR-Code laufen zentral zusammen, jede Bewerbung bekommt sofort eine Rückmeldung.</p></div></div>
+    <div class="action"><span class="n grad">06</span><div><h4>Schnell antworten</h4><p>Gute Kandidat:innen sind nach wenigen Tagen woanders. Wer innerhalb von 48 Stunden reagiert, gewinnt.</p></div></div>
+  </div>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>13</span></div>
+</section>
+
+<!-- 14 · Kapitel 4: Beweis Huck -->
+<section class="page">
+  <p class="eyebrow">Kapitel 4 · Der Beweis</p>
+  <h2>Kein Recruiting-Marketing, sondern <span class="grad">ein Prozess</span>.</h2>
+  <p class="lead">Für die Frankfurter Traditionsbäckerei Huck haben wir ein Recruiting-System aufgebaut. Statt drei Zeilen aus einer Direktnachricht liegt am Ende eine vollständige Bewerbungsakte vor.</p>
+  <div class="flow">
+    <div class="ins">
+      <div class="in">E-Mail</div>
+      <div class="in">Social-Media-Funnel</div>
+      <div class="in">QR-Code in der Filiale</div>
+    </div>
+    <div class="arr">→</div>
+    <div class="chain">
+      <div class="st"><b>Ein zentrales Dashboard</b>Alle Bewerbungen aus allen Kanälen an einem Ort, ohne Dubletten.</div>
+      <div class="st"><b>Automatische Rückmeldung</b>Jede neue Bewerbung bekommt sofort eine Antwort mit Formular und Lebenslauf-Upload.</div>
+      <div class="st hl"><b>Vollständige Bewerbungsakte</b>Eine einzige Quelle der Wahrheit für dein Team.</div>
+    </div>
+  </div>
+  <img src="../public/jobs/bts-studio.jpg" alt="" style="margin-top:10mm;width:100%;height:78mm;object-fit:cover;border-radius:5mm;object-position:center 35%">
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>14</span></div>
+</section>
+
+<!-- 15 · Opener Kapitel 5 -->
+<section class="page opener">
+  <img class="bg" src="../public/jobs/bts-cafe.jpg" alt="">
+  <div class="shade"></div>
+  <div class="inner">
+    <span class="num grad">05</span>
+    <p class="eyebrow" style="margin-top:6mm">Kapitel 5</p>
+    <h2>Dein 90-Tage-Fahrplan bis 2027</h2>
+    <p class="lead">In 90 Tagen von „wir posten mal was“ zu einem System, das Umsatz, Zufriedenheit und Bewerbungen messbar steigert. Druck dir die nächsten Seiten aus und hake ab.</p>
+  </div>
+</section>
+
+<!-- 16 · Kapitel 5: Tage 1–60 -->
+<section class="page">
+  <p class="eyebrow">Kapitel 5 · Fahrplan</p>
+  <h2>Deine <span class="grad">Checkliste</span>.</h2>
+  <div class="phase">
+    <div class="head"><span class="days grad">Tage 1–30</span><span class="name">Fundament legen</span></div>
+    <div class="check"><span class="box"></span><span>Ziele festlegen: Wie viele Anfragen, Buchungen und Bewerbungen sollen pro Monat aus Social Media kommen?</span></div>
+    <div class="check"><span class="box"></span><span>Zielgruppen definieren: Kund:innen und Wunsch-Bewerber:innen getrennt beschreiben</span></div>
+    <div class="check"><span class="box"></span><span>Meta Business Manager, Werbeanzeigenmanager und Analytics sauber einrichten</span></div>
+    <div class="check"><span class="box"></span><span>Profil optimieren: Bio, Link zur Buchung, Highlights für Angebot, Bewertungen, Jobs</span></div>
+    <div class="check"><span class="box"></span><span>Google-Unternehmensprofil aktualisieren und alle offenen Bewertungen beantworten</span></div>
+    <div class="check"><span class="box"></span><span>Tone of Voice und 3–4 Content-Pillars festlegen, z. B. Produkt, Team, Kund:innen, Einblicke</span></div>
+  </div>
+  <div class="phase">
+    <div class="head"><span class="days grad">Tage 31–60</span><span class="name">Content und Community starten</span></div>
+    <div class="check"><span class="box"></span><span>Ersten Content Day planen: Shotlist für Reels, Fotos, Team-Porträts</span></div>
+    <div class="check"><span class="box"></span><span>Redaktionskalender mit allen Anlässen, Events und Aktionen für die nächsten 3 Monate</span></div>
+    <div class="check"><span class="box"></span><span>Regelmäßig posten: Reels mit starkem Hook, täglich Stories</span></div>
+    <div class="check"><span class="box"></span><span>Community Management täglich: Kommentare und DMs zeitnah beantworten</span></div>
+    <div class="check"><span class="box"></span><span>Erste Mitarbeitende als Gesicht der Marke zeigen</span></div>
+    <div class="check"><span class="box"></span><span>Bewerbungsprozess vereinfachen: Kurzformular, QR-Code, automatische Rückmeldung</span></div>
+  </div>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>16</span></div>
+</section>
+
+<!-- 17 · Kapitel 5: Tage 61–90 + KPIs -->
+<section class="page">
+  <p class="eyebrow">Kapitel 5 · Fahrplan</p>
+  <div class="phase" style="margin-top:2mm">
+    <div class="head"><span class="days grad">Tage 61–90</span><span class="name">Skalieren und messen</span></div>
+    <div class="check"><span class="box"></span><span>Die besten organischen Reels als Meta Ads schalten</span></div>
+    <div class="check"><span class="box"></span><span>Eine Recruiting-Kampagne mit Team-Videos starten</span></div>
+    <div class="check"><span class="box"></span><span>2–3 passende lokale Creator:innen für Kooperationen ansprechen</span></div>
+    <div class="check"><span class="box"></span><span>Monatliches Reporting einführen und Strategie anpassen</span></div>
+    <div class="check"><span class="box"></span><span>Was funktioniert, verdoppeln. Was nicht funktioniert, streichen</span></div>
+  </div>
+  <h3 style="margin-top:11mm">Diese Kennzahlen zählen</h3>
+  <table class="kpi">
+    <tr><th>Ziel</th><th>Kennzahl</th><th>Wo du sie findest</th></tr>
+    <tr><td>Umsatz</td><td>Link-Klicks, Reservierungen, Anfragen, Kosten pro Conversion</td><td>Meta Business Suite, Werbeanzeigenmanager, Buchungstool</td></tr>
+    <tr><td>Sichtbarkeit</td><td>Reichweite, Profilaufrufe, neue Follower</td><td>Meta Business Suite</td></tr>
+    <tr><td>Zufriedenheit</td><td>Antwortzeit auf DMs, Bewertungsschnitt, wiederkehrende Kund:innen</td><td>Postfach, Google-Unternehmensprofil, Kassensystem</td></tr>
+    <tr><td>Bewerbungen</td><td>Bewerbungen pro Monat, Kosten pro Bewerbung, Zeit bis zur Rückmeldung</td><td>Bewerbungs-Dashboard, Werbeanzeigenmanager</td></tr>
+  </table>
+  <div class="card hl" style="margin-top:9mm">
+    <p style="font-size:10.5pt;color:var(--snow)"><b>Tipp:</b> Trag dir den Tag 90 jetzt in den Kalender ein. Vergleiche dann jede Kennzahl mit heute. Was du nicht misst, kannst du nicht steigern.</p>
+  </div>
+  <div class="foot"><img src="../public/brand/grid_logo_snow.png" alt=""><span>17</span></div>
+</section>
+
+<!-- 18 · CTA -->
+<section class="page cta">
+  <img class="photo" src="../public/team/giulia.jpg" alt="Giulia Cavallino">
+  <div class="shade"></div>
+  <div class="inner">
+    <p class="eyebrow">Dein nächster Schritt</p>
+    <h2>Lass uns über <span class="grad">dein 2027</span> sprechen.</h2>
+    <p class="lead">2027 beginnt nicht im Januar, sondern mit der Entscheidung, die du heute triffst. In einer kostenlosen Erstberatung schauen wir uns deine Kanäle an und zeigen dir, wo dein größtes Potenzial liegt.</p>
+    <div class="steps">
+      <div class="card"><span class="k">01</span><h4>Termin buchen</h4><p>Erstberatung online anfragen und ein paar kurze Fragen beantworten.</p></div>
+      <div class="card"><span class="k">02</span><h4>Beratungsgespräch</h4><p>Giulia prüft mit dir, wie wir dir am besten helfen können.</p></div>
+      <div class="card"><span class="k">03</span><h4>Start</h4><p>Mit gutem Gefühl starten wir zum nächsten Monat mit Setup und Strategie.</p></div>
+    </div>
+    <a class="btn" href="https://calendly.com/giulia_cavallino/boost-your-socials">Kostenlose Erstberatung buchen →</a>
+    <div class="contact">
+      <div><img src="../public/brand/grid_logo_snow.png" alt="GRID"><p style="margin-top:3mm">Social Media Marketing aus Berlin und Frankfurt</p></div>
+      <div style="text-align:right"><a href="https://grid-agency.de">grid-agency.de</a><p>Giulia Cavallino · Gründerin</p></div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
