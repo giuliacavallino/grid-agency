@@ -31,16 +31,19 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
     }
   }
 
-  // Eingangsrechnungen: Freigabe protokollieren; „An DATEV gesendet“ nur aus
-  // „Freigegeben“ (der Versand selbst läuft im Browser über buchhaltung@).
+  // Eingangsrechnungen: Freigabe und DATEV-Versand protokollieren. „Freigeben“
+  // geht mit einem Klick von „Neu“ direkt nach DATEV (der Versand selbst läuft
+  // im Browser über buchhaltung@) und zählt dann zugleich als Freigabe.
   if (table === "invoices" && patch.stage) {
     const invoice = await store.get("invoices", id);
     if (!invoice) return Response.json({ error: "Nicht gefunden" }, { status: 404 });
     if (patch.stage === "datev" && invoice.stage !== "datev") {
-      if (invoice.stage !== "freigegeben") {
-        return Response.json({ error: "Erst freigeben, dann an DATEV senden" }, { status: 409 });
+      if (invoice.stage !== "neu" && invoice.stage !== "freigegeben") {
+        return Response.json({ error: "Abgelehnte Rechnungen gehen nicht an DATEV" }, { status: 409 });
       }
-      Object.assign(patch, { datev_sent_at: new Date().toISOString(), datev_sent_by: user.name });
+      const now = new Date().toISOString();
+      Object.assign(patch, { datev_sent_at: now, datev_sent_by: user.name });
+      if (!invoice.approved_at) Object.assign(patch, { approved_at: now, approved_by: user.name });
     }
     if (patch.stage === "freigegeben" && invoice.stage !== "freigegeben") {
       Object.assign(patch, { approved_at: new Date().toISOString(), approved_by: user.name });

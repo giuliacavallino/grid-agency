@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { DOMAIN } from "@/lib/config";
+import { INVOICE_CATEGORIES, PAYMENT_METHODS, type PaymentMethod } from "@/lib/sales/types";
 
 export type Classification = {
   classification: "anfrage" | "bewerbung" | "rechnung" | "sonstiges";
@@ -18,7 +19,11 @@ export type Classification = {
     invoice_date: string | null;
     due_date: string | null;
     amount: number | null;
+    net_amount: number | null;
+    vat_amount: number | null;
     currency: string | null;
+    payment_method: PaymentMethod | null;
+    category: string | null;
     description: string | null;
   } | null;
 };
@@ -40,7 +45,7 @@ Kategorien:
 - "rechnung": Eine Rechnung AN GRID, die bezahlt werden muss oder bereits abgebucht wurde (Lieferanten, Software-Abos, Freelancer, Miete, Telefon). Meist mit PDF-Anhang. Keine Mahnungen ohne neue Rechnung, keine Angebote, keine Zahlungsbestätigungen ohne Rechnung, keine Rechnungen, die GRID selbst verschickt.
 - "sonstiges": Alles andere – Newsletter, Werbung, Antworten in laufenden Gesprächen, Kund*innen-Kommunikation, private Mails, automatische Benachrichtigungen, Spam.
 
-Fülle nur Felder, die in der Mail oder den Dateinamen der Anhänge stehen. Bei "rechnung" das Feld invoice: Rechnungssteller, Rechnungsnummer, Rechnungsdatum und Fälligkeit als YYYY-MM-DD, Bruttobetrag als Zahl, Währung (ISO, meist EUR), kurze Beschreibung der Leistung. Bei allen anderen Kategorien sind alle Felder von invoice null. Bei "bewerbung" position_title mit der Stelle. Die Begründung ist ein kurzer deutscher Satz.`;
+Fülle nur Felder, die in der Mail oder den Dateinamen der Anhänge stehen. Bei "rechnung" das Feld invoice: Rechnungssteller, Rechnungsnummer, Rechnungsdatum und Fälligkeit als YYYY-MM-DD, Bruttobetrag, Nettobetrag und Umsatzsteuer als Zahlen (bei Reverse Charge oder Kleinunternehmern USt 0), Währung (ISO, meist EUR), Zahlungsart (nur wenn erkennbar: Karte/Kreditkarte, PayPal, Lastschrift/SEPA-Einzug, Überweisung, Bar), Kategorie aus der Liste (${INVOICE_CATEGORIES.join(", ")}) und eine kurze Beschreibung der Leistung. Bei allen anderen Kategorien sind alle Felder von invoice null. Bei "bewerbung" position_title mit der Stelle. Die Begründung ist ein kurzer deutscher Satz.`;
 
 const nullable = (type: string) => ({ type: [type, "null"] });
 
@@ -62,10 +67,17 @@ const SCHEMA = {
         invoice_date: nullable("string"),
         due_date: nullable("string"),
         amount: nullable("number"),
+        net_amount: nullable("number"),
+        vat_amount: nullable("number"),
         currency: nullable("string"),
+        payment_method: { type: ["string", "null"], enum: [...PAYMENT_METHODS.map((m) => m.id), null] },
+        category: { type: ["string", "null"], enum: [...INVOICE_CATEGORIES, null] },
         description: nullable("string"),
       },
-      required: ["vendor", "invoice_number", "invoice_date", "due_date", "amount", "currency", "description"],
+      required: [
+        "vendor", "invoice_number", "invoice_date", "due_date", "amount", "net_amount", "vat_amount",
+        "currency", "payment_method", "category", "description",
+      ],
       additionalProperties: false,
     },
   },
@@ -89,7 +101,7 @@ function heuristic(mail: Mail): Classification {
       ...base,
       classification: "rechnung",
       reason: "Stichworte einer Rechnung (Regel)",
-      invoice: { vendor: mail.fromName || mail.fromEmail, invoice_number: null, invoice_date: null, due_date: null, amount: null, currency: "EUR", description: mail.subject || null },
+      invoice: { vendor: mail.fromName || mail.fromEmail, invoice_number: null, invoice_date: null, due_date: null, amount: null, net_amount: null, vat_amount: null, currency: "EUR", payment_method: null, category: null, description: mail.subject || null },
     };
   }
   if (AUTOMATED.test(mail.fromEmail)) return { ...base, classification: "sonstiges", reason: "Automatische Mail (Regel)" };
