@@ -18,7 +18,7 @@ export type BankAccount = {
   error: string | null;
 };
 
-export type MatchType = "invoice" | "easybill" | "ignored";
+export type MatchType = "invoice" | "receivable" | "ignored";
 
 export type BankTransaction = {
   id: string;
@@ -32,9 +32,9 @@ export type BankTransaction = {
   purpose: string | null;
   match_type: MatchType | null;
   invoice_id: string | null;
-  easybill_document_id: number | null;
-  easybill_number: string | null;
-  easybill_payment_id: number | null;
+  billing_document_id: string | null;
+  billing_number: string | null;
+  billing_payment_id: string | null;
   matched_by: string | null;
   matched_at: string | null;
   note: string | null;
@@ -44,15 +44,15 @@ export type BankSync = {
   at: string;
   accounts: number;
   created: number;
-  matched: { invoices: number; easybill: number };
+  matched: { invoices: number; receivables: number };
   errors: string[];
 };
 
 /** Offene Rechnung, der ein Umsatz zugeordnet werden kann: Eingangsrechnung
- * (Abbuchung) oder Ausgangsrechnung aus easybill (Zahlungseingang). */
+ * (Abbuchung) oder Ausgangsrechnung (Zahlungseingang). */
 export type OpenItem = {
   id: string;
-  kind: "invoice" | "easybill";
+  kind: "invoice" | "receivable";
   number: string | null;
   name: string;
   /** Offener Betrag brutto, immer positiv */
@@ -101,8 +101,8 @@ function rate(tx: BankTransaction, item: OpenItem): Scored {
   return { item, amount, number, name, score: (amount ? 50 : 0) + (number ? 35 : 0) + (name ? 15 : 0) };
 }
 
-/** Passende Kinds: Abbuchung → Eingangsrechnung, Eingang → easybill */
-const fits = (tx: BankTransaction, item: OpenItem) => (tx.amount < 0 ? item.kind === "invoice" : item.kind === "easybill");
+/** Abbuchung → Eingangsrechnung, Zahlungseingang → Ausgangsrechnung */
+const fits = (tx: BankTransaction, item: OpenItem) => (tx.amount < 0 ? item.kind === "invoice" : item.kind === "receivable");
 
 /** Vorschläge, beste zuerst (mindestens Betrag, Nummer oder Name passt). */
 export function suggestions(tx: BankTransaction, items: OpenItem[]) {

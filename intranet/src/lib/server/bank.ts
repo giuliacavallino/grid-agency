@@ -1,8 +1,6 @@
 import "server-only";
 import { autoMatch, isOpen, type BankSync, type BankTransaction, type OpenItem } from "@/lib/bank";
-import { DEMO } from "@/lib/config";
 import { db, type Row } from "./db";
-import { addPayment, openInvoices, removePayment } from "./easybill";
 import {
   balances,
   BankError,
@@ -13,10 +11,11 @@ import {
   type EbBalance,
   type EbTransaction,
 } from "./enable-banking";
+import { addReceivablePayment, openReceivables, removeReceivablePayment } from "./receivables";
 
 // Abgleich Bank → Intranet: Saldo und gebuchte Umsätze aller verbundenen
 // Konten holen, danach offene Umsätze automatisch zuordnen
-// (Abbuchung → Eingangsrechnung, Eingang → Ausgangsrechnung in easybill).
+// (Abbuchung → Eingangsrechnung, Zahlungseingang → Ausgangsrechnung).
 
 const DAY = 86_400_000;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -162,8 +161,6 @@ export async function openPayables(): Promise<OpenItem[]> {
     }));
 }
 
-export const easybillConfigured = () => DEMO || !!process.env.EASYBILL_API_KEY;
-
 /** Offene Umsätze der letzten 180 Tage automatisch zuordnen */
 async function matchOpen(errors: string[]) {
   const store = db();
@@ -171,7 +168,7 @@ async function matchOpen(errors: string[]) {
   const open = (await store.list("bank_transactions"))
     .filter((t) => isOpen(t as unknown as BankTransaction) && String(t.booking_date) >= since)
     .map((t) => t as unknown as BankTransaction & Row);
-  const matched = { invoices: 0, easybill: 0 };
+  const matched = { invoices: 0, receivables: 0 };
 
   let payables = await openPayables();
   for (const tx of open.filter((t) => t.amount < 0)) {
@@ -183,19 +180,19 @@ async function matchOpen(errors: string[]) {
   }
 
   const credits = open.filter((t) => t.amount > 0);
-  if (credits.length && easybillConfigured()) {
+  if (credits.length) {
     try {
-      let receivables = await openInvoices();
+      let receivables = await openReceivables();
       for (const tx of credits) {
         const item = autoMatch(tx, receivables);
         if (!item) continue;
-        await assignEasybill(tx, item, "automatisch");
+        await assignReceivable(tx, item, "automatisch");
         receivables = receivables.filter((r) => r.id !== item.id);
-        matched.easybill++;
+        matched.receivables++;
       }
     } catch (error) {
       console.error(error);
-      errors.push(`easybill: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(`Ausgangsrechnungen: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   return matched;
@@ -212,14 +209,14 @@ export async function assignInvoice(tx: BankTransaction, invoiceId: string, by: 
   return store.update("bank_transactions", tx.id, { match_type: "invoice", invoice_id: invoiceId, ...stamp(by) });
 }
 
-export async function assignEasybill(tx: BankTransaction, item: OpenItem, by: string) {
+export async function assignReceivable(tx: BankTransaction, item: OpenItem, by: string) {
   if (tx.amount <= 0) throw new BankError("Nur Zahlungseingänge gehören zu Ausgangsrechnungen");
-  const paymentId = await addPayment(Number(item.id), Math.min(tx.amount, item.amount), tx.booking_date, [tx.counterparty, tx.purpose].filter(Boolean).join(" · "));
+  const paymentId = await addReceivablePayment(item.id, Math.min(tx.amount, item.amount), tx.booking_date, [tx.counterparty, tx.purpose].filter(Boolean).join(" · "));
   return db().update("bank_transactions", tx.id, {
-    match_type: "easybill",
-    easybill_document_id: Number(item.id),
-    easybill_number: item.number,
-    easybill_payment_id: paymentId,
+    match_type: "receivable",
+    billing_document_id: item.id,
+    billing_number: item.number,
+    billing_payment_id: paymentId,
     ...stamp(by),
   });
 }
@@ -228,20 +225,22 @@ export function ignore(tx: BankTransaction, by: string) {
   return db().update("bank_transactions", tx.id, { match_type: "ignored", ...stamp(by) });
 }
 
-/** Zuordnung lösen: Rechnung wieder offen bzw. Zahlung in easybill löschen */
+/** Zuordnung lösen: Eingangsrechnung wieder offen bzw. Zahlung der Ausgangsrechnung löschen */
 export async function clearMatch(tx: BankTransaction) {
   const store = db();
   if (tx.match_type === "invoice" && tx.invoice_id) {
     const invoice = await store.get("invoices", tx.invoice_id);
     if (invoice?.bank_transaction_id === tx.id) await store.update("invoices", tx.invoice_id, { paid: false, paid_at: null, bank_transaction_id: null });
   }
-  if (tx.match_type === "easybill" && tx.easybill_payment_id) await removePayment(tx.easybill_payment_id);
+  if (tx.match_type === "receivable" && tx.billing_payment_id && tx.billing_document_id) {
+    await removeReceivablePayment(tx.billing_payment_id, tx.billing_document_id);
+  }
   return store.update("bank_transactions", tx.id, {
     match_type: null,
     invoice_id: null,
-    easybill_document_id: null,
-    easybill_number: null,
-    easybill_payment_id: null,
+    billing_document_id: null,
+    billing_number: null,
+    billing_payment_id: null,
     matched_by: null,
     matched_at: null,
   });

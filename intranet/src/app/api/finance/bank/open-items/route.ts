@@ -1,22 +1,17 @@
 import type { OpenItem } from "@/lib/bank";
 import { withUser } from "@/lib/server/auth";
-import { easybillConfigured, openPayables } from "@/lib/server/bank";
-import { openInvoices } from "@/lib/server/easybill";
+import { openPayables } from "@/lib/server/bank";
+import { openReceivables } from "@/lib/server/receivables";
 
-export const maxDuration = 60;
-
-/** Offene Rechnungen zum Zuordnen: Eingangsrechnungen und, falls easybill
- * eingerichtet ist, offene Ausgangsrechnungen. */
+/** Offene Rechnungen zum Zuordnen: Eingangsrechnungen und Ausgangsrechnungen */
 export const GET = withUser(async () => {
   let receivables: OpenItem[] = [];
-  let easybillError: string | null = null;
-  if (easybillConfigured()) {
-    try {
-      receivables = await openInvoices();
-    } catch (error) {
-      console.error(error);
-      easybillError = error instanceof Error ? error.message : "easybill nicht erreichbar";
-    }
+  let receivablesError: string | null = null;
+  try {
+    receivables = await openReceivables();
+  } catch (error) {
+    console.error(error);
+    receivablesError = error instanceof Error ? error.message : "Ausgangsrechnungen nicht lesbar";
   }
-  return Response.json({ items: [...(await openPayables()), ...receivables], easybillError });
+  return Response.json({ items: [...(await openPayables()), ...receivables], receivablesError });
 }, ["finance"]);

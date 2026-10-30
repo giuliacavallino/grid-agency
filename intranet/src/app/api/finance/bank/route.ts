@@ -1,5 +1,5 @@
 import { withUser } from "@/lib/server/auth";
-import { easybillConfigured, syncBank } from "@/lib/server/bank";
+import { syncBank } from "@/lib/server/bank";
 import { db } from "@/lib/server/db";
 import { bankConfigured, BankError } from "@/lib/server/enable-banking";
 
@@ -7,11 +7,7 @@ export const maxDuration = 120;
 
 /** Stand der Bankanbindung: eingerichtet? letzter Abgleich? */
 export const GET = withUser(async () => {
-  return Response.json({
-    configured: bankConfigured(),
-    easybill: easybillConfigured(),
-    last: await db().getSetting("bank_sync"),
-  });
+  return Response.json({ configured: bankConfigured(), last: await db().getSetting("bank_sync") });
 }, ["finance"]);
 
 /** Abgleich auf Knopfdruck. Banken erlauben ohne TAN nur wenige Abrufe am
