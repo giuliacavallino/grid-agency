@@ -13,6 +13,7 @@ import {
   ChevronsRight,
   Columns3,
   Inbox,
+  Landmark,
   LayoutGrid,
   Menu,
   Package,
@@ -43,6 +44,7 @@ export const SALES_NAV: NavItem[] = [
 
 export const FINANCE_NAV: NavItem[] = [
   { href: "/finance", label: "Eingangsrechnungen", icon: Columns3, counter: "invoices" },
+  { href: "/finance/bank", label: "Bank", icon: Landmark },
   { href: "/finance/posteingang", label: "Posteingang", icon: Inbox },
   { href: "/finance/einstellungen", label: "Einstellungen", icon: Settings },
 ];

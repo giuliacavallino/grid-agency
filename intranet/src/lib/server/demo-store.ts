@@ -169,6 +169,11 @@ function invoice(stage: string, vendor: string, number: string, amount: number, 
     due_date: new Date(Date.now() + dueInDays * day).toISOString().slice(0, 10),
     amount,
     currency: "EUR",
+    net_amount: Math.round((amount / 1.19) * 100) / 100,
+    vat_amount: Math.round((amount - amount / 1.19) * 100) / 100,
+    payment_method: "ueberweisung",
+    category: null,
+    paid: false,
     description: null,
     attachment_names: [`${number}.pdf`],
     approved_by: stage === "neu" ? null : "Giulia Cavallino",
@@ -176,15 +181,17 @@ function invoice(stage: string, vendor: string, number: string, amount: number, 
     datev_sent_at: stage === "datev" ? ago(Math.max(0, daysAgo - 2)) : null,
     datev_sent_by: stage === "datev" ? "Giulia Cavallino" : null,
     notes: null,
+    paid_at: null,
+    bank_transaction_id: null,
     raw: null,
     ...extra,
   };
 }
 
 const invoices: Row[] = [
-  invoice("neu", "Adobe Systems", "IE-2026-118422", 89.24, 1, 14, { source_ref: "demo-mail-3", graph_id: "demo-inv-adobe", vendor_email: "mail@mail.adobe.com", description: "Creative Cloud Oktober" }),
-  invoice("neu", "Steffen Video", "2026-041", 1428, 3, 11, { source_ref: "demo-mail-4", graph_id: "demo-inv-steffen", vendor_email: "rechnung@steffen-video.de", description: "Shooting Frittenwerk" }),
-  invoice("neu", "Telekom", "9087 1123 4410", 54.9, 6, -1, { description: "Mobilfunk" }),
+  invoice("neu", "Adobe Systems", "IE-2026-118422", 89.24, 1, 14, { source_ref: "demo-mail-3", graph_id: "demo-inv-adobe", vendor_email: "mail@mail.adobe.com", description: "Creative Cloud Oktober", payment_method: "karte", category: "Software & Abos", paid: true }),
+  invoice("neu", "Steffen Video", "2026-041", 1428, 3, 11, { source_ref: "demo-mail-4", graph_id: "demo-inv-steffen", vendor_email: "rechnung@steffen-video.de", description: "Shooting Frittenwerk", category: "Freelancer" }),
+  invoice("neu", "Telekom", "9087 1123 4410", 54.9, 6, -1, { description: "Mobilfunk", payment_method: "lastschrift", category: "Telefon & Internet", paid: true }),
   invoice("freigegeben", "Canva", "CV-55102", 119.99, 8, 6),
   invoice("datev", "Studio Kreuzberg", "R-2026-88", 650, 20, -6, { description: "Studiomiete Content Day" }),
   invoice("datev", "Hetzner", "R0012345678", 17.85, 25, -12),
@@ -269,6 +276,8 @@ const tables: Record<string, Row[]> = {
   retainers,
   inbound_messages: inbound,
   invoices,
+  bank_accounts: [],
+  bank_transactions: [],
   applications,
   task_projects: taskProjects,
   task_sections: taskSections,
@@ -337,6 +346,15 @@ export const demoStore: Store = {
       // Datenbank-Standardwerte nachbilden, die der Abgleich nicht mitschickt
       const defaults = table === "retainers" ? { hours_per_month: 0, notes: null } : table === "articles" ? { hours: 0 } : { lead_id: null, industry: null };
       out.push(row ? await this.update(table, row.id, input) : await this.insert(table, { ...defaults, ...input }));
+    }
+    return out;
+  },
+  async upsert(table, rows, onConflict, ignoreDuplicates = false) {
+    const out: Row[] = [];
+    for (const input of rows) {
+      const row = tables[table].find((r) => r[onConflict] === input[onConflict]);
+      if (row && ignoreDuplicates) continue;
+      out.push(row ? await this.update(table, row.id, input) : await this.insert(table, { updated_at: now(), ...input }));
     }
     return out;
   },

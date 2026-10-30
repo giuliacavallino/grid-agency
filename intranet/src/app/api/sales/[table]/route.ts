@@ -1,5 +1,5 @@
 import { forbidden, withUser } from "@/lib/server/auth";
-import { canUseTable, db, isTable, mayTouch, pick, TABLES, visibleRows } from "@/lib/server/db";
+import { canUseTable, db, isTable, mayTouch, pick, READ_ONLY, TABLES, visibleRows } from "@/lib/server/db";
 
 type Context = { params: Promise<{ table: string }> };
 
@@ -22,7 +22,7 @@ export const GET = withUser(async (user, request, { params }: Context) => {
 
 export const POST = withUser(async (user, request, { params }: Context) => {
   const { table } = await params;
-  if (!isTable(table) || table === "inbound_messages") {
+  if (!isTable(table) || READ_ONLY.includes(table)) {
     return Response.json({ error: "Unbekannt" }, { status: 404 });
   }
   if (!canUseTable(user, table)) return forbidden();

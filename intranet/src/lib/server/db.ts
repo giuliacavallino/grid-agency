@@ -52,7 +52,8 @@ export const TABLES = {
   invoices: {
     columns: [
       "stage", "position", "vendor", "vendor_email", "invoice_number", "invoice_date", "due_date",
-      "amount", "currency", "description", "notes",
+      "amount", "currency", "net_amount", "vat_amount", "payment_method", "category", "paid",
+      "description", "notes",
     ],
     filters: ["stage"],
     order: { column: "position", ascending: true },
@@ -64,6 +65,17 @@ export const TABLES = {
     ],
     filters: ["stage"],
     order: { column: "position", ascending: true },
+  },
+  // Bank: nur lesen; Zuordnungen laufen über /api/finance/bank
+  bank_accounts: {
+    columns: [],
+    filters: ["active"],
+    order: { column: "created_at", ascending: true },
+  },
+  bank_transactions: {
+    columns: [],
+    filters: ["account_id", "match_type"],
+    order: { column: "booking_date", ascending: false },
   },
   // Aufgaben: Kunde → Themen (Spalten) → To-dos (Karten)
   task_projects: {
@@ -94,6 +106,8 @@ const TABLE_AREAS: Record<keyof typeof TABLES, string[]> = {
   inbound_messages: ["sales", "finance", "mail"],
   invoices: ["finance"],
   applications: ["personal"],
+  bank_accounts: ["finance"],
+  bank_transactions: ["finance"],
   task_projects: ["aufgaben", "admin"],
   task_sections: ["aufgaben"],
   tasks: ["aufgaben"],
@@ -128,6 +142,8 @@ export async function mayTouch(user: User, table: TableName, row: Record<string,
 export type IngestTable = "leads" | "inbound_messages" | "invoices" | "applications";
 
 export type TableName = keyof typeof TABLES;
+/** Tabellen, die der Browser über /api/sales nur lesen darf */
+export const READ_ONLY: readonly TableName[] = ["inbound_messages", "bank_accounts", "bank_transactions"];
 export type EasybillTable = "customers" | "articles" | "retainers";
 export type Row = Record<string, unknown> & { id: string };
 
@@ -155,6 +171,9 @@ export interface Store {
   /** Anlegen oder aktualisieren über die easybill-ID. Spalten, die in keiner
    * Zeile vorkommen, bleiben bei bestehenden Zeilen unverändert. */
   upsertEasybill(table: EasybillTable, rows: Record<string, unknown>[]): Promise<Row[]>;
+  /** Anlegen oder aktualisieren über eine eindeutige Spalte; mit
+   * ignoreDuplicates bleiben bestehende Zeilen unverändert. */
+  upsert(table: "bank_accounts" | "bank_transactions", rows: Record<string, unknown>[], onConflict: string, ignoreDuplicates?: boolean): Promise<Row[]>;
   remove(table: TableName, id: string): Promise<void>;
   getSetting<T>(key: string): Promise<T | null>;
   setSetting(key: string, value: unknown): Promise<void>;
@@ -207,6 +226,10 @@ const supabaseStore: Store = {
   async upsertEasybill(table, rows) {
     if (!rows.length) return [];
     return check(await sb().from(table).upsert(rows, { onConflict: "easybill_id" }).select()) as Row[];
+  },
+  async upsert(table, rows, onConflict, ignoreDuplicates = false) {
+    if (!rows.length) return [];
+    return check(await sb().from(table).upsert(rows, { onConflict, ignoreDuplicates }).select()) as Row[];
   },
   async remove(table, id) {
     check(await sb().from(table).delete().eq("id", id));
