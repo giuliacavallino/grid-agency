@@ -38,10 +38,25 @@ function client() {
   return msal;
 }
 
+/** Läuft die Seite als Rückkehrziel einer stillen Anmeldung (verstecktes
+ * iframe) oder eines Popups? Dann nur die Antwort an das Hauptfenster
+ * weiterreichen (MSAL v5 „redirect bridge“), sonst wartet MSAL dort bis
+ * zum Timeout. */
+function isAuthCallbackFrame() {
+  const inFrame = window.parent !== window || !!window.opener;
+  return inFrame && /[#?&](state|code|error)=/.test(window.location.hash + window.location.search);
+}
+
 /** Initialisiert MSAL einmal und verarbeitet die Rückkehr vom Login. */
 function init() {
   if (!ready) {
     ready = (async () => {
+      if (isAuthCallbackFrame()) {
+        const { broadcastResponseToMainFrame } = await import("@azure/msal-browser/redirect-bridge");
+        await broadcastResponseToMainFrame().catch(() => {});
+        // Dieses Fenster wird gleich geschlossen; die App hier nicht starten.
+        return new Promise<AccountInfo | null>(() => {});
+      }
       const app = client();
       await app.initialize();
       const result = await app.handleRedirectPromise();
@@ -83,18 +98,46 @@ export async function signOut() {
   await app.logoutRedirect({ account: app.getActiveAccount() ?? undefined });
 }
 
+let pendingToken: Promise<string> | null = null;
+let redirecting = false;
+
+/** Fehler, bei denen nur eine neue Anmeldung hilft: Sitzung abgelaufen oder
+ * die stille Erneuerung im Hintergrund kam nicht zurück (z. B. weil der
+ * Browser Drittanbieter-Cookies blockiert). */
+function needsInteraction(error: unknown) {
+  const code = (error as { errorCode?: string } | null)?.errorCode;
+  return error instanceof InteractionRequiredAuthError || code === "timed_out" || code === "monitor_window_timeout";
+}
+
 /** ID-Token für die eigenen API-Routen. Der Server prüft Signatur,
- * Tenant und Client-ID. */
+ * Tenant und Client-ID. Gleichzeitige Aufrufe teilen sich eine Anfrage;
+ * klappt die stille Erneuerung nicht, geht es einmal über den Login zurück
+ * auf dieselbe Seite (mit bestehender Microsoft-Sitzung ohne Eingabe). */
 export async function getIdToken(forceRefresh = false) {
   if (DEMO) return "demo";
-  const account = await init();
-  if (!account) throw new Error("Nicht angemeldet");
-  const result = await client().acquireTokenSilent({
-    scopes: ["User.Read"],
-    account,
-    forceRefresh,
-  });
-  return result.idToken;
+  if (pendingToken && !forceRefresh) return pendingToken;
+  const request = (async () => {
+    const account = await init();
+    if (!account) throw new Error("Nicht angemeldet");
+    try {
+      const result = await client().acquireTokenSilent({ scopes: ["User.Read"], account, forceRefresh });
+      return result.idToken;
+    } catch (error) {
+      if (!needsInteraction(error)) throw error;
+      if (!redirecting) {
+        redirecting = true;
+        await client().acquireTokenRedirect({ scopes: ["User.Read"], account });
+      }
+      // Die Seite wird gerade zum Login weitergeleitet.
+      return new Promise<string>(() => {});
+    }
+  })();
+  pendingToken = request;
+  try {
+    return await request;
+  } finally {
+    if (pendingToken === request) pendingToken = null;
+  }
 }
 
 export class ConsentRequiredError extends Error {
