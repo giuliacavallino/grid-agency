@@ -127,7 +127,7 @@ function escapeHtml(text: string) {
 
 /** Mail-HTML in einer Sandbox ohne Skripte, auf weißem Papier wie Outlook.
  * allow-same-origin nur, um die Höhe zu messen; Skripte bleiben gesperrt. */
-function MailBody({ body }: { body: NonNullable<Message["body"]> }) {
+export function MailBody({ body }: { body: NonNullable<Message["body"]> }) {
   const [height, setHeight] = useState(200);
   const content =
     body.contentType === "html"

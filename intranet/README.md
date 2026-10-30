@@ -56,7 +56,7 @@ Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in 
 **Microsoft Entra** (App „GRID Intranet“):
 
 1. API-Berechtigungen, delegiert: `Mail.ReadWrite.Shared`, `Mail.Send.Shared`, `Calendars.ReadWrite.Shared` (Posteingang und Kalender im Sales), `Chat.ReadWrite` (Teams-Chats), `User.ReadBasic.All` (Profilbilder). Nach Möglichkeit Administratorzustimmung erteilen, sonst stimmt jede Person beim ersten Mal selbst zu.
-2. Anwendungsberechtigung `Mail.Read` mit Administratorzustimmung (Mail-Eingang). Am besten per Application Access Policy auf hello@ beschränken.
+2. Anwendungsberechtigung `Mail.ReadWrite` mit Administratorzustimmung (Mail-Eingang; erkannte Rechnungen werden je Postfach in den Ordner „Eingangsrechnungen“ verschoben). Am besten per Application Access Policy auf die Postfächer aus `MAILBOXES` beschränken.
 3. Unter „Zertifikate & Geheimnisse“ ein Client-Secret anlegen und als `MS_CLIENT_SECRET` hinterlegen.
 4. Exchange: Vollzugriff und „Senden als“ auf jedes geteilte Postfach aus `MAILBOXES` (hello@, buchhaltung@, google@). Der DATEV-Versand läuft über „Senden als“ von buchhaltung@.
 5. SPA-Redirect-URIs: jede Intranet-URL mit `/` am Ende (Produktion, Previews, `http://localhost:3000/`).

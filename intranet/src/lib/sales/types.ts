@@ -126,6 +126,30 @@ export const INVOICE_STAGES = [
 ] as const;
 export type InvoiceStage = (typeof INVOICE_STAGES)[number]["id"] | "abgelehnt";
 
+export const PAYMENT_METHODS = [
+  { id: "ueberweisung", label: "Überweisung" },
+  { id: "lastschrift", label: "Lastschrift" },
+  { id: "karte", label: "Karte" },
+  { id: "paypal", label: "PayPal" },
+  { id: "bar", label: "Bar" },
+] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number]["id"];
+/** Zahlungsarten, bei denen die Rechnung meist schon bezahlt ist */
+export const PREPAID_METHODS: readonly PaymentMethod[] = ["lastschrift", "karte", "paypal", "bar"];
+
+export const INVOICE_CATEGORIES = [
+  "Software & Abos",
+  "Freelancer",
+  "Produktion",
+  "Werbung & Ads",
+  "Miete & Nebenkosten",
+  "Telefon & Internet",
+  "Reise & Bewirtung",
+  "Büro & Material",
+  "Beratung & Gebühren",
+  "Sonstiges",
+] as const;
+
 export type Invoice = {
   id: string;
   created_at: string;
@@ -143,6 +167,11 @@ export type Invoice = {
   due_date: string | null;
   amount: number | null;
   currency: string;
+  net_amount: number | null;
+  vat_amount: number | null;
+  payment_method: PaymentMethod | null;
+  category: string | null;
+  paid: boolean;
   description: string | null;
   attachment_names: string[] | null;
   approved_by: string | null;
