@@ -55,6 +55,8 @@ export type Activity = {
 
 export type Customer = {
   id: string;
+  /** Fortlaufende Kundennummer (aus easybill bzw. höchste + 1) */
+  customer_number: string | null;
   created_at: string;
   updated_at: string;
   name: string;
