@@ -16,21 +16,21 @@ const STATUS = "/api/finance/bank";
 const OPEN_ITEMS = "/api/finance/bank/open-items";
 const TX = "/api/sales/bank_transactions";
 
-type Status = { configured: boolean; easybill: boolean; last: BankSync | null };
-type OpenItems = { items: OpenItem[]; easybillError: string | null };
+type Status = { configured: boolean; last: BankSync | null };
+type OpenItems = { items: OpenItem[]; receivablesError: string | null };
 
 const money = (amount: number | null, currency = "EUR") =>
   amount === null ? "–" : new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(amount);
 
 const KIND = {
   invoice: { label: "Eingangsrechnung", color: "#7fa8ff" },
-  easybill: { label: "easybill", color: "#9fd8a8" },
+  receivable: { label: "Ausgangsrechnung", color: "#9fd8a8" },
 } as const;
 
 type Filter = "offen" | "zugeordnet" | "alle";
 
 /** Finance → Bank: Saldo und Umsätze des Firmenkontos (Enable Banking),
- * Abbuchungen ↔ Eingangsrechnungen, Zahlungseingänge ↔ easybill. */
+ * Abbuchungen ↔ Eingangsrechnungen, Zahlungseingänge ↔ Ausgangsrechnungen. */
 export function Bank() {
   const { data: status, reload: reloadStatus } = useResource<Status>(STATUS);
   const { data: accounts } = useRows<BankAccount>("bank_accounts");
@@ -72,7 +72,7 @@ export function Bank() {
     return sorted.filter((t) => {
       if (filter === "offen" && !isOpen(t)) return false;
       if (filter === "zugeordnet" && isOpen(t)) return false;
-      return !q || [t.counterparty, t.purpose, t.easybill_number, t.note, String(t.amount)].some((v) => v?.toLowerCase().includes(q));
+      return !q || [t.counterparty, t.purpose, t.billing_number, t.note, String(t.amount)].some((v) => v?.toLowerCase().includes(q));
     });
   }, [sorted, filter, query]);
   const openCount = sorted.filter(isOpen).length;
@@ -84,7 +84,7 @@ export function Bank() {
       const r = await api<BankSync>(STATUS, { method: "POST" });
       refresh();
       reloadStatus();
-      const matched = r.matched.invoices + r.matched.easybill;
+      const matched = r.matched.invoices + r.matched.receivables;
       toast(
         r.errors.length
           ? `Abgleich mit Fehlern: ${r.errors[0]}`
@@ -153,9 +153,9 @@ export function Bank() {
           Enable Banking ist noch nicht eingerichtet: <code>ENABLE_BANKING_APP_ID</code> und <code>ENABLE_BANKING_PRIVATE_KEY</code> in Vercel hinterlegen.
         </p>
       )}
-      {open?.easybillError && (
+      {open?.receivablesError && (
         <p className="border-b border-snow/[0.08] bg-error/10 px-5 py-2 text-[13px] text-snow/80">
-          Offene Ausgangsrechnungen konnten nicht aus easybill geladen werden: {open.easybillError}
+          Offene Ausgangsrechnungen konnten nicht geladen werden: {open.receivablesError}
         </p>
       )}
 
@@ -215,7 +215,6 @@ export function Bank() {
           return t?.invoice_id ? invoiceById.get(t.invoice_id) : undefined;
         })()}
         items={items}
-        easybill={!!status?.easybill}
         onClose={() => setOpenId(null)}
       />
       <ConnectDialog open={connecting} onClose={() => setConnecting(false)} />
@@ -307,7 +306,7 @@ function AccountCard({ account }: { account: BankAccount }) {
 
 function MatchBadge({ tx, invoice }: { tx: BankTransaction; invoice?: Invoice }) {
   if (tx.match_type === "ignored") return <Badge>Ignoriert</Badge>;
-  if (tx.match_type === "easybill") return <Badge color={KIND.easybill.color}>easybill · {tx.easybill_number ?? tx.easybill_document_id}</Badge>;
+  if (tx.match_type === "receivable") return <Badge color={KIND.receivable.color}>Ausgangsrechnung · {tx.billing_number ?? "ohne Nr."}</Badge>;
   if (tx.match_type === "invoice" && tx.invoice_id)
     return <Badge color={KIND.invoice.color}>{invoice ? [invoice.vendor, invoice.invoice_number].filter(Boolean).join(" · ") : "Eingangsrechnung"}</Badge>;
   return null;
@@ -368,13 +367,11 @@ function TransactionSheet({
   tx,
   invoice,
   items,
-  easybill,
   onClose,
 }: {
   tx?: BankTransaction;
   invoice?: Invoice;
   items: OpenItem[];
-  easybill: boolean;
   onClose: () => void;
 }) {
   return (
@@ -384,12 +381,12 @@ function TransactionSheet({
       title={tx ? (tx.counterparty ?? "Umsatz") : "Umsatz"}
       subtitle={tx && `${money(tx.amount, tx.currency)} · gebucht ${formatDate(tx.booking_date)}`}
     >
-      {tx && <TransactionDetail key={tx.id} tx={tx} invoice={invoice} items={items} easybill={easybill} />}
+      {tx && <TransactionDetail key={tx.id} tx={tx} invoice={invoice} items={items} />}
     </Sheet>
   );
 }
 
-function TransactionDetail({ tx, invoice, items, easybill }: { tx: BankTransaction; invoice?: Invoice; items: OpenItem[]; easybill: boolean }) {
+function TransactionDetail({ tx, invoice, items }: { tx: BankTransaction; invoice?: Invoice; items: OpenItem[] }) {
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -399,7 +396,7 @@ function TransactionDetail({ tx, invoice, items, easybill }: { tx: BankTransacti
   const ranked = useMemo(() => suggestions(tx, items), [tx, items]);
   const candidates = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const fitting = items.filter((i) => (incoming ? i.kind === "easybill" : i.kind === "invoice"));
+    const fitting = items.filter((i) => (incoming ? i.kind === "receivable" : i.kind === "invoice"));
     if (!q) return ranked.slice(0, 6).map((s) => s.item);
     return fitting.filter((i) => [i.name, i.number, String(i.amount)].some((v) => v?.toLowerCase().includes(q))).slice(0, 20);
   }, [query, items, ranked, incoming]);
@@ -424,8 +421,8 @@ function TransactionDetail({ tx, invoice, items, easybill }: { tx: BankTransacti
   const assign = (item: OpenItem) =>
     act(
       item.id,
-      item.kind === "invoice" ? { action: "invoice", invoice_id: item.id } : { action: "easybill", document_id: item.id },
-      item.kind === "invoice" ? "Eingangsrechnung als bezahlt markiert" : "Zahlung in easybill gebucht"
+      item.kind === "invoice" ? { action: "invoice", invoice_id: item.id } : { action: "receivable", document_id: item.id },
+      item.kind === "invoice" ? "Eingangsrechnung als bezahlt markiert" : "Zahlung bei der Ausgangsrechnung gebucht"
     );
 
   return (
@@ -458,7 +455,6 @@ function TransactionDetail({ tx, invoice, items, easybill }: { tx: BankTransacti
       {!isOpen(tx) ? (
         <div className="flex flex-wrap items-center gap-3">
           <MatchBadge tx={tx} invoice={invoice} />
-          {tx.match_type === "easybill" && <span className="text-[12px] text-snow/50">Zahlung ist in easybill gebucht.</span>}
           <Button
             size="sm"
             variant="ghost"
@@ -475,13 +471,10 @@ function TransactionDetail({ tx, invoice, items, easybill }: { tx: BankTransacti
         <div>
           <div className="mb-2 flex items-center gap-3">
             <p className="flex-1 text-xs font-medium text-snow/60">
-              {incoming ? "Ausgangsrechnung (easybill) zuordnen" : "Eingangsrechnung zuordnen"}
+              {incoming ? "Ausgangsrechnung zuordnen" : "Eingangsrechnung zuordnen"}
             </p>
           </div>
-          {incoming && !easybill ? (
-            <p className="text-sm text-snow/50">EASYBILL_API_KEY fehlt in Vercel – Zahlungseingänge lassen sich erst danach zuordnen.</p>
-          ) : (
-            <>
+          <>
               <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Name, Nummer oder Betrag" aria-label="Rechnung suchen" className="h-9" />
               <ul className="mt-2 flex flex-col gap-1.5">
                 {candidates.length === 0 && <li className="py-3 text-sm text-snow/45">Keine passende offene Rechnung.</li>}
@@ -502,8 +495,7 @@ function TransactionDetail({ tx, invoice, items, easybill }: { tx: BankTransacti
                   </li>
                 ))}
               </ul>
-            </>
-          )}
+          </>
           <Button
             size="sm"
             variant="ghost"

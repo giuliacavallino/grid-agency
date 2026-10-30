@@ -289,7 +289,7 @@ function EditorForm({
         <section className="grid gap-3 sm:grid-cols-2">
           <Field label="Kunde" className="sm:col-span-2">
             {(id) => (
-              <Select id={id} value={form.customer_id} onChange={(e) => chooseCustomer(e.target.value)} required>
+              <Select id={id} value={form.customer_id} onChange={(e) => chooseCustomer(e.target.value)}>
                 <option value="">Kunde wählen …</option>
                 {sortedCustomers.map((c) => (
                   <option key={c.id} value={c.id}>

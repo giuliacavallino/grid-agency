@@ -1,19 +1,22 @@
 "use client";
 
 import {
+  Children,
   createContext,
   forwardRef,
+  isValidElement,
   useCallback,
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
 import { cn as clsx } from "@/lib/cn";
 import { accentFill, accentText } from "@/lib/theme";
-import { LoaderCircle, X } from "lucide-react";
+import { Check, ChevronDown, LoaderCircle, X } from "lucide-react";
 
 // ---------- Buttons ----------
 
@@ -96,11 +99,246 @@ export const Textarea = forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttrib
   }
 );
 
-export function Select({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+type SelectOption = { value: string; label: string; disabled: boolean; group?: string };
+
+/** Text eines Elementbaums (Inhalt von <option>). */
+function textOf(node: React.ReactNode): string {
+  if (node === null || node === undefined || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(textOf).join("");
+  if (isValidElement<{ children?: React.ReactNode }>(node)) return textOf(node.props.children);
+  return "";
+}
+
+/** <option>/<optgroup> wie beim nativen Select in eine flache Liste. */
+function readOptions(children: React.ReactNode, group?: string): SelectOption[] {
+  const out: SelectOption[] = [];
+  Children.forEach(children, (child) => {
+    if (!isValidElement<{ value?: unknown; disabled?: boolean; label?: string; children?: React.ReactNode }>(child)) return;
+    if (child.type === "optgroup") out.push(...readOptions(child.props.children, child.props.label));
+    else if (child.type === "option") {
+      const label = textOf(child.props.children);
+      out.push({ value: String(child.props.value ?? label), label, disabled: !!child.props.disabled, group });
+    } else out.push(...readOptions(child.props.children, group));
+  });
+  return out;
+}
+
+type SelectProps = {
+  id?: string;
+  value?: string | number;
+  onChange?: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+  disabled?: boolean;
+  className?: string;
+  children: React.ReactNode;
+  "aria-label"?: string;
+  "aria-busy"?: boolean;
+  /** Eigener Auslöser statt des Feld-Looks (z. B. Avatar in der Aufgabenliste) */
+  renderButton?: (label: string) => React.ReactNode;
+};
+
+/** Auswahlfeld im Hub-Design statt des nativen Dropdowns. Gleiche API wie
+ * <select> mit <option>/<optgroup>; onChange bekommt { target: { value } }.
+ * Bedienung: Pfeiltasten, Home/End, Enter, Escape, Tippen springt zum
+ * passenden Eintrag. Die Liste liegt im Portal, damit Sheets und Dialoge
+ * sie nicht abschneiden. */
+export function Select({ id, value, onChange, disabled, className, children, renderButton, ...aria }: SelectProps) {
+  const listId = useId();
+  const options = readOptions(children);
+  const current = String(value ?? "");
+  const selected = options.find((o) => o.value === current);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const [pos, setPos] = useState<{ left: number; top: number; width: number; up: boolean; max: number } | null>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const typed = useRef({ text: "", at: 0 });
+
+  const place = useCallback(() => {
+    const rect = button.current?.getBoundingClientRect();
+    if (!rect) return;
+    const below = window.innerHeight - rect.bottom - 12;
+    const above = rect.top - 12;
+    const up = below < 220 && above > below;
+    const width = Math.max(rect.width, 200);
+    setPos({
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+      top: up ? rect.top - 6 : rect.bottom + 6,
+      width,
+      up,
+      max: Math.min(320, up ? above : below),
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, place]);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!button.current?.contains(target) && !list.current?.contains(target)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+
+  useEffect(() => {
+    if (open) list.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [open, active]);
+
+  const enabled = (i: number) => options[i] && !options[i].disabled;
+  const step = (from: number, dir: 1 | -1) => {
+    for (let i = from + dir; i >= 0 && i < options.length; i += dir) if (enabled(i)) return i;
+    return from;
+  };
+
+  const show = () => {
+    if (disabled) return;
+    const index = options.findIndex((o) => o.value === current);
+    setActive(index >= 0 ? index : step(-1, 1));
+    setOpen(true);
+    requestAnimationFrame(() => list.current?.focus());
+  };
+
+  const choose = (option: SelectOption) => {
+    if (option.disabled) return;
+    setOpen(false);
+    button.current?.focus();
+    if (option.value !== current) {
+      onChange?.({ target: { value: option.value }, currentTarget: { value: option.value } } as React.ChangeEvent<HTMLSelectElement>);
+    }
+  };
+
+  const typeahead = (key: string, now: number) => {
+    typed.current = { text: (now - typed.current.at < 700 ? typed.current.text : "") + key.toLowerCase(), at: now };
+    const match = options.findIndex((o, i) => enabled(i) && o.label.toLowerCase().startsWith(typed.current.text));
+    if (match >= 0) setActive(match);
+  };
+
+  const onListKey = (event: React.KeyboardEvent) => {
+    const keys: Record<string, () => void> = {
+      ArrowDown: () => setActive((i) => step(i, 1)),
+      ArrowUp: () => setActive((i) => step(i, -1)),
+      Home: () => setActive(step(-1, 1)),
+      End: () => setActive(step(options.length, -1)),
+      Enter: () => options[active] && choose(options[active]),
+      " ": () => options[active] && choose(options[active]),
+      Escape: () => {
+        setOpen(false);
+        button.current?.focus();
+      },
+    };
+    if (event.key === "Tab") return setOpen(false);
+    if (keys[event.key]) {
+      event.preventDefault();
+      // Escape soll nur die Liste schließen, nicht auch Sheet oder Dialog
+      event.stopPropagation();
+      keys[event.key]();
+    } else if (event.key.length === 1) typeahead(event.key, event.timeStamp);
+  };
+
+  const label = selected?.label ?? "";
+  const placeholder = !selected || (selected.disabled && selected.value === "");
+
   return (
-    <select className={clsx(fieldClass, "h-10 pr-2", className)} {...props}>
-      {children}
-    </select>
+    <>
+      <button
+        ref={button}
+        id={id}
+        type="button"
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
+        aria-label={aria["aria-label"]}
+        aria-busy={aria["aria-busy"]}
+        onClick={() => (open ? setOpen(false) : show())}
+        onKeyDown={(event) => {
+          if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+            event.preventDefault();
+            show();
+          }
+        }}
+        className={
+          renderButton
+            ? className
+            : clsx(
+                fieldClass,
+                "flex h-10 items-center justify-between gap-2 pr-2.5 text-left disabled:cursor-not-allowed aria-expanded:border-snow/40",
+                className
+              )
+        }
+      >
+        {renderButton ? (
+          renderButton(label)
+        ) : (
+          <>
+            <span className={clsx("min-w-0 truncate", placeholder && "text-snow/45")}>{label || "\u00a0"}</span>
+            <ChevronDown className={clsx("h-4 w-4 shrink-0 text-snow/45 transition-transform", open && "rotate-180")} />
+          </>
+        )}
+      </button>
+      {open && pos && (
+        <Portal>
+          <ul
+            ref={list}
+            id={listId}
+            role="listbox"
+            tabIndex={-1}
+            aria-label={aria["aria-label"]}
+            aria-activedescendant={`${listId}-${active}`}
+            data-select-list=""
+            onKeyDown={onListKey}
+            style={{
+              left: pos.left,
+              width: pos.width,
+              maxHeight: pos.max,
+              ...(pos.up ? { bottom: window.innerHeight - pos.top } : { top: pos.top }),
+            }}
+            className="glass-solid animate-pop fixed z-[70] overflow-y-auto rounded-2xl p-1.5 outline-none"
+          >
+            {options.map((option, i) => {
+              const isSelected = option.value === current;
+              const groupStart = option.group && option.group !== options[i - 1]?.group;
+              return (
+                <li key={`${option.group ?? ""}|${option.value}`} role="presentation">
+                  {groupStart && (
+                    <p className="px-3 pt-2.5 pb-1 text-[11px] font-medium tracking-wide text-snow/45 uppercase">{option.group}</p>
+                  )}
+                  <div
+                    id={`${listId}-${i}`}
+                    data-index={i}
+                    role="option"
+                    aria-selected={isSelected}
+                    aria-disabled={option.disabled || undefined}
+                    onPointerEnter={() => !option.disabled && setActive(i)}
+                    onClick={() => choose(option)}
+                    className={clsx(
+                      "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm",
+                      option.disabled ? "cursor-default text-snow/35" : "cursor-pointer text-snow/85",
+                      i === active && !option.disabled && "bg-snow/[0.08] text-snow",
+                      isSelected && "text-snow"
+                    )}
+                  >
+                    <Check className={clsx("h-4 w-4 shrink-0", isSelected ? "text-snow" : "invisible")} />
+                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Portal>
+      )}
+    </>
   );
 }
 
@@ -253,6 +491,8 @@ export function Popover({
   useEffect(() => {
     if (!open) return;
     const onClick = (event: MouseEvent) => {
+      // Auswahlliste eines Selects im Popover liegt im Portal, zählt aber dazu
+      if ((event.target as Element).closest?.("[data-select-list]")) return;
       if (!ref.current?.contains(event.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", onClick);

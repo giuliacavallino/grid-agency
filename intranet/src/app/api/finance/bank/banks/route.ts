@@ -9,4 +9,4 @@ export const GET = withUser(async () => {
     if (error instanceof BankError) return Response.json({ error: error.message }, { status: 502 });
     throw error;
   }
-}, ["finance"]);
+}, ["admin"]);

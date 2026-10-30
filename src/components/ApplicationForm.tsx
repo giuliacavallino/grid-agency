@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, CircleCheck, LoaderCircle, Paperclip } from "lucide-react";
+import { Check, ChevronDown, LoaderCircle, Paperclip } from "lucide-react";
 import {
   submitApplication,
   type ApplicationFormState,
@@ -197,6 +197,53 @@ function JobSelect({
   );
 }
 
+/** Grüner Haken nach dem Absenden: Kreis und Haken zeichnen sich nach,
+ * dazu ein kurzer Puls. */
+function SuccessCheck() {
+  return (
+    <motion.div
+      initial={{ scale: 0.6, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 260, damping: 18 }}
+      className="relative h-16 w-16"
+    >
+      <motion.span
+        aria-hidden
+        className="absolute inset-0 rounded-full bg-emerald-400/25"
+        initial={{ scale: 1, opacity: 0.7 }}
+        animate={{ scale: 1.7, opacity: 0 }}
+        transition={{ duration: 0.9, delay: 0.55, ease: "easeOut" }}
+      />
+      <svg viewBox="0 0 64 64" className="relative h-16 w-16" aria-hidden>
+        <g transform="rotate(-90 32 32)">
+          <motion.circle
+          cx="32"
+          cy="32"
+          r="29"
+          fill="rgb(52 211 153 / 0.12)"
+          stroke="rgb(52 211 153)"
+          strokeWidth="3"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          />
+        </g>
+        <motion.path
+          d="M20 33 l8 8 l16 -18"
+          fill="none"
+          stroke="rgb(52 211 153)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.35, delay: 0.4, ease: "easeOut" }}
+        />
+      </svg>
+    </motion.div>
+  );
+}
+
 /** Bewerbungsformular auf /jobs: Angaben und Unterlagen gehen direkt als
  * Karte in Personal → Bewerbungen im Intranet. */
 export function ApplicationForm({
@@ -256,10 +303,15 @@ export function ApplicationForm({
   if (state.status === "success") {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-snow/10 bg-snow/[0.04] px-6 py-10 text-center">
-        <CircleCheck className="h-8 w-8 text-dune" strokeWidth={1.75} />
-        <p className="max-w-md text-sm font-light leading-relaxed text-snow/80">
+        <SuccessCheck />
+        <motion.p
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.6 }}
+          className="max-w-md text-sm font-light leading-relaxed text-snow/80"
+        >
           {state.message ?? "Danke für deine Bewerbung!"}
-        </p>
+        </motion.p>
       </div>
     );
   }
