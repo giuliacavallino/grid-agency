@@ -86,6 +86,7 @@ export async function demoBillingDetail(id: string): Promise<BillingDetail | nul
     payment_terms_days: 5,
     recipient_email: null,
     sent_to: null,
+    customer_number: "10042",
     items: doc.amount_net
       ? [
           {

@@ -68,6 +68,14 @@ export type Customer = {
   source: string | null;
   notes: string | null;
   lead_id: string | null;
+  /** Rechnungsdaten (aus easybill übernommen oder im Intranet gepflegt) */
+  customer_number?: string | null;
+  street?: string | null;
+  zip?: string | null;
+  country?: string | null;
+  vat_id?: string | null;
+  billing_email?: string | null;
+  payment_terms_days?: number | null;
 };
 
 export const UNITS = [
@@ -87,6 +95,8 @@ export type Article = {
   unit: (typeof UNITS)[number]["id"];
   hours: number;
   active: boolean;
+  number?: string | null;
+  vat_percent?: number;
 };
 
 export type Retainer = {

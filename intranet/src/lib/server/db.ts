@@ -24,7 +24,8 @@ export const TABLES = {
   customers: {
     columns: [
       "name", "contact_name", "email", "phone", "website", "industry", "city", "status",
-      "source", "notes", "lead_id",
+      "source", "notes", "lead_id", "customer_number", "street", "zip", "country", "vat_id",
+      "billing_email", "payment_terms_days",
     ],
     filters: ["status"],
     order: { column: "name", ascending: true },

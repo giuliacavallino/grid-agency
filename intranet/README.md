@@ -14,7 +14,7 @@ Für die lokale Vorschau ohne Login und Datenbank `NEXT_PUBLIC_INTRANET_DEMO=1` 
 
 - `/` – Login und Hub mit den Bereichskacheln
 - `/sales` – Pipeline (Kanban), Posteingang und Kalender von hello@ und giulia@, Kunden, Auftragsbuch, Artikel, Analytics
-- `/finance` – Eingangsrechnungen als Kanban (Neu → Freigegeben → An DATEV gesendet), Ausgangsrechnungen (alle Belege aus easybill: Rechnungen, Stornos, Angebote, Serien, Mahnwesen; Kennzahlen, Beleg mit Positionen, Zahlungen und PDF), Posteingang von buchhaltung@, Einstellungen (DATEV-Upload-Adresse)
+- `/finance` – Eingangsrechnungen als Kanban (Neu → Freigegeben → An DATEV gesendet), Ausgangsrechnungen (Rechnungen, Gutschriften, Stornos, Serien schreiben und verschicken; dazu alle Belege aus easybill), Posteingang von buchhaltung@, Einstellungen (DATEV-Upload-Adresse, Firmendaten und Texte der Rechnungen)
 - `/personal` – Bewerbungen als Kanban (Neue Bewerbung → Gespräch → Case Study → Zusage / Absage)
 - `/mail` – Posteingang und Kalender aller Postfächer (hello@, giulia@, buchhaltung@, google@)
 - `/aufgaben` – To-dos je Kunde (ersetzt Asana): Kacheln aller Kunden, je Kunde eine Liste wie in Asana (Themen als Gruppen, alles direkt in der Zeile bearbeitbar, speichert automatisch), „Meine To-dos“ über alle Kunden, Briefing je Kunde (Zugänge, Ansprechpartner, Postingplan), ehemalige Kunden im Archiv
@@ -77,3 +77,13 @@ curl -X POST https://pmjfgzjoaloggzbpvnrq.supabase.co/functions/v1/easybill-hist
 ```
 
 Der Token wird nur als SHA-256-Hash in `sales_settings.easybill_import` gespeichert; für einen neuen Lauf einen neuen Token erzeugen und den Hash dort ersetzen. `pdfs` arbeitet in Portionen und gibt `cursor` und `remaining` zurück. Den Plan für das eigene Rechnungstool beschreibt `docs/rechnungsausgang.md`.
+
+## Rechnungsausgang
+
+Finance → Ausgangsrechnungen schreibt Rechnungen, Gutschriften und Serienrechnungen:
+
+- **Entwurf → Festschreiben → Senden → Zahlung.** Beim Festschreiben vergibt die Datenbankfunktion `billing_finalize` die nächste Nummer (`JJ-NNN`, durchlaufend ab 26-222, gemeinsam für Rechnung, Gutschrift und Storno) und das PDF landet im Bucket `billing`. Danach sperrt ein Trigger den Beleg (GoBD); geändert werden nur noch Status, Zahlungen und Versand.
+- **Storno** (eigene Nummer, Gegenbuchung aller Positionen), **Korrektur** (Storno und Kopie als neuer Entwurf) und **Gutschrift** über einen Teilbetrag gehen auch für Rechnungen aus easybill.
+- **Versand** von buchhaltung@ über Graph im Browser (wie der DATEV-Versand), mit PDF im Anhang.
+- **Serienrechnungen**: Der Cron `GET /api/cron/billing` (täglich, `vercel.json`) erzeugt fällige Rechnungen, schreibt sie fest und verschickt sie ohne angemeldete Person. Dafür braucht die Entra-App zusätzlich die **Anwendungsberechtigung `Mail.Send`** mit Admin-Zustimmung (am besten per Application Access Policy auf buchhaltung@ beschränkt). Scheitert der Versand, steht der Fehler am Beleg und er lässt sich von Hand senden. easybill-Serien laufen in easybill weiter, bis sie im Intranet „übernommen“ werden; vorher in easybill stoppen.
+- **Rechnungspapier** (`src/lib/server/invoice-pdf.tsx`, react-pdf): Look der Website, Readex Pro (statische Schnitte in `src/lib/server/fonts`, per `outputFileTracingIncludes` in die Funktionen gepackt), GiroCode für Banking-Apps. Firmendaten und Texte stehen in Finance → Einstellungen.

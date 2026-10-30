@@ -1,4 +1,6 @@
-# Rechnungsausgang im Intranet (Vorschlag)
+# Rechnungsausgang im Intranet
+
+Stand 30.10.2026: Schritte 1 bis 4 sind umgesetzt (Archiv, Rechnung schreiben und senden, Storno/Korrektur/Gutschrift, Serien mit Cron). Entscheidungen: Stornos und Gutschriften bekommen eigene Nummern aus dem Rechnungskreis; Serien schreiben fest und versenden automatisch.
 
 Ziel: easybill ablösen. Das Intranet schreibt Rechnungen, Serienrechnungen, Gutschriften, Korrekturen und Stornos selbst, verschickt sie und verfolgt die Zahlungen.
 

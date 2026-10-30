@@ -108,6 +108,7 @@ export type BillingDetail = BillingDocument & {
   payment_terms_days: number | null;
   recipient_email: string | null;
   sent_to: string | null;
+  customer_number: string | null;
   items: BillingItem[];
   payments: BillingPayment[];
   /** Original, Storno, Mahnungen, Auftrag … */

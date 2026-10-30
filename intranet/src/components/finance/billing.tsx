@@ -3,11 +3,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowUpRight, FileDown, ReceiptText, Search } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, FileDown, Plus, ReceiptText, Repeat, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { api } from "@/lib/api";
 import { useResource } from "@/lib/data";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import {
   KIND_GROUPS,
   KIND_LABEL,
@@ -24,8 +23,10 @@ import {
   type BillingKind,
   type KindGroup,
 } from "@/lib/billing";
-import { Badge, Button, Empty, Input, Select, Sheet, Spinner, useToast } from "@/components/ui";
+import { Badge, Button, Empty, IconButton, Input, Select, Sheet, Spinner, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
+import { BillingEditor } from "./billing-editor";
+import { DocumentActions, openPdf, removePayment } from "./billing-actions";
 
 const LIST_URL = "/api/finance/belege";
 
@@ -49,6 +50,7 @@ export function Billing() {
   const [status, setStatus] = useState("");
   const [year, setYear] = useState("");
   const [query, setQuery] = useState("");
+  const [editor, setEditor] = useState<{ kind: "rechnung" | "gutschrift" | "serie"; doc: BillingDetail | null } | null>(null);
 
   // Geöffneter Beleg steht in der URL (?id=…), damit Links ihn öffnen
   const params = useSearchParams();
@@ -134,6 +136,15 @@ export function Billing() {
             </option>
           ))}
         </Select>
+        {series ? (
+          <Button variant="primary" size="sm" className="h-9" icon={<Repeat className="h-4 w-4" />} onClick={() => setEditor({ kind: "serie", doc: null })}>
+            <span className="sr-only sm:not-sr-only">Neue Serie</span>
+          </Button>
+        ) : (
+          <Button variant="primary" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ kind: "rechnung", doc: null })}>
+            <span className="sr-only sm:not-sr-only">Neue Rechnung</span>
+          </Button>
+        )}
       </PageBar>
 
       {docs && (
@@ -254,7 +265,25 @@ export function Billing() {
         </div>
       )}
 
-      <DocumentSheet id={openId} onClose={() => show(null)} onOpen={show} />
+      <DocumentSheet
+        id={editor ? null : openId}
+        onClose={() => show(null)}
+        onOpen={(id) => show(id || null)}
+        onEdit={(doc) => {
+          show(doc.id);
+          setEditor({ kind: doc.kind as "rechnung" | "gutschrift" | "serie", doc });
+        }}
+      />
+      <BillingEditor
+        open={!!editor}
+        kind={editor?.kind ?? "rechnung"}
+        doc={editor?.doc ?? null}
+        onClose={() => setEditor(null)}
+        onSaved={(doc) => {
+          setEditor(null);
+          show(doc.id);
+        }}
+      />
     </div>
   );
 }
@@ -336,26 +365,31 @@ function servicePeriod(doc: BillingDetail) {
 
 const quantity = (value: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(value);
 
-function DocumentSheet({ id, onClose, onOpen }: { id: string | null; onClose: () => void; onOpen: (id: string) => void }) {
+function DocumentSheet({
+  id,
+  onClose,
+  onOpen,
+  onEdit,
+}: {
+  id: string | null;
+  onClose: () => void;
+  onOpen: (id: string) => void;
+  onEdit: (doc: BillingDetail) => void;
+}) {
   const { data: doc, error, loading } = useResource<BillingDetail>(id ? `${LIST_URL}/${id}` : null);
   const [opening, setOpening] = useState(false);
   const toast = useToast();
 
-  // Signierte Links laufen nach 10 Minuten ab, daher erst beim Klick holen.
-  // Das Fenster öffnet sofort, sonst blockt Safari das Pop-up.
-  async function openPdf() {
-    const tab = window.open("", "_blank");
+  // Signierte Links laufen nach 10 Minuten ab, daher erst beim Klick holen
+  async function pdf() {
+    if (!id) return;
     setOpening(true);
     try {
-      const { url } = await api<{ url: string }>(`${LIST_URL}/${id}/pdf`);
-      if (tab) tab.location.href = url;
-      else window.location.href = url;
+      await openPdf(id);
     } catch {
-      tab?.close();
       toast("PDF konnte nicht geöffnet werden", "error");
-    } finally {
-      setOpening(false);
     }
+    setOpening(false);
   }
 
   const current = doc?.id === id ? doc : undefined;
@@ -369,7 +403,7 @@ function DocumentSheet({ id, onClose, onOpen }: { id: string | null; onClose: ()
       subtitle={current && [current.customer_name, formatDate(current.document_date)].filter((v) => v && v !== "–").join(" · ")}
       actions={
         current?.has_pdf && (
-          <Button size="sm" icon={<FileDown className="h-4 w-4" />} loading={opening} loadingText="Wird geöffnet …" onClick={openPdf}>
+          <Button size="sm" icon={<FileDown className="h-4 w-4" />} loading={opening} loadingText="Wird geöffnet …" onClick={pdf}>
             PDF
           </Button>
         )
@@ -382,13 +416,15 @@ function DocumentSheet({ id, onClose, onOpen }: { id: string | null; onClose: ()
           <Spinner />
         </div>
       ) : (
-        <DocumentBody doc={current} onOpen={onOpen} />
+        <DocumentBody doc={current} onOpen={onOpen} onEdit={onEdit} />
       )}
     </Sheet>
   );
 }
 
-function DocumentBody({ doc, onOpen }: { doc: BillingDetail; onOpen: (id: string) => void }) {
+function DocumentBody({ doc, onOpen, onEdit }: { doc: BillingDetail; onOpen: (id: string) => void; onEdit: (doc: BillingDetail) => void }) {
+  const toast = useToast();
+  const [removing, setRemoving] = useState<string | null>(null);
   const lines = addressLines(doc.address);
   const period = servicePeriod(doc);
   const payable = ["rechnung", "gutschrift", "proforma"].includes(doc.kind) && ["offen", "teilbezahlt", "bezahlt"].includes(doc.status);
@@ -398,7 +434,18 @@ function DocumentBody({ doc, onOpen }: { doc: BillingDetail; onOpen: (id: string
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge doc={doc} />
         {doc.source === "easybill" && <Badge>aus easybill</Badge>}
+        {doc.kind === "serie" && <Badge>{doc.recurring?.managed_by === "intranet" ? "läuft im Intranet" : "läuft in easybill"}</Badge>}
+        {doc.sent_at && <Badge>gesendet {formatDateTime(doc.sent_at)}</Badge>}
       </div>
+
+      <DocumentActions doc={doc} onOpen={onOpen} onEdit={onEdit} />
+
+      {doc.send_error && !doc.sent_at && (
+        <p className="flex items-start gap-2 rounded-2xl bg-error/10 px-4 py-3 text-[13px] text-error">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>Automatischer Versand fehlgeschlagen: {doc.send_error}. Bitte über „Senden“ verschicken.</span>
+        </p>
+      )}
 
       {doc.amount_gross !== 0 && (
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -440,6 +487,7 @@ function DocumentBody({ doc, onOpen }: { doc: BillingDetail; onOpen: (id: string
         )}
         {period && <Fact label="Leistung">{period}</Fact>}
         {doc.paid_at && <Fact label="Bezahlt am">{formatDate(doc.paid_at)}</Fact>}
+        {doc.sent_to && <Fact label="Gesendet an">{doc.sent_to}</Fact>}
       </dl>
 
       {plain(doc.intro) && <p className="text-[13px] whitespace-pre-line text-snow/70">{plain(doc.intro)}</p>}
@@ -484,6 +532,25 @@ function DocumentBody({ doc, onOpen }: { doc: BillingDetail; onOpen: (id: string
                 <span className="tabular-nums text-snow/70">{formatDate(p.paid_on)}</span>
                 <span className="min-w-0 flex-1 truncate text-snow/55">{[p.method, p.reference, p.notes].filter(Boolean).join(" · ")}</span>
                 <span className="font-medium tabular-nums">{money(p.amount, doc.currency)}</span>
+                {doc.source === "intranet" && (
+                  <IconButton
+                    label="Zahlung entfernen"
+                    disabled={removing === p.id}
+                    aria-busy={removing === p.id || undefined}
+                    onClick={async () => {
+                      setRemoving(p.id);
+                      try {
+                        await removePayment(doc.id, p.id);
+                        toast("Zahlung entfernt");
+                      } catch (e) {
+                        toast(e instanceof Error ? e.message : "Entfernen fehlgeschlagen", "error");
+                      }
+                      setRemoving(null);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </IconButton>
+                )}
               </li>
             ))}
           </ul>

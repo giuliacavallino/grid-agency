@@ -10,11 +10,11 @@ import { demoBilling, demoBillingDetail } from "./billing-demo";
 export const BUCKET = "billing";
 
 const LIST_COLUMNS =
-  "id,kind,number,status,title,customer_id,ref_document_id,document_date,due_date,currency,amount_net,amount_gross,paid_amount,paid_at,recurring,pdf_path,source,finalized_at,sent_at,send_error,customers(name)";
+  "id,kind,number,status,title,customer_id,ref_document_id,document_date,due_date,currency,amount_net,amount_gross,paid_amount,paid_at,recurring,pdf_path,source,finalized_at,sent_at,send_error,customers(name,customer_number)";
 
 type ListRow = Omit<BillingDocument, "customer_name" | "has_pdf"> & {
   pdf_path: string | null;
-  customers: { name: string } | null;
+  customers: { name: string; customer_number: string | null } | null;
 };
 
 export function check<T>({ data, error }: { data: T; error: { message: string } | null }) {
@@ -81,6 +81,7 @@ export async function getBilling(id: string): Promise<BillingDetail | null> {
 
   return {
     ...toDocument(doc),
+    customer_number: doc.customers?.customer_number ?? null,
     amount_vat: num(doc.amount_vat),
     service_from: doc.service_from,
     service_to: doc.service_to,

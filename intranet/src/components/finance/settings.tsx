@@ -4,18 +4,27 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { FINANCE_MAILBOX } from "@/lib/config";
 import { mutate, useResource } from "@/lib/data";
+import type { BillingSettings } from "@/lib/billing";
 import type { Settings } from "@/lib/sales/types";
-import { Button, Field, Input, Spinner, useToast } from "@/components/ui";
+import { Button, Field, Input, Spinner, Textarea, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
 
-/** Einstellungen für Finance: DATEV-Upload-Adresse (Belegtransfer per Mail). */
+/** Einstellungen für Finance: DATEV-Upload-Adresse (Belegtransfer per Mail),
+ * Firmendaten und Texte der Ausgangsrechnungen. */
 export function FinanceSettings() {
   const { data } = useResource<Settings>("/api/sales/settings");
   return (
     <div className="flex h-full flex-col">
       <PageBar title="Einstellungen" />
       <div className="overflow-y-auto p-5">
-        {data ? <DatevForm key={data.datev.upload_address} initial={data.datev.upload_address} /> : <Spinner />}
+        {data ? (
+          <div className="flex flex-col gap-5">
+            <DatevForm key={data.datev.upload_address} initial={data.datev.upload_address} />
+            <BillingForm initial={data.billing} />
+          </div>
+        ) : (
+          <Spinner />
+        )}
       </div>
     </div>
   );
@@ -61,6 +70,82 @@ function DatevForm({ initial }: { initial: string }) {
         )}
       </Field>
       <Button type="submit" variant="primary" className="mt-5" loading={busy} loadingText="Wird gespeichert …" disabled={address.trim() === initial}>
+        Speichern
+      </Button>
+    </form>
+  );
+}
+
+const COMPANY_FIELDS: [keyof BillingSettings["company"], string][] = [
+  ["name", "Firma"],
+  ["street", "Straße"],
+  ["zip", "PLZ"],
+  ["city", "Ort"],
+  ["email", "E-Mail"],
+  ["phone", "Telefon"],
+  ["website", "Website"],
+  ["tax_number", "Steuernummer"],
+  ["vat_id", "USt-IdNr."],
+  ["bank", "Bank"],
+  ["iban", "IBAN"],
+  ["bic", "BIC"],
+  ["managing_director", "Geschäftsführung"],
+  ["register", "Registergericht und Nummer"],
+];
+
+/** Firmendaten (Pflichtangaben auf jeder Rechnung) und Standardtexte */
+function BillingForm({ initial }: { initial: BillingSettings }) {
+  const toast = useToast();
+  const [form, setForm] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const setCompany = (key: keyof BillingSettings["company"], value: string) => setForm((f) => ({ ...f, company: { ...f.company, [key]: value } }));
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    try {
+      const result = await api<Settings>("/api/sales/settings", { method: "PUT", body: JSON.stringify({ billing: form }) });
+      mutate<Settings>("/api/sales/settings", () => result);
+      setForm(result.billing);
+      toast("Gespeichert");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Speichern fehlgeschlagen", "error");
+    }
+    setBusy(false);
+  }
+
+  return (
+    <form onSubmit={save} className="max-w-3xl rounded-3xl border border-snow/10 bg-surface p-6">
+      <h2 className="mb-1 text-lg font-medium">Ausgangsrechnungen</h2>
+      <p className="mb-5 text-sm text-snow/60">
+        Diese Angaben stehen auf jeder Rechnung (Pflichtangaben nach § 14 UStG) und im GiroCode. Änderungen gelten für neu festgeschriebene Belege; bereits
+        abgelegte PDFs bleiben unverändert.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {COMPANY_FIELDS.map(([key, label]) => (
+          <Field key={key} label={label}>
+            {(id) => <Input id={id} value={form.company[key]} onChange={(e) => setCompany(key, e.target.value)} required={key === "name" || key === "iban"} />}
+          </Field>
+        ))}
+        <Field label="Zahlungsziel (Tage)" hint="Vorgabe für neue Rechnungen; je Kunde abweichend möglich">
+          {(id) => (
+            <Input id={id} inputMode="numeric" value={String(form.payment_terms_days)} onChange={(e) => setForm({ ...form, payment_terms_days: Number(e.target.value) || 0 })} />
+          )}
+        </Field>
+        <Field label="Einleitung" className="sm:col-span-2">
+          {(id) => <Textarea id={id} value={form.intro} onChange={(e) => setForm({ ...form, intro: e.target.value })} className="min-h-16" />}
+        </Field>
+        <Field label="Schlusstext" className="sm:col-span-2" hint="Platzhalter: {Fällig}, {Monat}, {Zeitraum}, {Firma}">
+          {(id) => <Textarea id={id} value={form.closing} onChange={(e) => setForm({ ...form, closing: e.target.value })} className="min-h-16" />}
+        </Field>
+        <Field label="Betreff der Mail" className="sm:col-span-2" hint="Platzhalter: {Belegart}, {Nummer}, {Firma}">
+          {(id) => <Input id={id} value={form.mail_subject} onChange={(e) => setForm({ ...form, mail_subject: e.target.value })} />}
+        </Field>
+        <Field label="Text der Mail" className="sm:col-span-2" hint="Platzhalter: {Belegart}, {Nummer}, {Betrag}, {Fällig}, {Firma}">
+          {(id) => <Textarea id={id} value={form.mail_body} onChange={(e) => setForm({ ...form, mail_body: e.target.value })} className="min-h-32" />}
+        </Field>
+      </div>
+      <Button type="submit" variant="primary" className="mt-5" loading={busy} loadingText="Wird gespeichert …">
         Speichern
       </Button>
     </form>
