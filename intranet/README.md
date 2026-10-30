@@ -18,9 +18,11 @@ Für die lokale Vorschau ohne Login und Datenbank `NEXT_PUBLIC_INTRANET_DEMO=1` 
 - `/personal` – Bewerbungen als Kanban (Neue Bewerbung → Gespräch → Case Study → Zusage / Absage)
 - `/mail` – Posteingang und Kalender aller Postfächer (hello@, giulia@, buchhaltung@, google@)
 - `/aufgaben` – To-dos je Kunde (ersetzt Asana): Kacheln aller Kunden, je Kunde eine Liste wie in Asana (Themen als Gruppen, alles direkt in der Zeile bearbeitbar, speichert automatisch), „Meine To-dos“ über alle Kunden, Briefing je Kunde (Zugänge, Ansprechpartner, Postingplan), ehemalige Kunden im Archiv
-- `/admin` – Admin-Konsole (nur Rolle Admin): Passwort-Tresor (Kunden-Zugänge sehen alle mit Aufgaben, interne nur Admins; AES-256-GCM-verschlüsselt, Anzeigen/Kopieren/Ändern im Protokoll), Benutzer & Rechte (wer ins Intranet darf, Rolle Admin oder Mitarbeiter*in mit freigegebenen Bereichen; Tabelle `intranet_users`), Firmendaten, Protokoll
+- `/admin` – Admin-Konsole (nur Rolle Admin): Passwort-Tresor (Kunden-Zugänge sehen alle mit Aufgaben, interne nur Admins; AES-256-GCM-verschlüsselt, Anzeigen/Kopieren/Ändern im Protokoll), Benutzer & Rechte (wer ins Intranet darf, Rolle Admin oder Mitarbeiter*in mit freigegebenen Bereichen; Tabelle `intranet_users`), Firmendaten, Absender & Updates, Protokoll
 
 Teams: Über das Sprechblasen-Symbol (Hub oben rechts, Seitenleiste „Teams“) öffnen sich die eigenen Teams-Chats: lesen, antworten, neuer 1:1-Chat mit dem Team. Aus einem To-do heraus schickt „Per Teams schicken“ es an die zuständige Person (Nachricht vorausgefüllt, gesendet wird erst auf Knopfdruck). Alles läuft mit dem Microsoft-Login der Person (`Chat.ReadWrite`), Nachrichten kommen also von ihr selbst.
+
+Kunden-Updates (Admin → Absender & Updates): Ein eigenes Microsoft-365-Konto (z. B. eine Mitarbeiterin fürs Kunden-Update) wird einmal verbunden; der Server hält dessen Refresh-Token mit `VAULT_KEY` verschlüsselt. Je Kunde wird ein Teams-Chat dieses Kontos zugeordnet und Wochen-Update und/oder Reporting eingeschaltet. Claude schreibt die Texte aus den Aufgaben (nur Titel, keine Notizen, nichts Internes) und schickt sie automatisch: Wochen-Update freitags um 14/15 Uhr, Reporting für den Vormonat am ersten Werktag (`GET /api/cron/updates`, `vercel.json`). Pro Kunde, Art und Zeitraum geht höchstens eine Nachricht raus; ohne `ANTHROPIC_API_KEY` gar keine. Vorschau, Senden von Hand, Verlauf (`customer_updates`) und Antworten im Kundenchat stehen auf derselben Seite. Social-Media-Zahlen im Reporting folgen, sobald die Plattform-APIs angebunden sind.
 
 Zugang: Nur Microsoft-Konten, die in Admin → Benutzer & Rechte aktiv sind, kommen hinein. Jede API-Route prüft das (`withUser` in `src/lib/server/auth.ts`); welche Tabelle zu welchem Bereich gehört, steht in `TABLE_AREAS` in `src/lib/server/db.ts`. Aufgaben-Listen mit `restricted` (z. B. „Geschäftsführung“) sehen nur Admins.
 
@@ -47,7 +49,7 @@ Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in 
 
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`: ohne sie bleiben die Sales-Seiten leer.
 - `MS_CLIENT_SECRET`, `MAIL_WEBHOOK_SECRET` (beliebiger langer Zufallswert), `CRON_SECRET`, `INTRANET_URL`
-- `ANTHROPIC_API_KEY`: ohne Key ordnen einfache Stichwort-Regeln die Mails ein.
+- `ANTHROPIC_API_KEY`: ohne Key ordnen einfache Stichwort-Regeln die Mails ein, und es gehen keine Kunden-Updates raus.
 - `VAULT_KEY`: Schlüssel des Passwort-Tresors, 32 Byte base64 (`openssl rand -base64 32`). Nie ändern oder löschen, sonst lassen sich gespeicherte Passwörter nicht mehr entschlüsseln. Bis er gesetzt ist, liegen die aus Asana übernommenen Passwörter unverschlüsselt vor; beim ersten Öffnen von Admin danach werden sie automatisch verschlüsselt.
 - `EASYBILL_API_KEY`: easybill → Einstellungen → API. Damit gleicht das Intranet Kunden, Artikel, Serienrechnungen (→ Retainer) und offene Angebote (→ Leads in „Angebot“) ab, täglich und per Knopf „easybill“ in Kunden, Auftragsbuch und Artikel.
 - `META_APP_SECRET`, `META_VERIFY_TOKEN`, `META_PAGE_ACCESS_TOKEN`
@@ -60,6 +62,7 @@ Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in 
 3. Unter „Zertifikate & Geheimnisse“ ein Client-Secret anlegen und als `MS_CLIENT_SECRET` hinterlegen.
 4. Exchange: Vollzugriff und „Senden als“ auf jedes geteilte Postfach aus `MAILBOXES` (hello@, buchhaltung@, google@). Der DATEV-Versand läuft über „Senden als“ von buchhaltung@.
 5. SPA-Redirect-URIs: jede Intranet-URL mit `/` am Ende (Produktion, Previews, `http://localhost:3000/`).
+6. Plattform „Web“ mit der Redirect-URI `https://intranet.grid-agency.de/api/sender/callback` (Absender-Konto für Kunden-Updates; nutzt `MS_CLIENT_SECRET`).
 
 **Meta:** In der Meta-App das Webhook-Produkt „Page“ mit Feld `leadgen` auf `https://intranet.grid-agency.de/api/webhooks/meta` einrichten (Verify Token = `META_VERIFY_TOKEN`). Die App braucht die Rechte `leads_retrieval` und `pages_manage_metadata` und einen Page Access Token.
 
