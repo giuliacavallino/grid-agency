@@ -134,8 +134,9 @@ export const PAYMENT_METHODS = [
   { id: "bar", label: "Bar" },
 ] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]["id"];
-/** Zahlungsarten, bei denen die Rechnung meist schon bezahlt ist */
-export const PREPAID_METHODS: readonly PaymentMethod[] = ["lastschrift", "karte", "paypal", "bar"];
+/** Zahlungsarten, bei denen die Rechnung schon bezahlt ist. Lastschriften
+ * nicht: die gelten erst als bezahlt, wenn der Bank-Abgleich sie findet. */
+export const PREPAID_METHODS: readonly PaymentMethod[] = ["karte", "paypal", "bar"];
 
 export const INVOICE_CATEGORIES = [
   "Software & Abos",
@@ -175,6 +176,8 @@ export type Invoice = {
   /** Buchungsdatum der zugeordneten Abbuchung (Bank-Abgleich) */
   paid_at: string | null;
   bank_transaction_id: string | null;
+  /** Beleg ausgelesen (Beträge, Fälligkeit, bezahlt); leer = steht noch aus */
+  extracted_at: string | null;
   description: string | null;
   attachment_names: string[] | null;
   approved_by: string | null;
