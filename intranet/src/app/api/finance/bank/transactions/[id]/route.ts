@@ -44,4 +44,4 @@ export const POST = withUser(async (user, request, { params }: Context) => {
     if (error instanceof BankError) return Response.json({ error: error.message }, { status: 502 });
     throw error;
   }
-}, ["finance"]);
+}, ["admin"]);

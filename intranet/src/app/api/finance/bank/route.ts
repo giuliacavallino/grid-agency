@@ -8,16 +8,18 @@ export const maxDuration = 120;
 /** Stand der Bankanbindung: eingerichtet? letzter Abgleich? */
 export const GET = withUser(async () => {
   return Response.json({ configured: bankConfigured(), last: await db().getSetting("bank_sync") });
-}, ["finance"]);
+}, ["admin"]);
 
-/** Abgleich auf Knopfdruck. Banken erlauben ohne TAN nur wenige Abrufe am
- * Tag (PSD2: 4 je Konto), daher kein Automatismus beim Öffnen der Seite. */
-export const POST = withUser(async () => {
+/** Abgleich auf Knopfdruck, mit IP und Browser der Person (zählt nicht
+ * gegen die 4 automatischen Abrufe am Tag, die der Cron braucht). */
+export const POST = withUser(async (_user, request) => {
   if (!bankConfigured()) return Response.json({ error: "Enable Banking ist nicht eingerichtet" }, { status: 503 });
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim();
+  const userAgent = request.headers.get("user-agent");
   try {
-    return Response.json(await syncBank());
+    return Response.json(await syncBank(ip && userAgent ? { ip, userAgent } : undefined));
   } catch (error) {
     if (error instanceof BankError) return Response.json({ error: error.message }, { status: 502 });
     throw error;
   }
-}, ["finance"]);
+}, ["admin"]);

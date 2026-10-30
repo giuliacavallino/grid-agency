@@ -21,16 +21,19 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { useMe } from "@/components/access";
 import { AccountMenu } from "@/components/hub";
 import { TeamsButton } from "@/components/teams";
 import { Logo } from "@/components/logo";
+import { hasArea } from "@/lib/access";
 import { useRows } from "@/lib/data";
 
 /** Zähler „neu“ an einem Menüpunkt (Leads, Bewerbungen, Rechnungen) */
 type Counter = "leads" | "applications" | "invoices";
 
 /** color: farbiger Punkt statt Icon (Kunden in Aufgaben); group: Zwischenüberschrift davor */
-export type NavItem = { href: string; label: string; icon?: LucideIcon; color?: string; counter?: Counter; group?: string };
+/** area: nur sichtbar, wer diesen Bereich darf (z. B. "admin" für Bank) */
+export type NavItem = { href: string; label: string; icon?: LucideIcon; color?: string; counter?: Counter; group?: string; area?: string };
 
 export const SALES_NAV: NavItem[] = [
   { href: "/sales", label: "Pipeline", icon: Columns3, counter: "leads" },
@@ -44,7 +47,7 @@ export const SALES_NAV: NavItem[] = [
 
 export const FINANCE_NAV: NavItem[] = [
   { href: "/finance", label: "Eingangsrechnungen", icon: Columns3, counter: "invoices" },
-  { href: "/finance/bank", label: "Bank", icon: Landmark },
+  { href: "/finance/bank", label: "Bank", icon: Landmark, area: "admin" },
   { href: "/finance/posteingang", label: "Posteingang", icon: Inbox },
   { href: "/finance/einstellungen", label: "Einstellungen", icon: Settings },
 ];
@@ -87,11 +90,12 @@ function NavCount({ counter, collapsed, label }: { counter: Counter; collapsed: 
 
 function NavList({ nav, collapsed, onNavigate }: { nav: NavItem[]; collapsed: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const me = useMe();
   const root = nav[0].href;
 
   return (
     <ul className="flex flex-col gap-0.5">
-      {nav.map(({ href, label, icon: Icon, color, counter, group }) => {
+      {nav.filter((item) => !item.area || hasArea(me.data, item.area)).map(({ href, label, icon: Icon, color, counter, group }) => {
         const active = isActive(pathname, href, root);
         return (
           <li key={href}>

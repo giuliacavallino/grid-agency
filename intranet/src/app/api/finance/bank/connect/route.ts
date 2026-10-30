@@ -18,4 +18,4 @@ export const POST = withUser(async (user, request) => {
     if (error instanceof BankError) return Response.json({ error: error.message }, { status: 502 });
     throw error;
   }
-}, ["finance"]);
+}, ["admin"]);

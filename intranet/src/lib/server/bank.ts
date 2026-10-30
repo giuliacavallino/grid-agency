@@ -9,6 +9,7 @@ import {
   transactionRef,
   transactions,
   type EbBalance,
+  type Psu,
   type EbTransaction,
 } from "./enable-banking";
 import { addReceivablePayment, openReceivables, removeReceivablePayment } from "./receivables";
@@ -91,7 +92,8 @@ export async function disconnect(accountId: string) {
 
 // ---------- Abgleich ----------
 
-export async function syncBank(): Promise<BankSync> {
+/** psu: nur beim Abgleich auf Knopfdruck (Person sitzt davor) */
+export async function syncBank(psu?: Psu): Promise<BankSync> {
   const store = db();
   const accounts = await store.list("bank_accounts", { active: "true" });
   const errors: string[] = [];
@@ -107,14 +109,14 @@ export async function syncBank(): Promise<BankSync> {
     }
     try {
       const uid = String(account.uid);
-      const balance = pickBalance(await balances(uid));
+      const balance = pickBalance(await balances(uid, psu));
 
       // Ab dem letzten gebuchten Tag (mit Puffer für Nachbuchungen), beim
       // ersten Mal 90 Tage (mehr geben Banken ohne neue TAN meist nicht her)
       const known = await store.list("bank_transactions", { account_id: account.id });
       const latest = known.reduce((max, t) => (String(t.booking_date) > max ? String(t.booking_date) : max), "");
       const from = latest ? new Date(new Date(latest).getTime() - 7 * DAY).toISOString().slice(0, 10) : daysAgo(90);
-      const booked = (await transactions(uid, from)).filter((t) => !t.status || t.status === "BOOK");
+      const booked = (await transactions(uid, from, psu)).filter((t) => !t.status || t.status === "BOOK");
       // Schlüssel über die IBAN, damit eine neue Freigabe nichts doppelt anlegt
       const accountKey = String(account.iban ?? uid);
       const inserted = await store.upsert("bank_transactions", booked.map((t) => toRow(account.id, accountKey, t)), "ref", true);

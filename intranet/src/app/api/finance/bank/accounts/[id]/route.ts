@@ -7,4 +7,4 @@ type Context = { params: Promise<{ id: string }> };
 export const DELETE = withUser(async (_user, _request, { params }: Context) => {
   const { id } = await params;
   return Response.json(await disconnect(id));
-}, ["finance"]);
+}, ["admin"]);

@@ -14,4 +14,4 @@ export const GET = withUser(async () => {
     receivablesError = error instanceof Error ? error.message : "Ausgangsrechnungen nicht lesbar";
   }
   return Response.json({ items: [...(await openPayables()), ...receivables], receivablesError });
-}, ["finance"]);
+}, ["admin"]);

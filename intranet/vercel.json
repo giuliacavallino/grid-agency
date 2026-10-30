@@ -3,6 +3,13 @@
   "crons": [
     { "path": "/api/cron/mail", "schedule": "0 5 * * *" },
     { "path": "/api/cron/easybill", "schedule": "30 4 * * *" },
-    { "path": "/api/cron/bank", "schedule": "45 5 * * *" }
+    { "path": "/api/cron/bank?slot=8&zeit=winter", "schedule": "30 7 * * *" },
+    { "path": "/api/cron/bank?slot=8&zeit=sommer", "schedule": "30 6 * * *" },
+    { "path": "/api/cron/bank?slot=11&zeit=winter", "schedule": "0 10 * * *" },
+    { "path": "/api/cron/bank?slot=11&zeit=sommer", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/bank?slot=15&zeit=winter", "schedule": "0 14 * * *" },
+    { "path": "/api/cron/bank?slot=15&zeit=sommer", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/bank?slot=20&zeit=winter", "schedule": "0 19 * * *" },
+    { "path": "/api/cron/bank?slot=20&zeit=sommer", "schedule": "0 18 * * *" }
   ]
 }
