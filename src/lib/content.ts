@@ -1000,6 +1000,32 @@ export const jobs: Job[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* E-Books                                                            */
+/* ------------------------------------------------------------------ */
+
+export type Ebook = {
+  href: string;
+  /** Cover unter /public, Hochformat A4. */
+  cover: string;
+  band: number;
+  pages: number;
+  title: string;
+  subtitle: string;
+};
+
+/** E-Books (Leadmagneten) fürs Regal im Menü. Neuer Band = neuer Eintrag. */
+export const ebooks: Ebook[] = [
+  {
+    href: "/ebook",
+    cover: "/ebook/cover.jpg",
+    band: 1,
+    pages: 18,
+    title: "Social Media 2027",
+    subtitle: "Mehr Umsatz, zufriedenere Kund:innen, mehr Bewerbungen.",
+  },
+];
+
+/* ------------------------------------------------------------------ */
 /* FAQ                                                                */
 /* ------------------------------------------------------------------ */
 
