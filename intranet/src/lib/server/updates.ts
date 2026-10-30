@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { DEMO } from "@/lib/config";
 import { db, sb, type Row } from "./db";
 import { sendAsSender, senderInfo } from "./sender";
+import { vaultStatus } from "./vault";
 
 // Automatische Kunden-Updates über das Absender-Konto: freitags ein kurzes
 // Wochen-Update, am ersten Werktag des Monats das Reporting für den Vormonat.
@@ -175,6 +176,16 @@ async function alreadySent(projectId: string, kind: UpdateKind, period: string) 
 
 // ---------- Ablauf ----------
 
+/** Warum gerade nichts rausgehen darf (null = bereit). Prüft nur, ob etwas
+ * vorhanden ist, nie Werte. Solange etwas fehlt, sind die Updates pausiert:
+ * kein Text von Claude, kein Senden, beim Cron auch kein Protokolleintrag. */
+export async function updatesBlocked(): Promise<string | null> {
+  if (vaultStatus() !== "ok") return "VAULT_KEY fehlt oder ist ungültig";
+  if (!DEMO && !process.env.MS_CLIENT_SECRET) return "MS_CLIENT_SECRET fehlt";
+  if (!(await senderInfo())) return "Kein Absender-Konto verbunden";
+  return null;
+}
+
 /** Update für einen Kunden schreiben und (mit send) verschicken. Mit text
  * geht ein schon geprüfter (ggf. bearbeiteter) Vorschau-Text raus. */
 export async function runUpdate(
@@ -188,6 +199,9 @@ export async function runUpdate(
   if (!project) throw new Error("Kunde nicht gefunden");
   const chatId = (project.teams_chat_id as string | null) ?? null;
   const base = { project_id: projectId, kind, period, chat_id: chatId, sent_by: options.by };
+
+  const blocked = await updatesBlocked();
+  if (blocked) return saveLog({ ...base, text: null, status: "skipped", error: blocked });
 
   // Pro Kunde, Art und Zeitraum höchstens eine Nachricht (auch von Hand)
   if (options.send && (await alreadySent(projectId, kind, period))) {
@@ -220,11 +234,13 @@ export async function runUpdate(
 
 /** Cron: alle aktiven Kunden mit eingeschaltetem Update und Chat */
 export async function runDue(kind: UpdateKind, now = new Date()) {
+  const paused = await updatesBlocked();
+  if (paused) return { paused, results: [] };
   const flag = kind === "weekly" ? "weekly_update" : "monthly_report";
   const projects = (await db().list("task_projects")).filter((p) => !p.archived && !p.restricted && p[flag] && p.teams_chat_id);
   const results = [];
   for (const project of projects) {
     results.push(await runUpdate(project.id, kind, { send: true, by: "automatisch", now }));
   }
-  return results;
+  return { paused: null, results };
 }

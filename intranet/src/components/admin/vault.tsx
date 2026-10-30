@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Eye, EyeOff, ExternalLink, KeyRound, Lock, PanelRightOpen, Plus, Search, Trash2, Wand2 } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
+import { accentFill } from "@/lib/theme";
 import { useIsAdmin } from "@/components/access";
 import { useResource, useRows } from "@/lib/data";
 import { formatDateTime, relativeTime } from "@/lib/format";
@@ -10,7 +11,7 @@ import type { TaskProject } from "@/lib/tasks";
 import { generatePassword, type VaultItem, type VaultLogEntry } from "@/lib/vault";
 import { Avatar, Button, Dialog, Empty, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
-import { copyPassword, createVaultItem, deleteVaultItem, revealPassword, updateVaultItem, useVault, type VaultPatch } from "./vault-data";
+import { copyPassword, createVaultItem, deleteVaultItem, revealPassword, updateVaultItem, useVault, useVaultReady, VAULT_LOCKED_HINT, type VaultPatch } from "./vault-data";
 
 const INTERNAL = "intern";
 
@@ -46,6 +47,7 @@ function useGroups(items: VaultItem[] | undefined, projects: TaskProject[] | und
 /** Admin → Passwörter: alle Zugänge je Kunde, interne nur für die GF. */
 export function Vault() {
   const vault = useVault();
+  const ready = useVaultReady();
   const projects = useRows<TaskProject>("task_projects");
   const management = useIsManagement();
   const [query, setQuery] = useState("");
@@ -64,7 +66,7 @@ export function Vault() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageBar title="Passwörter" meta={vault.data && `${vault.data.length} Zugänge · verschlüsselt gespeichert`}>
+      <PageBar title="Passwörter" meta={vault.data && `${vault.data.length} Zugänge${ready ? " · verschlüsselt gespeichert" : ""}`}>
         <div className="relative min-w-0 flex-1 md:max-w-64">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-snow/40" />
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Kunde, Dienst, Benutzer …" aria-label="Zugänge durchsuchen" className="h-9 w-full pl-9" />
@@ -74,6 +76,13 @@ export function Vault() {
         </Button>
       </PageBar>
 
+      {ready === false && (
+        <p className="mx-4 mt-4 max-w-3xl rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed text-snow/80 md:mx-6" style={{ background: accentFill("#f5a524", 14) }} role="status">
+          <strong className="font-medium">VAULT_KEY ist in Vercel nicht (gültig) gesetzt.</strong> Die aus Asana übernommenen Passwörter liegen noch unverschlüsselt in der
+          Datenbank und werden erst verschlüsselt, wenn der Schlüssel gesetzt ist. Neue Passwörter lassen sich bis dahin nicht speichern. Anleitung:
+          docs/absender-setup.md.
+        </p>
+      )}
       {error ? (
         <Empty title="Passwörter konnten nicht geladen werden" text={error.message} />
       ) : vault.loading || projects.loading ? (
@@ -273,6 +282,7 @@ function VaultSheet({ item, projects, management, onClose }: { item?: VaultItem;
  * ein neues Passwort beim Klick auf „Übernehmen“. */
 function VaultDetail({ item, projects, management, onClose }: { item: VaultItem; projects: TaskProject[]; management: boolean; onClose: () => void }) {
   const toast = useToast();
+  const locked = useVaultReady() === false;
   const [form, setForm] = useState({ title: item.title, username: item.username ?? "", url: item.url ?? "", notes: item.notes ?? "" });
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(0);
@@ -307,8 +317,8 @@ function VaultDetail({ item, projects, management, onClose }: { item: VaultItem;
       setPassword("");
       log.reload();
       toast("Passwort gespeichert");
-    } catch {
-      toast("Speichern fehlgeschlagen", "error");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Speichern fehlgeschlagen", "error");
     }
     setSavingPassword(false);
   }
@@ -346,11 +356,20 @@ function VaultDetail({ item, projects, management, onClose }: { item: VaultItem;
         <Field label={item.has_secret ? "Neues Passwort" : "Passwort"} className="col-span-2">
           {(id) => (
             <div className="flex gap-2">
-              <Input id={id} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className="font-mono" placeholder={item.has_secret ? "Nur ausfüllen, um es zu ändern" : ""} />
-              <IconButton label="Sicheres Passwort erzeugen" className="h-10 w-10 shrink-0" onClick={() => setPassword(generatePassword())}>
+              <Input
+                id={id}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                className="font-mono"
+                disabled={locked}
+                title={locked ? VAULT_LOCKED_HINT : undefined}
+                placeholder={locked ? VAULT_LOCKED_HINT : item.has_secret ? "Nur ausfüllen, um es zu ändern" : ""}
+              />
+              <IconButton label="Sicheres Passwort erzeugen" className="h-10 w-10 shrink-0" disabled={locked} onClick={() => setPassword(generatePassword())}>
                 <Wand2 className="h-4 w-4" />
               </IconButton>
-              <Button onClick={savePassword} loading={savingPassword} loadingText="Wird gespeichert …" disabled={!password}>
+              <Button onClick={savePassword} loading={savingPassword} loadingText="Wird gespeichert …" disabled={!password || locked}>
                 Übernehmen
               </Button>
             </div>
@@ -431,6 +450,7 @@ export function NewVaultDialog({
   onCreated?: (id: string) => void;
 }) {
   const toast = useToast();
+  const locked = useVaultReady() === false;
   const [scope, setScope] = useState(projectId ?? "");
   const [form, setForm] = useState({ title: "", username: "", password: "", url: "" });
   const [busy, setBusy] = useState(false);
@@ -466,8 +486,21 @@ export function NewVaultDialog({
         <Field label="Passwort">
           {(id) => (
             <div className="flex gap-2">
-              <Input id={id} value={form.password} onChange={set("password")} autoComplete="new-password" className="font-mono" />
-              <IconButton label="Sicheres Passwort erzeugen" className="h-10 w-10 shrink-0" onClick={() => setForm((f) => ({ ...f, password: generatePassword() }))}>
+              <Input
+                id={id}
+                value={form.password}
+                onChange={set("password")}
+                autoComplete="new-password"
+                className="font-mono"
+                disabled={locked}
+                placeholder={locked ? VAULT_LOCKED_HINT : undefined}
+              />
+              <IconButton
+                label="Sicheres Passwort erzeugen"
+                className="h-10 w-10 shrink-0"
+                disabled={locked}
+                onClick={() => setForm((f) => ({ ...f, password: generatePassword() }))}
+              >
                 <Wand2 className="h-4 w-4" />
               </IconButton>
             </div>

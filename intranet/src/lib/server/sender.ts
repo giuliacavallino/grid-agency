@@ -2,7 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { CLIENT_ID, DEMO, TENANT_ID } from "@/lib/config";
 import { db } from "./db";
-import { decrypt, encrypt } from "./vault";
+import { decrypt, encrypt, vaultStatus } from "./vault";
 
 // Absenderin für Kunden-Updates: ein normales Microsoft-365-Konto mit Teams,
 // das einmal im Intranet verbunden wird (Admin → Absender & Updates). Der
@@ -27,7 +27,7 @@ function secret() {
 }
 
 export async function senderInfo(): Promise<SenderInfo> {
-  if (DEMO) return { email: "lena@grid-agency.de", name: "Lena Berger", connected_at: new Date().toISOString(), connected_by: "vorschau@grid-agency.de" };
+  if (DEMO) return { email: "sophia.conti@grid-agency.de", name: "Sophia Conti", connected_at: new Date().toISOString(), connected_by: "vorschau@grid-agency.de" };
   const stored = await db().getSetting<Stored>("teams_sender");
   if (!stored) return null;
   const { email, name, connected_at, connected_by } = stored;
@@ -37,7 +37,7 @@ export async function senderInfo(): Promise<SenderInfo> {
 /** Startet die Anmeldung des Absender-Kontos; liefert die Microsoft-URL. */
 export async function startConnect(origin: string, by: string, loginHint?: string) {
   secret();
-  if (!process.env.VAULT_KEY) throw new Error("Erst VAULT_KEY in Vercel anlegen, damit das Konto verschlüsselt gespeichert werden kann");
+  if (vaultStatus() !== "ok") throw new Error("Erst VAULT_KEY in Vercel anlegen und neu deployen, damit das Konto verschlüsselt gespeichert werden kann");
   const state = randomBytes(24).toString("base64url");
   await db().setSetting("teams_sender_state", { state, by, expires: Date.now() + 10 * 60_000 });
   const params = new URLSearchParams({

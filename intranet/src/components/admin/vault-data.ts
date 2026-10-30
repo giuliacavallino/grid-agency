@@ -8,6 +8,14 @@ const BASE = "/api/vault";
 
 export const useVault = () => useResource<VaultItem[]>(BASE);
 
+/** Ob VAULT_KEY gesetzt ist; ohne ihn lassen sich keine Passwörter speichern */
+export function useVaultReady() {
+  const { data } = useResource<{ status: "ok" | "missing" | "invalid" }>(`${BASE}/status`);
+  return data ? data.status === "ok" : null;
+}
+
+export const VAULT_LOCKED_HINT = "Erst mit VAULT_KEY möglich";
+
 export type VaultPatch = Partial<Pick<VaultItem, "project_id" | "internal" | "title" | "username" | "url" | "notes">> & { password?: string | null };
 
 export async function createVaultItem(values: VaultPatch) {
