@@ -14,11 +14,12 @@ import {
   type ContractTerms,
   type SignField,
 } from "@/lib/contract";
-import { KIND_LABEL, money, plain, type BillingDetail } from "@/lib/billing";
+import { KIND_LABEL, plain, type BillingDetail } from "@/lib/billing";
 import { BUCKET, billingSettings, check, contractTemplate, getBilling } from "./billing";
-import { renderBundle, type AuditEvent, type BundleInput, type SepaData } from "./bundle-pdf";
+import { PART_FILE, renderBundle, renderPart, type AuditEvent, type BundleInput, type BundlePart, type SepaData } from "./bundle-pdf";
 import { sb } from "./db";
 import { sendAppMail } from "./graph-app";
+import { brandedMail, senderFor } from "./mail-template";
 import { sealFingerprint, sealPdf } from "./seal";
 
 // Unterschriftsmappe: Angebot + Agenturvertrag + SEPA-Mandat. GRID
@@ -195,21 +196,20 @@ export async function createEnvelope(offerId: string, input: CreateInput, user: 
     mail: {
       from: SHARED_MAILBOX,
       to: row.signer_email,
-      subject: `Ihr Angebot ${offer.number} – ${settings.company.name}`,
-      body: [
-        `Guten Tag ${input.signer_name.trim()},`,
-        "",
-        `vielen Dank für Ihr Interesse. Über den Link finden Sie unser Angebot ${offer.number} über ${money(offer.amount_net, offer.currency)} netto${row.sepa_required ? " (Zahlungsart SEPA-Lastschrift)" : ""}:`,
-        link,
-        "",
-        `Wenn alles passt, klicken Sie auf „Angebot annehmen“. Danach unterschreiben Sie in einem Schritt die Mappe mit Agenturvertrag${row.sepa_required ? " und SEPA-Lastschriftmandat" : ""}; wir haben bereits unterschrieben.`,
-        "",
-        `Der Link ist bis zum ${new Date(row.expires_at).toLocaleDateString("de-DE")} gültig. Nach der Unterschrift erhalten Sie die von beiden Seiten unterschriebenen Unterlagen per E-Mail.`,
-        "",
-        "Viele Grüße",
-        row.grid_signer,
-        settings.company.name,
-      ].join("\n"),
+      subject: `Ihr Angebot von ${settings.company.name}`,
+      html: true,
+      // Kein Preis in der Mail: alles steht im Angebot hinter dem Button
+      body: brandedMail({
+        eyebrow: "Ihr Angebot",
+        title: `Hallo ${input.signer_name.trim().split(/\s+/)[0]}, Ihr Angebot ist da!`,
+        paragraphs: [
+          "vielen Dank für das gute Gespräch. Wie besprochen haben wir Ihnen alles zusammengestellt.",
+          `Mit einem Klick sehen Sie das Angebot ein. Passt alles, nehmen Sie es direkt online an und unterschreiben in einem Schritt den Agenturvertrag${row.sepa_required ? " und das SEPA-Lastschriftmandat" : ""}.`,
+        ],
+        button: { label: "Angebot einsehen", href: link },
+        note: `Der Link gilt bis zum ${new Date(row.expires_at).toLocaleDateString("de-DE")}. Fragen? Antworten Sie einfach auf diese Mail.`,
+        sender: senderFor(row.grid_signer, user.email),
+      }),
     },
   };
 }
@@ -342,6 +342,7 @@ export async function publicView(token: string, client: Client) {
       managing_director: settings.company.managing_director.replace(/^(Frau|Herr)\s+/, ""),
     },
     signer_name: row.signer_name,
+    signer_email: row.signer_email,
     grid_signer: row.grid_signer,
     grid_signature: row.grid_signature,
     grid_id: gridVerifyId(row.id),
@@ -462,12 +463,26 @@ export async function signEnvelope(token: string, input: SignInput, client: Clie
     mandate_reference: mandate,
     audit: [...row.audit, ...events],
   };
-  const pdf = await sealPdf(await renderBundle(await bundleInput(signed, offer, true)), {
+  const finalInput = await bundleInput(signed, offer, true);
+  const pdf = await sealPdf(await renderBundle(finalInput), {
     reason: `Angebot ${offer.number}, ${row.contract.title}${row.sepa_required ? ", SEPA-Mandat" : ""} – unterschrieben von ${row.signer_name}`,
   });
   const folder = row.customer_id ?? "ohne-kunde";
   const path = `kunden/${folder}/${stamp}_Angebot-${offer.number}_unterschrieben_${row.id.slice(0, 8)}.pdf`;
   check(await sb().storage.from(BUCKET).upload(path, pdf, { contentType: "application/pdf", upsert: false }));
+
+  // Jedes Dokument zusätzlich einzeln (Abschlussmail, Kundenakte), je mit Siegel
+  const parts: BundlePart[] = row.sepa_required ? ["angebot", "vertrag", "sepa"] : ["angebot", "vertrag"];
+  const files: { part: BundlePart; name: string; path: string; bytes: Buffer }[] = [];
+  for (const part of parts) {
+    const bytes = await sealPdf(await renderPart(finalInput, part), {
+      reason: `${PART_FILE[part]} zu Angebot ${offer.number} – unterschrieben von ${row.signer_name}`,
+    });
+    const name = `${PART_FILE[part]}_${offer.number}_unterschrieben.pdf`;
+    const partPath = `kunden/${folder}/${stamp}_${PART_FILE[part]}-${offer.number}_unterschrieben_${row.id.slice(0, 8)}.pdf`;
+    check(await sb().storage.from(BUCKET).upload(partPath, bytes, { contentType: "application/pdf", upsert: false }));
+    files.push({ part, name, path: partPath, bytes });
+  }
 
   check(
     await sb()
@@ -489,17 +504,28 @@ export async function signEnvelope(token: string, input: SignInput, client: Clie
   // Pipeline: Lead auf „Kunde gewonnen“ (Fehler halten die Unterschrift nicht auf)
   await import("./lead-flow").then((flow) => flow.offerSigned(row.document_id, row.customer_id)).catch(console.error);
   if (row.customer_id) {
+    const label: Record<BundlePart, string> = { angebot: `Angebot ${offer.number}`, vertrag: row.contract.title, sepa: "SEPA-Lastschriftmandat" };
     check(
       await sb()
         .from("customer_documents")
-        .insert({
-          customer_id: row.customer_id,
-          kind: "vertrag",
-          title: `Angebot ${offer.number} · ${row.contract.title}${row.sepa_required ? " · SEPA-Mandat" : ""} (unterschrieben)`,
-          pdf_path: path,
-          envelope_id: row.id,
-          document_id: row.document_id,
-        })
+        .insert([
+          ...files.map((f) => ({
+            customer_id: row.customer_id,
+            kind: f.part,
+            title: `${label[f.part]} (unterschrieben)`,
+            pdf_path: f.path,
+            envelope_id: row.id,
+            document_id: row.document_id,
+          })),
+          {
+            customer_id: row.customer_id,
+            kind: "sonstiges",
+            title: `Gesamte Mappe zu Angebot ${offer.number} (unterschrieben)`,
+            pdf_path: path,
+            envelope_id: row.id,
+            document_id: row.document_id,
+          },
+        ])
     );
     if (sepa) {
       check(
@@ -512,7 +538,7 @@ export async function signEnvelope(token: string, input: SignInput, client: Clie
   }
 
   // Abschlussmail an beide Seiten; scheitert sie, bleibt die Unterschrift gültig
-  await sendCompletion(row, offer, pdf, mandate, sepa).catch(async (error) => {
+  await sendCompletion(row, offer, files, mandate, sepa).catch(async (error) => {
     await sb()
       .from("sign_envelopes")
       .update({ mail_error: String(error instanceof Error ? error.message : error).slice(0, 500) })
@@ -521,33 +547,36 @@ export async function signEnvelope(token: string, input: SignInput, client: Clie
   return { signed_at: now.toISOString() };
 }
 
-async function sendCompletion(row: EnvelopeRow, offer: BillingDetail, pdf: Buffer, mandate: string | null, sepa: SepaData | null) {
+async function sendCompletion(row: EnvelopeRow, offer: BillingDetail, files: { name: string; bytes: Buffer }[], mandate: string | null, sepa: SepaData | null) {
   const settings = await billingSettings();
-  const name = `Angebot_${offer.number}_unterschrieben.pdf`;
-  const attachment = { name, contentType: "application/pdf", contentBytes: pdf.toString("base64") };
+  // Jedes Dokument als eigene PDF: Angebot, Vertrag, SEPA-Mandat
+  const attachments = files.map((f) => ({ name: f.name, contentType: "application/pdf", contentBytes: f.bytes.toString("base64") }));
+  const first = row.signer_name.trim().split(/\s+/)[0];
   await sendAppMail(SHARED_MAILBOX, {
     to: [row.signer_email],
-    subject: `Ihre unterschriebenen Unterlagen – ${settings.company.name}`,
-    body: [
-      `Guten Tag ${row.signer_name},`,
-      "",
-      `vielen Dank! Angebot ${offer.number}, ${row.contract.title}${row.sepa_required ? " und SEPA-Lastschriftmandat" : ""} sind jetzt von beiden Seiten unterschrieben. Sie finden die versiegelten Unterlagen im Anhang.`,
-      ...(mandate && sepa
-        ? ["", `SEPA-Mandat: Mandatsreferenz ${mandate}, Gläubiger-ID ${settings.company.creditor_id}, Konto ${formatIban(sepa.iban).replace(/^(.{7}).*(.{4})$/, "$1 … $2")}. Wir kündigen jede Lastschrift mit der Rechnung an.`]
-        : []),
-      "",
-      "Wir freuen uns auf die Zusammenarbeit!",
-      "",
-      "Viele Grüße",
-      row.grid_signer,
-      settings.company.name,
-    ].join("\n"),
-    attachments: [attachment],
+    subject: `Willkommen bei GRID – Ihre unterschriebenen Unterlagen`,
+    html: true,
+    body: brandedMail({
+      eyebrow: "Unterschrieben und versiegelt",
+      title: `Willkommen bei GRID, ${first}!`,
+      paragraphs: [
+        `vielen Dank für Ihr Vertrauen! Angebot ${offer.number}, ${row.contract.title}${row.sepa_required ? " und SEPA-Lastschriftmandat" : ""} sind jetzt von beiden Seiten unterschrieben.`,
+        "Im Anhang finden Sie jedes Dokument als eigene, versiegelte PDF für Ihre Unterlagen.",
+        ...(mandate && sepa
+          ? [
+              `SEPA-Mandat: Mandatsreferenz ${mandate}, Gläubiger-ID ${settings.company.creditor_id}, Konto ${formatIban(sepa.iban).replace(/^(.{7}).*(.{4})$/, "$1 … $2")}. Wir kündigen jede Lastschrift mit der Rechnung an.`,
+            ]
+          : []),
+        "Als Nächstes melden wir uns für den Kick-off. Wir freuen uns riesig auf die Zusammenarbeit!",
+      ],
+      sender: senderFor(row.grid_signer),
+    }),
+    attachments,
   });
   await sendAppMail(SHARED_MAILBOX, {
     to: [SHARED_MAILBOX],
     subject: `Unterschrieben: Angebot ${offer.number} · ${offer.customer_name ?? row.signer_name}`,
     body: `${row.signer_name} (${row.signer_email}) hat Angebot ${offer.number}, ${row.contract.title}${row.sepa_required ? " und das SEPA-Mandat" : ""} unterschrieben. Die Unterlagen liegen in der Kundenakte im Intranet.`,
-    attachments: [attachment],
+    attachments,
   });
 }

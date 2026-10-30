@@ -41,7 +41,9 @@ export async function appGraph<T>(path: string, init: RequestInit = {}): Promise
     },
   });
   if (!response.ok) throw new Error(`Graph ${path}: ${response.status} ${await response.text()}`);
-  return response.status === 204 ? (undefined as T) : response.json();
+  // sendMail antwortet mit 202 ohne Inhalt, andere Aufrufe mit 204
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 export const mailboxPath = (mailbox: string) => `/users/${encodeURIComponent(mailbox)}`;

@@ -120,7 +120,7 @@ export function SignFolderDialog({ doc, onClose }: { doc: BillingDetail; onClose
     if (!signature) return toast("Bitte für GRID unterschreiben", "error");
     setBusy("senden");
     try {
-      const created = await api<{ id: string; link: string; mail: { from: string; to: string; subject: string; body: string } }>(mappenUrl(doc.id), {
+      const created = await api<{ id: string; link: string; mail: { from: string; to: string; subject: string; body: string; html?: boolean } }>(mappenUrl(doc.id), {
         method: "POST",
         body: JSON.stringify(input()),
       });
@@ -129,7 +129,7 @@ export function SignFolderDialog({ doc, onClose }: { doc: BillingDetail; onClose
         mutate<Settings>("/api/sales/settings", () => result);
       }
       try {
-        await graphFor(created.mail.from).send({ to: [created.mail.to], cc: [], subject: created.mail.subject, body: created.mail.body });
+        await graphFor(created.mail.from).send({ to: [created.mail.to], cc: [], subject: created.mail.subject, body: created.mail.body, html: created.mail.html });
         await api(`/api/finance/mappen/${created.id}`, { method: "POST", body: JSON.stringify({ action: "versendet", by: created.mail.from, to: created.mail.to }) });
         toast(`Mappe an ${created.mail.to} gesendet`);
         revalidate(mappenUrl(doc.id));
