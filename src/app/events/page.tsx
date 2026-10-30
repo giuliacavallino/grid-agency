@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalShell } from "@/components/app/LegalShell";
+import { PageShell } from "@/components/app/PageShell";
 import { EventsView } from "@/components/app/EventsView";
 
 export const metadata: Metadata = {
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function EventsPage() {
   return (
-    <LegalShell title="Events">
+    <PageShell>
       <EventsView />
-    </LegalShell>
+    </PageShell>
   );
 }

@@ -3,21 +3,41 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, Heart, Menu, Send } from "lucide-react";
 import { motion } from "framer-motion";
-import { scrollToId } from "@/lib/scroll";
+import { scrollToId, stashScrollTarget } from "@/lib/scroll";
 import { MainMenu } from "./MainMenu";
 
-/** Kopfleiste als schwebende Glas-Pill auf der Frame-Breite. Desktop:
- * Logo mit Subline links, Navigation und große CTA-Pill mit Pfeil-Badge
- * rechts. Mobile: Logo plus die drei Icons. */
+const pages = [
+  { href: "/projekte", label: "Projekte" },
+  { href: "/events", label: "Events" },
+  { href: "/jobs", label: "Jobs" },
+  { href: "/faq", label: "FAQ" },
+];
+
+/** Kopfleiste als schwebende Glas-Pill auf der Frame-Breite, auf der
+ * Startseite und allen Unterseiten gleich. Desktop: Logo mit Subline
+ * links, Navigation und große CTA-Pill mit Pfeil-Badge rechts. Mobile:
+ * Logo plus die drei Icons. */
 export function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const onHome = pathname === "/";
 
+  // Sektionen liegen auf der Startseite; von Unterseiten aus geht es erst
+  // dorthin, die AppShell scrollt dann zur gemerkten Sektion.
   const jump = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
-    scrollToId(id);
+    if (onHome) {
+      scrollToId(id);
+    } else {
+      stashScrollTarget(id);
+      router.push("/");
+    }
   };
+  const sectionHref = (id: string) => (onHome ? `#${id}` : "/");
 
   return (
     <>
@@ -32,8 +52,8 @@ export function TopBar() {
             <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 
             <a
-              href="#home"
-              aria-label="Nach oben"
+              href={sectionHref("home")}
+              aria-label={onHome ? "Nach oben" : "Zur Startseite"}
               className="relative flex flex-col items-start"
               onClick={jump("home")}
             >
@@ -58,26 +78,27 @@ export function TopBar() {
                 Logo, Links und CTA auch im halbbreiten Fenster in eine
                 Zeile passen. */}
             <nav className="relative hidden items-center gap-4 whitespace-nowrap text-[0.875rem] font-normal text-snow/80 lg:flex xl:gap-8 xl:text-[0.9375rem]">
-              <a href="#leistungen" onClick={jump("leistungen")} className="nav-rainbow">
+              <a href={sectionHref("leistungen")} onClick={jump("leistungen")} className="nav-rainbow">
                 Leistungen
               </a>
-              <a href="#team" onClick={jump("team")} className="nav-rainbow">
+              <a href={sectionHref("team")} onClick={jump("team")} className="nav-rainbow">
                 Über uns
               </a>
-              <Link href="/projekte" className="nav-rainbow">
-                Projekte
-              </Link>
-              <Link href="/events" className="nav-rainbow">
-                Events
-              </Link>
-              <Link href="/jobs" className="nav-rainbow">
-                Jobs
-              </Link>
-              <Link href="/faq" className="nav-rainbow">
-                FAQ
-              </Link>
+              {pages.map((page) => {
+                const current = pathname.startsWith(page.href);
+                return (
+                  <Link
+                    key={page.href}
+                    href={page.href}
+                    aria-current={current ? "page" : undefined}
+                    className={`nav-rainbow ${current ? "font-medium text-snow" : ""}`}
+                  >
+                    {page.label}
+                  </Link>
+                );
+              })}
               <a
-                href="#dm"
+                href={sectionHref("dm")}
                 onClick={jump("dm")}
                 className="btn-rainbow ml-1 flex items-center gap-2.5 rounded-full bg-snow py-2.5 pl-4 pr-2.5 text-[0.875rem] font-medium text-sky active:scale-95 xl:ml-2 xl:pl-5 xl:text-[0.9375rem]"
               >
@@ -99,7 +120,7 @@ export function TopBar() {
                 <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-dune" />
               </Link>
               <a
-                href="#dm"
+                href={sectionHref("dm")}
                 aria-label="Nachricht schreiben"
                 className="text-snow transition-transform active:scale-90"
                 onClick={jump("dm")}

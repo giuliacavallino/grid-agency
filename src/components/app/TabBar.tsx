@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Home, Users, TrendingUp, MessageCircle } from "lucide-react";
 import { animate, motion, useMotionValue } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { stashScrollTarget } from "@/lib/scroll";
 import type { ViewId } from "./AppShell";
 
 const tabs: { id: ViewId; label: string; icon: typeof Home; live?: boolean }[] = [
@@ -28,7 +30,10 @@ function clampIndex(i: number) {
   return Math.min(Math.max(i, 0), tabs.length - 1);
 }
 
-export function TabBar({ active }: { active: ViewId }) {
+/** Untere Navigation (mobil). Ohne `active` steht sie auf einer Unterseite:
+ * keine Lupe, ein Tipp führt zur Sektion auf der Startseite. */
+export function TabBar({ active }: { active?: ViewId }) {
+  const router = useRouter();
   const trackRef = useRef<HTMLDivElement>(null);
   const [slotW, setSlotW] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -112,10 +117,15 @@ export function TabBar({ active }: { active: ViewId }) {
             return (
               <a
                 key={tab.id}
-                href={`#${tab.id}`}
+                href={active ? `#${tab.id}` : "/"}
                 onClick={(e) => {
                   e.preventDefault();
                   haptic(8);
+                  if (!active) {
+                    stashScrollTarget(tab.id);
+                    router.push("/");
+                    return;
+                  }
                   document
                     .getElementById(tab.id)
                     ?.scrollIntoView({ behavior: "smooth" });
@@ -156,7 +166,7 @@ export function TabBar({ active }: { active: ViewId }) {
         {/* Draggable lens track — pointer-events only on the lens itself,
             so taps on the other tabs reach the links underneath */}
         <div ref={trackRef} className="pointer-events-none absolute inset-x-2 inset-y-2">
-          {slotW > 0 && (
+          {slotW > 0 && active && (
             <motion.div
               drag="x"
               dragConstraints={{
