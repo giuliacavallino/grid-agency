@@ -1,21 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
 import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { createRow, deleteRow, updateRow, useRows } from "@/lib/data";
-import { isOverdue, PROJECT_COLORS, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
+import { isOverdue, PROJECT_COLORS, TEAM, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
 import { Badge, Button, Dialog, Empty, Field, IconButton, Input, MenuItem, Popover, Select, Spinner, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
 import { BriefingSheet } from "./briefing";
-import { TaskSheet } from "./task";
+import { KeepVisible, TaskSheet } from "./task";
 import { ListHeader, SectionedList } from "./task-list";
-
-/** Alle Personen, die schon To-dos haben, für die Auswahl „Zuständig“ */
-export function usePeople(tasks: Task[] | undefined) {
-  return useMemo(() => [...new Set((tasks ?? []).map((t) => t.assignee).filter((a): a is string => !!a))].sort(), [tasks]);
-}
 
 /** To-dos eines Kunden als Liste, gruppiert nach Themen. */
 export function ProjectView({ id }: { id: string }) {
@@ -35,14 +30,17 @@ export function ProjectView({ id }: { id: string }) {
     [sectionRows.data, id]
   );
   const allTasks = useMemo(() => (taskRows.data ?? []).filter((t) => t.project_id === id), [taskRows.data, id]);
-  const people = usePeople(taskRows.data);
+  const people = TEAM;
+  // Hier abgehakte To-dos bleiben bis zum Verlassen der Seite sichtbar
+  const [keep, setKeep] = useState<Set<string>>(() => new Set());
+  const keepVisible = useCallback((taskId: string) => setKeep((set) => new Set(set).add(taskId)), []);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allTasks
-      .filter((t) => showDone || !t.done)
+      .filter((t) => showDone || !t.done || keep.has(t.id))
       .filter((t) => !q || [t.title, t.notes, t.assignee].some((v) => v?.toLowerCase().includes(q)));
-  }, [allTasks, showDone, query]);
+  }, [allTasks, showDone, query, keep]);
 
   const open = allTasks.filter((t) => !t.done);
   const overdue = open.filter(isOverdue).length;
@@ -60,72 +58,74 @@ export function ProjectView({ id }: { id: string }) {
   if (!project) return <Empty title="Kunde nicht gefunden" />;
 
   return (
-    <div className="flex h-full flex-col">
-      <PageBar
-        title={project.name}
-        meta={
-          <span className="flex items-center gap-2">
-            {open.length} offen
-            {overdue > 0 && <span className="text-error">· {overdue} überfällig</span>}
-            {project.archived && <Badge>Archiv</Badge>}
-          </span>
-        }
-      >
-        <div className="relative min-w-0 flex-1 md:max-w-56">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-snow/40" />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Suchen" aria-label="To-dos durchsuchen" className="h-9 w-full pl-9" />
-        </div>
-        <Button size="sm" className="h-9" variant={showDone ? "secondary" : "ghost"} aria-pressed={showDone} icon={<Check className="h-4 w-4" />} onClick={() => setShowDone((v) => !v)}>
-          <span className="hidden sm:inline">Erledigte</span>
-        </Button>
-        <Button size="sm" className="h-9" icon={<FileText className="h-4 w-4" />} onClick={() => setBriefing(true)}>
-          Briefing
-        </Button>
-        <ProjectMenu project={project} onEdit={() => setProjectDialog(true)} onAddSection={() => setSectionDialog("new")} />
-      </PageBar>
-
-      {sections.length === 0 ? (
-        <Empty
-          title="Noch keine Themen"
-          text="Themen gruppieren die To-dos, z. B. JourFix, Content Days oder Performance Marketing."
-          action={
-            <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setSectionDialog("new")}>
-              Thema anlegen
-            </Button>
+    <KeepVisible.Provider value={keepVisible}>
+      <div className="flex h-full flex-col">
+        <PageBar
+          title={project.name}
+          meta={
+            <span className="flex items-center gap-2">
+              {open.length} offen
+              {overdue > 0 && <span className="text-error">· {overdue} überfällig</span>}
+              {project.archived && <Badge>Archiv</Badge>}
+            </span>
           }
-        />
-      ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto pb-10">
-          <ListHeader />
-          <SectionedList project={project} sections={sections} tasks={visible} people={people} onOpen={setOpenId} onEditSection={setSectionDialog} />
-          <button
-            type="button"
-            onClick={() => setSectionDialog("new")}
-            className="mt-6 ml-2 flex h-9 items-center gap-2 rounded-lg px-3 text-[14px] font-medium text-snow/55 hover:bg-snow/[0.06] hover:text-snow md:ml-6"
-          >
-            <Plus className="h-4 w-4" /> Thema hinzufügen
-          </button>
-        </div>
-      )}
+        >
+          <div className="relative min-w-0 flex-1 md:max-w-56">
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-snow/40" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Suchen" aria-label="To-dos durchsuchen" className="h-9 w-full pl-9" />
+          </div>
+          <Button size="sm" className="h-9" variant={showDone ? "secondary" : "ghost"} aria-pressed={showDone} icon={<Check className="h-4 w-4" />} onClick={() => setShowDone((v) => !v)}>
+            <span className="hidden sm:inline">Erledigte</span>
+          </Button>
+          <Button size="sm" className="h-9" icon={<FileText className="h-4 w-4" />} onClick={() => setBriefing(true)}>
+            Briefing
+          </Button>
+          <ProjectMenu project={project} onEdit={() => setProjectDialog(true)} onAddSection={() => setSectionDialog("new")} />
+        </PageBar>
 
-      <TaskSheet
-        task={allTasks.find((t) => t.id === openId)}
-        project={project}
-        sections={sections}
-        people={people}
-        onClose={() => setOpenId(null)}
-      />
-      <BriefingSheet project={project} open={briefing} onClose={() => setBriefing(false)} />
-      <SectionDialog
-        key={sectionDialog === "new" ? "new" : sectionDialog?.id}
-        projectId={project.id}
-        section={sectionDialog}
-        sections={sections}
-        tasks={allTasks}
-        onClose={() => setSectionDialog(null)}
-      />
-      <ProjectDialog key={project.id} open={projectDialog} project={project} onClose={() => setProjectDialog(false)} />
-    </div>
+        {sections.length === 0 ? (
+          <Empty
+            title="Noch keine Themen"
+            text="Themen gruppieren die To-dos, z. B. JourFix, Content Days oder Performance Marketing."
+            action={
+              <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setSectionDialog("new")}>
+                Thema anlegen
+              </Button>
+            }
+          />
+        ) : (
+          <div className="min-h-0 flex-1 overflow-y-auto pb-10">
+            <ListHeader />
+            <SectionedList project={project} sections={sections} tasks={visible} people={people} onOpen={setOpenId} onEditSection={setSectionDialog} />
+            <button
+              type="button"
+              onClick={() => setSectionDialog("new")}
+              className="mt-6 ml-2 flex h-9 items-center gap-2 rounded-lg px-3 text-[14px] font-medium text-snow/55 hover:bg-snow/[0.06] hover:text-snow md:ml-6"
+            >
+              <Plus className="h-4 w-4" /> Thema hinzufügen
+            </button>
+          </div>
+        )}
+
+        <TaskSheet
+          task={allTasks.find((t) => t.id === openId)}
+          project={project}
+          sections={sections}
+          people={people}
+          onClose={() => setOpenId(null)}
+        />
+        <BriefingSheet project={project} open={briefing} onClose={() => setBriefing(false)} />
+        <SectionDialog
+          key={sectionDialog === "new" ? "new" : sectionDialog?.id}
+          projectId={project.id}
+          section={sectionDialog}
+          sections={sections}
+          tasks={allTasks}
+          onClose={() => setSectionDialog(null)}
+        />
+        <ProjectDialog key={project.id} open={projectDialog} project={project} onClose={() => setProjectDialog(false)} />
+      </div>
+    </KeepVisible.Provider>
   );
 }
 
