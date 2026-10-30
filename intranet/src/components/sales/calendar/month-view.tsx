@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Repeat } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { CalEvent } from "@/lib/graph";
 import { accentFill, accentText } from "@/lib/theme";
@@ -101,6 +102,7 @@ export function MonthView({
                       >
                         {!allDay && <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />}
                         <span className="min-w-0 flex-1 truncate">{event.subject}</span>
+                        {event.recurring && <Repeat className="h-3 w-3 shrink-0 text-snow/45" aria-label="Serientermin" />}
                         {!allDay && <span className="hidden shrink-0 text-[11px] text-snow/45 lg:inline">{time(event.start)}</span>}
                       </button>
                     </li>

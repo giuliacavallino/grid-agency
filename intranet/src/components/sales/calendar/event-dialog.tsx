@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useCan } from "@/components/access";
 import { mailboxLabel } from "@/lib/config";
 import { graphFor, type Calendar } from "@/lib/graph";
 import { Button, Dialog, Field, Input, Select, useToast } from "@/components/ui";
+import { JourFixForm, Switch } from "../jourfix";
 import { addDays, fromInput, toInput } from "./dates";
 
 /** Neuer Termin in einem der Kalender des Bereichs */
@@ -19,9 +21,31 @@ export function EventDialog({
   onCreated: () => void;
 }) {
   return (
-    <Dialog open={!!start} onClose={onClose} title="Neuer Termin">
-      {start && <EventForm key={start.toISOString()} start={start} calendars={calendars} onClose={onClose} onCreated={onCreated} />}
+    <Dialog open={!!start} onClose={onClose} title="Neuer Termin" width="max-w-xl">
+      {start && <EventChoice key={start.toISOString()} start={start} calendars={calendars} onClose={onClose} onCreated={onCreated} />}
     </Dialog>
+  );
+}
+
+/** „Wiederholen“ macht aus dem Termin einen Jour fixe (Serie mit festem
+ * Meet-Link, angelegt über den Server). Nur mit Zugriff auf Sales. */
+function EventChoice(props: { start: Date; calendars: Calendar[]; onClose: () => void; onCreated: () => void }) {
+  const canRepeat = useCan("sales");
+  const [repeat, setRepeat] = useState(false);
+  return (
+    <div className="flex flex-col gap-4">
+      {canRepeat && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-ink/60 px-4 py-3">
+          <Switch checked={repeat} onChange={setRepeat} label="Wiederholen" />
+          <span className="text-right text-xs text-snow/50">{repeat ? "Jour fixe mit festem Link" : "Einzeltermin"}</span>
+        </div>
+      )}
+      {repeat ? (
+        <JourFixForm start={props.start} onCancel={props.onClose} onCreated={props.onCreated} />
+      ) : (
+        <EventForm {...props} />
+      )}
+    </div>
   );
 }
 

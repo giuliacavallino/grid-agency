@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, Heart, Play, Share2, TrendingUp, UserPlus } from "lucide-react";
+import { Eye, Heart, Play, Repeat, Share2, TrendingUp, UserPlus } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
 import { EbookCard, LogoMarquee } from "./brand";
 
@@ -136,8 +136,9 @@ const FLOATERS = [
   { left: "90%", drift: "-8px", duration: "4.6s", delay: "4.1s", size: "h-5 w-5" },
 ];
 
-/** Bühne der Warteseite. `selfView` ist das eigene Kamerabild (oder ein Platzhalter). */
-export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: React.ReactNode }) {
+/** Bühne der Warteseite. `selfView` ist das eigene Kamerabild (oder ein
+ * Platzhalter); `series` beim Jour fixe der Rhythmus mit dem aktuellen Termin. */
+export function WaitingStage({ isHost, selfView, series }: { isHost: boolean; selfView: React.ReactNode; series?: string | null }) {
   const [round, setRound] = useState(0);
   useEffect(() => {
     const id = window.setInterval(() => setRound((r) => r + 1), CYCLE_MS);
@@ -166,6 +167,12 @@ export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: 
               </span>
               Du bist drin
             </p>
+            {series && (
+              <p className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-snow/70">
+                <Repeat className="h-4 w-4" />
+                Jour fixe · {series}
+              </p>
+            )}
             <h2 className="mt-4 text-[2.5rem] leading-[1.02] font-semibold tracking-tight md:text-6xl">
               Gleich geht&apos;s <span className="text-aurora">los.</span>
             </h2>

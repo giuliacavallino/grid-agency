@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Repeat } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { CalEvent } from "@/lib/graph";
 import { accentFill, accentText } from "@/lib/theme";
@@ -162,6 +163,7 @@ export function TimeGrid({
                       }}
                     >
                       <span className="block truncate font-semibold" style={{ color: accentText(color) }}>
+                        {event.recurring && <Repeat className="mr-1 inline h-3 w-3 align-[-2px]" aria-label="Serientermin" />}
                         {event.subject}
                         {short && <span className="font-normal opacity-80"> · {time(event.start)}</span>}
                       </span>

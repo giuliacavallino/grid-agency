@@ -1,4 +1,5 @@
 import type { Attachment, CalEvent, Calendar, FolderKey, GraphApi, Message, Recipient } from "./graph";
+import { berlinDate, buildRecurrence, fromBerlin, occurrences, type JourFix } from "./jourfix";
 
 // Vorschau-Postfächer (nur NEXT_PUBLIC_INTRANET_DEMO=1 auf localhost):
 // realistische Beispieldaten im Speicher, Änderungen wirken bis zum Neuladen.
@@ -271,6 +272,82 @@ calendarEvents.push(
   event("cal-giulia", "Steuerberatung", 0, 1, 16, 60, { location: "Kanzlei" }),
   event("cal-giulia", "Vernissage Anna", 0, 4, 19, 120)
 );
+
+// Jour fixe (Vorschau): wöchentlich dienstags 10:00 mit Frittenwerk, seit
+// fünf Wochen. Derselbe Raum steht in demo-store.ts (meetings).
+const lastTuesday = (() => {
+  const d = new Date(`${berlinDate(Date.now())}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 5) % 7) - 35);
+  return fromBerlin(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), 10);
+})();
+export const DEMO_JOURFIX = {
+  code: "jfx-frtw-k8m",
+  title: "Jour fixe GRID × Frittenwerk",
+  start: lastTuesday,
+  minutes: 45,
+  recurrence: buildRecurrence(lastTuesday, "weekly", { type: "noEnd" }),
+  attendees: [
+    { name: "Lena Kühn", address: "lena@frittenwerk.de", response: "accepted" },
+    { name: "Giulia Cavallino", address: "giulia.cavallino@grid-agency.de", response: "organizer" },
+  ],
+};
+
+/** Termine einer Serie in den Vorschau-Kalender legen (wie Outlook es täte) */
+function seriesEvents(calendarId: string, series: { title: string; start: number; minutes: number; joinUrl: string | null; location: string | null; recurrence: JourFix["recurrence"]; attendees?: CalEvent["attendees"] }) {
+  return occurrences(series.recurrence, series.start, 120).map((at) => ({
+    id: `demo-evt-${++eventSeq}`,
+    calendarId,
+    subject: series.title,
+    start: new Date(at),
+    end: new Date(at + series.minutes * 60_000),
+    isAllDay: false,
+    location: series.joinUrl ?? series.location,
+    organizer: "GRID Agency",
+    attendees: series.attendees ?? [],
+    joinUrl: series.joinUrl,
+    bodyPreview: series.joinUrl ? `Zum Video-Call (gilt für jeden Termin der Serie): ${series.joinUrl}` : "",
+    webLink: null,
+    recurring: true,
+  }));
+}
+
+calendarEvents.push(
+  ...seriesEvents("cal-kunden", {
+    title: DEMO_JOURFIX.title,
+    start: DEMO_JOURFIX.start,
+    minutes: DEMO_JOURFIX.minutes,
+    joinUrl: `https://meet.grid-agency.de/${DEMO_JOURFIX.code}`,
+    location: null,
+    recurrence: DEMO_JOURFIX.recurrence,
+    attendees: DEMO_JOURFIX.attendees,
+  })
+);
+
+/** Vorschau: neu angelegten Jour fixe im Kalender zeigen (Standardkalender
+ * des Postfachs, sonst hello@) */
+export function addDemoSeries(mailbox: string, jourFix: JourFix) {
+  const calendar = calendars.find((c) => c.mailbox === mailbox && c.isDefaultCalendar) ?? calendars[0];
+  calendarEvents.push(
+    ...seriesEvents(calendar.id, {
+      title: jourFix.title,
+      start: Date.parse(jourFix.starts_at),
+      minutes: jourFix.minutes,
+      joinUrl: jourFix.url,
+      location: jourFix.location,
+      recurrence: jourFix.recurrence,
+    })
+  );
+}
+
+/** Vorschau: beendete Serie ab morgen aus dem Kalender nehmen */
+export function endDemoSeries(title: string) {
+  const tomorrow = new Date();
+  tomorrow.setHours(24, 0, 0, 0);
+  for (let i = calendarEvents.length - 1; i >= 0; i--) {
+    const e = calendarEvents[i];
+    if (e.recurring && e.subject === title && e.start >= tomorrow) calendarEvents.splice(i, 1);
+  }
+}
 
 export function demoGraphFor(mailbox: string): GraphApi {
   const own = OWN[mailbox] ?? person(mailbox, mailbox);

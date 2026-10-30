@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Clock, ExternalLink, MapPin, Trash2, Users, Video } from "lucide-react";
+import { CalendarDays, Clock, ExternalLink, MapPin, Repeat, Trash2, Users, Video } from "lucide-react";
 import { graphFor, type CalEvent, type Calendar } from "@/lib/graph";
 import { Button, Dialog, Sheet, useToast } from "@/components/ui";
 import { addDays, sameDay, time } from "./dates";
@@ -72,6 +72,7 @@ export function EventSheet({
       {event && (
         <div className="flex flex-col gap-5 p-5 text-sm">
           <Row icon={Clock}>{when(event)}</Row>
+          {event.recurring && <Row icon={Repeat}>Termin einer Serie</Row>}
           {event.location && <Row icon={MapPin}>{event.location}</Row>}
           {event.joinUrl && (
             <a

@@ -106,7 +106,7 @@ async function transcribe(audio: Buffer): Promise<{ phrases: Phrase[]; duration_
   };
 }
 
-const SYSTEM = `Du wertest Transkripte von Video-Calls der Social-Media-Agentur GRID AGENCY aus (Erstgespräche, Kick-offs, Kunden-Calls, Vorstellungsgespräche).
+const SYSTEM = `Du wertest Transkripte von Video-Calls der Social-Media-Agentur GRID AGENCY aus (Erstgespräche, Kick-offs, Jour fixe und andere Kunden-Calls, Vorstellungsgespräche).
 Antworte auf Deutsch, du-Form, sachlich.
 
 summary: 3 bis 6 Sätze: Worum ging es, was wurde entschieden, was ist offen.
@@ -199,9 +199,13 @@ export async function processRecording(recordingId: string) {
 
     const meeting = (await db().get("meetings", String(recording.meeting_id)))!;
     const names = ((meeting.participants as { name: string }[] | null) ?? []).map((p) => p.name);
+    // Jour fixe: ein Raum für die ganze Serie, jeder Termin ist ein eigener
+    // Anruf. Das Datum kommt deshalb aus der Aufnahme, nicht aus dem Raum.
+    const series = !!meeting.recurrence;
+    const callDate = dateDe(String(series ? recording.created_at : meeting.starts_at));
     const context = [
-      `Call: ${meeting.title}`,
-      `Datum: ${dateDe(String(meeting.starts_at))}`,
+      series ? `Call: ${meeting.title} (Jour fixe vom ${callDate})` : `Call: ${meeting.title}`,
+      `Datum: ${callDate}`,
       `Teilnehmende: ${[...new Set([meeting.host_name, ...names].filter(Boolean))].join(", ") || "unbekannt"}`,
     ].join("\n");
     const result = phrases.length ? await evaluate(context, phrases) : { summary: "Im Call wurde nichts gesagt, das sich transkribieren ließ.", tasks: [] };
