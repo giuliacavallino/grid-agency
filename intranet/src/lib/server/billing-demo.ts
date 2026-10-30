@@ -38,6 +38,9 @@ async function build() {
     recurring: null,
     has_pdf: false,
     source: "easybill",
+    finalized_at: null,
+    sent_at: null,
+    send_error: null,
     ...extra,
   });
   return [
@@ -80,12 +83,16 @@ export async function demoBillingDetail(id: string): Promise<BillingDetail | nul
     vat_option: null,
     address: { company_name: doc.customer_name, street: "Musterstraße 1", zip_code: "10115", city: "Berlin", country: "DE" },
     notes: null,
+    payment_terms_days: 5,
+    recipient_email: null,
+    sent_to: null,
     items: doc.amount_net
       ? [
           {
             id: `${id}-1`,
             position: 0,
             kind: "position",
+            article_id: null,
             number: "SM-M",
             description: "Social Media Betreuung\n3 Kanäle, 12 Posts, 20 Stories, 4 Reels",
             quantity: 1,
@@ -95,6 +102,7 @@ export async function demoBillingDetail(id: string): Promise<BillingDetail | nul
             discount: null,
             discount_type: null,
             total_net: doc.amount_net,
+            total_vat: Math.round((doc.amount_gross - doc.amount_net) * 100) / 100,
             total_gross: doc.amount_gross,
           },
         ]

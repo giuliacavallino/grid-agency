@@ -185,7 +185,11 @@ export type Application = {
   notes: string | null;
 };
 
-export type Settings = { capacity: { team_hours_per_month: number }; datev: { upload_address: string } };
+export type Settings = {
+  capacity: { team_hours_per_month: number };
+  datev: { upload_address: string };
+  billing: import("@/lib/billing").BillingSettings;
+};
 
 /** Position für „ganz oben“ in einer Pipeline-Spalte (absteigend sortiert). */
 export const topPosition = () => Date.now() / 1000;

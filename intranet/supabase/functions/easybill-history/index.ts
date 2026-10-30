@@ -5,6 +5,7 @@
 //
 // POST { "step": "data" }                 Stammdaten, Belege, Zahlungen
 // POST { "step": "pdfs", "after": <id> }   PDFs in Portionen (Cursor = easybill-ID)
+// POST { "step": "link", "path": "…" }     5 Minuten gültiger Link auf ein abgelegtes PDF (Prüfung)
 // Header x-import-token: Klartext zum Hash in sales_settings.easybill_import
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -338,6 +339,11 @@ Deno.serve(async (request) => {
   }
   try {
     const body = await request.json().catch(() => ({}));
+    if (body.step === "link") {
+      const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(String(body.path), 300);
+      if (error) throw new Error(error.message);
+      return Response.json({ url: data.signedUrl });
+    }
     const result = body.step === "pdfs" ? await importPdfs(Number(body.after) || 0) : await importData();
     return Response.json(result);
   } catch (error) {

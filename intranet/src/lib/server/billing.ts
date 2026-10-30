@@ -1,23 +1,23 @@
 import "server-only";
 import { DEMO } from "@/lib/config";
-import type { BillingDetail, BillingDocument } from "@/lib/billing";
-import { sb } from "./db";
+import { DEFAULT_BILLING_SETTINGS, type BillingDetail, type BillingDocument, type BillingSettings } from "@/lib/billing";
+import { db, sb } from "./db";
 import { demoBilling, demoBillingDetail } from "./billing-demo";
 
 // Ausgangsrechnungen lesen. Die PDFs liegen im privaten Bucket „billing“
 // und gehen nur als kurzlebige signierte URL an den Browser.
 
-const BUCKET = "billing";
+export const BUCKET = "billing";
 
 const LIST_COLUMNS =
-  "id,kind,number,status,title,customer_id,ref_document_id,document_date,due_date,currency,amount_net,amount_gross,paid_amount,paid_at,recurring,pdf_path,source,customers(name)";
+  "id,kind,number,status,title,customer_id,ref_document_id,document_date,due_date,currency,amount_net,amount_gross,paid_amount,paid_at,recurring,pdf_path,source,finalized_at,sent_at,send_error,customers(name)";
 
 type ListRow = Omit<BillingDocument, "customer_name" | "has_pdf"> & {
   pdf_path: string | null;
   customers: { name: string } | null;
 };
 
-function check<T>({ data, error }: { data: T; error: { message: string } | null }) {
+export function check<T>({ data, error }: { data: T; error: { message: string } | null }) {
   if (error) throw new Error(error.message);
   return data;
 }
@@ -62,7 +62,7 @@ export async function getBilling(id: string): Promise<BillingDetail | null> {
   const doc = check(
     await sb()
       .from("billing_documents")
-      .select(`${LIST_COLUMNS},amount_vat,service_from,service_to,service_text,intro,closing,vat_option,address,notes`)
+      .select(`${LIST_COLUMNS},amount_vat,service_from,service_to,service_text,intro,closing,vat_option,address,notes,payment_terms_days,recipient_email,sent_to`)
       .eq("id", id)
       .maybeSingle()
   ) as unknown as (ListRow & Omit<BillingDetail, keyof BillingDocument | "items" | "payments" | "related">) | null;
@@ -72,7 +72,7 @@ export async function getBilling(id: string): Promise<BillingDetail | null> {
   const [items, payments, related] = await Promise.all([
     sb()
       .from("billing_items")
-      .select("id,position,kind,number,description,quantity,unit,unit_price_net,vat_percent,discount,discount_type,total_net,total_gross")
+      .select("id,position,kind,article_id,number,description,quantity,unit,unit_price_net,vat_percent,discount,discount_type,total_net,total_vat,total_gross")
       .eq("document_id", id)
       .order("position"),
     sb().from("billing_payments").select("id,paid_on,amount,method,reference,notes").eq("document_id", id).order("paid_on"),
@@ -90,6 +90,9 @@ export async function getBilling(id: string): Promise<BillingDetail | null> {
     vat_option: doc.vat_option,
     address: doc.address,
     notes: doc.notes,
+    payment_terms_days: doc.payment_terms_days,
+    recipient_email: doc.recipient_email,
+    sent_to: doc.sent_to,
     items: (check(items) ?? []).map((item) => ({
       ...item,
       quantity: num(item.quantity),
@@ -97,6 +100,7 @@ export async function getBilling(id: string): Promise<BillingDetail | null> {
       vat_percent: num(item.vat_percent),
       discount: item.discount === null ? null : num(item.discount),
       total_net: num(item.total_net),
+      total_vat: num(item.total_vat),
       total_gross: num(item.total_gross),
     })),
     payments: (check(payments) ?? []).map((p) => ({ ...p, amount: num(p.amount) })),
@@ -111,4 +115,14 @@ export async function billingPdfUrl(id: string) {
   const { data, error } = await sb().storage.from(BUCKET).createSignedUrl(doc.pdf_path, 600);
   if (error) throw new Error(error.message);
   return data.signedUrl;
+}
+
+/** Firmendaten und Texte aus Finance → Einstellungen, ergänzt um die Vorgaben */
+export async function billingSettings(): Promise<BillingSettings> {
+  const stored = await db().getSetting<Partial<BillingSettings>>("billing");
+  return {
+    ...DEFAULT_BILLING_SETTINGS,
+    ...stored,
+    company: { ...DEFAULT_BILLING_SETTINGS.company, ...stored?.company },
+  };
 }

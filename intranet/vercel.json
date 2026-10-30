@@ -2,6 +2,7 @@
   "framework": "nextjs",
   "crons": [
     { "path": "/api/cron/mail", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/easybill", "schedule": "30 4 * * *" }
+    { "path": "/api/cron/easybill", "schedule": "30 4 * * *" },
+    { "path": "/api/cron/billing", "schedule": "0 6 * * *" }
   ]
 }
