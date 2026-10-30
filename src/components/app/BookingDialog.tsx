@@ -493,9 +493,7 @@ export function BookingDialog() {
                 />
               </label>
 
-              <div className="mt-5">
-                <Altcha key={attempt} onChange={setAltcha} />
-              </div>
+              <Altcha key={attempt} onChange={setAltcha} />
 
               {error && <p className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
 
