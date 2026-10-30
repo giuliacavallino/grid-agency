@@ -9,7 +9,7 @@ import { check, getBilling } from "./billing";
 import { finalize, saveDraft } from "./billing-write";
 import { db, sb, type Row } from "./db";
 import { sendAppMail } from "./graph-app";
-import { createEnvelope, markEnvelopeSent } from "./sign";
+import { createEnvelope, markEnvelopeSent, revokeEnvelope } from "./sign";
 import { createMeeting, freeSlots, type Busy, type SlotRules } from "./slots";
 import { verifyAltcha } from "./altcha";
 import { book as bookErstgespraech, freeSlots as freeErstgespraech, type Slot } from "./booking";
@@ -279,6 +279,11 @@ export async function requestEbook(input: { name: string; email: string; company
 // ---------- Angebot erstellen und abschicken ----------
 
 export type OfferInput = {
+  /** Vorhandenen Kunden verwenden bzw. ausdrücklich neu anlegen (Rückfrage im Dialog) */
+  customer_id?: string | null;
+  new_customer?: boolean;
+  /** Offenes Angebot des Leads zurückziehen und durch dieses ersetzen (Rückfrage im Dialog) */
+  replace_open?: boolean;
   customer: { name: string; contact_name: string; email: string; street: string; zip: string; city: string };
   title: string;
   intro: string;
@@ -304,12 +309,14 @@ export async function createOffer(id: string, input: OfferInput, user: { email: 
   if (!EMAIL.test(input.signer_email.trim())) throw new FlowError("Bitte eine gültige E-Mail für die Unterschrift angeben");
   const items = input.items.filter((i) => (i.description ?? "").trim() && Number(i.quantity) > 0);
   if (!items.length) throw new FlowError("Bitte mindestens eine Leistung eintragen");
-  // Kein zweites Angebot, solange eine Mappe für diesen Lead offen ist
+  // Offenes Angebot des Leads: nur nach Rückfrage ersetzen
   if (lead.offer_id) {
     const open = check(
-      await sb().from("sign_envelopes").select("id").eq("document_id", lead.offer_id).in("status", ["versendet", "geoeffnet"]).limit(1)
+      await sb().from("sign_envelopes").select("id").eq("document_id", lead.offer_id).in("status", ["versendet", "geoeffnet"])
     ) as { id: string }[];
-    if (open.length) throw new FlowError("Für diesen Lead ist schon ein Angebot unterwegs. Erst die Mappe zurückziehen.");
+    if (open.length && !input.replace_open) throw new FlowError("Für diesen Lead ist schon ein Angebot unterwegs. Bitte bestätigen, dass es ersetzt wird.");
+    for (const envelope of open) await revokeEnvelope(envelope.id, user.name);
+    if (open.length) check(await sb().from("billing_documents").update({ status: "storniert" }).eq("id", lead.offer_id).eq("status", "offen"));
   }
 
   // Kunde: aus dem Lead anlegen bzw. Anschrift aktualisieren
@@ -323,17 +330,14 @@ export async function createOffer(id: string, input: OfferInput, user: { email: 
     city: c.city.trim(),
     country: "DE",
   };
-  // Vorhandenen Kunden nehmen (am Lead, sonst gleiche E-Mail oder gleicher Name), nie doppelt anlegen
-  let existingId = (lead.customer_id as string | null) ?? null;
-  if (!existingId) {
+  // Kunde: gewählt im Dialog, sonst der am Lead; gibt es einen passenden
+  // Kunden (gleiche E-Mail oder gleicher Name), entscheidet der Dialog
+  const existingId = input.customer_id ?? (input.new_customer ? null : ((lead.customer_id as string | null) ?? null));
+  if (!existingId && !input.new_customer) {
     const email = customerData.billing_email ?? (lead.email as string | null);
-    const byEmail = email
-      ? (check(await sb().from("customers").select("id").or(`email.ilike.${email},billing_email.ilike.${email}`).limit(1)) as { id: string }[])
-      : [];
-    const byName = byEmail.length
-      ? byEmail
-      : (check(await sb().from("customers").select("id").ilike("name", customerData.name).order("created_at").limit(1)) as { id: string }[]);
-    existingId = byName[0]?.id ?? null;
+    const byEmail = email ? (check(await sb().from("customers").select("id").or(`email.ilike.${email},billing_email.ilike.${email}`).limit(1)) as { id: string }[]) : [];
+    const byName = check(await sb().from("customers").select("id").ilike("name", customerData.name).limit(1)) as { id: string }[];
+    if (byEmail.length || byName.length) throw new FlowError("Diesen Kunden gibt es schon. Bitte im Dialog wählen: vorhandenen Kunden verwenden oder neu anlegen.");
   }
   const customer = existingId
     ? await db().update("customers", existingId, customerData)
