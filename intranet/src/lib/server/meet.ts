@@ -18,7 +18,11 @@ const GRACE_MS = 7 * 24 * 60 * 60_000;
 const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 export const CODE = /^[a-z2-9]{3}-[a-z2-9]{4}-[a-z2-9]{3}$/;
 
-export class MeetError extends Error {}
+export class MeetError extends Error {
+  constructor(message: string, readonly status = 404) {
+    super(message);
+  }
+}
 
 export const meetEnabled = () => !!process.env.ACS_CONNECTION_STRING;
 
@@ -51,7 +55,7 @@ async function room(code: string) {
   const { data, error } = await sb().from("meetings").select("*").eq("code", code).maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new MeetError("Diesen Link gibt es nicht.");
-  if (Date.parse(data.ends_at) + GRACE_MS < Date.now()) throw new MeetError("Dieser Termin ist vorbei.");
+  if (Date.parse(data.ends_at) + GRACE_MS < Date.now()) throw new MeetError("Dieser Call ist vorbei.", 410);
   return data as { code: string; group_id: string; title: string; starts_at: string; ends_at: string; host_name: string | null };
 }
 
@@ -66,7 +70,7 @@ export async function roomView(code: string): Promise<RoomView> {
 /** Zugang zum Anruf: neue ACS-Identität mit VoIP-Token (4 Stunden) */
 export async function joinRoom(code: string) {
   const { group_id } = await room(code);
-  if (!meetEnabled()) throw new MeetError("Video-Calls sind gerade nicht verfügbar.");
+  if (!meetEnabled()) throw new MeetError("Video-Calls sind gerade nicht verfügbar.", 503);
   const client = new CommunicationIdentityClient(process.env.ACS_CONNECTION_STRING!);
   const { token, expiresOn } = await client.createUserAndToken(["voip"], { tokenExpiresInMinutes: 240 });
   return { token, expires_on: expiresOn.toISOString(), group_id };

@@ -8,7 +8,7 @@ type Context = { params: Promise<{ code: string }> };
 const headers = { "Cache-Control": "no-store" };
 
 function fail(error: unknown) {
-  if (error instanceof MeetError) return Response.json({ error: error.message }, { status: 404, headers });
+  if (error instanceof MeetError) return Response.json({ error: error.message }, { status: error.status, headers });
   console.error(error);
   return Response.json({ error: "Da ist etwas schiefgelaufen. Bitte versuch es erneut." }, { status: 500, headers });
 }

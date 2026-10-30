@@ -15,6 +15,7 @@ import { CalendarClock, Mic, MicOff, MonitorUp, PhoneOff, Users, Video, VideoOff
 import { cn as clsx } from "@/lib/cn";
 import { Avatar, Button, Input, Spinner } from "@/components/ui";
 import { MeetMark, MeetShell } from "./brand";
+import { CallDone } from "./done";
 import { WaitingStage } from "./waiting";
 
 // Video-Call unter meet.grid-agency.de/<code> mit Azure Communication
@@ -99,6 +100,7 @@ export function MeetRoom({ code }: { code: string }) {
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("lobby");
   const [ended, setEnded] = useState<string | null>(null);
+  const [gone, setGone] = useState(false);
   const [name, setName] = useState("");
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
@@ -117,6 +119,7 @@ export function MeetRoom({ code }: { code: string }) {
     fetch(`/api/meet/${code}`, { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
+        if (response.status === 410) setGone(true);
         if (!response.ok) throw new Error(data.error ?? "Diesen Link gibt es nicht.");
         setView(data);
       })
@@ -269,6 +272,13 @@ export function MeetRoom({ code }: { code: string }) {
 
   const canShare = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia;
 
+  if (gone) {
+    return (
+      <MeetShell center>
+        <CallDone title="Dieser Call ist vorbei." text="Danke fürs Gespräch! Den Link brauchst du nicht mehr." />
+      </MeetShell>
+    );
+  }
   if (error) {
     return (
       <MeetShell center>
@@ -376,6 +386,18 @@ export function MeetRoom({ code }: { code: string }) {
           </ControlButton>
         </footer>
       </div>
+    );
+  }
+
+  if (phase === "left" && !ended) {
+    return (
+      <MeetShell center>
+        <CallDone title="Call beendet." text="Danke fürs Gespräch! Du kannst das Fenster jetzt schließen.">
+          <Button variant="secondary" onClick={() => setPhase("lobby")}>
+            Wieder beitreten
+          </Button>
+        </CallDone>
+      </MeetShell>
     );
   }
 

@@ -595,3 +595,61 @@ body {
     display: none;
   }
 }
+
+/* Meet: Abschluss mit grünem Haken */
+@keyframes meet-done-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.meet-done-pop {
+  animation: meet-done-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes meet-done-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+.meet-done-ring {
+  animation: meet-done-ring 2.4s ease-out 0.8s infinite;
+}
+@keyframes meet-spark {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), var(--y)) scale(1);
+    opacity: 0;
+  }
+}
+.meet-spark {
+  opacity: 0;
+  animation: meet-spark 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .meet-done-pop,
+  .meet-done-ring {
+    animation: none;
+  }
+  .meet-spark {
+    display: none;
+  }
+}
