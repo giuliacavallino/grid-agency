@@ -9,6 +9,12 @@ export class ApiError extends Error {
 /** fetch gegen die eigenen API-Routen mit Microsoft-ID-Token. Bei 401
  * (Token abgelaufen) einmal mit frischem Token wiederholen. */
 export async function api<T = unknown>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await apiFetch(path, init);
+  return response.status === 204 ? (undefined as T) : response.json();
+}
+
+/** Wie api(), liefert aber die rohe Antwort (z. B. für Dateien). */
+export async function apiFetch(path: string, init: RequestInit = {}) {
   const run = async (forceRefresh: boolean) => {
     const token = await getIdToken(forceRefresh);
     return fetch(path, {
@@ -26,5 +32,5 @@ export async function api<T = unknown>(path: string, init: RequestInit = {}): Pr
     const body = await response.json().catch(() => ({}));
     throw new ApiError(response.status, body.error ?? "Anfrage fehlgeschlagen");
   }
-  return response.status === 204 ? (undefined as T) : response.json();
+  return response;
 }

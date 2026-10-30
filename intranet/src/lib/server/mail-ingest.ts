@@ -1,5 +1,6 @@
 import "server-only";
 import { PREPAID_METHODS } from "@/lib/sales/types";
+import { getBeleg } from "./beleg";
 import { classifyMail } from "./classify";
 import { db } from "./db";
 import { attachmentNames, moveToInvoiceFolder, type GraphMail } from "./graph-app";
@@ -113,6 +114,10 @@ export async function ingestMail(mail: GraphMail) {
       const movedId = await fileInvoiceMail(mail.mailbox, mail.id);
       if (movedId) await store.update("invoices", row.id, { graph_id: movedId });
       await store.update("inbound_messages", key, { invoice_id: row.id, ...(movedId && { graph_id: movedId }) });
+      // Beleg gleich ablegen, damit die Vorschau in der Freigabe sofort da ist
+      await getBeleg({ ...row, graph_id: movedId ?? row.graph_id }).catch((error) =>
+        console.error("Beleg nicht abgelegt:", error)
+      );
     }
   }
 

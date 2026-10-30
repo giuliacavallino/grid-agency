@@ -7,7 +7,8 @@ import { ArrowLeft, ArrowRight, CalendarClock, Check, CheckCheck, FileText, Inbo
 import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
 import { createRow, deleteRow, updateRow, useResource, useRows } from "@/lib/data";
 import { formatDate, relativeTime } from "@/lib/format";
-import { graphErrorMessage, graphFor, type Attachment, type Message } from "@/lib/graph";
+import { api, apiFetch } from "@/lib/api";
+import { graphErrorMessage, graphFor, type FileAttachment } from "@/lib/graph";
 import {
   INVOICE_CATEGORIES,
   INVOICE_STAGES,
@@ -38,7 +39,8 @@ async function release(invoice: Invoice, datevAddress: string): Promise<"datev" 
     return "freigegeben";
   }
   if (!datevAddress) throw new Error("Keine DATEV-Upload-Adresse hinterlegt");
-  const files = await graphFor(invoice.mailbox).files(invoice.graph_id);
+  // Belege per App-Zugriff vom Server, damit es nicht auf den Postfachzugriff der Person ankommt
+  const files = await api<FileAttachment[]>(`/api/finance/belege/${invoice.id}?alle=1`);
   if (!files.length) throw new Error("Die Mail hat keine Dateianhänge");
   const subject = [invoice.vendor, invoice.invoice_number].filter(Boolean).join(" · ");
   await graphFor(FINANCE_MAILBOX).send({ to: [datevAddress], cc: [], subject: subject || "Eingangsrechnung", body: "" }, files);
@@ -539,48 +541,31 @@ function PaidCheckbox({ invoice }: { invoice: Invoice }) {
 }
 
 // ---------- Beleg-Vorschau ----------
-// Belege werden für die ganze Freigabe-Liste vorab geladen und für die Sitzung
-// gemerkt, damit beim Wechsel der Rechnung der Beleg sofort dasteht.
+// Der Server holt den Beleg per App-Zugriff aus der Rechnungsmail und legt ihn
+// einmal ab. Hier werden die Belege der Freigabe-Liste vorab geladen und für
+// die Sitzung gemerkt, damit beim Wechsel der Rechnung der Beleg sofort dasteht.
 
-type Beleg =
-  | { kind: "file"; files: Attachment[]; file: Attachment; url: string }
-  | { kind: "mail"; files: Attachment[]; body: NonNullable<Message["body"]> | null };
-
-const isPdf = (a: Attachment) => a.contentType === "application/pdf" || /\.pdf$/i.test(a.name);
-const isImage = (a: Attachment) => a.contentType.startsWith("image/") || /\.(png|jpe?g|gif|webp)$/i.test(a.name);
+type Beleg = { kind: "file"; url: string; name: string; image: boolean } | { kind: "mail"; html: string } | { kind: "none" };
 
 const belegPromises = new Map<string, Promise<Beleg>>();
 const belege = new Map<string, Beleg>();
-const fileUrls = new Map<string, string>();
 
-async function fileUrl(mailbox: string, messageId: string, file: Attachment) {
-  const key = `${mailbox}:${messageId}:${file.id}`;
-  const known = fileUrls.get(key);
-  if (known) return known;
-  const blob = await graphFor(mailbox).download(messageId, file.id);
-  // Graph liefert oft application/octet-stream; mit dem richtigen Typ zeigt der Browser das PDF an
-  const url = URL.createObjectURL(new Blob([blob], { type: isPdf(file) ? "application/pdf" : blob.type || file.contentType }));
-  fileUrls.set(key, url);
-  return url;
-}
-
-/** Erster PDF- oder Bildanhang; ohne solchen Anhang der Mailtext als Beleg */
-function loadBeleg(mailbox: string, messageId: string) {
-  const key = `${mailbox}:${messageId}`;
-  let promise = belegPromises.get(key);
+function loadBeleg(invoice: Invoice) {
+  let promise = belegPromises.get(invoice.id);
   if (!promise) {
     promise = (async (): Promise<Beleg> => {
-      const files = (await graphFor(mailbox).attachments(messageId)).filter((a) => !a.isInline);
-      const file = files.find(isPdf) ?? files.find(isImage);
-      if (file) return { kind: "file", files, file, url: await fileUrl(mailbox, messageId, file) };
-      const message = await graphFor(mailbox).message(messageId);
-      return { kind: "mail", files, body: message.body ?? null };
+      if (!invoice.mailbox || !invoice.graph_id) return { kind: "none" };
+      const response = await apiFetch(`/api/finance/belege/${invoice.id}`);
+      const type = response.headers.get("Content-Type") ?? "";
+      if (type.startsWith("text/html")) return { kind: "mail", html: await response.text() };
+      const name = decodeURIComponent(response.headers.get("Content-Disposition")?.match(/filename\*=UTF-8''(.+)$/)?.[1] ?? "Beleg");
+      return { kind: "file", url: URL.createObjectURL(await response.blob()), name, image: type.startsWith("image/") };
     })();
     promise.then(
-      (beleg) => belege.set(key, beleg),
-      () => belegPromises.delete(key)
+      (beleg) => belege.set(invoice.id, beleg),
+      () => belegPromises.delete(invoice.id)
     );
-    belegPromises.set(key, promise);
+    belegPromises.set(invoice.id, promise);
   }
   return promise;
 }
@@ -588,122 +573,78 @@ function loadBeleg(mailbox: string, messageId: string) {
 /** Belege der nächsten Rechnungen im Hintergrund laden */
 function usePreloadBelege(invoices: Invoice[]) {
   useEffect(() => {
-    for (const invoice of invoices.slice(0, 12)) {
-      if (invoice.mailbox && invoice.graph_id) loadBeleg(invoice.mailbox, invoice.graph_id).catch(() => {});
-    }
+    for (const invoice of invoices.slice(0, 12)) loadBeleg(invoice).catch(() => {});
   }, [invoices]);
 }
 
 function BelegPreview({ invoice }: { invoice: Invoice }) {
-  const { mailbox, graph_id: messageId } = invoice;
-  const key = mailbox && messageId ? `${mailbox}:${messageId}` : null;
   const [, rerender] = useReducer((n: number) => n + 1, 0);
   const [failed, setFailed] = useState<string | null>(null);
-  const [picked, setPicked] = useState<Attachment | null>(null);
-  const beleg = key ? belege.get(key) : undefined;
+  const [attempt, retry] = useReducer((n: number) => n + 1, 0);
+  const beleg = belege.get(invoice.id);
 
   useEffect(() => {
-    if (!mailbox || !messageId || belege.has(`${mailbox}:${messageId}`)) return;
+    if (belege.has(invoice.id)) return;
     let live = true;
-    loadBeleg(mailbox, messageId).then(
+    loadBeleg(invoice).then(
       () => live && rerender(),
-      () => live && setFailed(`${mailbox}:${messageId}`)
+      (error) => live && setFailed(error instanceof Error ? error.message : "Unbekannter Fehler")
     );
     return () => {
       live = false;
     };
-  }, [mailbox, messageId]);
+    // invoice.id reicht: dieselbe Rechnung hat denselben Beleg
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice.id, attempt]);
 
-  // Weiterer Anhang gewählt → nachladen
-  const pickedKey = picked && key ? `${key}:${picked.id}` : null;
-  useEffect(() => {
-    if (!picked || !mailbox || !messageId || fileUrls.has(`${mailbox}:${messageId}:${picked.id}`)) return;
-    let live = true;
-    fileUrl(mailbox, messageId, picked).then(
-      () => live && rerender(),
-      () => live && setFailed(`${mailbox}:${messageId}:${picked.id}`)
-    );
-    return () => {
-      live = false;
-    };
-  }, [picked, mailbox, messageId]);
-
-  if (!key) {
+  if (failed) {
     return (
       <Frame>
+        <div className="grid h-full place-items-center p-8 text-center">
+          <div>
+            <p className="text-sm text-error">Beleg konnte nicht geladen werden: {failed}</p>
+            <Button
+              size="sm"
+              className="mt-3"
+              onClick={() => {
+                setFailed(null);
+                retry();
+              }}
+            >
+              Nochmal versuchen
+            </Button>
+          </div>
+        </div>
+      </Frame>
+    );
+  }
+
+  return (
+    <Frame>
+      {!beleg ? (
+        <div className="grid h-full place-items-center">
+          <Spinner />
+        </div>
+      ) : beleg.kind === "file" ? (
+        beleg.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={beleg.url} alt={beleg.name} className="h-full w-full bg-white object-contain" />
+        ) : (
+          <iframe src={`${beleg.url}#view=FitH`} title={beleg.name} className="h-full w-full bg-white" />
+        )
+      ) : beleg.kind === "mail" ? (
+        <div className="h-full overflow-y-auto bg-white">
+          <MailBody body={{ contentType: "html", content: beleg.html }} />
+        </div>
+      ) : (
         <div className="grid h-full place-items-center p-8 text-center text-sm text-snow/55">
           <div>
             <FileText className="mx-auto mb-2 h-8 w-8 text-snow/30" />
             Kein Beleg – manuell erfasst.
           </div>
         </div>
-      </Frame>
-    );
-  }
-  if (failed === key || (pickedKey && failed === pickedKey)) {
-    return (
-      <Frame>
-        <p className="p-6 text-sm text-error">Beleg konnte nicht geladen werden.</p>
-      </Frame>
-    );
-  }
-  if (!beleg) {
-    return (
-      <Frame>
-        <div className="grid h-full place-items-center">
-          <Spinner />
-        </div>
-      </Frame>
-    );
-  }
-
-  const previewable = beleg.files.filter((f) => isPdf(f) || isImage(f));
-  const file = picked ?? (beleg.kind === "file" ? beleg.file : null);
-  const url = file ? (fileUrls.get(`${key}:${file.id}`) ?? null) : null;
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {previewable.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          {previewable.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setPicked(f)}
-              className={clsx(
-                "max-w-64 truncate rounded-full border px-3 py-1 text-[13px]",
-                f.id === file?.id ? "border-snow/25 bg-snow/[0.08]" : "border-snow/10 text-snow/60 hover:text-snow"
-              )}
-            >
-              {f.name}
-            </button>
-          ))}
-        </div>
       )}
-      <Frame>
-        {file && url ? (
-          isImage(file) && !isPdf(file) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={url} alt={file.name} className="h-full w-full bg-white object-contain" />
-          ) : (
-            <iframe src={`${url}#view=FitH`} title={file.name} className="h-full w-full bg-white" />
-          )
-        ) : file ? (
-          <div className="grid h-full place-items-center">
-            <Spinner />
-          </div>
-        ) : beleg.kind === "mail" && beleg.body ? (
-          <div className="h-full overflow-y-auto bg-white">
-            <MailBody body={beleg.body} />
-          </div>
-        ) : (
-          <p className="p-6 text-sm text-snow/55">Die Mail hat keinen Beleg.</p>
-        )}
-      </Frame>
-      {beleg.kind === "mail" && beleg.files.length > 0 && (
-        <Attachments mailbox={mailbox!} messageId={messageId!} />
-      )}
-    </div>
+    </Frame>
   );
 }
 
