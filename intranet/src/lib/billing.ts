@@ -387,3 +387,12 @@ export function addPeriod(date: string, frequency: "DAILY" | "WEEKLY" | "MONTHLY
 
 /** Heute in Berlin als yyyy-mm-dd */
 export const todayBerlin = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
+
+/** Einheit einer Belegposition aus der Artikel-Einheit */
+export const UNIT_LABEL: Record<string, string> = { monatlich: "Monat", einmalig: "Pauschal", stunde: "Std.", tag: "Tag", laufzeit: "Monate" };
+
+/** Monatliche Position („Monat“, „Account / Monat“) – nicht „Monate“ der Laufzeit */
+export const isMonthlyUnit = (unit: string | null | undefined) => !!unit && /(^|\/\s*)monat$/i.test(unit.trim());
+
+/** Einheit für zählbare Monatsleistungen, z. B. „Account / Monat“ */
+export const monthlyUnitFor = (countLabel: string | null | undefined) => (countLabel ? `${countLabel} / Monat` : "Monat");

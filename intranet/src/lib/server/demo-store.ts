@@ -85,15 +85,15 @@ const customers: Row[] = [
 }));
 
 const articles: Row[] = [
-  ["Social Media Betreuung S", "Retainer", "2 Kanäle, 8 Posts und 8 Stories im Monat, Community Management werktags", 1490, "monatlich", 18],
-  ["Social Media Betreuung M", "Retainer", "3 Kanäle, 12 Posts, 20 Stories, 4 Reels im Monat, Community Management", 2490, "monatlich", 32],
-  ["Social Media Betreuung L", "Retainer", "Alle Kanäle, Content-Produktion vor Ort, Reels-Serie, Reporting", 3990, "monatlich", 54],
-  ["Paid Social Management", "Retainer", "Meta- und TikTok-Ads: Setup, Creatives, Optimierung, Reporting", 890, "monatlich", 10],
-  ["Content Shooting (Tag)", "Produktion", "Foto und Video vor Ort, inkl. Schnitt von 6 Reels", 1800, "tag", 10],
-  ["Strategie-Workshop", "Beratung", "Halbtägiger Workshop mit Kanalstrategie und Content-Säulen", 1200, "einmalig", 8],
-  ["Influencer Kampagne", "Kampagne", "Recherche, Briefing und Abwicklung von bis zu 10 Creator*innen", 2900, "einmalig", 24],
-  ["Event-Content", "Produktion", "Begleitung eines Events mit Live-Stories und Recap-Reel", 95, "stunde", 1],
-].map(([name, category, description, price, unit, hours]) => ({
+  ["Betreuung Starter", "Betreuung", "3 Posts und 8 Storys pro Woche, Community Management werktags 1 h", 2600, "monatlich", 20, null],
+  ["Betreuung Business", "Betreuung", "5 Posts und 10 Storys pro Woche, Community Management werktags 1 h", 3300, "monatlich", 32, null],
+  ["Betreuung Enterprise", "Betreuung", "7 Posts und 14 Storys pro Woche, Community Management werktags 2 h", 3950, "monatlich", 54, null],
+  ["Performance Marketing", "Weitere", "Meta-Kampagnen: Struktur, Copy, Monitoring, Budget, Reporting", 1750, "monatlich", 10, null],
+  ["Setup", "Setup", "Zugänge, Ziele, Content-Strategie, Tonalität, Analyse-Tools", 1500, "einmalig", 8, null],
+  ["Strategie", "Strategie", "Redaktionskalender, visuelle Vorlagen, Storytelling, Kooperationen", 300, "laufzeit", 0, null],
+  ["Videoproduktion: 10 Reels", "Weitere", "2 Drehtage, Schnitt, Equipment, Buy-outs", 7500, "einmalig", 40, null],
+  ["Google Account Management", "Weitere", "Unternehmensprofil pflegen, Bewertungen beantworten, Reporting", 250, "monatlich", 2, "Account"],
+].map(([name, category, description, price, unit, hours, count_label]) => ({
   id: uid(),
   created_at: ago(200),
   name,
@@ -102,6 +102,7 @@ const articles: Row[] = [
   price,
   unit,
   hours,
+  count_label,
   active: true,
 }));
 

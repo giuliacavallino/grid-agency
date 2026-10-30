@@ -33,7 +33,7 @@ export const TABLES = {
     order: { column: "name", ascending: true },
   },
   articles: {
-    columns: ["name", "category", "description", "price", "unit", "hours", "active"],
+    columns: ["name", "category", "description", "price", "unit", "hours", "active", "count_label"],
     filters: ["active"],
     order: { column: "name", ascending: true },
   },

@@ -10,14 +10,13 @@ import { Button, useToast } from "@/components/ui";
 type Result = {
   at: string;
   customers: { created: number; updated: number };
-  articles: { created: number; updated: number };
   retainers: { created: number; updated: number };
   offers: { created: number };
 };
 
 const URL = "/api/sales/sync/easybill";
 
-/** Knopf „easybill abgleichen“: holt Kunden, Artikel, Serienrechnungen
+/** Knopf „easybill abgleichen“: holt Kunden, Serienrechnungen
  * (Retainer) und offene Angebote aus easybill. */
 export function EasybillSync() {
   const { data, reload } = useResource<{ last: Result | null; configured: boolean }>(URL);
@@ -28,11 +27,10 @@ export function EasybillSync() {
     setBusy(true);
     try {
       const r = await api<Result>(URL, { method: "POST" });
-      ["customers", "articles", "retainers", "leads"].forEach((t) => revalidate(`/api/sales/${t}`));
+      ["customers", "retainers", "leads"].forEach((t) => revalidate(`/api/sales/${t}`));
       reload();
       toast(
-        `easybill: ${r.customers.created} neue Kund*innen, ${r.retainers.created} neue Retainer, ` +
-          `${r.articles.created} neue Artikel, ${r.offers.created} offene Angebote`
+        `easybill: ${r.customers.created} neue Kund*innen, ${r.retainers.created} neue Retainer, ${r.offers.created} offene Angebote`
       );
     } catch (error) {
       toast(error instanceof Error ? error.message : "Abgleich fehlgeschlagen", "error");

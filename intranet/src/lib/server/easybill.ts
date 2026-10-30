@@ -114,14 +114,6 @@ export function monthlyFee(doc: EbDocument) {
   }
 }
 
-export function articleUnit(unit: string | null) {
-  const u = (unit ?? "").toLowerCase();
-  if (/mon|mtl/.test(u)) return "monatlich";
-  if (/std|stunde|^h$/.test(u)) return "stunde";
-  if (/tag/.test(u)) return "tag";
-  return "einmalig";
-}
-
 const RETAINER_STATUS = { RUNNING: "aktiv", WAITING: "aktiv", PAUSE: "pausiert", STOP: "gekuendigt" } as const;
 
 function customerName(c: EbCustomer) {
@@ -145,16 +137,13 @@ async function sync(table: EasybillTable, rows: Record<string, unknown>[], keepO
 export type SyncResult = {
   at: string;
   customers: { created: number; updated: number };
-  articles: { created: number; updated: number };
   retainers: { created: number; updated: number };
   offers: { created: number };
 };
 
 export async function syncEasybill(): Promise<SyncResult> {
-  const [customers, positions, groups, recurring, offers] = await Promise.all([
+  const [customers, recurring, offers] = await Promise.all([
     all<EbCustomer>("/customers"),
-    all<EbPosition>("/positions"),
-    all<EbGroup>("/position-groups"),
     all<EbDocument>("/documents?type=RECURRING"),
     all<EbDocument>("/documents?type=OFFER&is_draft=0"),
   ]);
@@ -179,20 +168,10 @@ export async function syncEasybill(): Promise<SyncResult> {
   );
   const customerId = (id: number | null) => (id == null ? null : (customerSync.byEasybill.get(id)?.id ?? null));
 
-  // Artikel
-  const groupName = new Map(groups.map((g) => [g.id, g.name]));
-  const articleSync = await sync(
-    "articles",
-    positions.map((p) => ({
-      easybill_id: p.id,
-      name: firstLine(p.description) ?? p.number ?? `Position ${p.id}`,
-      description: p.description?.split("\n").slice(1).join("\n").trim() || p.note || null,
-      category: (p.group_id && groupName.get(p.group_id)) || null,
-      price: euros(p.sale_price),
-      unit: articleUnit(p.unit),
-      active: !p.archived,
-    })),
-    []
+  // Artikel pflegen wir im Intranet (Setup, Strategie, Betreuung …); easybill-
+  // Positionen dienen nur noch zum Zuordnen alter Serienrechnungen
+  const articleByEasybill = new Map(
+    (await db().list("articles")).filter((r) => r.easybill_id != null).map((r) => [Number(r.easybill_id), r])
   );
 
   // Retainer aus Serienrechnungen
@@ -205,7 +184,7 @@ export async function syncEasybill(): Promise<SyncResult> {
       return {
         easybill_id: doc.id,
         customer_id: customer,
-        article_id: positionId ? (articleSync.byEasybill.get(positionId)?.id ?? null) : null,
+        article_id: positionId ? (articleByEasybill.get(positionId)?.id ?? null) : null,
         title: doc.title || firstLine(doc.items[0]?.description) || "Serienrechnung",
         monthly_fee: Math.round(monthlyFee(doc) * 100) / 100,
         start_date: day(doc.document_date) ?? day(doc.created_at),
@@ -246,7 +225,6 @@ export async function syncEasybill(): Promise<SyncResult> {
   const result: SyncResult = {
     at: new Date().toISOString(),
     customers: { created: customerSync.created, updated: customerSync.updated },
-    articles: { created: articleSync.created, updated: articleSync.updated },
     retainers: { created: retainerSync.created, updated: retainerSync.updated },
     offers: { created: offersCreated },
   };
