@@ -55,6 +55,7 @@ export type Activity = {
 
 export type Customer = {
   id: string;
+  customer_number: number;
   created_at: string;
   updated_at: string;
   name: string;

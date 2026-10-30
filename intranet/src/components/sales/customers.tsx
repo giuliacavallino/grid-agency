@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Building2, Globe, Mail, Pencil, Phone, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowRight, Building2, ChevronDown, ChevronUp, ChevronsUpDown, Globe, Mail, Pencil, Phone, Plus, Search, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { createRow, deleteRow, revalidate, updateRow, useRows } from "@/lib/data";
 import { euro, formatDate, num } from "@/lib/format";
@@ -37,6 +37,48 @@ function Source({ source }: { source: string | null }) {
   return isSource(source) ? <SourceBadge source={source} /> : <span className="text-snow/70">{source}</span>;
 }
 
+/** Kundennummer für die Anzeige; vor der Migration noch leer */
+const customerNo = (c: Customer) => (c.customer_number ? String(c.customer_number) : "–");
+
+type SortKey = "number" | "name" | "contact" | "email" | "status" | "source" | "mrr" | "since";
+type Sort = { key: SortKey; dir: 1 | -1 };
+
+const COLUMNS: { key: SortKey; label: string; className: string }[] = [
+  { key: "number", label: "Nr.", className: "pl-5 pr-2 w-20" },
+  { key: "name", label: "Kunde", className: "px-3" },
+  { key: "contact", label: "Ansprechpartner*in", className: "px-3" },
+  { key: "email", label: "E-Mail", className: "px-3" },
+  { key: "status", label: "Status", className: "px-3" },
+  { key: "source", label: "Quelle", className: "px-3" },
+  { key: "mrr", label: "MRR", className: "px-3 text-right" },
+  { key: "since", label: "Kunde seit", className: "px-5" },
+];
+
+/** Leere Werte landen immer unten, egal in welche Richtung sortiert wird. */
+function compare(a: string | number | null | undefined, b: string | number | null | undefined, dir: 1 | -1) {
+  const emptyA = a == null || a === "";
+  const emptyB = b == null || b === "";
+  if (emptyA || emptyB) return Number(emptyA) - Number(emptyB);
+  return (typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b), "de", { numeric: true })) * dir;
+}
+
+function SortHeader({ column, sort, onSort }: { column: (typeof COLUMNS)[number]; sort: Sort; onSort: (key: SortKey) => void }) {
+  const active = sort.key === column.key;
+  const Icon = !active ? ChevronsUpDown : sort.dir === 1 ? ChevronUp : ChevronDown;
+  return (
+    <th aria-sort={active ? (sort.dir === 1 ? "ascending" : "descending") : "none"} className={cn("py-2.5 font-medium", column.className)}>
+      <button
+        type="button"
+        onClick={() => onSort(column.key)}
+        className={cn("group inline-flex items-center gap-1 hover:text-snow", active && "text-snow/80", column.key === "mrr" && "flex-row-reverse")}
+      >
+        {column.label}
+        <Icon className={cn("h-3.5 w-3.5", !active && "opacity-0 group-hover:opacity-60 group-focus-visible:opacity-60")} />
+      </button>
+    </th>
+  );
+}
+
 /** MRR je Kunde aus den Retainern, die im laufenden Monat zählen. */
 function useMrrByCustomer(retainers: Retainer[] | undefined) {
   return useMemo(() => {
@@ -56,6 +98,8 @@ export function Customers() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [creating, setCreating] = useState(false);
+  const [sort, setSort] = useState<Sort>({ key: "name", dir: 1 });
+  const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "mrr" || key === "since" ? -1 : 1 }));
 
   // Geöffneter Kunde steht in der URL (?id=…), damit Pipeline und Links ihn öffnen
   const params = useSearchParams();
@@ -66,11 +110,22 @@ export function Customers() {
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const value = (c: Customer) =>
+      ({
+        number: c.customer_number,
+        name: c.name,
+        contact: c.contact_name,
+        email: c.email,
+        status: CUSTOMER_STATUS.findIndex((s) => s.id === c.status),
+        source: c.source && (SOURCES.find((s) => s.id === c.source)?.label ?? c.source),
+        mrr: mrr.get(c.id),
+        since: c.created_at,
+      })[sort.key];
     return (customers ?? [])
       .filter((c) => !status || c.status === status)
-      .filter((c) => !q || [c.name, c.contact_name, c.email, c.city, c.industry].some((v) => v?.toLowerCase().includes(q)))
-      .sort((a, b) => a.name.localeCompare(b.name, "de"));
-  }, [customers, query, status]);
+      .filter((c) => !q || [String(c.customer_number ?? ""), c.name, c.contact_name, c.email, c.city, c.industry].some((v) => v?.toLowerCase().includes(q)))
+      .sort((a, b) => compare(value(a), value(b), sort.dir) || a.name.localeCompare(b.name, "de"));
+  }, [customers, query, status, sort, mrr]);
 
   const active = customers?.filter((c) => c.status === "aktiv").length ?? 0;
   const totalMrr = [...mrr.values()].reduce((a, b) => a + b, 0);
@@ -113,13 +168,9 @@ export function Customers() {
           <table className="hidden w-full text-[13px] md:table">
             <thead className="sticky top-0 z-10 bg-canvas">
               <tr className="border-b border-snow/[0.08] text-left text-[12px] text-snow/50">
-                <th className="px-5 py-2.5 font-medium">Kunde</th>
-                <th className="px-3 py-2.5 font-medium">Ansprechpartner*in</th>
-                <th className="px-3 py-2.5 font-medium">E-Mail</th>
-                <th className="px-3 py-2.5 font-medium">Status</th>
-                <th className="px-3 py-2.5 font-medium">Quelle</th>
-                <th className="px-3 py-2.5 text-right font-medium">MRR</th>
-                <th className="px-5 py-2.5 font-medium">Kunde seit</th>
+                {COLUMNS.map((column) => (
+                  <SortHeader key={column.key} column={column} sort={sort} onSort={toggleSort} />
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -131,7 +182,8 @@ export function Customers() {
                   onKeyDown={(e) => e.key === "Enter" && open(c.id)}
                   className="cursor-pointer border-b border-snow/[0.05] outline-none hover:bg-snow/[0.04] focus-visible:bg-snow/[0.06]"
                 >
-                  <td className="px-5 py-2.5">
+                  <td className="py-2.5 pr-2 pl-5 tabular-nums text-snow/55">{customerNo(c)}</td>
+                  <td className="px-3 py-2.5">
                     <span className="flex items-center gap-3">
                       <Avatar name={c.name} className="h-7 w-7 text-[11px]" />
                       <span className="min-w-0">
@@ -163,7 +215,9 @@ export function Customers() {
                   <Avatar name={c.name} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] font-medium">{c.name}</span>
-                    <span className="block truncate text-[12px] text-snow/55">{c.contact_name ?? c.email ?? "–"}</span>
+                    <span className="block truncate text-[12px] text-snow/55">
+                      <span className="tabular-nums">{customerNo(c)}</span> · {c.contact_name ?? c.email ?? "–"}
+                    </span>
                   </span>
                   <span className="shrink-0 text-right">
                     <span className="block text-[13px] font-medium tabular-nums">{mrr.get(c.id) ? euro(mrr.get(c.id)) : "–"}</span>
@@ -252,7 +306,7 @@ function CustomerSheet({ id, onClose, retainers }: { id: string | null; onClose:
       open={!!id}
       onClose={onClose}
       title={customer?.name ?? "Kunde"}
-      subtitle={customer && `Kunde seit ${formatDate(customer.created_at, { month: "long", year: "numeric" })}`}
+      subtitle={customer && `Kundennr. ${customerNo(customer)} · Kunde seit ${formatDate(customer.created_at, { month: "long", year: "numeric" })}`}
     >
       {customer ? (
         <CustomerDetail key={customer.id} customer={customer} retainers={retainers?.filter((r) => r.customer_id === customer.id) ?? []} onClose={onClose} />

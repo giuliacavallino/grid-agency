@@ -59,8 +59,9 @@ const customers: Row[] = [
   ["Sajent Club", "Aylin Demir", "Nightlife", "Berlin", 300],
   ["Lovebirds", "Sophie Wagner", "Fashion", "Frankfurt", 120],
   ["Smash Burger Co.", "Jonas Hartmann", "Gastronomie", "Berlin", 60],
-].map(([name, contact, industry, city, since]) => ({
+].map(([name, contact, industry, city, since], i) => ({
   id: uid(),
+  customer_number: 1001 + i,
   created_at: ago(Number(since)),
   updated_at: ago(3),
   name,
@@ -338,6 +339,7 @@ export const demoStore: Store = {
     }
     if (table === "task_projects") Object.assign(row, { color: row.color ?? "#afaaa0", archived: row.archived ?? false, briefing: row.briefing ?? null, customer_id: null, position: row.position ?? Date.now() / 1000 });
     if (table === "task_sections") Object.assign(row, { position: row.position ?? Date.now() / 1000 });
+    if (table === "customers") row.customer_number = Math.max(1000, ...tables.customers.map((c) => Number(c.customer_number))) + 1;
     tables[table].push(row);
     return structuredClone(row);
   },
