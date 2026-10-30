@@ -43,7 +43,7 @@ function signature(sender: Sender) {
       <img src="${ASSETS}/grid-logo.png" width="120" alt="GRID" style="display:block;border:0;width:120px;height:auto">
       <p style="margin:16px 0 0">
         <a href="https://www.instagram.com/grid.berlin/"><img src="${ASSETS}/instagram.png" width="22" height="22" alt="Instagram" style="border:0;margin-right:14px"></a>
-        <a href="https://www.linkedin.com/company/grid-agency/"><img src="${ASSETS}/linkedin.png" width="22" height="22" alt="LinkedIn" style="border:0;margin-right:14px"></a>
+        <a href="https://www.linkedin.com/company/grid-agency-gmbh/"><img src="${ASSETS}/linkedin.png" width="22" height="22" alt="LinkedIn" style="border:0;margin-right:14px"></a>
         <a href="https://grid-agency.de"><img src="${ASSETS}/web.png" width="22" height="22" alt="Website" style="border:0"></a>
       </p>
     </td>
