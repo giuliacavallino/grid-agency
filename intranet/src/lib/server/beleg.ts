@@ -1,4 +1,5 @@
 import "server-only";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { appGraph, mailboxPath } from "./graph-app";
 import { db, sb, type Row } from "./db";
 
@@ -13,6 +14,7 @@ export type BelegFile = { name: string; contentType: string; bytes: Buffer };
 const isPdf = (f: { name: string; contentType: string }) => /pdf/i.test(f.contentType) || /\.pdf$/i.test(f.name);
 const isImage = (f: { name: string; contentType: string }) =>
   /^image\//i.test(f.contentType) || /\.(png|jpe?g|gif|webp)$/i.test(f.name);
+const isXml = (f: { name: string; contentType: string }) => /xml/i.test(f.contentType) || /\.xml$/i.test(f.name);
 const isSmime = (f: { name: string; contentType: string }) =>
   /pkcs7-mime|smime/i.test(f.contentType) || /\.p7m$/i.test(f.name);
 const isSignature = (f: { name: string; contentType: string }) =>
@@ -78,8 +80,8 @@ export function expandSmime(file: BelegFile): BelegFile[] {
 
 type GraphAttachment = { "@odata.type": string; name: string; contentType: string | null; contentBytes?: string; isInline: boolean };
 
-/** Alle Belegdateien der Rechnungsmail (ohne eingebettete Bilder und Signaturen) */
-export async function belegFiles(invoice: Row): Promise<BelegFile[]> {
+/** Dateianhänge der Rechnungsmail (ohne eingebettete Bilder und Signaturen) */
+async function attachmentFiles(invoice: Row): Promise<BelegFile[]> {
   if (!invoice.mailbox || !invoice.graph_id) return [];
   const mailbox = invoice.mailbox as string;
   const id = await messageId(invoice);
@@ -89,6 +91,90 @@ export async function belegFiles(invoice: Row): Promise<BelegFile[]> {
     .map((a) => ({ name: a.name, contentType: a.contentType ?? "application/octet-stream", bytes: Buffer.from(a.contentBytes!, "base64") }))
     .flatMap((f) => (isSmime(f) ? expandSmime(f) : [f]))
     .filter((f) => !isSignature(f));
+}
+
+/** Belegdateien für DATEV. Steht der Beleg nur im Mailtext (z. B. Fahrt- oder
+ * Shop-Quittungen ohne Anhang), wird daraus ein PDF erzeugt – DATEV legt nur
+ * Anhänge als Beleg an. */
+export async function belegFiles(invoice: Row): Promise<BelegFile[]> {
+  const files = await attachmentFiles(invoice);
+  if (!invoice.mailbox || !invoice.graph_id || files.some((f) => isPdf(f) || isImage(f) || isXml(f))) return files;
+  return [...files, await mailPdf(invoice)];
+}
+
+// ---------- Mailtext als PDF ----------
+
+type MailText = { subject?: string; receivedDateTime?: string; from?: { emailAddress?: { name?: string; address?: string } }; body?: { content: string } };
+
+async function mailPdf(invoice: Row): Promise<BelegFile> {
+  const id = await messageId(invoice);
+  // appGraph liefert den Mailtext als Klartext
+  const mail = await appGraph<MailText>(
+    `${mailboxPath(invoice.mailbox as string)}/messages/${encodeURIComponent(id)}?$select=subject,from,receivedDateTime,body`
+  );
+  const sender = mail.from?.emailAddress;
+  const received = mail.receivedDateTime ? new Date(mail.receivedDateTime).toLocaleString("de-DE", { timeZone: "Europe/Berlin" }) : "";
+  const bytes = await textPdf(mail.subject || "Beleg", [
+    `Von: ${[sender?.name, sender?.address && `<${sender.address}>`].filter(Boolean).join(" ")}`,
+    `Empfangen: ${received}`,
+    `Postfach: ${invoice.mailbox}`,
+  ], mail.body?.content ?? "");
+  const base = [invoice.vendor, invoice.invoice_number].filter(Boolean).join(" ") || "Beleg";
+  return { name: `${String(base).replace(/[^\w.\- ]+/g, "_").trim()}.pdf`, contentType: "application/pdf", bytes };
+}
+
+/** Schlichtes A4-PDF: Betreff, Kopfzeilen, Mailtext mit Zeilenumbruch. */
+async function textPdf(title: string, meta: string[], body: string) {
+  const doc = await PDFDocument.create();
+  doc.setTitle(title);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+  // Standardschrift kann nur WinAnsi: Emojis weglassen, sonstiges als „?“
+  const known = new Set(font.getCharacterSet());
+  const clean = (text: string) =>
+    [...text.replace(/\t/g, "    ").replace(/[\u00a0\u202f]/g, " ")].map((c) => (known.has(c.codePointAt(0)!) ? c : c.codePointAt(0)! > 0xffff ? "" : "?")).join("");
+
+  const [width, height, margin] = [595.28, 841.89, 56];
+  let page = doc.addPage([width, height]);
+  let y = height - margin;
+  const write = (text: string, size: number, face = font, color = rgb(0.12, 0.11, 0.1)) => {
+    const words = clean(text).split(/(\s+)/);
+    let line = "";
+    const flush = () => {
+      if (y < margin + size) {
+        page = doc.addPage([width, height]);
+        y = height - margin;
+      }
+      page.drawText(line.trimEnd(), { x: margin, y: y - size, size, font: face, color });
+      y -= size * 1.45;
+      line = "";
+    };
+    for (const word of words) {
+      if (face.widthOfTextAtSize(line + word, size) > width - 2 * margin && line.trim()) flush();
+      // Überlange Wörter (URLs) hart umbrechen
+      let rest = line ? word : word.trimStart();
+      while (face.widthOfTextAtSize(line + rest, size) > width - 2 * margin && rest.length > 1) {
+        let cut = rest.length - 1;
+        while (cut > 1 && face.widthOfTextAtSize(line + rest.slice(0, cut), size) > width - 2 * margin) cut--;
+        line += rest.slice(0, cut);
+        flush();
+        rest = rest.slice(cut);
+      }
+      line += rest;
+    }
+    flush();
+  };
+
+  write(title, 15, bold);
+  y -= 4;
+  for (const line of meta) write(line, 9, font, rgb(0.4, 0.38, 0.36));
+  y -= 10;
+  const text = body.replace(/\r\n?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  for (const paragraph of text.split("\n")) {
+    if (paragraph.trim()) write(paragraph, 10);
+    else y -= 7;
+  }
+  return Buffer.from(await doc.save());
 }
 
 async function mailHtml(invoice: Row) {
@@ -115,7 +201,7 @@ export async function getBeleg(invoice: Row): Promise<Beleg | null> {
   }
   if (!invoice.mailbox || !invoice.graph_id) return null;
 
-  const files = await belegFiles(invoice);
+  const files = await attachmentFiles(invoice);
   let beleg: Beleg | undefined = files.find(isPdf) ?? files.find(isImage);
   if (beleg && isPdf(beleg)) beleg = { ...beleg, contentType: "application/pdf" };
   if (!beleg) beleg = { name: "Mail.html", contentType: "text/html; charset=utf-8", bytes: Buffer.from(await mailHtml(invoice), "utf8") };
