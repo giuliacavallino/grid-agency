@@ -29,7 +29,7 @@ const range = (start: string, minutes: number) => {
 };
 
 /** Terminwahl für eingeladene Bewerber*innen: freie Slots aus dem Kalender
- * der einladenden Person, ein Klick bucht den Teams-Termin. */
+ * der einladenden Person, ein Klick bucht den Termin mit Video-Call. */
 export function Booking({ token }: { token: string }) {
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +124,7 @@ export function Booking({ token }: { token: string }) {
               </div>
               <div className="flex flex-wrap gap-1.5 text-[12px]">
                 <Chip icon={<Clock className="h-3.5 w-3.5" />}>{view.minutes} Min.</Chip>
-                <Chip icon={<Video className="h-3.5 w-3.5" />}>Teams</Chip>
+                <Chip icon={<Video className="h-3.5 w-3.5" />}>Video-Call</Chip>
                 {view.position_title && <Chip icon={<Briefcase className="h-3.5 w-3.5" />}>{view.position_title}</Chip>}
               </div>
             </div>
@@ -267,10 +267,10 @@ function Booked({ view }: { view: View }) {
         {longDay.format(new Date(start))}
       </p>
       <p className="rise-in text-[15px] text-snow/70" style={{ "--delay": "650ms" } as React.CSSProperties}>
-        {range(start, view.minutes)} · Teams mit {view.inviter}
+        {range(start, view.minutes)} · Video-Call mit {view.inviter}
       </p>
       <p className="rise-in mx-auto mt-5 max-w-md text-[14px] text-snow/55" style={{ "--delay": "750ms" } as React.CSSProperties}>
-        Die Einladung mit Teams-Link kommt gleich per Mail. Wir freuen uns auf dich, {view.first_name}!
+        Die Einladung mit Link zum Video-Call kommt gleich per Mail. Wir freuen uns auf dich, {view.first_name}!
       </p>
       {view.booked!.url && (
         <a
@@ -280,7 +280,7 @@ function Booked({ view }: { view: View }) {
           className="btn-rainbow rise-in mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-snow px-6 text-sm font-medium text-sky"
           style={{ "--delay": "850ms" } as React.CSSProperties}
         >
-          <Video className="h-4 w-4" /> Teams-Link öffnen
+          <Video className="h-4 w-4" /> Video-Call öffnen
         </a>
       )}
     </div>

@@ -396,7 +396,7 @@ function InterviewSection({ application: a }: { application: Application }) {
           <Video className="h-4 w-4 shrink-0 text-snow/60" />
           <div className="min-w-0 flex-1 text-[13px]">
             <p className="font-medium">{interviewTime(a.interview_at)} Uhr</p>
-            <p className="text-snow/55">Teams-Termin im Kalender von {a.invited_by_name ?? a.invited_by}</p>
+            <p className="text-snow/55">Termin mit Video-Call im Kalender von {a.invited_by_name ?? a.invited_by}</p>
           </div>
           {a.interview_url && (
             <a
@@ -405,7 +405,7 @@ function InterviewSection({ application: a }: { application: Application }) {
               rel="noopener noreferrer"
               className="inline-flex h-9 items-center gap-1.5 rounded-full border border-snow/15 bg-snow/[0.06] px-3.5 text-[13px] font-medium hover:bg-snow/12"
             >
-              <ExternalLink className="h-3.5 w-3.5" /> Teams
+              <ExternalLink className="h-3.5 w-3.5" /> Beitreten
             </a>
           )}
         </div>
@@ -428,7 +428,7 @@ function InterviewSection({ application: a }: { application: Application }) {
       )}
       {!a.interview_at && canInvite && (
         <p className="mt-2 text-[12px] text-snow/45">
-          Mail von hello@ mit Button zur Terminwahl in deinem Outlook-Kalender (30 Min., Teams).
+          Mail von hello@ mit Button zur Terminwahl in deinem Outlook-Kalender (30 Min., Video-Call).
         </p>
       )}
     </div>

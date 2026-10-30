@@ -175,17 +175,27 @@ export default function DatenschutzPage() {
             unserem Kalender bei Microsoft 365 (Microsoft Ireland Operations
             Ltd., One Microsoft Place, South County Business Park,
             Leopardstown, Dublin 18, Irland) an und schicken dir von dort die
-            Einladung mit einem Link zu Microsoft Teams. Deine Anfrage
+            Einladung mit dem Link zum Video-Call. Deine Anfrage
             speichern wir außerdem bei unserem Datenbank-Dienstleister
             Supabase (siehe Abschnitt 4), um das Gespräch vorzubereiten. Mit
             Microsoft und Supabase bestehen Verträge zur
             Auftragsverarbeitung; für Übermittlungen in Drittländer gelten die
             EU-Standardvertragsklauseln bzw. das EU-US Data Privacy Framework.
           </p>
+          <p id="video-call" className="mt-2">
+            Den Video-Call führen wir über unsere eigene Seite
+            meet.grid-agency.de. Ton und Bild laufen über Azure Communication
+            Services von Microsoft (Anschrift wie oben), ebenfalls im Rahmen
+            des Vertrags zur Auftragsverarbeitung. Verarbeitet werden dabei
+            der Name, den du beim Beitreten angibst, technische
+            Verbindungsdaten (z. B. IP-Adresse, Browser, Zeitpunkt und Dauer)
+            sowie Ton und Bild, solange du Mikrofon und Kamera eingeschaltet
+            hast. Gespräche werden nicht aufgezeichnet. Kamera und Mikrofon
+            nutzt die Seite nur nach deiner Freigabe im Browser.
+          </p>
           <p className="mt-2">
             Rechtsgrundlage ist die Anbahnung einer Zusammenarbeit (Art. 6
-            Abs. 1 lit. b DSGVO). Für das Gespräch in Microsoft Teams gelten
-            zusätzlich die Datenschutzbestimmungen von Microsoft. Wir löschen
+            Abs. 1 lit. b DSGVO). Wir löschen
             deine Angaben, sobald sie für die Anbahnung nicht mehr nötig sind
             und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
           </p>

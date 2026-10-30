@@ -8,8 +8,8 @@ import { createMeeting, freeSlots as freeSlotsIn, type Busy, type SlotRules } fr
 // Einladung zum Vorstellungsgespräch: Ein Klick auf der Bewerbungskarte
 // schickt von hello@ eine Mail mit geheimem Link (nur dessen SHA-256 liegt in
 // der Datenbank). Über den Link wählt die Person einen freien Slot aus dem
-// Outlook-Kalender der einladenden Person; der Termin wird dort als
-// Teams-Besprechung angelegt, Outlook schickt die Einladung. Ohne Link gibt
+// Outlook-Kalender der einladenden Person; der Termin wird dort mit Link zum
+// Video-Call angelegt, Outlook schickt die Einladung. Ohne Link gibt
 // es keine Buchung. Braucht in Entra die Anwendungsberechtigung
 // Calendars.ReadWrite (Frei/Gebucht lesen, Termin anlegen) und Mail.Send.
 
@@ -51,10 +51,11 @@ async function createEvent(application: Row, start: number) {
   // Der Text geht mit der Einladung an die Person, daher nichts Internes
   return createMeeting(String(application.invited_by), {
     subject: `Kennenlernen GRID × ${name}`,
-    text: `Hi ${firstName(name)},\n\nschön, dass es klappt! Wir sprechen per Microsoft Teams, den Link findest du in diesem Termin.\n\nBis bald\n${application.invited_by_name ?? "GRID"}\nGRID Agency`,
+    text: `Hi ${firstName(name)},\n\nschön, dass es klappt! Wir sprechen per Video-Call, den Link findest du in diesem Termin.\n\nBis bald\n${application.invited_by_name ?? "GRID"}\nGRID Agency`,
     start,
     minutes: SLOT_MINUTES,
     attendee: { email: String(application.email), name },
+    hostName: application.invited_by_name ? String(application.invited_by_name) : undefined,
   });
 }
 
@@ -68,7 +69,7 @@ function inviteMail(application: Row, inviter: { name: string }, link: string) {
   const from = firstName(inviter.name);
   const text = `Hi ${name},
 
-danke für ${role}! Wir würden dich gern kennenlernen. Such dir einfach einen Termin für ein ${SLOT_MINUTES}-minütiges Gespräch per Teams mit ${from} aus:
+danke für ${role}! Wir würden dich gern kennenlernen. Such dir einfach einen Termin für ein ${SLOT_MINUTES}-minütiges Gespräch per Video-Call mit ${from} aus:
 
 ${link}
 
@@ -83,7 +84,7 @@ GRID Agency`;
 </tr></table>
 <p style="margin:0 0 6px;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#fa7e1e;font-weight:600">Einladung zum Kennenlernen</p>
 <p style="margin:0 0 20px;font-size:26px;line-height:1.2;font-weight:700">Hi ${escape(name)}, lass uns quatschen!</p>
-<p>danke für ${escape(role)}! Sie hat uns gefallen und wir würden dich gern kennenlernen. Such dir einfach einen Termin für ein ${SLOT_MINUTES}-minütiges Gespräch per Teams mit ${escape(from)} aus:</p>
+<p>danke für ${escape(role)}! Sie hat uns gefallen und wir würden dich gern kennenlernen. Such dir einfach einen Termin für ein ${SLOT_MINUTES}-minütiges Gespräch per Video-Call mit ${escape(from)} aus:</p>
 <p style="margin:28px 0"><a href="${link}" style="display:inline-block;background:#2b2926;color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;padding:15px 30px;border-radius:999px;border-bottom:3px solid #fa7e1e">Termin wählen &rarr;</a></p>
 <p style="font-size:13px;color:#676159">Oder diesen Link öffnen: <a href="${link}" style="color:#676159">${link}</a></p>
 <p>Falls keiner der Termine passt, antworte einfach auf diese Mail.</p>
@@ -174,7 +175,7 @@ export async function publicInvite(token: string): Promise<InviteView> {
 }
 
 /** Bucht einen Slot: prüft ihn erneut gegen den Kalender, legt den
- * Teams-Termin an und trägt ihn an der Bewerbung ein. */
+ * Termin mit Video-Call an und trägt ihn an der Bewerbung ein. */
 export async function bookInterview(token: string, startIso: string) {
   const row = await byToken(token);
   if (row.interview_at) throw new InviteError("Du hast schon einen Termin gebucht.");

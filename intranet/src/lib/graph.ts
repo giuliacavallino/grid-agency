@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getGraphToken } from "./auth";
-import { CALENDAR_SCOPES, DEMO, MAIL_SCOPES } from "./config";
+import { CALENDAR_SCOPES, DEMO, DOMAIN, MAIL_SCOPES } from "./config";
 import { demoGraphFor } from "./graph-demo";
 
 // Microsoft Graph für die Postfächer aus MAILBOXES (delegiert, mit dem Login
@@ -304,7 +304,8 @@ function realGraph(mailbox: string): GraphApi {
               address: a.emailAddress.address,
               response: a.status?.response ?? "none",
             })),
-            joinUrl: e.onlineMeeting?.joinUrl ?? null,
+            // Teams-Besprechung oder eigener Video-Call (Link steht im Ort)
+            joinUrl: e.onlineMeeting?.joinUrl ?? (e.location?.displayName?.startsWith(`https://meet.${DOMAIN}/`) ? e.location.displayName : null),
             bodyPreview: e.bodyPreview ?? "",
             webLink: e.webLink ?? null,
           });
