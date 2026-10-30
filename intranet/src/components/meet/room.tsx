@@ -363,7 +363,7 @@ export function MeetRoom({ code }: { code: string }) {
       // Eine Seite ohne Scrollen: fest auf den Bildschirm, nichts ragt raus
       <div className="fixed inset-0 flex flex-col overflow-hidden overscroll-none bg-sky text-snow">
         <header className="flex h-14 shrink-0 items-center gap-3 px-4">
-          <MeetMark className="shrink-0 [&_img]:h-5 [&_span]:text-lg" />
+          <MeetMark size="sm" />
           <p className="min-w-0 flex-1 truncate border-l border-snow/15 pl-3 text-sm font-medium">{view.title}</p>
           {view.recording && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-error/12 px-2.5 py-1 text-[11px] font-medium tracking-wide text-error uppercase" title="Der Call wird aufgezeichnet und transkribiert">
