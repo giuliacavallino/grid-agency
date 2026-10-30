@@ -208,11 +208,22 @@ export type Application = {
   position_title: string | null;
   message: string | null;
   attachment_names: string[] | null;
+  /** "website" bei Bewerbungen über das Formular der Website */
+  source: string | null;
+  job_slug: string | null;
+  link: string | null;
+  /** Hochgeladene Unterlagen (Bucket „bewerbungen“) */
+  files: ApplicationFile[];
   owner: string | null;
   next_step: string | null;
   next_step_at: string | null;
   notes: string | null;
 };
+
+export type ApplicationFile = { path: string; name: string; type: string; size: number };
+
+/** Offene Stelle auf der Website; Texte stehen in der Website, hier nur An/Aus */
+export type JobPosting = { id: string; slug: string; title: string; active: boolean; position: number; updated_at: string };
 
 export type Settings = { capacity: { team_hours_per_month: number }; datev: { upload_address: string } };
 

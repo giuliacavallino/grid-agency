@@ -136,10 +136,21 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <H>5. Bewerbungen</H>
+          <H id="bewerbungen">5. Bewerbungen</H>
           <p>
+            Wenn du dich über das Bewerbungsformular auf unserer Jobseite
+            bewirbst, verarbeiten wir die Angaben, die du machst (Name,
+            E-Mail-Adresse, Stelle, optional Telefonnummer, Link und
+            Nachricht), sowie die hochgeladenen Unterlagen. Sie werden über
+            unseren Server an unseren Datenbank-Dienstleister Supabase Inc.
+            übermittelt und dort gespeichert (siehe Abschnitt 4) und sind nur
+            für die Personen bei GRID zugänglich, die das Bewerbungsverfahren
+            betreuen.
+          </p>
+          <p className="mt-2">
             Wenn du dich per E-Mail bei uns bewirbst, verarbeiten wir deine
-            Bewerbungsunterlagen ausschließlich für das Bewerbungsverfahren
+            Unterlagen ebenso. Wir verarbeiten deine Bewerbung
+            ausschließlich für das Bewerbungsverfahren
             (Art. 6 Abs. 1 lit. b DSGVO). Kommt keine Zusammenarbeit zustande,
             löschen wir deine Unterlagen spätestens sechs Monate nach Abschluss
             des Verfahrens, sofern du nicht einer längeren Speicherung für
