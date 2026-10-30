@@ -115,6 +115,7 @@ export function BookingDialog() {
   const [booked, setBooked] = useState<Slot | null>(null);
   const [pending, startTransition] = useTransition();
   const panel = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
 
   const loadSlots = useCallback(() => {
     setSlots(undefined);
@@ -158,9 +159,9 @@ export function BookingDialog() {
     };
   }, [open, close]);
 
-  // Beim Schrittwechsel nach oben, mobil ist das Popup scrollbar
+  // Beim Schrittwechsel nach oben, falls der Inhalt gescrollt war
   useEffect(() => {
-    panel.current?.scrollTo({ top: 0 });
+    content.current?.scrollTo({ top: 0 });
   }, [step, booked]);
 
   const days = useMemo(() => {
@@ -224,7 +225,9 @@ export function BookingDialog() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="booking-title"
-        className="glass relative grid max-h-[94dvh] w-full max-w-5xl grid-cols-1 overflow-y-auto rounded-t-[2rem] bg-sky/70 [animation:rise_0.45s_var(--ease-spring)_backwards] sm:rounded-[2rem] lg:max-h-[88dvh] lg:grid-cols-[17rem_minmax(0,1fr)]"
+        // Feste Höhe für alle drei Schritte, damit das Popup beim Wechsel nicht
+        // springt; wird es zu eng, scrollt nur der Inhalt rechts
+        className="glass relative flex h-[92dvh] w-full max-w-5xl flex-col overflow-hidden rounded-t-[2rem] bg-sky/70 [animation:rise_0.45s_var(--ease-spring)_backwards] sm:h-[min(50rem,92dvh)] sm:rounded-[2rem] lg:grid lg:h-[min(46rem,90dvh)] lg:grid-cols-[17rem_minmax(0,1fr)]"
       >
         <button
           type="button"
@@ -236,7 +239,7 @@ export function BookingDialog() {
         </button>
 
         {/* Seitenleiste: worum es geht und wo man steht */}
-        <aside className="border-b border-snow/10 p-6 pr-20 lg:border-b-0 lg:border-r lg:p-8">
+        <aside className="shrink-0 border-b border-snow/10 p-6 pr-20 lg:border-b-0 lg:border-r lg:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-snow/50">GRID Agency</p>
           <h2 id="booking-title" className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-snow">
             Erstgespräch
@@ -261,9 +264,9 @@ export function BookingDialog() {
           </div>
         </aside>
 
-        <div className="min-w-0 p-6 lg:p-10">
+        <div ref={content} className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain p-6 lg:p-10">
           {booked ? (
-            <div role="status" className="flex flex-col items-start gap-5 py-6 [animation:rise_0.5s_var(--ease-spring)_backwards]">
+            <div role="status" className="flex h-full flex-col items-start justify-center gap-5 [animation:rise_0.5s_var(--ease-spring)_backwards]">
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-snow text-sky">
                 <CalendarCheck className="h-7 w-7" strokeWidth={1.8} />
               </span>
