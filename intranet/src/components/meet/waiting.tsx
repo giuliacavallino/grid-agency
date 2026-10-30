@@ -155,8 +155,8 @@ export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: 
         <div className="meet-grid absolute inset-x-[-25%] bottom-0 h-[55%]" />
       </div>
 
-      <div className="flex h-full flex-col overflow-y-auto">
-        <div className="grid flex-1 grid-cols-1 items-center gap-8 p-5 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] md:gap-12 md:p-10 lg:px-14">
+      <div className="flex h-full flex-col overflow-hidden">
+        <div className="grid min-h-0 flex-1 grid-cols-1 items-center gap-8 p-5 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] md:gap-12 md:p-10 lg:px-14 [@media(max-height:700px)]:md:py-5">
           {/* Links: Status, Kennzahl, eigenes Bild */}
           <div className="min-w-0">
             <p className="inline-flex items-center gap-2 rounded-full border border-snow/15 bg-sky/40 px-3 py-1 text-[11px] font-medium tracking-[0.22em] text-snow/70 uppercase backdrop-blur">
@@ -166,7 +166,7 @@ export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: 
               </span>
               Du bist drin
             </p>
-            <h2 className="mt-4 text-[2.5rem] leading-[1.02] font-semibold tracking-tight md:text-6xl">
+            <h2 className="mt-4 text-[2.5rem] leading-[1.02] font-semibold tracking-tight md:text-6xl [@media(max-height:700px)]:text-4xl">
               Gleich geht&apos;s <span className="text-aurora">los.</span>
             </h2>
             <p className="mt-3 max-w-md text-[15px] text-snow/65">
@@ -174,9 +174,9 @@ export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: 
               aus.
             </p>
 
-            <div className="mt-7 md:mt-10">
+            <div className="mt-7 md:mt-10 [@media(max-height:700px)]:mt-5">
               <div key={round} className="meet-stat">
-                <p className="text-[2.75rem] leading-none font-semibold tracking-tight md:text-7xl">
+                <p className="text-[2.75rem] leading-none font-semibold tracking-tight md:text-7xl [@media(max-height:700px)]:text-5xl">
                   <CountUp stat={stat} />
                 </p>
                 <p className="mt-2 text-lg font-medium md:text-xl">{stat.label}</p>
@@ -194,14 +194,14 @@ export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: 
               </div>
             </div>
 
-            <div className="mt-7 flex items-center gap-3">
+            <div className="mt-7 flex items-center gap-3 [@media(max-height:620px)]:hidden">
               <div className="relative aspect-video w-36 shrink-0 overflow-hidden rounded-xl bg-surface ring-1 ring-snow/15 md:w-44">{selfView}</div>
               <p className="text-xs text-snow/55">So sehen dich die anderen. Mikro und Kamera kannst du unten an- und ausschalten.</p>
             </div>
           </div>
 
           {/* Rechts: Dashboard-Karte mit Wachstumskurve, Benachrichtigungen und Reaktionen */}
-          <div className="relative mx-auto w-full max-w-md md:mx-0">
+          <div className="relative mx-auto hidden w-full max-w-md md:mx-0 md:block [@media(max-height:560px)]:hidden">
             <div className="meet-hover relative rounded-3xl border border-snow/12 bg-sky/60 p-5 shadow-2xl backdrop-blur-xl">
               <div className="flex items-center justify-between">
                 <div>
@@ -268,7 +268,7 @@ export function WaitingStage({ isHost, selfView }: { isHost: boolean; selfView: 
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-end gap-4 border-t border-snow/[0.08] px-5 py-4 md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] md:px-10 lg:px-14">
+        <div className="hidden shrink-0 items-end gap-4 border-t border-snow/[0.08] px-5 py-4 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] md:px-10 lg:px-14 [@media(max-height:860px)]:hidden">
           <LogoMarquee />
           <EbookCard className="bg-sky/50" />
         </div>
