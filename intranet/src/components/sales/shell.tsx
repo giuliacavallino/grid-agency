@@ -27,7 +27,8 @@ import { useRows } from "@/lib/data";
 /** Zähler „neu“ an einem Menüpunkt (Leads, Bewerbungen, Rechnungen) */
 type Counter = "leads" | "applications" | "invoices";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; counter?: Counter };
+/** color: farbiger Punkt statt Icon (Kunden in Aufgaben); group: Zwischenüberschrift davor */
+export type NavItem = { href: string; label: string; icon?: LucideIcon; color?: string; counter?: Counter; group?: string };
 
 export const SALES_NAV: NavItem[] = [
   { href: "/sales", label: "Pipeline", icon: Columns3, counter: "leads" },
@@ -87,10 +88,13 @@ function NavList({ nav, collapsed, onNavigate }: { nav: NavItem[]; collapsed: bo
 
   return (
     <ul className="flex flex-col gap-0.5">
-      {nav.map(({ href, label, icon: Icon, counter }) => {
+      {nav.map(({ href, label, icon: Icon, color, counter, group }) => {
         const active = isActive(pathname, href, root);
         return (
           <li key={href}>
+            {group && !collapsed && (
+              <p className="px-3 pt-4 pb-1.5 text-[11px] font-medium tracking-wide text-snow/40 uppercase">{group}</p>
+            )}
             <Link
               href={href}
               onClick={onNavigate}
@@ -102,7 +106,13 @@ function NavList({ nav, collapsed, onNavigate }: { nav: NavItem[]; collapsed: bo
                 active ? "bg-snow/[0.12] font-medium text-snow" : "text-snow/65 hover:bg-snow/[0.06] hover:text-snow"
               )}
             >
-              <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
+              {Icon ? (
+                <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
+              ) : (
+                <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
+                </span>
+              )}
               {!collapsed && <span className="flex-1 truncate">{label}</span>}
               {counter && <NavCount counter={counter} collapsed={collapsed} label={label} />}
             </Link>

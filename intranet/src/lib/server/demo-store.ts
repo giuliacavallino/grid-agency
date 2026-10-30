@@ -231,6 +231,36 @@ const inbound: Row[] = [
   { id: "demo-mail-4", mailbox: BUCHHALTUNG, received_at: ago(3), from_email: "rechnung@steffen-video.de", from_name: "Steffen Video", subject: "Rechnung 2026-041", classification: "rechnung", reason: "Rechnung eines Freelancers", lead_id: null, invoice_id: invoices[1].id, application_id: null },
 ];
 
+
+// Aufgaben: zwei aktive Kunden, ein archivierter
+const inDays = (days: number) => new Date(Date.now() + days * day).toISOString().slice(0, 10);
+const taskProjects: Row[] = [
+  { id: "demo-tp-1", created_at: ago(60), name: "Bäckerei Sonne", color: "#eda100", customer_id: null, position: 1, archived: false, briefing: "Familienbäckerei mit 6 Filialen in Frankfurt.\n\nZugänge:\nInstagram: baeckerei.sonne / PW: im Intranet hinterlegt\n\nAnsprechpartnerin: Anna Sonne +49 170 0000000\n\nPostingplan: 3 Posts / Woche, 10 Storys / Woche" },
+  { id: "demo-tp-2", created_at: ago(40), name: "Pizzeria Forno", color: "#e5484d", customer_id: null, position: 2, archived: false, briefing: null },
+  { id: "demo-tp-3", created_at: ago(400), name: "Café Lumen", color: "#afaaa0", customer_id: null, position: 20, archived: true, briefing: "Frühstückscafé in Berlin-Mitte.\n\nPostingplan: 2 Posts / Woche" },
+];
+const taskSections: Row[] = [
+  ["demo-ts-1", "demo-tp-1", "JourFix", 1],
+  ["demo-ts-2", "demo-tp-1", "Content Days", 2],
+  ["demo-ts-3", "demo-tp-1", "Performance Marketing", 3],
+  ["demo-ts-4", "demo-tp-2", "Allgemein", 1],
+  ["demo-ts-5", "demo-tp-2", "Influencer", 2],
+].map(([id, project_id, name, position]) => ({ id: id as string, created_at: ago(30), project_id, name, position }));
+function task(project_id: string, section_id: string, title: string, extra: Record<string, unknown> = {}): Row {
+  return { id: uid(), created_at: ago(10), updated_at: ago(1), project_id, section_id, title, notes: null, done: false, done_at: null, assignee: null, due_on: null, checklist: [], position: 1_700_000_000 - seq, ...extra };
+}
+const tasks: Row[] = [
+  task("demo-tp-1", "demo-ts-1", "Halloween-Special abstimmen", { assignee: "Marine Eichner", due_on: inDays(-2) }),
+  task("demo-tp-1", "demo-ts-1", "Zugang Meta für Filialleitung", { assignee: "Giulia Cavallino", due_on: inDays(0) }),
+  task("demo-tp-1", "demo-ts-1", "Postkarten bestellt?", { done: true, done_at: ago(2), assignee: "Marine Eichner" }),
+  task("demo-tp-1", "demo-ts-2", "Nächsten Content Day planen", { assignee: "Marine Eichner", due_on: inDays(5), notes: "Teamfotos je Filiale\nProduktbilder für die Webseite", checklist: [{ text: "Termin mit Filialen", done: true }, { text: "Shotlist", done: false }, { text: "Fotograf buchen", done: false }] }),
+  task("demo-tp-1", "demo-ts-2", "Story: Lieblingsprodukt im Büro"),
+  task("demo-tp-1", "demo-ts-3", "Ads Catering-Shop", { assignee: "Giulia Cavallino", due_on: inDays(9) }),
+  task("demo-tp-2", "demo-ts-4", "TikTok-Zugang klären", { assignee: "Marine Eichner", due_on: inDays(-6) }),
+  task("demo-tp-2", "demo-ts-4", "Postinganzahl Ist = Soll prüfen", { done: true, done_at: ago(4) }),
+  task("demo-tp-2", "demo-ts-5", "Auf Content von Creator warten", { due_on: inDays(3) }),
+];
+
 const tables: Record<string, Row[]> = {
   leads,
   lead_activities: activities,
@@ -240,6 +270,9 @@ const tables: Record<string, Row[]> = {
   inbound_messages: inbound,
   invoices,
   applications,
+  task_projects: taskProjects,
+  task_sections: taskSections,
+  tasks,
 };
 const settings: Record<string, unknown> = {
   capacity: { team_hours_per_month: 480 },
@@ -268,6 +301,11 @@ export const demoStore: Store = {
       Object.assign(row, { updated_at: now(), stage: row.stage ?? "neu", status: "offen", position: row.position ?? Date.now() / 1000 });
       tables.lead_activities.unshift({ id: uid(), created_at: now(), lead_id: row.id, kind: "stage", author: null, body: "Lead angelegt", from_stage: null, to_stage: row.stage });
     }
+    if (table === "tasks") {
+      Object.assign(row, { updated_at: now(), done: row.done ?? false, done_at: row.done ? now() : null, checklist: row.checklist ?? [], notes: row.notes ?? null, assignee: row.assignee ?? null, due_on: row.due_on ?? null, position: row.position ?? Date.now() / 1000 });
+    }
+    if (table === "task_projects") Object.assign(row, { color: row.color ?? "#afaaa0", archived: row.archived ?? false, briefing: row.briefing ?? null, customer_id: null, position: row.position ?? Date.now() / 1000 });
+    if (table === "task_sections") Object.assign(row, { position: row.position ?? Date.now() / 1000 });
     tables[table].push(row);
     return structuredClone(row);
   },
@@ -288,7 +326,8 @@ export const demoStore: Store = {
       tables.lead_activities.unshift({ id: uid(), created_at: now(), lead_id: id, kind: "stage", author: null, body: null, from_stage: row.stage, to_stage: patch.stage });
       if (patch.stage === "gewonnen" && !row.won_at) row.won_at = now();
     }
-    Object.assign(row, patch, ["leads", "customers", "invoices", "applications"].includes(table) ? { updated_at: now() } : {});
+    if (table === "tasks" && "done" in patch) row.done_at = patch.done ? (row.done_at ?? now()) : null;
+    Object.assign(row, patch, ["leads", "customers", "invoices", "applications", "tasks"].includes(table) ? { updated_at: now() } : {});
     return structuredClone(row);
   },
   async upsertEasybill(table, rows) {

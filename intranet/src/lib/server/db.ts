@@ -63,6 +63,22 @@ export const TABLES = {
     filters: ["stage"],
     order: { column: "position", ascending: true },
   },
+  // Aufgaben: Kunde → Themen (Spalten) → To-dos (Karten)
+  task_projects: {
+    columns: ["name", "color", "customer_id", "position", "archived", "briefing"],
+    filters: ["archived"],
+    order: { column: "position", ascending: true },
+  },
+  task_sections: {
+    columns: ["project_id", "name", "position"],
+    filters: ["project_id"],
+    order: { column: "position", ascending: true },
+  },
+  tasks: {
+    columns: ["project_id", "section_id", "title", "notes", "done", "assignee", "due_on", "checklist", "position"],
+    filters: ["project_id", "done"],
+    order: { column: "position", ascending: false },
+  },
 } as const;
 
 /** Tabellen mit Herkunftsschlüssel (source_ref) aus dem Mail-Eingang */

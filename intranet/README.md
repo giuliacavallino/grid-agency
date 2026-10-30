@@ -17,6 +17,7 @@ Für die lokale Vorschau ohne Login und Datenbank `NEXT_PUBLIC_INTRANET_DEMO=1` 
 - `/finance` – Eingangsrechnungen als Kanban (Neu → Freigegeben → An DATEV gesendet), Posteingang von buchhaltung@, Einstellungen (DATEV-Upload-Adresse)
 - `/personal` – Bewerbungen als Kanban (Neue Bewerbung → Gespräch → Case Study → Zusage / Absage)
 - `/mail` – Posteingang und Kalender aller Postfächer (hello@, giulia@, buchhaltung@, google@)
+- `/aufgaben` – To-dos je Kunde (ersetzt Asana): Kacheln aller Kunden, je Kunde ein Board mit Themen als Spalten, „Meine To-dos“ über alle Kunden, Briefing je Kunde (Zugänge, Ansprechpartner, Postingplan), ehemalige Kunden im Archiv
 
 Welche Postfächer wo erscheinen, steht in `MAILBOXES` in `src/lib/config.ts`.
 - `src/app/api/sales/*` – Daten-API. Prüft das Microsoft-ID-Token (Signatur, Tenant, Client-ID) und spricht mit Supabase über den Service-Key.

@@ -46,6 +46,9 @@ export function Board<T extends BoardItem>({
   onAdd,
   addLabel,
   summary,
+  columnActions,
+  columnFooter,
+  emptyText,
 }: {
   columns: readonly BoardColumn[];
   items: T[];
@@ -56,6 +59,11 @@ export function Board<T extends BoardItem>({
   onAdd?: () => void;
   addLabel?: string;
   summary?: (items: T[]) => React.ReactNode;
+  /** Zusätzliche Knöpfe im Spaltenkopf, z. B. Umbenennen */
+  columnActions?: (column: BoardColumn) => React.ReactNode;
+  /** Unter den Karten, z. B. Schnelleingabe eines To-dos */
+  columnFooter?: (column: BoardColumn) => React.ReactNode;
+  emptyText?: string;
 }) {
   const [dragging, setDragging] = useState<Columns | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -148,6 +156,9 @@ export function Board<T extends BoardItem>({
               onOpen={onOpen}
               onAdd={i === 0 ? onAdd : undefined}
               addLabel={addLabel}
+              actions={columnActions?.(column)}
+              footer={columnFooter?.(column)}
+              emptyText={emptyText}
             />
           );
         })}
@@ -167,6 +178,9 @@ function Column<T extends BoardItem>({
   onOpen,
   onAdd,
   addLabel,
+  actions,
+  footer,
+  emptyText = "Hierher ziehen",
 }: {
   column: BoardColumn;
   items: T[];
@@ -175,6 +189,9 @@ function Column<T extends BoardItem>({
   onOpen: (id: string) => void;
   onAdd?: () => void;
   addLabel?: string;
+  actions?: React.ReactNode;
+  footer?: React.ReactNode;
+  emptyText?: string;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
   return (
@@ -187,7 +204,7 @@ function Column<T extends BoardItem>({
     >
       <header className="flex items-center gap-2 px-3 pt-3 pb-2">
         <span className="h-2 w-2 rounded-full" style={{ background: column.color }} />
-        <h2 className="text-[13px] font-medium">{column.label}</h2>
+        <h2 className="min-w-0 truncate text-[13px] font-medium">{column.label}</h2>
         <span className="text-[12px] text-snow/45">{items.length}</span>
         <span className="ml-auto text-[12px] text-snow/45">{summary}</span>
         {onAdd && (
@@ -200,6 +217,7 @@ function Column<T extends BoardItem>({
             <Plus className="h-4 w-4" />
           </button>
         )}
+        {actions}
       </header>
       <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <ul ref={setNodeRef} className="flex min-h-24 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
@@ -210,9 +228,10 @@ function Column<T extends BoardItem>({
           ))}
           {items.length === 0 && (
             <li className="m-1 rounded-xl border border-dashed border-snow/12 py-6 text-center text-[12px] text-snow/35">
-              Hierher ziehen
+              {emptyText}
             </li>
           )}
+          {footer && <li className="-mx-2 -mb-2">{footer}</li>}
         </ul>
       </SortableContext>
     </section>
