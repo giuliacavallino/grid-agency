@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowUpRight, LayoutGrid, LogOut, Menu } from "lucide-react"
 import { AREAS, type Area } from "@/lib/areas";
 import { hasArea } from "@/lib/access";
 import { useMe } from "./access";
+import { TeamsButton } from "./teams";
 import { usePhoto } from "./person";
 import { signOut, useAuth } from "@/lib/auth";
 import { Logo } from "./logo";
@@ -133,6 +134,7 @@ export function TopBar() {
           </nav>
 
           <div className="relative flex items-center gap-1.5">
+            <TeamsButton className="h-9 w-9 rounded-full" />
             <AccountMenu />
             <div className="lg:hidden">
               <Popover

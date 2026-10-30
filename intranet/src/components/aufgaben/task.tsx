@@ -5,7 +5,10 @@ import { cn as clsx } from "@/lib/cn";
 import { Check, Plus, Trash2, X } from "lucide-react";
 import { deleteRow, updateRow } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
-import type { ChecklistItem, Task, TaskProject, TaskSection } from "@/lib/tasks";
+import { dueLabel, type ChecklistItem, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
+import { useAuth } from "@/lib/auth";
+import { useTeam } from "@/components/access";
+import { SendViaTeams } from "@/components/teams";
 import { Button, Dialog, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 
 /** Gerade abgehakte To-dos bleiben in der Liste stehen (grün, durchgestrichen),
@@ -67,15 +70,31 @@ export function TaskSheet({
 }) {
   return (
     <Sheet open={!!task} onClose={onClose} title={project?.name ?? "To-do"} subtitle={task && sections.find((s) => s.id === task.section_id)?.name}>
-      {task && <TaskDetail key={task.id} task={task} sections={sections} people={people} onClose={onClose} />}
+      {task && <TaskDetail key={task.id} task={task} project={project} sections={sections} people={people} onClose={onClose} />}
     </Sheet>
   );
 }
 
 /** Detailansicht ohne Speichern-Knopf: Auswahlfelder und Checkliste
  * speichern sofort, Texte kurz nach dem Tippen und beim Verlassen. */
-function TaskDetail({ task, sections, people, onClose }: { task: Task; sections: TaskSection[]; people: string[]; onClose: () => void }) {
+function TaskDetail({
+  task,
+  project,
+  sections,
+  people,
+  onClose,
+}: {
+  task: Task;
+  project?: TaskProject;
+  sections: TaskSection[];
+  people: string[];
+  onClose: () => void;
+}) {
   const toast = useToast();
+  const auth = useAuth();
+  const team = useTeam();
+  const assigneeEmail = team.find((m) => m.name === task.assignee)?.email;
+  const isMe = auth.status === "signed-in" && assigneeEmail === auth.account.email.toLowerCase();
   const [title, setTitle] = useState(task.title);
   const [notes, setNotes] = useState(task.notes ?? "");
   const [newItem, setNewItem] = useState("");
@@ -239,7 +258,27 @@ function TaskDetail({ task, sections, people, onClose }: { task: Task; sections:
             </>
           )}
         </p>
-        <Button variant="ghost" size="sm" className="ml-auto text-error" icon={<Trash2 className="h-4 w-4" />} onClick={() => setConfirmDelete(true)}>
+        {assigneeEmail && !isMe && (
+          <SendViaTeams
+            className="ml-auto"
+            email={assigneeEmail}
+            text={[
+              `📌 ${task.title}`,
+              project && `Kunde: ${project.name}`,
+              task.due_on && `Fällig: ${dueLabel(task.due_on)}`,
+              `${window.location.origin}/aufgaben/${task.project_id}`,
+            ]
+              .filter(Boolean)
+              .join("\n")}
+          />
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={clsx("text-error", (!assigneeEmail || isMe) && "ml-auto")}
+          icon={<Trash2 className="h-4 w-4" />}
+          onClick={() => setConfirmDelete(true)}
+        >
           Löschen
         </Button>
       </div>
