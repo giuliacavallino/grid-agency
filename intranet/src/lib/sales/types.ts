@@ -76,6 +76,10 @@ export type Customer = {
   vat_id?: string | null;
   billing_email?: string | null;
   payment_terms_days?: number | null;
+  sepa_mandate_reference?: string | null;
+  sepa_holder?: string | null;
+  sepa_iban?: string | null;
+  sepa_signed_at?: string | null;
 };
 
 export const UNITS = [
@@ -199,6 +203,8 @@ export type Settings = {
   capacity: { team_hours_per_month: number };
   datev: { upload_address: string };
   billing: import("@/lib/billing").BillingSettings;
+  contract: import("@/lib/contract").ContractTemplate;
+  grid_signature: { signer: string; image: string } | null;
 };
 
 /** Position für „ganz oben“ in einer Pipeline-Spalte (absteigend sortiert). */

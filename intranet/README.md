@@ -87,3 +87,13 @@ Finance → Ausgangsrechnungen schreibt Rechnungen, Gutschriften und Serienrechn
 - **Versand** von buchhaltung@ über Graph im Browser (wie der DATEV-Versand), mit PDF im Anhang.
 - **Serienrechnungen**: Der Cron `GET /api/cron/billing` (täglich, `vercel.json`) erzeugt fällige Rechnungen, schreibt sie fest und verschickt sie ohne angemeldete Person. Dafür braucht die Entra-App zusätzlich die **Anwendungsberechtigung `Mail.Send`** mit Admin-Zustimmung (am besten per Application Access Policy auf buchhaltung@ beschränkt). Scheitert der Versand, steht der Fehler am Beleg und er lässt sich von Hand senden. easybill-Serien laufen in easybill weiter, bis sie im Intranet „übernommen“ werden; vorher in easybill stoppen.
 - **Rechnungspapier** (`src/lib/server/invoice-pdf.tsx`, react-pdf): Look der Website, Readex Pro (statische Schnitte in `src/lib/server/fonts`, per `outputFileTracingIncludes` in die Funktionen gepackt), GiroCode für Banking-Apps. Firmendaten und Texte stehen in Finance → Einstellungen.
+
+## Angebote und Unterschrift (sign.grid-agency.de)
+
+Ein Angebot geht als Mappe zur Unterschrift: Angebot, Agenturvertrag (Text aus dem easybill-„Auftrag“, in Finance → Einstellungen bearbeitbar, Platzhalter wie `{Mindestlaufzeit}`) und optional SEPA-Lastschriftmandat.
+
+- **Ablauf**: Angebot schreiben → Fertigstellen (eigener Nummernkreis `angebot`) → „Zur Unterschrift senden“. GRID unterschreibt dabei vorab (Unterschrift wird gespeichert), die Mail mit Link geht von hello@ über Graph im Browser.
+- **Kunde**: Der Link `https://sign.grid-agency.de/s/<token>` führt durch Angebot, Vertrag, SEPA und Unterschrift (zeichnen oder tippen). Der Token liegt nur als SHA-256-Hash in `sign_envelopes`, Links laufen nach 30 Tagen ab, ein neuer Versand zieht offene Mappen zurück. Auf `sign.*` lässt `src/proxy.ts` nur `/s/` und `/api/sign/` durch.
+- **Abschluss**: Das Gesamt-PDF mit Protokoll (Ereignisse, IP, SHA-256 vor der Unterschrift) wird mit einem PAdES-Siegel versehen (`src/lib/server/seal.ts`). Das Siegel-Zertifikat ist selbst ausgestellt, wird beim ersten Gebrauch erzeugt und im Supabase Vault gespeichert; ein gekauftes Zertifikat lässt sich über `SIGN_P12_BASE64`/`SIGN_P12_PASSWORD` setzen. Das PDF landet in der Kundenakte (`customer_documents`, Bucket `billing`), das Angebot steht auf „angenommen“, das SEPA-Mandat am Kunden.
+- **Abschlussmail** an den Kunden und an hello@ mit dem PDF: braucht wie die Serien die **Anwendungsberechtigung `Mail.Send`**. Fehlt sie, steht der Fehler an der Mappe; das PDF ist trotzdem in der Kundenakte.
+- **SEPA** setzt die **Gläubiger-ID** in Finance → Einstellungen voraus.

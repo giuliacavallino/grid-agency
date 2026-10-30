@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { FINANCE_MAILBOX } from "@/lib/config";
 import { mutate, useResource } from "@/lib/data";
 import type { BillingSettings } from "@/lib/billing";
+import { DEFAULT_CONTRACT, contractFromText, contractToText, type ContractTemplate } from "@/lib/contract";
 import type { Settings } from "@/lib/sales/types";
 import { Button, Field, Input, Spinner, Textarea, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
@@ -21,6 +22,7 @@ export function FinanceSettings() {
           <div className="flex flex-col gap-5">
             <DatevForm key={data.datev.upload_address} initial={data.datev.upload_address} />
             <BillingForm initial={data.billing} />
+            <ContractForm initial={data.contract} signature={data.grid_signature} />
           </div>
         ) : (
           <Spinner />
@@ -91,6 +93,7 @@ const COMPANY_FIELDS: [keyof BillingSettings["company"], string][] = [
   ["bic", "BIC"],
   ["managing_director", "Geschäftsführung"],
   ["register", "Registergericht und Nummer"],
+  ["creditor_id", "SEPA-Gläubiger-ID"],
 ];
 
 /** Firmendaten (Pflichtangaben auf jeder Rechnung) und Standardtexte */
@@ -148,6 +151,68 @@ function BillingForm({ initial }: { initial: BillingSettings }) {
       <Button type="submit" variant="primary" className="mt-5" loading={busy} loadingText="Wird gespeichert …">
         Speichern
       </Button>
+    </form>
+  );
+}
+
+/** Agenturvertrag der Unterschriftsmappe: ein Abschnitt je „## Überschrift“ */
+function ContractForm({ initial, signature }: { initial: ContractTemplate; signature: Settings["grid_signature"] }) {
+  const toast = useToast();
+  const [title, setTitle] = useState(initial.title);
+  const [text, setText] = useState(() => contractToText(initial));
+  const [busy, setBusy] = useState<"vertrag" | "unterschrift" | null>(null);
+
+  async function put(body: object, label: "vertrag" | "unterschrift", done: string) {
+    setBusy(label);
+    try {
+      const result = await api<Settings>("/api/sales/settings", { method: "PUT", body: JSON.stringify(body) });
+      mutate<Settings>("/api/sales/settings", () => result);
+      toast(done);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Speichern fehlgeschlagen", "error");
+    }
+    setBusy(null);
+  }
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        put({ contract: contractFromText(title, text) }, "vertrag", "Vertrag gespeichert");
+      }}
+      className="max-w-3xl rounded-3xl border border-snow/10 bg-surface p-6"
+    >
+      <h2 className="mb-1 text-lg font-medium">Agenturvertrag</h2>
+      <p className="mb-5 text-sm text-snow/60">
+        Geht mit jedem Angebot zur Unterschrift. Jeder Abschnitt beginnt mit „## Überschrift“. Platzhalter: {"{Zweck}"}, {"{Angebot}"}, {"{Angebotsdatum}"},{" "}
+        {"{Vertragsbeginn}"}, {"{Mindestlaufzeit}"}, {"{Kündigungsfrist}"}. Bereits verschickte Mappen behalten ihre Fassung.
+      </p>
+      <div className="flex flex-col gap-3">
+        <Field label="Titel">{(id) => <Input id={id} value={title} onChange={(e) => setTitle(e.target.value)} />}</Field>
+        <Field label="Text">{(id) => <Textarea id={id} value={text} onChange={(e) => setText(e.target.value)} className="min-h-96 font-mono text-[12px]" />}</Field>
+      </div>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <Button type="submit" variant="primary" loading={busy === "vertrag"} loadingText="Wird gespeichert …">
+          Speichern
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setTitle(DEFAULT_CONTRACT.title);
+            setText(contractToText(DEFAULT_CONTRACT));
+          }}
+        >
+          Vorlage aus easybill wiederherstellen
+        </Button>
+      </div>
+      {signature && (
+        <div className="mt-6 flex items-center gap-4 border-t border-snow/10 pt-5 text-sm">
+          <span className="text-snow/60">Gespeicherte Unterschrift für GRID: {signature.signer}</span>
+          <Button size="sm" variant="ghost" loading={busy === "unterschrift"} loadingText="Wird entfernt …" onClick={() => put({ grid_signature: null }, "unterschrift", "Unterschrift entfernt")}>
+            Entfernen
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

@@ -19,13 +19,13 @@ Font.register({
 Font.registerHyphenationCallback((word) => [word]);
 
 // Farben der Website
-const SKY = "#2b2926";
-const SNOW = "#e4e2e7";
-const DUNE = "#afaaa0";
-const EARTH = "#676159";
-const DAWN = "#e2e0dc";
-const GHOST = "#35322f";
-const PALE = "#f2f1ef";
+export const SKY = "#2b2926";
+export const SNOW = "#e4e2e7";
+export const DUNE = "#afaaa0";
+export const EARTH = "#676159";
+export const DAWN = "#e2e0dc";
+export const GHOST = "#35322f";
+export const PALE = "#f2f1ef";
 
 const L = 56;
 const R = 48;
@@ -90,7 +90,7 @@ const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateS
 const qty = (value: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(value);
 
 const DOC_TITLE: Partial<Record<BillingDetail["kind"], string>> = { storno: "Stornorechnung", storno_gutschrift: "Storno Gutschrift" };
-const GHOST_WORD: Partial<Record<BillingDetail["kind"], string>> = { storno: "STORNO", storno_gutschrift: "STORNO", gutschrift: "GUTSCHRIFT" };
+const GHOST_WORD: Partial<Record<BillingDetail["kind"], string>> = { storno: "STORNO", storno_gutschrift: "STORNO", gutschrift: "GUTSCHRIFT", angebot: "ANGEBOT" };
 
 function recipient(doc: BillingDetail) {
   const a = doc.address ?? {};
@@ -117,7 +117,8 @@ export type PdfInput = {
   qr?: string | null;
 };
 
-function InvoicePdf({ doc, settings, reference, qr }: PdfInput) {
+/** Eine Belegseite (Rechnung, Storno, Gutschrift, Angebot); auch Teil der Unterschriftsmappe */
+export function InvoicePage({ doc, settings, reference, qr }: PdfInput) {
   const c = settings.company;
   const title = DOC_TITLE[doc.kind] ?? KIND_LABEL[doc.kind];
   const label = `${title} ${doc.number ?? "(Entwurf)"}`;
@@ -137,13 +138,14 @@ function InvoicePdf({ doc, settings, reference, qr }: PdfInput) {
   const meta: [string, string][] = [
     [`${KIND_LABEL[doc.kind]}snr.`, doc.number ?? "Entwurf"],
     ["Datum", dateDe(doc.document_date) || "–"],
-    ["Leistung", service],
+    ...(doc.kind === "angebot"
+      ? ([["Gültig bis", dateDe(doc.due_date) || "–"], ...(doc.service_from ? [["Leistungsbeginn", dateDe(doc.service_from)]] : [])] as [string, string][])
+      : ([["Leistung", service]] as [string, string][])),
     ...(reference ? ([["Bezug", `${reference.label} ${reference.number ?? ""}`.trim()]] as [string, string][]) : []),
     ...(doc.customer_number ? ([["Kundennr.", doc.customer_number]] as [string, string][]) : []),
   ];
 
   return (
-    <Document title={label} author={c.name} creator={c.name} producer="GRID Intranet" language="de-DE">
       <Page size="A4" style={s.page}>
         {/* Kopf der ersten Seite */}
         <View style={s.band}>
@@ -167,7 +169,7 @@ function InvoicePdf({ doc, settings, reference, qr }: PdfInput) {
             <View style={{ maxWidth: 310 }}>
               <Text style={s.eyebrow}>{title} für</Text>
               <Text style={s.headline}>
-                {to.name}
+                {to.name.replace(/\.$/, "")}
                 <Text style={{ color: DUNE }}>.</Text>
               </Text>
               <Text style={s.bandNote}>{to.rest.join(" · ")}</Text>
@@ -175,7 +177,13 @@ function InvoicePdf({ doc, settings, reference, qr }: PdfInput) {
             <View style={{ alignItems: "flex-end" }}>
               <Text style={s.eyebrow}>Gesamtbetrag</Text>
               <Text style={s.headline}>{money(totals.gross, doc.currency)}</Text>
-              <Text style={s.bandNote}>{payable && doc.due_date ? `fällig am ${dateDe(doc.due_date)}` : `inkl. ${money(totals.vat, doc.currency)} USt`}</Text>
+              <Text style={s.bandNote}>
+                {payable && doc.due_date
+                  ? `fällig am ${dateDe(doc.due_date)}`
+                  : doc.kind === "angebot" && doc.due_date
+                    ? `gültig bis ${dateDe(doc.due_date)}`
+                    : `inkl. ${money(totals.vat, doc.currency)} USt`}
+              </Text>
             </View>
           </View>
         </View>
@@ -324,15 +332,27 @@ function InvoicePdf({ doc, settings, reference, qr }: PdfInput) {
         </View>
         <Text style={s.pageNo} fixed render={({ pageNumber, totalPages }) => `Seite ${pageNumber} von ${totalPages}`} />
       </Page>
+  );
+}
+
+function InvoicePdf(props: PdfInput) {
+  const c = props.settings.company;
+  const title = DOC_TITLE[props.doc.kind] ?? KIND_LABEL[props.doc.kind];
+  return (
+    <Document title={`${title} ${props.doc.number ?? "(Entwurf)"}`} author={c.name} creator={c.name} producer="GRID Intranet" language="de-DE">
+      <InvoicePage {...props} />
     </Document>
   );
 }
 
-export async function renderInvoicePdf(input: PdfInput) {
+/** GiroCode für zahlbare Rechnungen, sonst null */
+export async function invoiceQr(input: PdfInput) {
   const totals = computeTotals(input.doc.items);
-  const qr =
-    input.doc.kind === "rechnung" && input.doc.number && totals.gross > 0 && input.settings.company.iban
-      ? await giroCode(input.settings, totals.gross, `${KIND_LABEL[input.doc.kind]} ${input.doc.number}`)
-      : null;
-  return renderToBuffer(<InvoicePdf {...input} qr={qr} />);
+  return input.doc.kind === "rechnung" && input.doc.number && totals.gross > 0 && input.settings.company.iban
+    ? giroCode(input.settings, totals.gross, `${KIND_LABEL[input.doc.kind]} ${input.doc.number}`)
+    : null;
+}
+
+export async function renderInvoicePdf(input: PdfInput) {
+  return renderToBuffer(<InvoicePdf {...input} qr={await invoiceQr(input)} />);
 }

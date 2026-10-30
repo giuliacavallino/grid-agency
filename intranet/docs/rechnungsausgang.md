@@ -62,6 +62,7 @@ Nummernkreis bisher: `JJ-NNN` mit durchlaufendem Zähler, ohne Neustart zum Jahr
 2. **Rechnung schreiben**: Editor, Festschreiben mit Nummernkreis und Sperr-Trigger, PDF, Versand per Mail, Firmendaten
 3. **Storno, Korrektur, Gutschrift**
 4. **Serienrechnungen** mit Cron; Retainer gehen in den Serien auf
-5. **Zahlungen und Mahnwesen**, später Kontoabgleich über die Bank-API
-6. **E-Rechnung (XRechnung)** und Ausgangsbelege an DATEV (Upload-Mail wie bei den Eingangsrechnungen)
-7. **Umstieg**: einen Monat parallel zu easybill, danach easybill-Abgleich abschalten und kündigen. easybill-Daten bleiben als Archiv (Aufbewahrung 10 Jahre).
+5. **Angebote mit Unterschrift**: Mappe aus Angebot, Agenturvertrag und SEPA-Mandat, Unterschrift auf sign.grid-agency.de, gesiegeltes PDF in der Kundenakte (siehe README)
+6. **Zahlungen und Mahnwesen**, später Kontoabgleich über die Bank-API
+7. **E-Rechnung (XRechnung)** und Ausgangsbelege an DATEV (Upload-Mail wie bei den Eingangsrechnungen)
+8. **Umstieg**: einen Monat parallel zu easybill, danach easybill-Abgleich abschalten und kündigen. easybill-Daten bleiben als Archiv (Aufbewahrung 10 Jahre).

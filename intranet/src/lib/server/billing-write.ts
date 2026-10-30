@@ -16,7 +16,7 @@ import {
 } from "@/lib/billing";
 import { BUCKET, billingSettings, check, getBilling } from "./billing";
 import { sb } from "./db";
-import { appGraph, mailboxPath } from "./graph-app";
+import { sendAppMail } from "./graph-app";
 import { renderInvoicePdf } from "./invoice-pdf";
 
 // Rechnungsausgang: Entwürfe anlegen und ändern, festschreiben (Nummer aus
@@ -102,11 +102,11 @@ async function replaceItems(documentId: string, items: ItemInput[]) {
 /** Neuer Entwurf (id = null) oder Änderung eines Entwurfs bzw. einer Serie */
 export async function saveDraft(id: string | null, input: DraftInput): Promise<string> {
   guardDemo();
-  if (!["rechnung", "gutschrift", "serie"].includes(input.kind)) throw new BillingError("Unbekannte Belegart");
+  if (!["rechnung", "gutschrift", "serie", "angebot"].includes(input.kind)) throw new BillingError("Unbekannte Belegart");
   if (!input.customer_id) throw new BillingError("Bitte einen Kunden wählen");
   if (!Array.isArray(input.items)) throw new BillingError("Positionen fehlen");
   const terms = Math.round(num(input.payment_terms_days));
-  if (!Number.isFinite(terms) || terms < 0 || terms > 365) throw new BillingError("Zahlungsziel ungültig");
+  if (!Number.isFinite(terms) || terms < 0 || terms > 365) throw new BillingError(input.kind === "angebot" ? "Gültigkeit ungültig" : "Zahlungsziel ungültig");
 
   if (id) {
     const current = await loadRow(id);
@@ -409,17 +409,11 @@ export async function sendFromServer(id: string) {
   const to = doc.recipient_email;
   if (!to) throw new BillingError("Keine Empfänger-Adresse");
   const { subject, body } = await mailDraft(doc);
-  await appGraph(`${mailboxPath(FINANCE_MAILBOX)}/sendMail`, {
-    method: "POST",
-    body: JSON.stringify({
-      message: {
-        subject,
-        body: { contentType: "Text", content: body },
-        toRecipients: to.split(/[,;\s]+/).filter(Boolean).map((address) => ({ emailAddress: { address } })),
-        attachments: [{ "@odata.type": "#microsoft.graph.fileAttachment", name: attachment.name, contentType: attachment.contentType, contentBytes: attachment.contentBytes }],
-      },
-      saveToSentItems: true,
-    }),
+  await sendAppMail(FINANCE_MAILBOX, {
+    to: to.split(/[,;\s]+/).filter(Boolean),
+    subject,
+    body,
+    attachments: [{ name: attachment.name, contentType: attachment.contentType, contentBytes: attachment.contentBytes }],
   });
   await markSent(id, to);
 }

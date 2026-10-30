@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/finance/**": ["src/lib/server/fonts/**"],
     "/api/cron/billing": ["src/lib/server/fonts/**"],
+    "/api/sign/**": ["src/lib/server/fonts/**"],
   },
   // Die alte statische Seite lag unter /index.html
   async redirects() {

@@ -1,6 +1,7 @@
 import "server-only";
 import { DEMO } from "@/lib/config";
 import { DEFAULT_BILLING_SETTINGS, type BillingDetail, type BillingDocument, type BillingSettings } from "@/lib/billing";
+import { DEFAULT_CONTRACT, type ContractTemplate } from "@/lib/contract";
 import { db, sb } from "./db";
 import { demoBilling, demoBillingDetail } from "./billing-demo";
 
@@ -126,4 +127,9 @@ export async function billingSettings(): Promise<BillingSettings> {
     ...stored,
     company: { ...DEFAULT_BILLING_SETTINGS.company, ...stored?.company },
   };
+}
+
+/** Vertragsvorlage der Unterschriftsmappe (Finance → Einstellungen) */
+export async function contractTemplate(): Promise<ContractTemplate> {
+  return (await db().getSetting<ContractTemplate>("contract")) ?? DEFAULT_CONTRACT;
 }

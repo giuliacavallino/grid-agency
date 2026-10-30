@@ -1,6 +1,7 @@
 import { DEFAULT_BILLING_SETTINGS, type BillingSettings } from "@/lib/billing";
 import { withUser } from "@/lib/server/auth";
-import { billingSettings } from "@/lib/server/billing";
+import { billingSettings, contractTemplate } from "@/lib/server/billing";
+import type { ContractTemplate } from "@/lib/contract";
 import { db } from "@/lib/server/db";
 
 const DEFAULT_CAPACITY = { team_hours_per_month: 480 };
@@ -10,7 +11,13 @@ export const GET = withUser(async () => {
   const store = db();
   const capacity = (await store.getSetting("capacity")) ?? DEFAULT_CAPACITY;
   const datev = (await store.getSetting("datev")) ?? DEFAULT_DATEV;
-  return Response.json({ capacity, datev, billing: await billingSettings() });
+  return Response.json({
+    capacity,
+    datev,
+    billing: await billingSettings(),
+    contract: await contractTemplate(),
+    grid_signature: await store.getSetting("grid_signature"),
+  });
 });
 
 /** Nur bekannte Felder als Text übernehmen */
@@ -62,9 +69,31 @@ export const PUT = withUser(async (_user, request) => {
     await store.setSetting("billing", billing);
   }
 
+  if (body?.contract !== undefined) {
+    const contract = body.contract as ContractTemplate;
+    const sections = Array.isArray(contract?.sections)
+      ? contract.sections
+          .map((s) => ({ heading: String(s?.heading ?? "").trim().slice(0, 200), body: String(s?.body ?? "").trim().slice(0, 20_000) }))
+          .filter((s) => s.heading && s.body)
+      : [];
+    if (!sections.length) return Response.json({ error: "Der Vertrag braucht mindestens einen Abschnitt" }, { status: 400 });
+    await store.setSetting("contract", { title: String(contract.title ?? "Agenturvertrag").trim().slice(0, 120) || "Agenturvertrag", sections });
+  }
+
+  // Gespeicherte Unterschrift für GRID (zum Wiederverwenden beim Versand)
+  if (body?.grid_signature !== undefined) {
+    const sig = body.grid_signature as { signer?: string; image?: string } | null;
+    if (sig && !(typeof sig.image === "string" && /^data:image\/png;base64,/.test(sig.image) && sig.image.length < 400_000)) {
+      return Response.json({ error: "Ungültige Unterschrift" }, { status: 400 });
+    }
+    await store.setSetting("grid_signature", sig ? { signer: String(sig.signer ?? "").slice(0, 120), image: sig.image } : null);
+  }
+
   return Response.json({
     capacity: result.capacity ?? (await store.getSetting("capacity")) ?? DEFAULT_CAPACITY,
     datev: result.datev ?? (await store.getSetting("datev")) ?? DEFAULT_DATEV,
     billing: await billingSettings(),
+    contract: await contractTemplate(),
+    grid_signature: await store.getSetting("grid_signature"),
   });
 });

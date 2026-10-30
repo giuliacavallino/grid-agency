@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { revalidate, useResource, useRows } from "@/lib/data";
 import {
   DEFAULT_BILLING_SETTINGS,
+  OFFER_TEXTS,
   computeTotals,
   lineNet,
   money,
@@ -21,6 +22,7 @@ import { Button, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, use
 export const BILLING_URL = "/api/finance/belege";
 
 type Kind = DraftInput["kind"];
+export type EditorKind = Kind;
 
 type Line = ItemInput & { key: string };
 
@@ -98,12 +100,12 @@ function toForm(kind: Kind, doc: BillingDetail | null, settings: Settings["billi
     },
     recipient_email: doc?.recipient_email ?? "",
     document_date: doc?.document_date ?? "",
-    payment_terms_days: String(doc?.payment_terms_days ?? settings.payment_terms_days),
+    payment_terms_days: String(doc?.payment_terms_days ?? (kind === "angebot" ? 14 : settings.payment_terms_days)),
     service_from: doc?.service_from ?? "",
     service_to: doc?.service_to ?? "",
     title: doc?.title ?? "",
-    intro: plain(doc?.intro ?? settings.intro),
-    closing: plain(doc?.closing ?? settings.closing),
+    intro: plain(doc?.intro ?? (kind === "angebot" ? OFFER_TEXTS.intro : settings.intro)),
+    closing: plain(doc?.closing ?? (kind === "angebot" ? OFFER_TEXTS.closing : settings.closing)),
     lines: doc?.items.length
       ? doc.items.map((item) => ({ ...item, key: nextKey(), description: plain(item.description), unit_price_net: sign * item.unit_price_net }))
       : [emptyLine()],
@@ -119,6 +121,7 @@ const TITLES: Record<Kind, [string, string]> = {
   rechnung: ["Neue Rechnung", "Rechnung bearbeiten"],
   gutschrift: ["Neue Gutschrift", "Gutschrift bearbeiten"],
   serie: ["Neue Serienrechnung", "Serie bearbeiten"],
+  angebot: ["Neues Angebot", "Angebot bearbeiten"],
 };
 
 /** Editor für Entwürfe (Rechnung, Gutschrift) und Serien. doc = null legt neu an. */
@@ -340,12 +343,20 @@ function EditorForm({
           </section>
         ) : (
           <section className="grid gap-3 sm:grid-cols-4">
-            <Field label={kind === "gutschrift" ? "Datum" : "Rechnungsdatum"} hint="leer = beim Festschreiben">
+            <Field label={kind === "rechnung" ? "Rechnungsdatum" : "Datum"} hint={kind === "angebot" ? "leer = beim Fertigstellen" : "leer = beim Festschreiben"}>
               {(id) => <Input id={id} type="date" value={form.document_date} onChange={(e) => set("document_date", e.target.value)} />}
             </Field>
-            <Field label="Zahlungsziel (Tage)">{(id) => <Input id={id} inputMode="numeric" value={form.payment_terms_days} onChange={(e) => set("payment_terms_days", e.target.value)} />}</Field>
-            <Field label="Leistung von">{(id) => <Input id={id} type="date" value={form.service_from} onChange={(e) => set("service_from", e.target.value)} />}</Field>
-            <Field label="Leistung bis" hint="leer = Rechnungsdatum">{(id) => <Input id={id} type="date" value={form.service_to} onChange={(e) => set("service_to", e.target.value)} />}</Field>
+            <Field label={kind === "angebot" ? "Gültig (Tage)" : "Zahlungsziel (Tage)"}>
+              {(id) => <Input id={id} inputMode="numeric" value={form.payment_terms_days} onChange={(e) => set("payment_terms_days", e.target.value)} />}
+            </Field>
+            <Field label={kind === "angebot" ? "Leistungsbeginn" : "Leistung von"}>
+              {(id) => <Input id={id} type="date" value={form.service_from} onChange={(e) => set("service_from", e.target.value)} />}
+            </Field>
+            {kind !== "angebot" && (
+              <Field label="Leistung bis" hint="leer = Rechnungsdatum">
+                {(id) => <Input id={id} type="date" value={form.service_to} onChange={(e) => set("service_to", e.target.value)} />}
+              </Field>
+            )}
           </section>
         )}
 

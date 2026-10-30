@@ -25,8 +25,9 @@ import {
 } from "@/lib/billing";
 import { Badge, Button, Empty, IconButton, Input, Select, Sheet, Spinner, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
-import { BillingEditor } from "./billing-editor";
+import { BillingEditor, type EditorKind } from "./billing-editor";
 import { DocumentActions, openPdf, removePayment } from "./billing-actions";
+import { SignFolders } from "./sign-folder";
 
 const LIST_URL = "/api/finance/belege";
 
@@ -50,7 +51,7 @@ export function Billing() {
   const [status, setStatus] = useState("");
   const [year, setYear] = useState("");
   const [query, setQuery] = useState("");
-  const [editor, setEditor] = useState<{ kind: "rechnung" | "gutschrift" | "serie"; doc: BillingDetail | null } | null>(null);
+  const [editor, setEditor] = useState<{ kind: EditorKind; doc: BillingDetail | null } | null>(null);
 
   // Geöffneter Beleg steht in der URL (?id=…), damit Links ihn öffnen
   const params = useSearchParams();
@@ -139,6 +140,10 @@ export function Billing() {
         {series ? (
           <Button variant="primary" size="sm" className="h-9" icon={<Repeat className="h-4 w-4" />} onClick={() => setEditor({ kind: "serie", doc: null })}>
             <span className="sr-only sm:not-sr-only">Neue Serie</span>
+          </Button>
+        ) : group === "angebote" ? (
+          <Button variant="primary" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ kind: "angebot", doc: null })}>
+            <span className="sr-only sm:not-sr-only">Neues Angebot</span>
           </Button>
         ) : (
           <Button variant="primary" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ kind: "rechnung", doc: null })}>
@@ -271,7 +276,7 @@ export function Billing() {
         onOpen={(id) => show(id || null)}
         onEdit={(doc) => {
           show(doc.id);
-          setEditor({ kind: doc.kind as "rechnung" | "gutschrift" | "serie", doc });
+          setEditor({ kind: doc.kind as EditorKind, doc });
         }}
       />
       <BillingEditor
@@ -522,6 +527,8 @@ function DocumentBody({ doc, onOpen, onEdit }: { doc: BillingDetail; onOpen: (id
       )}
 
       {plain(doc.closing) && <p className="text-[13px] whitespace-pre-line text-snow/55">{plain(doc.closing)}</p>}
+
+      {doc.kind === "angebot" && doc.source === "intranet" && <SignFolders doc={doc} />}
 
       {doc.payments.length > 0 && (
         <section>

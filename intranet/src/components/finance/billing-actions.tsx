@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleDollarSign, FilePen, FileText, Lock, Pause, Play, Send, Square, Trash2, Undo2, Workflow } from "lucide-react";
+import { CircleDollarSign, Signature, FilePen, FileText, Lock, Pause, Play, Send, Square, Trash2, Undo2, Workflow } from "lucide-react";
 import { api } from "@/lib/api";
 import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
 import { revalidate } from "@/lib/data";
@@ -9,6 +9,7 @@ import { graphErrorMessage, graphFor, type FileAttachment } from "@/lib/graph";
 import { KIND_LABEL, docLabel, money, todayBerlin, type BillingDetail } from "@/lib/billing";
 import { Button, Dialog, Field, Input, Popover, MenuItem, Select, Textarea, useToast } from "@/components/ui";
 import { BILLING_URL } from "./billing-editor";
+import { SignFolderDialog } from "./sign-folder";
 
 /** Aktion am Beleg; Antwort ist der Beleg, der danach offen sein soll */
 async function act(id: string, action: string, body: Record<string, unknown> = {}) {
@@ -37,7 +38,7 @@ export async function openPdf(id: string) {
   }
 }
 
-type DialogName = "festschreiben" | "senden" | "zahlung" | "stornieren" | "korrigieren" | "loeschen" | "uebernehmen" | "beenden" | null;
+type DialogName = "festschreiben" | "senden" | "mappe" | "zahlung" | "stornieren" | "korrigieren" | "loeschen" | "uebernehmen" | "beenden" | null;
 
 /** Knöpfe und Dialoge passend zum Zustand des Belegs */
 export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; onOpen: (id: string) => void; onEdit: (doc: BillingDetail) => void }) {
@@ -79,6 +80,7 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
   const payable = finalized && invoiceLike && ["offen", "teilbezahlt", "bezahlt"].includes(doc.status);
   const series = doc.kind === "serie";
   const seriesInIntranet = series && doc.recurring?.managed_by === "intranet";
+  const offer = doc.kind === "angebot";
 
   return (
     <>
@@ -86,7 +88,7 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
         {draft && (
           <>
             <Button size="sm" variant="primary" icon={<Lock className="h-4 w-4" />} onClick={() => setDialog("festschreiben")}>
-              Festschreiben
+              {offer ? "Fertigstellen" : "Festschreiben"}
             </Button>
             <Button size="sm" icon={<FilePen className="h-4 w-4" />} onClick={() => onEdit(doc)}>
               Bearbeiten
@@ -100,7 +102,12 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
           </>
         )}
 
-        {finalized && !series && (
+        {finalized && offer && intranet && doc.status === "offen" && (
+          <Button size="sm" variant="primary" icon={<Signature className="h-4 w-4" />} onClick={() => setDialog("mappe")}>
+            Zur Unterschrift senden
+          </Button>
+        )}
+        {finalized && !series && !offer && (
           <Button size="sm" variant={doc.sent_at ? "secondary" : "primary"} icon={<Send className="h-4 w-4" />} onClick={() => setDialog("senden")}>
             {doc.sent_at ? "Erneut senden" : "Senden"}
           </Button>
@@ -172,14 +179,18 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
       <Confirm
         open={dialog === "festschreiben"}
         onClose={() => setDialog(null)}
-        title={`${KIND_LABEL[doc.kind]} festschreiben?`}
-        text="Der Beleg bekommt die nächste Nummer aus dem Nummernkreis und das PDF wird abgelegt. Danach lässt er sich nicht mehr ändern, nur noch stornieren oder korrigieren."
+        title={offer ? "Angebot fertigstellen?" : `${KIND_LABEL[doc.kind]} festschreiben?`}
+        text={
+          offer
+            ? "Das Angebot bekommt die nächste Angebotsnummer und lässt sich danach nicht mehr ändern. Anschließend schickst du es mit Vertrag und SEPA-Mandat zur Unterschrift."
+            : "Der Beleg bekommt die nächste Nummer aus dem Nummernkreis und das PDF wird abgelegt. Danach lässt er sich nicht mehr ändern, nur noch stornieren oder korrigieren."
+        }
         busy={busy === "festschreiben"}
-        confirm="Festschreiben"
-        confirmBusy="Wird festgeschrieben …"
+        confirm={offer ? "Fertigstellen" : "Festschreiben"}
+        confirmBusy={offer ? "Wird fertiggestellt …" : "Wird festgeschrieben …"}
         onConfirm={async () => {
-          const next = await run("festschreiben", "Festgeschrieben");
-          if (next) setDialog("senden");
+          const next = await run("festschreiben", offer ? "Angebot fertiggestellt" : "Festgeschrieben");
+          if (next) setDialog(offer ? "mappe" : "senden");
         }}
       />
       <Confirm
@@ -251,6 +262,7 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
         onConfirm={() => run("beenden", "Serie beendet")}
       />
       {dialog === "senden" && <SendDialog doc={doc} onClose={() => setDialog(null)} />}
+      {dialog === "mappe" && <SignFolderDialog doc={doc} onClose={() => setDialog(null)} />}
       {dialog === "zahlung" && <PaymentDialog doc={doc} onClose={() => setDialog(null)} />}
     </>
   );

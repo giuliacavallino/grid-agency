@@ -214,7 +214,7 @@ export type ItemInput = Pick<
 
 /** Entwurf einer Rechnung oder Gutschrift, oder eine Serie (Vorlage) */
 export type DraftInput = {
-  kind: "rechnung" | "gutschrift" | "serie";
+  kind: "rechnung" | "gutschrift" | "serie" | "angebot";
   customer_id: string;
   ref_document_id?: string | null;
   address: BillingAddress;
@@ -272,6 +272,8 @@ export type BillingCompany = {
   bic: string;
   managing_director: string;
   register: string;
+  /** SEPA-Gläubiger-Identifikationsnummer (DE..ZZZ..) */
+  creditor_id: string;
 };
 
 export type BillingSettings = {
@@ -300,6 +302,7 @@ export const DEFAULT_BILLING_SETTINGS: BillingSettings = {
     bic: "COBADEFFXXX",
     managing_director: "Frau Giulia Cavallino",
     register: "Amtsgericht Charlottenburg HRB 235987 B",
+    creditor_id: "",
   },
   payment_terms_days: 5,
   intro: "Sehr geehrte Damen und Herren,\nnachfolgend berechnen wir Ihnen wie vereinbart:",
@@ -322,6 +325,12 @@ export const CORRECTION_TEXTS = {
     closing: "Den Betrag erstatten wir Ihnen bzw. verrechnen ihn mit offenen Rechnungen.\n\nMit freundlichen Grüßen\n\n{Firma}",
     mail: "Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie unsere {Belegart} {Nummer} über {Betrag}.\n\nMit freundlichen Grüßen\n{Firma}",
   },
+};
+
+/** Texte für Angebote (Einleitung und Schluss) */
+export const OFFER_TEXTS = {
+  intro: "Sehr geehrte Damen und Herren,\nvielen Dank für das gute Gespräch. Gerne bieten wir Ihnen folgende Leistungen an:",
+  closing: "Mit Annahme dieses Angebots kommt der beigefügte Agenturvertrag zustande. Wir freuen uns auf die Zusammenarbeit!\n\nMit freundlichen Grüßen\n{Firma}",
 };
 
 const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
