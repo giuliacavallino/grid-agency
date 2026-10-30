@@ -90,3 +90,48 @@ export const POST_STATUS: Record<PostStatus, { label: string; color?: string }> 
   partial: { label: "Teilweise", color: "#f5a524" },
   failed: { label: "Fehler", color: "#e5484d" },
 };
+
+// ---------- CI-Welt (Vorgabe für Team und Agenten) ----------
+
+export type BrandColor = { name: string; hex: string; role: "Primär" | "Sekundär" | "Akzent" | "Hintergrund" | "Text" | "Sonstige" };
+export type BrandFont = { role: string; family: string; source?: string; notes?: string };
+export type BrandLogo = { path: string; variant: string; notes?: string; url?: string };
+
+export type Brand = {
+  website?: string;
+  colors: BrandColor[];
+  fonts: BrandFont[];
+  logos: BrandLogo[];
+  tone: string;
+  audience: string;
+  imagery: string;
+  dos: string[];
+  donts: string[];
+  hashtags: string[];
+  notes: string;
+};
+
+export const EMPTY_BRAND: Brand = { colors: [], fonts: [], logos: [], tone: "", audience: "", imagery: "", dos: [], donts: [], hashtags: [], notes: "" };
+
+export const COLOR_ROLES: BrandColor["role"][] = ["Primär", "Sekundär", "Akzent", "Hintergrund", "Text", "Sonstige"];
+
+/** Die CI als klare Vorgabe in Textform: so bekommt sie der Agent */
+export function agentBrief(name: string, brand: Brand) {
+  const list = (items: string[]) => items.map((item) => `- ${item}`).join("\n");
+  const parts = [
+    `# CI-Vorgabe: ${name}`,
+    "Halte dich bei allen Posts, Designs und Texten für diesen Kunden strikt an diese Vorgabe.",
+    brand.website && `Website: ${brand.website}`,
+    brand.colors.length && `## Farben\n${list(brand.colors.map((c) => `${c.role}: ${c.name} ${c.hex}`))}`,
+    brand.fonts.length && `## Schriften\n${list(brand.fonts.map((f) => `${f.role}: ${f.family}${f.notes ? ` (${f.notes})` : ""}`))}`,
+    brand.logos.length && `## Logos\n${list(brand.logos.map((l) => `${l.variant}${l.notes ? `: ${l.notes}` : ""}${l.url ? ` – ${l.url}` : ""}`))}`,
+    brand.tone && `## Tonalität\n${brand.tone}`,
+    brand.audience && `## Zielgruppe\n${brand.audience}`,
+    brand.imagery && `## Bildsprache\n${brand.imagery}`,
+    brand.dos.length && `## Dos\n${list(brand.dos)}`,
+    brand.donts.length && `## Don'ts\n${list(brand.donts)}`,
+    brand.hashtags.length && `## Hashtags\n${brand.hashtags.join(" ")}`,
+    brand.notes && `## Weitere Hinweise\n${brand.notes}`,
+  ];
+  return parts.filter(Boolean).join("\n\n");
+}

@@ -108,3 +108,7 @@ select p.name, 'customer', p.color, p.id
 from public.task_projects p
 where not p.archived and not p.restricted
   and not exists (select 1 from public.workspaces w where w.project_id = p.id);
+
+-- CI-Welt je Kunde als Vorgabe für Team und Agenten: Farben, Schriften,
+-- Logo-Varianten, Tonalität, Zielgruppe, Bildsprache, Dos & Don'ts, Hashtags
+alter table public.workspaces add column if not exists brand jsonb not null default '{}'::jsonb;

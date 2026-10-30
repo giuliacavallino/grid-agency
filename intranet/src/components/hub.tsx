@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
-import { ArrowLeft, ArrowUpRight, CalendarDays, LayoutGrid, Link2, ListChecks, LogOut, Menu } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, LayoutGrid, Link2, ListChecks, LogOut, Menu, Palette } from "lucide-react";
 import { AREAS, type Area } from "@/lib/areas";
 import { hasArea } from "@/lib/access";
 import { useCan, useMe } from "./access";
@@ -228,6 +228,7 @@ function customerTiles(workspace: WorkspaceSummary, aufgaben: boolean): Area[] {
   return [
     { id: "posts", title: "Posts & Planung", text: `${workspace.scheduled} geplant · Posts bauen und veröffentlichen`, icon: CalendarDays, href: "/marketing/posts" },
     { id: "kanaele", title: "Kanäle", text: channels ? `${channels} verbunden · Instagram, Facebook, LinkedIn, TikTok` : "Noch nichts verbunden · Link für den Kunden erstellen", icon: Link2, href: "/marketing/kanaele" },
+    { id: "ci", title: "CI & Vorgaben", text: "Farben, Logos, Typo, Tonalität, Dos & Don'ts für Team und Agent", icon: Palette, href: "/marketing/ci" },
     ...(workspace.project_id && aufgaben
       ? [{ id: "aufgaben", title: "Aufgaben & Briefing", text: "To-dos, Briefing und Zugänge", icon: ListChecks, href: `/aufgaben/${workspace.project_id}` }]
       : []),
@@ -262,7 +263,7 @@ export function Hub() {
         {customer ? (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <h1 className="flex items-center gap-3 text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
-              <WorkspaceLogo workspace={customer} size={44} />
+              <WorkspaceLogo workspace={customer} size={44} wide />
               {customer.name}
             </h1>
             <button

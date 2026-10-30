@@ -20,7 +20,8 @@ export async function apiFetch(path: string, init: RequestInit = {}) {
     return fetch(path, {
       ...init,
       headers: {
-        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        // Bei FormData setzt der Browser Content-Type samt Boundary selbst
+        ...(init.body && !(init.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
         ...init.headers,
         Authorization: `Bearer ${token}`,
       },

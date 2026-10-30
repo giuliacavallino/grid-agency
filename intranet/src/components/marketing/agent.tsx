@@ -8,6 +8,7 @@ import { useMarketingStatus } from "./common";
 
 const ENDPOINTS: [string, string, string][] = [
   ["GET", "/api/marketing/workspaces", "Kundenwelten mit verbundenen Kanälen (IDs für Posts)"],
+  ["GET", "/api/marketing/workspaces/{id}/brand", "CI-Welt des Kunden + fertige Vorgabe (brief): vor jedem Design/Post lesen"],
   ["GET", "/api/marketing/canva/designs?query=…", "Designs in Canva suchen"],
   ["POST", "/api/marketing/canva/designs", "Design anlegen { title, width?, height?, asset_id?, workspace_id? }"],
   ["POST", "/api/marketing/canva/assets", "Bild/Video nach Canva hochladen (multipart „file“ oder { url })"],

@@ -17,7 +17,9 @@ const EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "
 export const mediaKind = (mime: string): MediaItem["kind"] => (mime.startsWith("video/") ? "video" : "image");
 
 export function publicMediaUrl(path: string, origin?: string) {
-  const base = process.env.INTRANET_URL ?? origin ?? "https://intranet.grid-agency.de";
+  // Live ist INTRANET_URL gesetzt (Meta/TikTok brauchen absolute Adressen);
+  // ohne ist die Adresse relativ und funktioniert im Browser (Vorschau)
+  const base = process.env.INTRANET_URL ?? origin ?? "";
   return `${base}/api/social/media/${path.split("/").map(encodeURIComponent).join("/")}`;
 }
 

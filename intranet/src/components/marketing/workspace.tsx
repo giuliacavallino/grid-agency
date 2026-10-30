@@ -65,7 +65,7 @@ export function WorkspaceDot({ color, className }: { color: string; className?: 
 }
 
 /** Logo der Kundenwelt (CI), sonst ein Punkt in ihrer Farbe */
-export function WorkspaceLogo({ workspace, size = 20 }: { workspace: Pick<Workspace, "logo_url" | "color" | "name">; size?: number }) {
+export function WorkspaceLogo({ workspace, size = 20, wide = false }: { workspace: Pick<Workspace, "logo_url" | "color" | "name">; size?: number; wide?: boolean }) {
   if (!workspace.logo_url) return <WorkspaceDot color={workspace.color} />;
   return (
     // eslint-disable-next-line @next/next/no-img-element -- Logo aus dem Storage
@@ -75,7 +75,8 @@ export function WorkspaceLogo({ workspace, size = 20 }: { workspace: Pick<Worksp
       width={size}
       height={size}
       className="shrink-0 rounded-md bg-white object-contain"
-      style={{ width: size, height: size, boxShadow: `0 0 0 1.5px ${workspace.color}` }}
+      // wide: Querformat-Logos in voller Breite (z. B. Überschrift im Hub)
+      style={{ height: size, width: wide ? "auto" : size, maxWidth: wide ? size * 4 : size, padding: wide ? 4 : 0, boxShadow: `0 0 0 1.5px ${workspace.color}` }}
     />
   );
 }

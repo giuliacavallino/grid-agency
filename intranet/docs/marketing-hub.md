@@ -9,6 +9,22 @@ Der Marketing Hub (`/marketing`) ist die Steuerzentrale, um GRID und alle Kunden
 
 Oben in der Übersicht wechselt das Auswahlfeld „GRID AGENCY ▾“ in die Welt eines Kunden.
 
+## CI-Welt je Kunde (Vorgabe für den Agenten)
+
+Unter Marketing → **CI & Vorgaben** liegt für jede Kundenwelt:
+
+- **Farben** mit Rolle (Primär, Sekundär, Akzent …). Die Primär- und die Sekundärfarbe färben auch die Kundenwelt im Hub.
+- **Logos** in Varianten (Hauptlogo, Negativ, Icon, Wortmarke). Das Hauptlogo erscheint im Hub.
+- **Schriften**.
+- **Tonalität**, **Zielgruppe** und **Bildsprache**.
+- **Dos & Don'ts**.
+- **Hashtags**.
+- **Weitere Hinweise**.
+
+„Mit Claude vorschlagen“ liest das Briefing aus Aufgaben und die Website des Kunden und schlägt Tonalität, Dos & Don'ts, Bildsprache und Hashtags vor. Farben und Schriften übernimmt Claude nur, wenn sie in den Unterlagen stehen. Übernommen wird erst nach Prüfung.
+
+Daraus entsteht eine Vorgabe als Text. Der Agent holt sie vor jedem Design und Post mit `GET /api/marketing/workspaces/{id}/brand` (Feld `brief`) und hält sich daran. Ändern darf die CI-Welt nur das Team.
+
 ## Wie Kunden ihre Kanäle verbinden
 
 GRID hat pro Plattform **eine** Entwickler-App (Meta, LinkedIn, TikTok). Diese wird einmal angelegt und einmal von der Plattform freigegeben (App Review). Danach braucht kein Kunde mehr eigene API-Rechte:
@@ -89,6 +105,7 @@ Typischer Ablauf:
 
 ```text
 GET  /api/marketing/workspaces                → Kundenwelt + account_ids wählen
+GET  /api/marketing/workspaces/{id}/brand      → CI-Vorgabe (brief) lesen und befolgen
 POST /api/marketing/canva/designs              { title, width: 1080, height: 1350, workspace_id }
      (Design in Canva gestalten oder aus Vorlage)
 POST /api/marketing/canva/export               { design_id, format: "png" }  → media[]

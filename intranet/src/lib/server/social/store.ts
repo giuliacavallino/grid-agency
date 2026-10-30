@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { DEMO } from "@/lib/config";
-import type { MediaItem, PostResult, Provider, SocialAccount, SocialPost, Workspace } from "@/lib/marketing";
+import { EMPTY_BRAND, type Brand, type MediaItem, type PostResult, type Provider, type SocialAccount, type SocialPost, type Workspace } from "@/lib/marketing";
 import { sb } from "../db";
 import { decrypt, encrypt } from "../vault";
 import { publicMediaUrl } from "./media";
@@ -104,6 +104,60 @@ export async function createWorkspace(input: BrandInput & { project_id?: string 
     return toWorkspace(ws);
   }
   return toWorkspace(check(await sb().from("workspaces").insert(row).select(COLUMNS).single()) as WorkspaceRow);
+}
+
+// ---------- CI-Welt ----------
+
+const text = (value: unknown, max = 4000) => (typeof value === "string" ? value.trim().slice(0, max) : "");
+const lines = (value: unknown, max = 40) =>
+  Array.isArray(value) ? value.map((v) => text(v, 300)).filter(Boolean).slice(0, max) : [];
+
+/** Nur gültige Felder übernehmen; Logos nur mit Storage-Pfad */
+export function cleanBrand(input: Partial<Brand>): Brand {
+  const colorRoles = ["Primär", "Sekundär", "Akzent", "Hintergrund", "Text", "Sonstige"];
+  return {
+    website: text(input.website, 300) || undefined,
+    colors: (Array.isArray(input.colors) ? input.colors : [])
+      .filter((c) => c && HEX.test(c.hex ?? ""))
+      .slice(0, 16)
+      .map((c) => ({ name: text(c.name, 60), hex: c.hex.toLowerCase(), role: (colorRoles.includes(c.role) ? c.role : "Sonstige") as Brand["colors"][number]["role"] })),
+    fonts: (Array.isArray(input.fonts) ? input.fonts : [])
+      .filter((f) => f && text(f.family, 80))
+      .slice(0, 8)
+      .map((f) => ({ role: text(f.role, 40) || "Text", family: text(f.family, 80), source: text(f.source, 200) || undefined, notes: text(f.notes, 300) || undefined })),
+    logos: (Array.isArray(input.logos) ? input.logos : [])
+      .filter((l) => l && /^[0-9a-f-]{36}\/[a-z0-9-_]+\.(png|jpg|webp)$/i.test(l.path ?? ""))
+      .slice(0, 12)
+      .map((l) => ({ path: l.path, variant: text(l.variant, 60) || "Logo", notes: text(l.notes, 300) || undefined })),
+    tone: text(input.tone),
+    audience: text(input.audience),
+    imagery: text(input.imagery),
+    dos: lines(input.dos),
+    donts: lines(input.donts),
+    hashtags: lines(input.hashtags, 30).map((h) => (h.startsWith("#") ? h : `#${h}`).replace(/\s+/g, "")),
+    notes: text(input.notes, 8000),
+  };
+}
+
+export async function getBrand(id: string): Promise<Brand> {
+  const raw = DEMO
+    ? (demo.workspaces.find((w) => w.id === id) as WorkspaceRow & { brand?: Brand })?.brand
+    : ((check(await sb().from("workspaces").select("brand").eq("id", id).maybeSingle()) as { brand: Brand } | null)?.brand ?? undefined);
+  const brand = { ...EMPTY_BRAND, ...(raw ?? {}) };
+  return { ...brand, logos: brand.logos.map((l) => ({ ...l, url: publicMediaUrl(l.path) })) };
+}
+
+/** CI-Welt speichern; Primär- und Sekundärfarbe färben auch die Kundenwelt im Hub */
+export async function updateBrand(id: string, input: Partial<Brand>): Promise<Brand> {
+  const brand = cleanBrand({ ...(await getBrand(id)), ...input });
+  const primary = brand.colors.find((c) => c.role === "Primär")?.hex;
+  const secondary = brand.colors.find((c) => c.role === "Sekundär")?.hex;
+  const patch: Record<string, unknown> = { brand };
+  if (primary) patch.color = primary;
+  if (secondary) patch.secondary_color = secondary;
+  if (DEMO) Object.assign(demo.workspaces.find((w) => w.id === id) ?? {}, patch);
+  else check(await sb().from("workspaces").update(patch).eq("id", id));
+  return getBrand(id);
 }
 
 /** CI der Kundenwelt ändern */
