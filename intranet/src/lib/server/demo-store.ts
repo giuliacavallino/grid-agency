@@ -176,6 +176,9 @@ function invoice(stage: string, vendor: string, number: string, amount: number, 
     datev_sent_at: stage === "datev" ? ago(Math.max(0, daysAgo - 2)) : null,
     datev_sent_by: stage === "datev" ? "Giulia Cavallino" : null,
     notes: null,
+    paid: false,
+    paid_at: null,
+    bank_transaction_id: null,
     raw: null,
     ...extra,
   };
@@ -269,6 +272,8 @@ const tables: Record<string, Row[]> = {
   retainers,
   inbound_messages: inbound,
   invoices,
+  bank_accounts: [],
+  bank_transactions: [],
   applications,
   task_projects: taskProjects,
   task_sections: taskSections,
@@ -337,6 +342,15 @@ export const demoStore: Store = {
       // Datenbank-Standardwerte nachbilden, die der Abgleich nicht mitschickt
       const defaults = table === "retainers" ? { hours_per_month: 0, notes: null } : table === "articles" ? { hours: 0 } : { lead_id: null, industry: null };
       out.push(row ? await this.update(table, row.id, input) : await this.insert(table, { ...defaults, ...input }));
+    }
+    return out;
+  },
+  async upsert(table, rows, onConflict, ignoreDuplicates = false) {
+    const out: Row[] = [];
+    for (const input of rows) {
+      const row = tables[table].find((r) => r[onConflict] === input[onConflict]);
+      if (row && ignoreDuplicates) continue;
+      out.push(row ? await this.update(table, row.id, input) : await this.insert(table, { updated_at: now(), ...input }));
     }
     return out;
   },

@@ -1,11 +1,11 @@
 import { forbidden, withUser } from "@/lib/server/auth";
-import { canUseTable, db, isTable, mayTouch, pick } from "@/lib/server/db";
+import { canUseTable, db, isTable, mayTouch, pick, READ_ONLY } from "@/lib/server/db";
 
 type Context = { params: Promise<{ table: string; id: string }> };
 
 export const PATCH = withUser(async (user, request, { params }: Context) => {
   const { table, id } = await params;
-  if (!isTable(table) || table === "inbound_messages") {
+  if (!isTable(table) || READ_ONLY.includes(table)) {
     return Response.json({ error: "Unbekannt" }, { status: 404 });
   }
   if (!canUseTable(user, table)) return forbidden();
@@ -54,7 +54,7 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
 
 export const DELETE = withUser(async (user, _request, { params }: Context) => {
   const { table, id } = await params;
-  if (!isTable(table) || table === "inbound_messages") {
+  if (!isTable(table) || READ_ONLY.includes(table)) {
     return Response.json({ error: "Unbekannt" }, { status: 404 });
   }
   if (!canUseTable(user, table)) return forbidden();
