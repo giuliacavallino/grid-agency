@@ -7,6 +7,7 @@ import { clsx } from "clsx";
 import {
   BarChart3,
   BookOpenCheck,
+  Briefcase,
   Building2,
   CalendarDays,
   ChevronsLeft,
@@ -49,7 +50,10 @@ export const FINANCE_NAV: NavItem[] = [
   { href: "/finance/einstellungen", label: "Einstellungen", icon: Settings },
 ];
 
-export const PERSONAL_NAV: NavItem[] = [{ href: "/personal", label: "Bewerbungen", icon: Columns3, counter: "applications" }];
+export const PERSONAL_NAV: NavItem[] = [
+  { href: "/personal", label: "Bewerbungen", icon: Columns3, counter: "applications" },
+  { href: "/personal/stellen", label: "Stellen", icon: Briefcase },
+];
 
 export const MAIL_NAV: NavItem[] = [
   { href: "/mail", label: "Posteingang", icon: Inbox },
