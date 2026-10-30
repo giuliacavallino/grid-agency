@@ -365,7 +365,7 @@ function CustomerSheet({ id, onClose, retainers }: { id: string | null; onClose:
       ) : (
         <Empty title="Kunde nicht gefunden" text="Vielleicht wurde er gelöscht." />
       )}
-      {customer && <CustomerDialog key={customer.id} open={editing} onClose={() => setEditing(false)} customer={customer} customers={customers} />}
+      {customer && <CustomerDialog key={`bearbeiten-${customer.id}`} open={editing} onClose={() => setEditing(false)} customer={customer} customers={customers} />}
     </Sheet>
   );
 }
@@ -408,7 +408,7 @@ function MasterData({ customer, onEdit }: { customer: Customer; onEdit: () => vo
           <Fact label="Ansprechpartner*in">{customer.contact_name}</Fact>
           <Fact label="Telefon">{customer.phone && <a href={`tel:${customer.phone}`} className={textLink}>{customer.phone}</a>}</Fact>
           <Fact label="E-Mail">{customer.email && <a href={`mailto:${customer.email}`} className={textLink}>{customer.email}</a>}</Fact>
-          <Fact label="Website">
+          <Fact label="Webseite">
             {customer.website && (
               <a href={customer.website} target="_blank" rel="noopener" className={textLink}>
                 {customer.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
@@ -720,7 +720,7 @@ function CustomerDialog({
           <Field label="E-Mail" className="col-span-2 sm:col-span-3">
             {(id) => <Input id={id} type="email" value={form.email} onChange={set("email")} />}
           </Field>
-          <Field label="Website" className="col-span-2 sm:col-span-3">
+          <Field label="Webseite" className="col-span-2 sm:col-span-3">
             {(id) => <Input id={id} type="url" value={form.website} onChange={set("website")} placeholder="https://" />}
           </Field>
         </FormGroup>
