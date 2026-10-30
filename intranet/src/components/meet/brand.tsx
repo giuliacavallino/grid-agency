@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
-import { Logo } from "@/components/logo";
+import { ProductMark } from "@/components/logo";
 
 // Marken-Bausteine für meet.grid-agency.de: Wortmarke, Kundenlogos als
 // Laufband, E-Book-Karte und Fußleiste. Bilder liegen unter /assets, weil
@@ -38,14 +38,9 @@ const WIDTH: Record<string, number> = {
 };
 const HEIGHT: Record<string, number> = { "the-pioneer": 140, "sajent-club": 140 };
 
-/** GRID-Logo mit „MEET“ in Aurora-Schrift */
-export function MeetMark({ className }: { className?: string }) {
-  return (
-    <span className={clsx("inline-flex items-center gap-2.5", className)} aria-label="GRID Meet">
-      <Logo className="h-6" priority />
-      <span className="text-aurora text-[1.35rem] leading-none font-semibold tracking-tight">MEET</span>
-    </span>
-  );
+/** Marke „GRID | MEET“ */
+export function MeetMark({ size, className }: { size?: "sm" | "md"; className?: string }) {
+  return <ProductMark product="Meet" size={size} priority className={className} />;
 }
 
 /** „Serving the coolest brands“: Kundenlogos als Laufband, einfarbig */

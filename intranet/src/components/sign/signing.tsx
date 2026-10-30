@@ -5,7 +5,7 @@ import { ArrowDown, Check, FileText, Lock, Mail, PenLine, ShieldCheck } from "lu
 import { cn } from "@/lib/cn";
 import { formatIban, SEPA_TEXT, SIGN_FIELD_LABEL, signFields, validIban, type SignField } from "@/lib/contract";
 import { money } from "@/lib/billing";
-import { Logo } from "@/components/logo";
+import { Logo, ProductMark } from "@/components/logo";
 import { Button, Dialog, Spinner, Textarea } from "@/components/ui";
 import { SignaturePad } from "@/components/signature-pad";
 
@@ -177,10 +177,7 @@ export function Signing({ token }: { token: string }) {
       <header className="sticky top-0 z-30 px-3 pt-3 md:px-6">
         <div className="glass mx-auto flex h-14 max-w-5xl items-center justify-between rounded-full pr-2 pl-5">
           <a href="https://grid-agency.de" className="group flex items-center gap-3" aria-label="GRID Agency">
-            <span className="logo-rainbow">
-              <Logo className="h-5" priority />
-            </span>
-            <span className="rounded-full border border-snow/15 px-2.5 py-0.5 text-[11px] tracking-[0.2em] text-snow/60 uppercase">sign</span>
+            <ProductMark product="Sign" size="sm" rainbow priority />
           </a>
           {view && !["widerrufen", "unterschrieben"].includes(view.status) && (
             <a
