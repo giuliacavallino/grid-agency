@@ -64,8 +64,16 @@ export function LeadActions({ lead, size = "sm" }: { lead: Lead; size?: "sm" | "
             >
               {lead.invited_at ? "Erneut einladen" : "Termin einladen"}
             </Button>
-            <Button size={size} variant="ghost" icon={<X className="h-4 w-4" />} onClick={() => setDialog("absage")}>
-              Absage
+            <Button
+              size={size}
+              variant="ghost"
+              icon={<X className="h-4 w-4" />}
+              aria-label="Absage"
+              title="Absage"
+              className={size === "sm" ? "w-8 px-0" : undefined}
+              onClick={() => setDialog("absage")}
+            >
+              {size === "sm" ? null : "Absage"}
             </Button>
           </div>
         </>
@@ -88,8 +96,16 @@ export function LeadActions({ lead, size = "sm" }: { lead: Lead; size?: "sm" | "
             <Button size={size} variant="primary" icon={<FileSignature className="h-4 w-4" />} onClick={() => setDialog("angebot")}>
               Angebot erstellen
             </Button>
-            <Button size={size} variant="ghost" icon={<X className="h-4 w-4" />} onClick={() => setDialog("absage")}>
-              Absage
+            <Button
+              size={size}
+              variant="ghost"
+              icon={<X className="h-4 w-4" />}
+              aria-label="Absage"
+              title="Absage"
+              className={size === "sm" ? "w-8 px-0" : undefined}
+              onClick={() => setDialog("absage")}
+            >
+              {size === "sm" ? null : "Absage"}
             </Button>
           </div>
         </>
