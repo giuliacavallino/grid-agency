@@ -112,15 +112,20 @@ export function LeadActions({ lead, size = "sm" }: { lead: Lead; size?: "sm" | "
       )}
 
       {lead.stage === "angebot" && (
-        <p className="flex items-center gap-1.5 text-[12px] text-snow/60">
-          <FileSignature className="h-3.5 w-3.5 shrink-0" />
-          Wartet auf Unterschrift
-          {lead.offer_id && (
-            <Link href={`/finance/ausgangsrechnungen?id=${lead.offer_id}`} className="ml-auto text-snow/80 hover:underline">
-              Angebot
-            </Link>
-          )}
-        </p>
+        <>
+          <p className="flex items-center gap-1.5 text-[12px] text-snow/60">
+            <FileSignature className="h-3.5 w-3.5 shrink-0" />
+            Wartet auf Unterschrift
+            {lead.offer_id && (
+              <Link href={`/finance/ausgangsrechnungen?id=${lead.offer_id}`} className="ml-auto text-snow/80 hover:underline">
+                Angebot
+              </Link>
+            )}
+          </p>
+          <Button size={size} variant="ghost" icon={<FileSignature className="h-4 w-4" />} className="self-start" onClick={() => setDialog("angebot")}>
+            Neues Angebot
+          </Button>
+        </>
       )}
 
       {lead.stage === "gewonnen" &&
