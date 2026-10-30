@@ -360,7 +360,7 @@ export function MeetRoom({ code }: { code: string }) {
             </div>
           )}
           {waiting ? (
-            <WaitingStage isHost={isHost} selfView={selfView} />
+            <WaitingStage isHost={isHost} hostName={view.host_name} selfView={selfView} />
           ) : people.length === 0 ? (
             <div className="grid place-items-center rounded-3xl border border-snow/10 bg-surface/60 p-6 text-center">
               <div>
