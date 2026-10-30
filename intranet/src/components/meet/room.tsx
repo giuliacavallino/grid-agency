@@ -331,7 +331,8 @@ export function MeetRoom({ code }: { code: string }) {
       </div>
     );
     return (
-      <div className="flex h-dvh flex-col bg-sky text-snow">
+      // Eine Seite ohne Scrollen: fest auf den Bildschirm, nichts ragt raus
+      <div className="fixed inset-0 flex flex-col overflow-hidden overscroll-none bg-sky text-snow">
         <header className="flex h-14 shrink-0 items-center gap-3 px-4">
           <MeetMark className="shrink-0 [&_img]:h-5 [&_span]:text-lg" />
           <p className="min-w-0 flex-1 truncate border-l border-snow/15 pl-3 text-sm font-medium">{view.title}</p>
@@ -349,7 +350,7 @@ export function MeetRoom({ code }: { code: string }) {
           </span>
         </header>
 
-        <main className={clsx("relative min-h-0 flex-1 gap-3 px-3 pb-3", screen ? "flex flex-col md:flex-row" : "grid")}>
+        <main className={clsx("relative min-h-0 flex-1 gap-3 overflow-hidden px-3 pb-3", screen ? "flex flex-col md:flex-row" : "grid grid-rows-[minmax(0,1fr)]")}>
           {screen && (
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-ink">
               <StreamView key={`screen-${screen.stream.id}`} stream={screen.stream} fit />
