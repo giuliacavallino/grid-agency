@@ -1,4 +1,3 @@
-import { isManagement } from "@/lib/config";
 import { withUser } from "@/lib/server/auth";
 import { deleteItem, getVisible, updateItem, type VaultInput } from "@/lib/server/vault";
 
@@ -9,7 +8,7 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
   const item = await getVisible(user, id);
   if (!item) return Response.json({ error: "Nicht gefunden" }, { status: 404 });
   const input = (await request.json()) as VaultInput;
-  if (input.internal && !isManagement(user.email)) return Response.json({ error: "Nur für die Geschäftsführung" }, { status: 403 });
+  if (input.internal && !user.admin) return Response.json({ error: "Nur für die Geschäftsführung" }, { status: 403 });
   if ("title" in input && !input.title?.trim()) return Response.json({ error: "Titel fehlt" }, { status: 400 });
   return Response.json(await updateItem(user, item, input));
 });

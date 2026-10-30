@@ -18,7 +18,9 @@ Für die lokale Vorschau ohne Login und Datenbank `NEXT_PUBLIC_INTRANET_DEMO=1` 
 - `/personal` – Bewerbungen als Kanban (Neue Bewerbung → Gespräch → Case Study → Zusage / Absage)
 - `/mail` – Posteingang und Kalender aller Postfächer (hello@, giulia@, buchhaltung@, google@)
 - `/aufgaben` – To-dos je Kunde (ersetzt Asana): Kacheln aller Kunden, je Kunde eine Liste wie in Asana (Themen als Gruppen, alles direkt in der Zeile bearbeitbar, speichert automatisch), „Meine To-dos“ über alle Kunden, Briefing je Kunde (Zugänge, Ansprechpartner, Postingplan), ehemalige Kunden im Archiv
-- `/admin` – Passwort-Tresor: Zugänge je Kunde (alle Mitarbeitenden) und intern (nur Geschäftsführung, `MANAGEMENT` in `src/lib/config.ts`). Passwörter liegen AES-256-GCM-verschlüsselt in Supabase, Anzeigen/Kopieren/Ändern landet im Protokoll. Die Zugänge eines Kunden stehen auch im Briefing unter Aufgaben.
+- `/admin` – Admin-Konsole (nur Rolle Admin): Passwort-Tresor (Kunden-Zugänge sehen alle mit Aufgaben, interne nur Admins; AES-256-GCM-verschlüsselt, Anzeigen/Kopieren/Ändern im Protokoll), Benutzer & Rechte (wer ins Intranet darf, Rolle Admin oder Mitarbeiter*in mit freigegebenen Bereichen; Tabelle `intranet_users`), Firmendaten, Protokoll
+
+Zugang: Nur Microsoft-Konten, die in Admin → Benutzer & Rechte aktiv sind, kommen hinein. Jede API-Route prüft das (`withUser` in `src/lib/server/auth.ts`); welche Tabelle zu welchem Bereich gehört, steht in `TABLE_AREAS` in `src/lib/server/db.ts`. Aufgaben-Listen mit `restricted` (z. B. „Geschäftsführung“) sehen nur Admins.
 
 Welche Postfächer wo erscheinen, steht in `MAILBOXES` in `src/lib/config.ts`.
 - `src/app/api/sales/*` – Daten-API. Prüft das Microsoft-ID-Token (Signatur, Tenant, Client-ID) und spricht mit Supabase über den Service-Key.

@@ -1,5 +1,5 @@
-import { withUser } from "@/lib/server/auth";
-import { db, isTable, pick } from "@/lib/server/db";
+import { forbidden, withUser } from "@/lib/server/auth";
+import { canUseTable, db, isTable, mayTouch, pick } from "@/lib/server/db";
 
 type Context = { params: Promise<{ table: string; id: string }> };
 
@@ -8,6 +8,8 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
   if (!isTable(table) || table === "inbound_messages") {
     return Response.json({ error: "Unbekannt" }, { status: 404 });
   }
+  if (!canUseTable(user, table)) return forbidden();
+  if (!(await mayTouch(user, table, await db().get(table, id)))) return forbidden();
   const patch = pick(table, await request.json());
   const store = db();
 
@@ -50,11 +52,13 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
   return Response.json(customer ? { ...row, _customer: customer } : row);
 });
 
-export const DELETE = withUser(async (_user, _request, { params }: Context) => {
+export const DELETE = withUser(async (user, _request, { params }: Context) => {
   const { table, id } = await params;
   if (!isTable(table) || table === "inbound_messages") {
     return Response.json({ error: "Unbekannt" }, { status: 404 });
   }
+  if (!canUseTable(user, table)) return forbidden();
+  if (!(await mayTouch(user, table, await db().get(table, id)))) return forbidden();
   await db().remove(table, id);
   return new Response(null, { status: 204 });
 });

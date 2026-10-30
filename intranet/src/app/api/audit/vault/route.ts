@@ -1,4 +1,3 @@
-import { isManagement } from "@/lib/config";
 import { withUser } from "@/lib/server/auth";
 import { getVisible, listLog } from "@/lib/server/vault";
 
@@ -10,6 +9,6 @@ export const GET = withUser(async (user, request) => {
     if (!(await getVisible(user, item))) return Response.json({ error: "Nicht gefunden" }, { status: 404 });
     return Response.json(await listLog(item));
   }
-  if (!isManagement(user.email)) return Response.json({ error: "Nur für die Geschäftsführung" }, { status: 403 });
+  if (!user.admin) return Response.json({ error: "Nur für die Geschäftsführung" }, { status: 403 });
   return Response.json(await listLog());
 });

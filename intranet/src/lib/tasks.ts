@@ -37,9 +37,6 @@ export type Task = {
   position: number;
 };
 
-/** Wer To-dos übernehmen kann (Auswahl „Zuständig“) */
-export const TEAM = ["Giulia Cavallino", "Marine Eichner"];
-
 /** Farben zur Auswahl für neue Kunden */
 export const PROJECT_COLORS = ["#eda100", "#e5484d", "#f06ba5", "#d62976", "#9085e9", "#6366f1", "#3e9fd6", "#30a46c", "#afaaa0"];
 

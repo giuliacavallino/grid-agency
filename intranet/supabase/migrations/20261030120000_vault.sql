@@ -34,3 +34,6 @@ alter table public.vault_log enable row level security;
 
 create trigger vault_items_touch before update on public.vault_items
   for each row execute function public.touch_updated_at();
+
+-- Aufgaben-Listen nur für die Geschäftsführung (z. B. „Geschäftsführung“)
+alter table public.task_projects add column restricted boolean not null default false;

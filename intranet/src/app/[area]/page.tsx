@@ -17,7 +17,7 @@ export default async function AreaPage({ params }: PageProps<"/[area]">) {
   const { area } = await params;
   if (!PLACEHOLDERS.some((a) => a.id === area)) notFound();
   return (
-    <RequireAuth>
+    <RequireAuth area={area}>
       <AreaPlaceholder id={area} />
     </RequireAuth>
   );

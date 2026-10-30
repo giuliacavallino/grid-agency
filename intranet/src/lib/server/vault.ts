@@ -1,6 +1,6 @@
 import "server-only";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { DEMO, isManagement } from "@/lib/config";
+import { DEMO } from "@/lib/config";
 import type { VaultItem, VaultLogEntry } from "@/lib/vault";
 import type { User } from "./auth";
 import { sb } from "./db";
@@ -47,7 +47,7 @@ type Row = Omit<VaultItem, "has_secret"> & { secret: string | null };
 /** Was der Browser sieht: alles außer dem verschlüsselten Passwort */
 const toItem = ({ secret, ...rest }: Row): VaultItem => ({ ...rest, has_secret: !!secret });
 
-export const canSee = (user: User, row: Pick<Row, "internal">) => !row.internal || isManagement(user.email);
+export const canSee = (user: User, row: Pick<Row, "internal">) => !row.internal || user.admin;
 
 // ---------- Speicher (Supabase oder Demo im Speicher) ----------
 
@@ -73,7 +73,7 @@ export async function listItems(user: User): Promise<VaultItem[]> {
     return demoRows.filter((r) => canSee(user, r)).map(toItem);
   }
   let query = sb().from("vault_items").select("*").order("title");
-  if (!isManagement(user.email)) query = query.eq("internal", false);
+  if (!user.admin) query = query.eq("internal", false);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   await sealPlain(data as Row[]);

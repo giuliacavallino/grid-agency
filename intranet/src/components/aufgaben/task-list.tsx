@@ -22,8 +22,9 @@ import { cn as clsx } from "@/lib/cn";
 import { createRow, deleteRow, updateRow } from "@/lib/data";
 import { topPosition } from "@/lib/sales/types";
 import { dueLabel, isOverdue, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
-import { Avatar, Button, Dialog, IconButton, Spinner, useToast } from "@/components/ui";
+import { Button, Dialog, IconButton, Spinner, useToast } from "@/components/ui";
 import { accentFill } from "@/lib/theme";
+import { PersonAvatar } from "@/components/person";
 import { DoneToggle } from "./task";
 
 type Groups = Record<string, string[]>;
@@ -328,7 +329,7 @@ export function TaskRow({
         </span>
       )}
       <label className="relative hidden w-44 shrink-0 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-snow/[0.06] md:flex">
-        {task.assignee ? <Avatar name={task.assignee} className="h-6 w-6 text-[10px]" /> : <span className="h-6 w-6 rounded-full border border-dashed border-snow/35" />}
+        {task.assignee ? <PersonAvatar name={task.assignee} className="h-6 w-6 text-[10px]" /> : <span className="h-6 w-6 rounded-full border border-dashed border-snow/35" />}
         <span className={clsx("truncate text-[13px]", task.assignee ? "text-snow/80" : "text-snow/50")}>{task.assignee ?? "Niemand"}</span>
         <select
           value={task.assignee ?? ""}

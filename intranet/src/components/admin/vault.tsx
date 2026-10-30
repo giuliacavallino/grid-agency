@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Eye, EyeOff, ExternalLink, KeyRound, Lock, PanelRightOpen, Plus, Search, Trash2, Wand2 } from "lucide-react";
-import { isManagement } from "@/lib/config";
 import { cn as clsx } from "@/lib/cn";
-import { useAuth } from "@/lib/auth";
+import { useIsAdmin } from "@/components/access";
 import { useResource, useRows } from "@/lib/data";
 import { formatDateTime, relativeTime } from "@/lib/format";
 import type { TaskProject } from "@/lib/tasks";
@@ -15,10 +14,7 @@ import { copyPassword, createVaultItem, deleteVaultItem, revealPassword, updateV
 
 const INTERNAL = "intern";
 
-function useIsManagement() {
-  const auth = useAuth();
-  return auth.status === "signed-in" && isManagement(auth.account.email);
-}
+const useIsManagement = useIsAdmin;
 
 function host(url: string | null) {
   if (!url) return null;

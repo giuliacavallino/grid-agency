@@ -1,6 +1,8 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { hasArea } from "@/lib/access";
 import { DEMO } from "@/lib/config";
+import type { User } from "./auth";
 import { demoStore } from "./demo-store";
 
 /** Tabellen, die die Sales-API lesen und schreiben darf, mit den Spalten,
@@ -80,6 +82,47 @@ export const TABLES = {
     order: { column: "position", ascending: false },
   },
 } as const;
+
+/** Bereiche, zu denen eine Tabelle gehört: Lesen und Schreiben darf, wer
+ * mindestens einen davon sehen darf (Admin → Benutzer & Rechte). */
+const TABLE_AREAS: Record<keyof typeof TABLES, string[]> = {
+  leads: ["sales"],
+  lead_activities: ["sales"],
+  customers: ["sales"],
+  articles: ["sales"],
+  retainers: ["sales"],
+  inbound_messages: ["sales", "finance", "mail"],
+  invoices: ["finance"],
+  applications: ["personal"],
+  task_projects: ["aufgaben", "admin"],
+  task_sections: ["aufgaben"],
+  tasks: ["aufgaben"],
+};
+
+export const canUseTable = (user: User, table: TableName) => TABLE_AREAS[table].some((area) => hasArea(user.member, area));
+
+const TASK_TABLES: readonly TableName[] = ["task_projects", "task_sections", "tasks"];
+
+/** Aufgaben-Listen mit restricted (z. B. „Geschäftsführung“) sieht nur die
+ * Geschäftsführung. Liefert die gesperrten Projekt-IDs für dieses Konto. */
+async function hiddenProjects(user: User, table: TableName) {
+  if (!TASK_TABLES.includes(table) || user.admin) return null;
+  const rows = await db().list("task_projects", { restricted: "true" });
+  return new Set(rows.map((row) => row.id));
+}
+
+const projectOf = (table: TableName, row: Row) => String(table === "task_projects" ? row.id : row.project_id);
+
+export async function visibleRows(user: User, table: TableName, rows: Row[]) {
+  const hidden = await hiddenProjects(user, table);
+  return hidden ? rows.filter((row) => !hidden.has(projectOf(table, row))) : rows;
+}
+
+/** Darf das Konto diese Zeile (bzw. eine neue Zeile mit diesen Werten) ändern? */
+export async function mayTouch(user: User, table: TableName, row: Record<string, unknown> | null) {
+  const hidden = await hiddenProjects(user, table);
+  return !hidden || !row || !hidden.has(projectOf(table, row as Row));
+}
 
 /** Tabellen mit Herkunftsschlüssel (source_ref) aus dem Mail-Eingang */
 export type IngestTable = "leads" | "inbound_messages" | "invoices" | "applications";

@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Admin" };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RequireAuth>
+    <RequireAuth area="admin">
       <AdminShell>{children}</AdminShell>
     </RequireAuth>
   );

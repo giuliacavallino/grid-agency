@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
 import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { createRow, deleteRow, updateRow, useRows } from "@/lib/data";
-import { isOverdue, PROJECT_COLORS, TEAM, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
+import { isOverdue, PROJECT_COLORS, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
 import { Badge, Button, Dialog, Empty, Field, IconButton, Input, MenuItem, Popover, Select, Spinner, useToast } from "@/components/ui";
+import { useTeamNames } from "@/components/access";
 import { PageBar } from "@/components/sales/shell";
 import { BriefingSheet } from "./briefing";
 import { KeepVisible, TaskSheet } from "./task";
@@ -30,7 +31,7 @@ export function ProjectView({ id }: { id: string }) {
     [sectionRows.data, id]
   );
   const allTasks = useMemo(() => (taskRows.data ?? []).filter((t) => t.project_id === id), [taskRows.data, id]);
-  const people = TEAM;
+  const people = useTeamNames();
   // Hier abgehakte To-dos bleiben bis zum Verlassen der Seite sichtbar
   const [keep, setKeep] = useState<Set<string>>(() => new Set());
   const keepVisible = useCallback((taskId: string) => setKeep((set) => new Set(set).add(taskId)), []);

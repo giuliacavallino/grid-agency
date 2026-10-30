@@ -6,9 +6,18 @@ import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import { ArrowLeft, ArrowUpRight, LayoutGrid, LogOut, Menu } from "lucide-react";
 import { AREAS, type Area } from "@/lib/areas";
+import { hasArea } from "@/lib/access";
+import { useMe } from "./access";
+import { usePhoto } from "./person";
 import { signOut, useAuth } from "@/lib/auth";
 import { Logo } from "./logo";
 import { Button, Popover } from "./ui";
+
+/** Bereiche, die das angemeldete Konto sehen darf */
+function useAreas() {
+  const { data: me } = useMe();
+  return AREAS.filter((area) => hasArea(me, area.id));
+}
 
 function AreaLink({ area, className, children }: { area: Area; className?: string; children: React.ReactNode }) {
   return area.external ? (
@@ -29,6 +38,25 @@ export function AccountMenu({ align = "right" }: { align?: "left" | "right" }) {
   if (auth.status !== "signed-in") return null;
   const { name, email } = auth.account;
   const letters = name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  return <AccountPopover name={name} email={email} letters={letters} align={align} leaving={leaving} setLeaving={setLeaving} />;
+}
+
+function AccountPopover({
+  name,
+  email,
+  letters,
+  align,
+  leaving,
+  setLeaving,
+}: {
+  name: string;
+  email: string;
+  letters: string;
+  align: "left" | "right";
+  leaving: boolean;
+  setLeaving: (value: boolean) => void;
+}) {
+  const photo = usePhoto(email);
   return (
     <Popover
       align={align}
@@ -39,9 +67,10 @@ export function AccountMenu({ align = "right" }: { align?: "left" | "right" }) {
           onClick={toggle}
           aria-expanded={open}
           aria-label="Konto"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-snow text-[13px] font-semibold text-sky transition-[transform,box-shadow] hover:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-snow)_22%,transparent)] active:scale-90"
+          className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-snow text-[13px] font-semibold text-sky transition-[transform,box-shadow] hover:shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-snow)_22%,transparent)] active:scale-90"
         >
-          {letters}
+          {/* eslint-disable-next-line @next/next/no-img-element -- Blob-URL aus Microsoft Graph */}
+          {photo ? <img src={photo} alt="" className="h-full w-full object-cover" /> : letters}
         </button>
       )}
     >
@@ -72,6 +101,7 @@ export function AccountMenu({ align = "right" }: { align?: "left" | "right" }) {
 /** Kopfleiste als schwebende Glas-Pill wie TopBar.tsx der Website. */
 export function TopBar() {
   const pathname = usePathname();
+  const areas = useAreas();
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-6">
       <div className="mx-auto w-full max-w-frame-lg px-5">
@@ -88,7 +118,7 @@ export function TopBar() {
           </Link>
 
           <nav className="relative hidden items-center gap-6 text-[15px] font-normal lg:flex" aria-label="Bereiche">
-            {AREAS.map((area) => (
+            {areas.map((area) => (
               <AreaLink
                 key={area.id}
                 area={area}
@@ -120,7 +150,7 @@ export function TopBar() {
               >
                 {(close) => (
                   <ul className="grid w-72 gap-0.5 p-1">
-                    {[{ id: "home", title: "Übersicht", icon: LayoutGrid, href: "/", text: "" } as Area, ...AREAS].map((area) => {
+                    {[{ id: "home", title: "Übersicht", icon: LayoutGrid, href: "/", text: "" } as Area, ...areas].map((area) => {
                       const Icon = area.icon;
                       const current = area.href === "/" ? pathname === "/" : pathname.startsWith(area.href);
                       return (
@@ -185,6 +215,7 @@ function greeting(hour: number) {
 
 export function Hub() {
   const auth = useAuth();
+  const areas = useAreas();
   const firstName = auth.status === "signed-in" ? auth.account.name.split(" ")[0] : "";
   // Datum und Tageszeit erst im Browser, damit Server und Client gleich rendern
   const [now, setNow] = useState<Date | null>(null);
@@ -203,7 +234,7 @@ export function Hub() {
 
       {/* Sales ist die breite Hauptkachel: 7 Bereiche gehen in 2 und 4 Spalten glatt auf */}
       <ul className="mt-8 grid grid-cols-2 gap-3 lg:mt-10 lg:grid-cols-4 lg:gap-4">
-        {AREAS.map((area, index) => {
+        {areas.map((area, index) => {
           const Icon = area.icon;
           const featured = index === 0;
           return (
