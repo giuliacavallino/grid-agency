@@ -37,7 +37,7 @@ function findGroup(groups: Groups, id: string): string | null {
 /** Spaltenköpfe über der Liste (nur Desktop) */
 export function ListHeader({ withProject = false }: { withProject?: boolean }) {
   return (
-    <div className="sticky top-0 z-10 hidden h-9 items-center border-b border-snow/[0.08] bg-canvas pr-12 pl-[60px] text-[12px] text-snow/45 md:flex">
+    <div className="sticky top-0 z-10 hidden h-9 items-center border-b border-snow/[0.08] bg-canvas pr-12 pl-[60px] text-[12px] text-snow/60 md:flex">
       <span className="flex-1">To-do</span>
       {withProject && <span className="w-36">Kunde</span>}
       <span className="w-44 pl-1.5">Zuständig</span>
@@ -169,11 +169,11 @@ export function SectionedList({
               >
                 {isCollapsed ? <ChevronRight className="h-4 w-4 shrink-0 text-snow/50" /> : <ChevronDown className="h-4 w-4 shrink-0 text-snow/50" />}
                 <h2 className="truncate text-[15px] font-semibold">{section.name}</h2>
-                <span className="text-[13px] text-snow/40">{open}</span>
+                <span className="text-[13px] text-snow/55">{open}</span>
               </button>
               <IconButton
                 label={`Thema „${section.name}“ bearbeiten`}
-                className="h-7 w-7 text-snow/45 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
+                className="h-7 w-7 text-snow/60 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
                 onClick={() => onEditSection(section)}
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -270,7 +270,7 @@ export function TaskRow({
         <button
           type="button"
           aria-label="Ziehen zum Sortieren"
-          className="mt-3 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center text-snow/30 opacity-100 active:cursor-grabbing md:mt-0 md:opacity-0 md:group-hover:opacity-100"
+          className="mt-3 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center text-snow/45 opacity-100 active:cursor-grabbing md:mt-0 md:opacity-0 md:group-hover:opacity-100"
           {...handle}
         >
           <GripVertical className="h-4 w-4" />
@@ -295,7 +295,7 @@ export function TaskRow({
           aria-label="Titel"
           className={clsx(
             "h-8 w-full truncate rounded-md bg-transparent px-1.5 text-[14px] outline-none focus:bg-snow/[0.06] focus:ring-1 focus:ring-snow/20",
-            task.done && "text-snow/45 line-through"
+            task.done && "text-snow/60 line-through"
           )}
         />
         {/* Mobil: Kunde, Fälligkeit und Person unter dem Titel */}
@@ -312,8 +312,8 @@ export function TaskRow({
         </span>
       )}
       <label className="relative hidden w-44 shrink-0 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-snow/[0.06] md:flex">
-        {task.assignee ? <Avatar name={task.assignee} className="h-6 w-6 text-[10px]" /> : <span className="h-6 w-6 rounded-full border border-dashed border-snow/25" />}
-        <span className={clsx("truncate text-[13px]", task.assignee ? "text-snow/80" : "text-snow/35")}>{task.assignee ?? "Niemand"}</span>
+        {task.assignee ? <Avatar name={task.assignee} className="h-6 w-6 text-[10px]" /> : <span className="h-6 w-6 rounded-full border border-dashed border-snow/35" />}
+        <span className={clsx("truncate text-[13px]", task.assignee ? "text-snow/80" : "text-snow/50")}>{task.assignee ?? "Niemand"}</span>
         <select
           value={task.assignee ?? ""}
           onChange={(e) => save({ assignee: e.target.value || null })}
@@ -363,7 +363,7 @@ function DueField({ task, onChange }: { task: Task; onChange: (due: string | nul
         }}
         className={clsx(
           "flex h-8 w-full items-center gap-1.5 rounded-md px-1.5 text-[13px] hover:bg-snow/[0.06]",
-          task.due_on ? (late ? "font-medium text-error" : "text-snow/75") : "text-snow/30"
+          task.due_on ? (late ? "font-medium text-error" : "text-snow/75") : "text-snow/45"
         )}
       >
         <CalendarDays className="h-3.5 w-3.5 shrink-0" />
@@ -428,7 +428,7 @@ function QuickAdd({ projectId, sectionId }: { projectId: string; sectionId: stri
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex h-10 w-full items-center gap-2 pl-[34px] text-[13px] text-snow/45 hover:text-snow md:pl-[38px]"
+          className="flex h-10 w-full items-center gap-2 pl-[34px] text-[13px] text-snow/60 hover:text-snow md:pl-[38px]"
         >
           <Plus className="h-4 w-4" /> To-do hinzufügen
         </button>

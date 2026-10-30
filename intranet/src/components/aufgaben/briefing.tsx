@@ -4,20 +4,58 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Copy, Pencil } from "lucide-react";
 import { updateRow } from "@/lib/data";
 import type { TaskProject } from "@/lib/tasks";
+import { accentText } from "@/lib/theme";
 import { Button, Empty, Sheet, Textarea, useToast } from "@/components/ui";
 
-const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+const LINK_PATTERN = /(https?:\/\/[^\s]+|[\w.+-]+@[\w-]+\.[\w.-]+)/g;
+const LINK_CLASS = "break-all underline-offset-2 hover:underline";
+const LINK_STYLE = { color: accentText("#3e7bfa") };
 
-/** Text mit klickbaren Links */
+/** Text mit klickbaren Links und Mail-Adressen */
 function Linked({ text }: { text: string }) {
-  return text.split(URL_PATTERN).map((part, i) =>
-    i % 2 ? (
-      <a key={i} href={part} target="_blank" rel="noreferrer" className="break-all underline decoration-snow/30 underline-offset-2 hover:decoration-snow">
+  return text.split(LINK_PATTERN).map((part, i) =>
+    i % 2 === 0 ? (
+      part
+    ) : part.includes("@") && !part.startsWith("http") ? (
+      <a key={i} href={`mailto:${part}`} className={LINK_CLASS} style={LINK_STYLE}>
         {part}
       </a>
     ) : (
-      part
+      <a key={i} href={part} target="_blank" rel="noreferrer" className={LINK_CLASS} style={LINK_STYLE}>
+        {part}
+      </a>
     )
+  );
+}
+
+/** Kurze Zeile wie „Zugänge:“, „Instagram“ oder „Postingplan“ gilt als
+ * Überschrift und wird fett gesetzt. */
+function isHeading(line: string) {
+  const t = line.trim();
+  if (!t || t.length > 40 || /https?:|@/.test(t) || t.startsWith("-")) return false;
+  if (t.endsWith(":")) return true;
+  return t.length <= 30 && t.split(" ").length <= 3 && /^\p{Lu}/u.test(t) && !/\d|:|[.,;!?)]$/.test(t);
+}
+
+/** Briefing formatiert wie in Asana: Absätze, fette Überschriften, Links */
+function BriefingText({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <div className="text-[14px] leading-relaxed text-snow/90">
+      {lines.map((line, i) =>
+        !line.trim() ? (
+          <div key={i} className="h-3" />
+        ) : isHeading(line) ? (
+          <p key={i} className="mt-1 font-semibold text-snow">
+            {line.trim()}
+          </p>
+        ) : (
+          <p key={i} className="whitespace-pre-wrap">
+            <Linked text={line} />
+          </p>
+        )
+      )}
+    </div>
   );
 }
 
@@ -82,7 +120,7 @@ function BriefingBody({ project }: { project: TaskProject }) {
           autoFocus
           aria-label="Briefing"
           placeholder={"Über den Kunden, Ansprechpartner, Zugänge, Postingplan …"}
-          className="min-h-[50dvh] flex-1 font-mono text-[13px]"
+          className="min-h-[50dvh] flex-1 text-[14px]"
         />
         <div className="flex items-center gap-3">
           <Button
@@ -113,8 +151,8 @@ function BriefingBody({ project }: { project: TaskProject }) {
         </Button>
       </div>
       {project.briefing ? (
-        <div className="rounded-2xl bg-snow/[0.04] p-4 text-[13.5px] leading-relaxed whitespace-pre-wrap text-snow/85">
-          <Linked text={project.briefing} />
+        <div className="rounded-2xl border border-snow/[0.08] bg-surface p-5">
+          <BriefingText text={project.briefing} />
         </div>
       ) : (
         <Empty title="Noch kein Briefing" />
