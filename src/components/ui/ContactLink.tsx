@@ -2,24 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  scrollToId,
-  selectContactTab,
-  stashContactTab,
-  stashScrollTarget,
-  type ContactTab,
-} from "@/lib/scroll";
+import { openBooking, scrollToId, stashScrollTarget } from "@/lib/scroll";
 
-/** Link zum Kontaktbereich der Startseite mit vorgewähltem Tab: „termin“
- * (Erstgespräch buchen) oder „nachricht“. Ersetzt Calendly- und Mail-Links;
- * jede Anfrage landet so in der Sales-Pipeline. */
+/** Kontakt-Link: „termin“ öffnet das Erstgespräch-Popup (auf jeder Seite),
+ * „nachricht“ führt zum Kontaktformular auf der Startseite. Ersetzt
+ * Calendly- und Mail-Links; jede Anfrage landet so in der Sales-Pipeline. */
 export function ContactLink({
   tab = "termin",
   className,
   children,
   onNavigate,
 }: {
-  tab?: ContactTab;
+  tab?: "termin" | "nachricht";
   className?: string;
   children: React.ReactNode;
   onNavigate?: () => void;
@@ -33,11 +27,11 @@ export function ContactLink({
       onClick={(e) => {
         e.preventDefault();
         onNavigate?.();
-        if (pathname === "/") {
-          selectContactTab(tab);
+        if (tab === "termin") {
+          openBooking();
+        } else if (pathname === "/") {
           scrollToId("dm");
         } else {
-          stashContactTab(tab);
           stashScrollTarget("dm");
           router.push("/");
         }

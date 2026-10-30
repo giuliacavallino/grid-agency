@@ -83,11 +83,6 @@ export default function DatenschutzPage() {
               wolltest (wird sofort nach dem Sprung gelöscht),
             </li>
             <li>
-              ob du im Kontaktbereich &bdquo;Termin buchen&ldquo; oder
-              &bdquo;Nachricht&ldquo; gewählt hast, wenn du von einer
-              Unterseite kommst (wird sofort danach gelöscht),
-            </li>
-            <li>
               deine Entscheidung zum Meta-Pixel auf der E-Book-Seite (siehe
               Abschnitt 7), damit wir nicht bei jedem Besuch erneut fragen.
             </li>

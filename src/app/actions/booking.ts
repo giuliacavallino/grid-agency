@@ -71,3 +71,65 @@ export async function bookSlot(_prev: BookingState, formData: FormData): Promise
     return { status: "error", message: "Buchen hat gerade nicht geklappt. Schreib uns sonst einfach eine Nachricht." };
   }
 }
+
+export type BookingRequest = {
+  start: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company: string;
+  street: string;
+  number: string;
+  zip: string;
+  city: string;
+  country: string;
+  message: string;
+  /** Lösung des Captchas (ALTCHA) */
+  altcha: string;
+  /** Honeypot */
+  website: string;
+};
+
+export type BookingResult =
+  | { ok: true; slot: Slot & { url?: string | null } }
+  | { ok: false; message: string; taken?: boolean };
+
+/** Buchung aus dem Erstgespräch-Popup: Ansprechpartner, Firma mit
+ * Anschrift und Termin in einem Rutsch. */
+export async function bookRequest(input: BookingRequest): Promise<BookingResult> {
+  const field = (value: unknown) => String(value ?? "").trim();
+  const name = [field(input.firstName), field(input.lastName)].filter(Boolean).join(" ");
+  const failed = "Buchen hat gerade nicht geklappt. Schreib uns sonst einfach eine Nachricht.";
+  if (!field(input.start)) return { ok: false, message: "Such dir bitte zuerst eine Uhrzeit aus." };
+  if (!name || !field(input.email)) return { ok: false, message: "Bitte gib Name und E-Mail an." };
+
+  try {
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        start: field(input.start),
+        name,
+        email: field(input.email),
+        phone: field(input.phone),
+        company: field(input.company),
+        street: field(input.street),
+        number: field(input.number),
+        zip: field(input.zip),
+        city: field(input.city),
+        country: field(input.country),
+        message: field(input.message),
+        website: field(input.website),
+        altcha: field(input.altcha),
+        kind: "erstgespraech",
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const data = (await res.json().catch(() => ({}))) as { slot?: Slot & { url?: string | null }; error?: string };
+    if (!res.ok || !data.slot) return { ok: false, message: data.error ?? failed, taken: res.status === 409 };
+    return { ok: true, slot: data.slot };
+  } catch {
+    return { ok: false, message: failed };
+  }
+}

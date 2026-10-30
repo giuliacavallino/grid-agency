@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { RevealObserver } from "@/components/ui/RevealObserver";
+import { BookingDialog } from "@/components/app/BookingDialog";
 
 const readex = localFont({
   src: "./fonts/ReadexPro-Variable.ttf",
@@ -41,6 +42,7 @@ export default function RootLayout({
         <div aria-hidden className="ambient" />
         {children}
         <RevealObserver />
+        <BookingDialog />
       </body>
     </html>
   );

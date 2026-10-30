@@ -134,7 +134,17 @@ export type BookingInput = {
   company?: string;
   phone?: string;
   message?: string;
+  /** Firmenanschrift aus dem Buchungs-Popup */
+  address?: { street?: string; number?: string; zip?: string; city?: string; country?: string };
 };
+
+/** Anschrift einzeilig, z. B. „Musterstraße 1, 10115 Berlin, Deutschland“. */
+const addressLine = (a: BookingInput["address"]) =>
+  a
+    ? [[a.street, a.number].filter(Boolean).join(" "), [a.zip, a.city].filter(Boolean).join(" "), a.country]
+        .filter(Boolean)
+        .join(", ")
+    : "";
 
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -159,9 +169,12 @@ export async function book(input: BookingInput, leadId: string | null = null) {
   if (!slot) return null;
 
   const who = input.company ? `${input.company} (${input.name})` : input.name;
+  const address = addressLine(input.address);
+  const note = [input.message, address && `Anschrift: ${address}`].filter(Boolean).join("\n\n");
   const body = [
     `<p>Erstgespräch über grid-agency.de gebucht.</p>`,
     `<p><b>${escape(input.name)}</b>${input.company ? `, ${escape(input.company)}` : ""}<br>`,
+    address ? `${escape(address)}<br>` : "",
     `${escape(input.email)}${input.phone ? `<br>${escape(input.phone)}` : ""}</p>`,
     input.message ? `<p>${escape(input.message).replace(/\n/g, "<br>")}</p>` : "",
   ].join("");
@@ -214,6 +227,7 @@ export async function book(input: BookingInput, leadId: string | null = null) {
       ...meeting,
       ...(!lead.phone && input.phone ? { phone: input.phone } : {}),
       ...(!lead.company && input.company ? { company: input.company } : {}),
+      ...(!lead.message && note ? { message: note } : {}),
     });
   } else {
     lead = await db().insertIgnore("leads", {
@@ -224,7 +238,9 @@ export async function book(input: BookingInput, leadId: string | null = null) {
       email: input.email,
       phone: input.phone || null,
       company: input.company || null,
-      message: input.message || null,
+      // Anschrift sichtbar in der Nachricht, strukturiert in raw (für den Kunden-Datensatz)
+      message: note || null,
+      raw: { booking: { address: input.address ?? null } },
       owner: BOOKING.host,
     });
   }
