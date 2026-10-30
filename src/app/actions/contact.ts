@@ -11,6 +11,9 @@ export async function submitContactForm(
   _prevState: ContactFormState,
   formData: FormData
 ): Promise<ContactFormState> {
+  // Honeypot: nur Bots füllen das versteckte Feld aus
+  if (String(formData.get("website") ?? "")) return { status: "success" };
+
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const company = String(formData.get("company") ?? "").trim();
@@ -49,5 +52,5 @@ export async function submitContactForm(
     };
   }
 
-  return { status: "success", message: "Danke! Wir melden uns in Kürze bei dir." };
+  return { status: "success", message: "Danke! Deine Nachricht ist bei uns, wir melden uns innerhalb von zwei Werktagen." };
 }

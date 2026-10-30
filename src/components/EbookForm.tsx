@@ -2,10 +2,10 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, Check, LoaderCircle } from "lucide-react";
 import { requestEbook, type EbookFormState } from "@/app/actions/ebook";
-import { CalendlyLink } from "@/components/app/CalendlyProvider";
+import { ContactLink } from "@/components/ui/ContactLink";
+import { inputClasses } from "@/components/ContactForm";
 import { trackMetaLead } from "@/lib/metaPixel";
 
 const initialState: EbookFormState = { status: "idle" };
@@ -21,9 +21,6 @@ const TRACKING_FIELDS = [
   "fbclid",
 ];
 
-const inputClasses =
-  "w-full rounded-lg border border-snow/15 bg-transparent px-4 py-3 text-sm text-snow placeholder:text-snow/40 outline-none transition-colors focus:border-dune";
-
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -31,7 +28,7 @@ function SubmitButton() {
       type="submit"
       disabled={pending}
       aria-busy={pending}
-      className="btn-rainbow inline-flex w-full items-center justify-center gap-2 rounded-full bg-snow px-7 py-3.5 text-sm font-medium text-sky disabled:cursor-progress disabled:opacity-80"
+      className="btn btn-primary w-full px-7 py-3.5 text-sm"
     >
       {pending && (
         <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
@@ -65,14 +62,9 @@ export function EbookForm() {
   }, [state]);
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <>
       {state.status === "success" ? (
-        <motion.div
-          key="done"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
+        <div className="rise">
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
             <Check className="h-5 w-5" strokeWidth={2.5} aria-hidden />
           </span>
@@ -87,24 +79,18 @@ export function EbookForm() {
             <a
               href={EBOOK_PDF}
               download
-              className="btn-rainbow inline-flex items-center justify-center gap-2 rounded-full bg-snow px-7 py-3.5 text-sm font-medium text-sky"
+              className="btn btn-primary px-7 py-3.5 text-sm"
             >
               <ArrowDown className="h-4 w-4" strokeWidth={2} aria-hidden />
               PDF herunterladen
             </a>
-            <CalendlyLink className="inline-flex items-center justify-center rounded-full border border-snow/20 px-7 py-3.5 text-sm font-medium text-snow transition-colors hover:border-snow/50">
+            <ContactLink tab="termin" className="btn btn-glass px-7 py-3.5 text-sm">
               Erstberatung buchen
-            </CalendlyLink>
+            </ContactLink>
           </div>
-        </motion.div>
+        </div>
       ) : (
-        <motion.form
-          key="form"
-          action={formAction}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.25 }}
-          className="space-y-3"
-        >
+        <form action={formAction} className="space-y-3">
           <input name="name" type="text" required autoComplete="name" placeholder="Vor- und Nachname *" className={inputClasses} />
           <input name="email" type="email" required autoComplete="email" placeholder="E-Mail *" className={inputClasses} />
           <input name="company" type="text" autoComplete="organization" placeholder="Unternehmen" className={inputClasses} />
@@ -114,7 +100,7 @@ export function EbookForm() {
               name="consent"
               type="checkbox"
               required
-              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#fa7e1e]"
+              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#ff7a1a]"
             />
             <span>
               Ja, schickt mir das E-Book. GRID darf mich per E-Mail oder
@@ -151,8 +137,8 @@ export function EbookForm() {
             </a>
             .
           </p>
-        </motion.form>
+        </form>
       )}
-    </AnimatePresence>
+    </>
   );
 }

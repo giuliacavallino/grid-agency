@@ -1,96 +1,57 @@
-"use client";
-
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { clientSlug, type Client } from "@/lib/content";
+import { logoWidth } from "@/lib/media";
 
 /** Eine Projekt-Karte: Logo, Rubriken-Chips (was GRID gemacht hat),
- * Kurzbeschreibung und Link auf die Projektseite. Wird von der
- * Projektübersicht und dem Startseiten-Teaser geteilt. `compact` hält
- * die Karte flach genug, dass die Startseiten-Reihe auf einen
- * Bildschirm passt (Text gekürzt, Bild an die Höhe gekoppelt). */
-export function ProjektCard({
-  client,
-  eager = false,
-  compact = false,
-}: {
-  client: Client;
-  eager?: boolean;
-  compact?: boolean;
-}) {
+ * Kurzbeschreibung, Content-Vorschau und Link auf die Projektseite.
+ * Geteilt von Projektübersicht und Startseite. */
+export function ProjektCard({ client, eager = false }: { client: Client; eager?: boolean }) {
+  const logoHeight = Math.round(Math.min((client.height ?? 32) * 1.15, 48));
   return (
     <Link
       href={`/projekte/${clientSlug(client.name)}`}
-      className="card-rainbow group flex h-full flex-col rounded-2xl border border-snow/10 p-5"
+      className="group card-rainbow glass flex h-full flex-col overflow-hidden rounded-[1.75rem] p-6"
     >
-      <div className={`flex items-center ${compact ? "h-12" : "h-16"}`}>
+      <div className="flex h-14 items-center justify-between gap-4">
         {client.logo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={client.logo}
             alt={client.name}
-            style={{ height: `${Math.min((client.height ?? 32) * 1.15, 48) / 16}rem` }}
-            className="w-auto max-w-[70%] object-contain opacity-90 transition-transform duration-300 ease-out group-hover:scale-105"
+            height={logoHeight}
+            width={logoWidth(client.logo, logoHeight)}
             loading={eager ? "eager" : "lazy"}
+            style={{ height: `${logoHeight / 16}rem`, width: "auto" }}
+            className="max-w-[70%] object-contain transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <span className="text-sm font-light uppercase tracking-[0.15em] text-snow/60">
-            {client.name}
+          <span className="text-sm font-medium uppercase tracking-[0.15em] text-snow/70">{client.name}</span>
+        )}
+        <ArrowUpRight className="h-5 w-5 shrink-0 text-snow/40 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-snow" strokeWidth={2} />
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        {(client.tags ?? ["Social Media Management", "Content Creation"]).map((tag) => (
+          <span key={tag} className="rounded-full bg-snow/[0.07] px-2.5 py-1 text-[0.6875rem] font-light text-snow/70">
+            {tag}
           </span>
-        )}
+        ))}
       </div>
 
-      {/* Rubriken: was GRID für dieses Projekt gemacht hat. */}
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {(client.tags ?? ["Social Media Management", "Content Creation"]).map(
-          (tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-snow/15 px-2.5 py-0.5 text-[0.6875rem] font-light text-snow/65"
-            >
-              {tag}
-            </span>
-          ),
-        )}
-      </div>
+      {client.intro && <p className="mt-4 line-clamp-3 flex-1 text-sm font-light leading-relaxed text-snow/65">{client.intro}</p>}
 
-      {client.intro && (
-        <p
-          className={`mt-3 flex-1 text-sm font-light leading-relaxed text-snow/65 ${
-            compact ? "line-clamp-2 lg:line-clamp-3" : ""
-          }`}
-        >
-          {client.intro}
-        </p>
-      )}
-
-      {/* Content-Vorschau: Fotos füllen die Fläche, freigestellte
-          Mockups stehen frei auf dem Kartengrund. */}
       {client.heroImage && (
-        <div className="mt-4 overflow-hidden rounded-xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className={`relative mt-5 overflow-hidden rounded-2xl ${client.heroImageFit === "contain" ? "h-48" : "aspect-[16/10]"}`}>
+          <Image
             src={client.heroImage}
             alt={`${client.name}, Einblick in den Content`}
-            loading="lazy"
-            className={`${
-              client.heroImageFit === "contain"
-                ? "mx-auto h-48 w-auto object-contain py-2"
-                : "aspect-[16/10] w-full object-cover"
-            } transition-transform duration-300 group-hover:scale-[1.03] ${
-              compact ? "max-h-[16svh] lg:max-h-[18svh]" : ""
-            }`}
+            fill
+            sizes="(min-width: 800px) 33vw, 100vw"
+            className={`${client.heroImageFit === "contain" ? "object-contain py-2" : "object-cover"} transition-transform duration-500 group-hover:scale-[1.04]`}
           />
         </div>
       )}
-
-      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-snow/75 transition-colors group-hover:text-snow">
-        Projekt ansehen
-        <ArrowRight
-          className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-          strokeWidth={2}
-        />
-      </span>
     </Link>
   );
 }

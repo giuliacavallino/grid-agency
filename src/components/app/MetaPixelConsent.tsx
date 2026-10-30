@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   consentState,
   denyConsent,
@@ -30,16 +29,12 @@ export function MetaPixelConsent() {
   }, [state]);
 
   return (
-    <AnimatePresence>
+    <>
       {state === null && (
-        <motion.div
+        <div
           role="dialog"
           aria-label="Einwilligung für das Meta-Pixel"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 16 }}
-          transition={{ duration: 0.3 }}
-          className="fixed inset-x-5 bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] z-50 mx-auto max-w-md rounded-2xl border border-snow/15 bg-sky/95 p-5 shadow-2xl shadow-black/40 backdrop-blur lg:inset-x-auto lg:bottom-6 lg:left-6"
+          className="rise glass-dark fixed inset-x-5 bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] z-50 mx-auto max-w-md rounded-[1.5rem] p-5 lg:inset-x-auto lg:bottom-6 lg:left-6"
         >
           <p className="text-sm font-medium text-snow">Dürfen wir messen?</p>
           <p className="mt-1.5 text-xs font-light leading-relaxed text-snow/65">
@@ -67,8 +62,8 @@ export function MetaPixelConsent() {
               Erlauben
             </button>
           </div>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

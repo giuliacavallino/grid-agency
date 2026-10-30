@@ -1,11 +1,22 @@
 @import "tailwindcss";
 
+/* GRID CI, aufgefrischt: tieferes Schwarz-Braun als Grund, helleres Snow,
+   und der Aurora-Verlauf aus den Kundenfarben kräftiger (Sun, Flame, Pop,
+   Grape). Logo und Readex bleiben. */
 :root {
-  --color-sky: #2b2926;
-  --color-snow: #e4e2e7;
-  --color-dune: #afaaa0;
-  --color-earth: #676159;
-  --color-dawn: #d8d9d7;
+  --color-sky: #141311;
+  --color-snow: #f5f3f7;
+  --color-dune: #cdc4b6;
+  --color-earth: #6f675d;
+  --color-dawn: #e6e5e3;
+
+  --color-sun: #ffd166;
+  --color-flame: #ff7a1a;
+  --color-pop: #ff3d8b;
+  --color-grape: #9d5cff;
+
+  --aurora: linear-gradient(95deg, var(--color-sun), var(--color-flame) 35%, var(--color-pop) 68%, var(--color-grape));
+  --aurora-loop: linear-gradient(95deg, var(--color-sun), var(--color-flame), var(--color-pop), var(--color-grape), var(--color-sun));
 
   --background: var(--color-sky);
   --foreground: var(--color-snow);
@@ -17,7 +28,10 @@
   --color-dune: var(--color-dune);
   --color-earth: var(--color-earth);
   --color-dawn: var(--color-dawn);
-
+  --color-sun: var(--color-sun);
+  --color-flame: var(--color-flame);
+  --color-pop: var(--color-pop);
+  --color-grape: var(--color-grape);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
@@ -25,76 +39,33 @@
 }
 
 @theme {
-  /* One frame for the whole app. Header, body, footer and bottom nav all
-     share this width so every surface lines up edge to edge — the single
-     source of truth for "wie breit ist die Seite". Change it here once. */
-  --container-frame: 35rem; /* 560px — mobile app frame */
-  --container-frame-lg: 68rem; /* 1088px — Unterseiten (Lesetext) */
-  /* Startseite ab Desktop: volle Bildschirmbreite; der Deckel greift erst
-     jenseits von 27"-Monitoren (Ultrawide), damit Zeilen nicht zerfasern. */
-  --container-frame-wide: 150rem;
+  /* Ein Rahmen für alle Seiten: Kopfleiste, Inhalt und Footer teilen sich
+     diese Breiten. Hier einmal ändern. */
+  --container-frame: 35rem; /* 560px — mobiler Rahmen */
+  --container-frame-lg: 68rem; /* 1088px — Lesetext */
+  --container-frame-wide: 92rem; /* 1472px — alles andere ab Desktop */
 
-  /* Seitenrand ab Desktop: wächst mit der Bildschirmbreite mit, von
-     ~2rem auf dem 14"-MacBook bis 6rem auf 27". */
-  --spacing-gutter: clamp(2rem, 4vw, 6rem);
+  /* Seitenrand ab Desktop, wächst mit der Bildschirmbreite. */
+  --spacing-gutter: clamp(2rem, 4vw, 5rem);
 
-  /* Desktop-Ansicht früher greifen lassen: Die Desktop-Variante ist ohnehin
-     auf den 760px-Frame gedeckelt, braucht also keine 1024px Viewport.
-     Ohne das Override "springt" ein halbbreites Browserfenster (z.B.
-     ~1000px auf dem MacBook) schon in die Mobile-App-Ansicht. */
-  --breakpoint-lg: 50rem; /* 800px statt Tailwind-Default 1024px */
+  /* Desktop-Layout ab 800px statt Tailwinds 1024px, damit halbbreite
+     Fenster nicht in die Handy-Ansicht springen. */
+  --breakpoint-lg: 50rem;
+
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Große Monitore (27" mit 2560px und mehr): Alles ist in rem gesetzt,
-   also skaliert eine größere Grundschrift Typo, Abstände und den
-   Seitenrahmen gemeinsam. Bis 1440px bleibt es bei 16px, darüber wächst
-   sie fließend bis 22px (bei ca. 2560px). Mobile und Laptop unverändert. */
+/* Große Monitore: Grundschrift wächst ab 1440px fließend bis 20px, Typo,
+   Abstände und Rahmen skalieren mit. */
 @media (min-width: 1440px) {
   html {
-    font-size: clamp(16px, 0.5rem + 0.55vw, 22px);
-  }
-}
-/* Auf kurzen Handy-Displays (iPhone 13/14/15 mit eingeblendeten Safari-
-   Leisten) rückt alles ein paar Prozent zusammen, damit jede Sektion in
-   einen Bildschirm passt. Ab ~730px Höhe bleibt es bei 16px. */
-@media (max-width: 49.99rem) {
-  html {
-    font-size: clamp(14px, 2.2svh, 16px);
+    font-size: clamp(16px, 0.5rem + 0.5vw, 20px);
   }
 }
 
-/* Ein "Bildschirm": Jede Sektion ist mindestens eine Viewporthöhe hoch,
-   Inhalt mittig, oben Luft für die schwebende Kopfleiste und mobil unten
-   für die Tab-Leiste. svh = kleinste Viewporthöhe, damit nichts unter
-   eingeblendeten Safari-Leisten verschwindet. */
-:root {
-  --screen-pt: calc(env(safe-area-inset-top) + 4.5rem);
-  --screen-pb: calc(env(safe-area-inset-bottom) + 6rem);
-}
-@media (min-width: 50rem) {
-  :root {
-    --screen-pt: 7rem;
-    --screen-pb: 2.5rem;
-  }
-}
-
-@utility screen {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 100svh;
-  padding-top: var(--screen-pt);
-  padding-bottom: var(--screen-pb);
-  scroll-snap-align: start;
-}
-
-/* Desktop rastet sanft Sektion für Sektion ein; "proximity" lässt
-   freies Scrollen zu und greift nur nahe einer Sektionskante. */
-@media (min-width: 50rem) and (pointer: fine) {
-  html {
-    scroll-snap-type: y proximity;
-  }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
 }
 
 body {
@@ -103,8 +74,33 @@ body {
 }
 
 ::selection {
-  background: var(--color-dune);
-  color: var(--color-sky);
+  background: var(--color-pop);
+  color: var(--color-snow);
+}
+
+@layer components {
+/* Umgebungslicht hinter allen Seiten: weiche Aurora-Flecken, fest am
+   Viewport, damit Glas überall etwas zum Brechen hat. Reines CSS. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(48rem 34rem at 8% -6%, rgb(255 209 102 / 0.13), transparent 65%),
+    radial-gradient(56rem 40rem at 96% 4%, rgb(157 92 255 / 0.16), transparent 62%),
+    radial-gradient(52rem 40rem at 82% 104%, rgb(255 61 139 / 0.1), transparent 62%),
+    radial-gradient(40rem 32rem at 4% 96%, rgb(255 122 26 / 0.08), transparent 60%),
+    var(--color-sky);
+}
+
+/* Das namensgebende Grid: feine Linien, zur Mitte hin ausgeblendet. */
+.grid-lines {
+  background-image:
+    linear-gradient(to right, rgb(245 243 247 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(245 243 247 / 0.06) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
 }
 
 .grid-pattern-bg {
@@ -113,15 +109,398 @@ body {
   background-size: 420px auto;
 }
 
-html {
-  scroll-behavior: smooth;
+/* ---------- Liquid Glass ---------- */
+
+/* Standardglas: hell getönt, starker Blur, Lichtkante oben, feiner
+   Verlaufsrand (heller oben, dunkler unten) wie bei Apples Liquid Glass. */
+.glass {
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    rgb(245 243 247 / 0.11),
+    rgb(245 243 247 / 0.04) 45%,
+    rgb(245 243 247 / 0.06)
+  );
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  border: 1px solid rgb(245 243 247 / 0.12);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 -1px 0 rgb(0 0 0 / 0.18),
+    0 10px 40px rgb(0 0 0 / 0.32);
 }
 
-/* Horizontale Wisch-Reihe (mobil für Karten-Grids, die sonst mehrere
-   Bildschirme hoch wären). Als Utility, damit Varianten wie lg:grid sie
-   ab Desktop wieder zum Grid machen können. */
+/* Glas über hellen Bildern: dunkler getönt, bleibt lesbar. */
+.glass-dark {
+  background: linear-gradient(160deg, rgb(20 19 17 / 0.78), rgb(20 19 17 / 0.62));
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  backdrop-filter: blur(28px) saturate(1.5);
+  border: 1px solid rgb(245 243 247 / 0.12);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 10px 40px rgb(0 0 0 / 0.35);
+}
+
+/* Die gleitende „Lupe“ der Tab-Leiste. */
+.glass-lens {
+  background: rgb(245 243 247 / 0.14);
+  -webkit-backdrop-filter: blur(6px) saturate(1.8) brightness(1.15);
+  backdrop-filter: blur(6px) saturate(1.8) brightness(1.15);
+  border: 1px solid rgb(245 243 247 / 0.22);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    inset 0 -6px 12px rgb(0 0 0 / 0.18),
+    0 4px 14px rgb(0 0 0 / 0.3);
+}
+
+/* Karte mit Aurora-Rand beim Hover (Leistungen, Projekte, Cases). */
+.card-rainbow {
+  position: relative;
+  transition:
+    transform 0.35s var(--ease-spring),
+    box-shadow 0.35s ease;
+}
+.card-rainbow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--aurora-loop);
+  background-size: 200% 100%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+@media (hover: hover) {
+  .card-rainbow:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 18px 50px rgb(0 0 0 / 0.35),
+      0 6px 40px rgb(255 61 139 / 0.12),
+      0 4px 30px rgb(157 92 255 / 0.12);
+  }
+  .card-rainbow:hover::before {
+    opacity: 1;
+    animation: rainbow-slide 2.4s linear infinite;
+  }
+  .card-rainbow:hover .card-rainbow-title {
+    background-image: var(--aurora-loop);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-slide 1.6s linear infinite;
+  }
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    transform 0.25s var(--ease-spring),
+    box-shadow 0.25s ease,
+    background-color 0.2s ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  cursor: progress;
+  opacity: 0.8;
+}
+
+/* Primär: Snow, beim Hover läuft der Aurora-Verlauf durch. */
+.btn-primary,
+.btn-rainbow {
+  background-color: var(--color-snow);
+  color: var(--color-sky);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 8px 30px rgb(245 243 247 / 0.12);
+  transition:
+    transform 0.25s var(--ease-spring),
+    box-shadow 0.25s ease;
+}
+@media (hover: hover) {
+  .btn-primary:hover,
+  .btn-rainbow:hover {
+    background-image: var(--aurora-loop);
+    background-size: 200% 100%;
+    color: var(--color-sky);
+    animation: rainbow-slide 1.8s linear infinite;
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 12px 40px rgb(255 61 139 / 0.35);
+  }
+}
+
+/* Glas-Button für sekundäre Aktionen. */
+.btn-glass {
+  color: var(--color-snow);
+  background: rgb(245 243 247 / 0.07);
+  border: 1px solid rgb(245 243 247 / 0.14);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+@media (hover: hover) {
+  .btn-glass:hover {
+    background: rgb(245 243 247 / 0.13);
+  }
+}
+
+/* ---------- Typo ---------- */
+
+.text-scroll-gradient,
+.text-aurora {
+  background: var(--aurora);
+  -webkit-background-clip: text;
+  background-clip: text;
+  padding-right: 0.09em;
+  margin-right: -0.09em;
+  color: transparent;
+}
+
+/* Für helle Flächen: startet kräftig statt mit dem hellen Gelb. */
+.text-scroll-gradient-strong {
+  background: linear-gradient(95deg, var(--color-flame), var(--color-pop) 55%, var(--color-grape));
+  -webkit-background-clip: text;
+  background-clip: text;
+  padding-right: 0.09em;
+  margin-right: -0.09em;
+  color: transparent;
+}
+
+.text-rainbow-animated {
+  background-image: var(--aurora-loop);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow-slide 2.4s linear infinite;
+}
+
+/* Kleine Kicker-Pille über Überschriften. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(245 243 247 / 0.12);
+  background: rgb(245 243 247 / 0.05);
+  padding: 0.3rem 0.8rem 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgb(245 243 247 / 0.8);
+}
+.eyebrow::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: var(--aurora);
+  box-shadow: 0 0 10px var(--color-pop);
+}
+
+/* ---------- Hover-Effekte ---------- */
+
+@keyframes rainbow-slide {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+.nav-rainbow {
+  transition: color 0.2s ease;
+}
+@media (hover: hover) {
+  .nav-rainbow:hover {
+    background-image: var(--aurora-loop);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rainbow-slide 1.4s linear infinite;
+  }
+}
+
+/* GRID-Logo: Verlauf läuft beim Hover durch die Buchstaben. */
+.logo-rainbow {
+  position: relative;
+  display: inline-block;
+  transition: transform 0.25s var(--ease-spring);
+}
+.logo-rainbow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--aurora-loop);
+  background-size: 200% 100%;
+  -webkit-mask: url("/brand/grid_logo_snow.png") center / contain no-repeat;
+  mask: url("/brand/grid_logo_snow.png") center / contain no-repeat;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  animation: rainbow-slide 1.4s linear infinite;
+  pointer-events: none;
+}
+.logo-rainbow:hover {
+  transform: scale(1.06);
+}
+.logo-rainbow:hover::after {
+  opacity: 1;
+}
+
+.story-ring {
+  background: conic-gradient(from 0deg, var(--color-sun), var(--color-flame), var(--color-pop), var(--color-grape), var(--color-sun));
+}
+
+/* ---------- Bewegung ---------- */
+
+/* Einblenden beim Scrollen: RevealObserver setzt data-shown, sobald das
+   Element im Bild ist. Ohne JS (und bei reduzierter Bewegung) sofort
+   sichtbar. Verzögerung per style="--d: 120ms". */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s var(--ease-spring),
+    transform 0.7s var(--ease-spring);
+  transition-delay: var(--d, 0ms);
+}
+.js .reveal[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Einstieg beim Laden (Hero, Kopfleiste), ohne Scroll-Auslöser. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+.rise {
+  animation: rise 0.8s var(--ease-spring) backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes pulse-out {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.float {
+  animation: float 6s ease-in-out infinite;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee {
+  animation: marquee var(--marquee-duration, 60s) linear infinite;
+}
+.marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgb(245 243 247 / 0.06) 25%,
+    rgb(245 243 247 / 0.12) 37%,
+    rgb(245 243 247 / 0.06) 63%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Weiche Kanten für Laufbänder. */
+.fade-x {
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+
+/* Aurora-Glow hinter Bereichen (z. B. CTA). */
+.aurora {
+  background:
+    radial-gradient(60rem 40rem at 12% 8%, rgb(255 209 102 / 0.16), transparent 60%),
+    radial-gradient(70rem 46rem at 88% 12%, rgb(157 92 255 / 0.2), transparent 60%),
+    radial-gradient(62rem 44rem at 78% 88%, rgb(255 122 26 / 0.15), transparent 62%),
+    radial-gradient(52rem 38rem at 15% 92%, rgb(255 61 139 / 0.14), transparent 60%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .float,
+  .marquee {
+    animation: none;
+  }
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+}
+
+/* ---------- Layout-Helfer ---------- */
+
+/* Horizontale Wisch-Reihe (mobil für Karten-Grids). */
 @utility snap-row {
-  --bleed: 1.25rem; /* = px-5 der Sektion */
+  --bleed: 1.25rem;
   display: flex;
   gap: 0.75rem;
   overflow-x: auto;
@@ -133,7 +512,7 @@ html {
   scrollbar-width: none;
 
   @media (min-width: 50rem) {
-    --bleed: var(--spacing-gutter); /* = lg:px-gutter */
+    --bleed: var(--spacing-gutter);
     gap: 1rem;
   }
   &::-webkit-scrollbar {
@@ -145,6 +524,7 @@ html {
   }
 }
 
+@layer components {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -152,283 +532,18 @@ html {
   scrollbar-width: none;
 }
 
-/* Apple-style liquid glass surfaces */
-.glass {
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--color-snow) 12%, transparent),
-    color-mix(in srgb, var(--color-snow) 5%, transparent)
-  );
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  backdrop-filter: blur(24px) saturate(1.6);
-  border: 1px solid color-mix(in srgb, var(--color-snow) 16%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-snow) 18%, transparent),
-    0 8px 32px rgb(0 0 0 / 0.35);
+/* Native <details> als Akkordeon: Pfeil dreht sich, Inhalt blendet ein. */
+details > summary {
+  list-style: none;
+  cursor: pointer;
 }
-
-/* The sliding "lens" that magnifies the active tab */
-.glass-lens {
-  background: color-mix(in srgb, var(--color-snow) 14%, transparent);
-  -webkit-backdrop-filter: blur(6px) saturate(1.8) brightness(1.15);
-  backdrop-filter: blur(6px) saturate(1.8) brightness(1.15);
-  border: 1px solid color-mix(in srgb, var(--color-snow) 24%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-snow) 32%, transparent),
-    inset 0 -6px 12px rgb(0 0 0 / 0.18),
-    0 4px 14px rgb(0 0 0 / 0.3);
+details > summary::-webkit-details-marker {
+  display: none;
 }
-
-.story-ring {
-  background: conic-gradient(
-    from 0deg,
-    #feda75,
-    #fa7e1e,
-    #d62976,
-    #962fbf,
-    #feda75
-  );
+details[open] .details-chevron {
+  transform: rotate(180deg);
 }
-
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+details[open] > .details-body {
+  animation: rise 0.45s var(--ease-spring) backwards;
 }
-
-/* No negative delay: the strip must visibly start with the most
-   important brands, so position 2 onward is what loads on screen
-   (position 1 sits half under the left fade). */
-.marquee {
-  animation: marquee var(--marquee-duration, 60s) linear infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -400px 0;
-  }
-  100% {
-    background-position: 400px 0;
-  }
-}
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--color-snow) 6%, transparent) 25%,
-    color-mix(in srgb, var(--color-snow) 12%, transparent) 37%,
-    color-mix(in srgb, var(--color-snow) 6%, transparent) 63%
-  );
-  background-size: 400px 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
-}
-
-/* Sky-tinted glass that stays legible over light and dark surfaces. */
-.glass-dark {
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--color-sky) 82%, transparent),
-    color-mix(in srgb, var(--color-sky) 70%, transparent)
-  );
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px solid color-mix(in srgb, var(--color-snow) 14%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-snow) 14%, transparent),
-    0 8px 32px rgb(0 0 0 / 0.35);
-}
-
-/* Aurora glow behind the hero: soft radial washes in client-brand
-   colors (Smash yellow, Friendly Fish blue, Lovebirds pink, Lipstick
-   red) over the Sky base — color without touching the GRID CI. */
-.aurora {
-  background:
-    radial-gradient(60rem 40rem at 12% 8%, rgb(254 218 117 / 0.16), transparent 60%),
-    radial-gradient(70rem 46rem at 88% 12%, rgb(79 91 213 / 0.17), transparent 60%),
-    radial-gradient(62rem 44rem at 78% 88%, rgb(250 126 30 / 0.15), transparent 62%),
-    radial-gradient(52rem 38rem at 15% 92%, rgb(214 41 118 / 0.12), transparent 60%);
-}
-
-.text-scroll-gradient {
-  background: linear-gradient(
-    92deg,
-    #feda75 0%,
-    #fa7e1e 45%,
-    #962fbf 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  padding-right: 0.09em;
-  margin-right: -0.09em;
-  color: transparent;
-}
-
-/* Hover effects in the aurora palette. */
-@keyframes rainbow-slide {
-  to {
-    background-position: 200% 0;
-  }
-}
-
-
-/* Intro wordmark: letters permanently filled with the moving
-   aurora gradient (same palette as the hover effects). */
-.text-rainbow-animated {
-  background-image: linear-gradient(
-    92deg,
-    #feda75,
-    #fa7e1e,
-    #d62976,
-    #962fbf,
-    #feda75
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: rainbow-slide 2.4s linear infinite;
-}
-
-/* Nav links: letters fill with a moving color gradient on hover. */
-.nav-rainbow {
-  transition: opacity 0.2s ease;
-}
-.nav-rainbow:hover {
-  background-image: linear-gradient(
-    92deg,
-    #feda75,
-    #fa7e1e,
-    #d62976,
-    #962fbf,
-    #feda75
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: rainbow-slide 1.4s linear infinite;
-}
-
-/* Primary buttons: pop into the animated gradient on hover. */
-.btn-rainbow {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.25s ease;
-}
-.btn-rainbow:hover {
-  background-image: linear-gradient(
-    92deg,
-    #feda75,
-    #fa7e1e,
-    #d62976,
-    #962fbf,
-    #feda75
-  );
-  background-size: 200% 100%;
-  color: var(--color-sky);
-  animation: rainbow-slide 1.6s linear infinite;
-  transform: scale(1.04);
-  box-shadow: 0 10px 34px rgb(250 126 30 / 0.35);
-}
-
-/* GRID mark: on hover the aurora gradient runs through the letters
-   (gradient masked by the logo artwork) and the mark zooms slightly. */
-.logo-rainbow {
-  position: relative;
-  display: inline-block;
-  transition: transform 0.25s ease;
-}
-.logo-rainbow::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
-  background-size: 200% 100%;
-  -webkit-mask: url("/brand/grid_logo_snow.png") center / contain no-repeat;
-  mask: url("/brand/grid_logo_snow.png") center / contain no-repeat;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  animation: rainbow-slide 1.4s linear infinite;
-  pointer-events: none;
-}
-.logo-rainbow:hover {
-  transform: scale(1.08);
-}
-.logo-rainbow:hover::after {
-  opacity: 1;
-}
-
-/* Cards (z. B. Leistungen): animierter Aurora-Rahmen + Glow beim Hover,
-   passend zum nav-rainbow der Menüpunkte. */
-.card-rainbow {
-  position: relative;
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.3s ease;
-}
-.card-rainbow::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background-image: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
-  background-size: 200% 100%;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  pointer-events: none;
-}
-.card-rainbow:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 8px 40px rgba(254, 218, 117, 0.1),
-    0 4px 32px rgba(150, 47, 191, 0.12),
-    0 2px 24px rgba(214, 41, 118, 0.1);
-}
-.card-rainbow:hover::before {
-  opacity: 1;
-  animation: rainbow-slide 1.4s linear infinite;
-}
-/* Titel der Karte läuft beim Hover im gleichen Farbverlauf mit. */
-.card-rainbow:hover .card-rainbow-title {
-  background-image: linear-gradient(92deg, #feda75, #fa7e1e, #d62976, #962fbf, #feda75);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: rainbow-slide 1.4s linear infinite;
-}
-
-/* Akzent-Verlauf für helle Hintergründe: startet kräftig (Orange)
-   statt mit dem blassen Gelb, das auf Weiß absäuft. */
-.text-scroll-gradient-strong {
-  background: linear-gradient(92deg, #fa7e1e 0%, #d62976 55%, #962fbf 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  padding-right: 0.09em;
-  margin-right: -0.09em;
-  color: transparent;
-}
-
-/* Heller Block: Hover-Titel im kräftigen Verlauf, und der Glow muss
-   auf Weiß deutlich stärker leuchten als auf dem dunklen Grund. */
-.section-light .card-rainbow:hover .card-rainbow-title {
-  background-image: linear-gradient(92deg, #fa7e1e, #d62976, #962fbf, #fa7e1e);
-}
-.section-light .card-rainbow:hover {
-  box-shadow:
-    0 10px 44px rgba(250, 126, 30, 0.28),
-    0 6px 36px rgba(214, 41, 118, 0.26),
-    0 3px 28px rgba(150, 47, 191, 0.22);
 }

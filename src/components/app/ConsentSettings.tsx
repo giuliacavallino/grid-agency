@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  consentState,
-  hasConsent,
-  onConsentChange,
-  revokeConsent,
-} from "@/lib/consent";
+import { consentState, onConsentChange, revokeConsent } from "@/lib/consent";
 import { clearMetaCookies, metaPixelEnabled } from "@/lib/metaPixel";
 
 function ConsentRow({
@@ -39,16 +34,14 @@ function ConsentRow({
 }
 
 /** Datenschutz-Einstellungen auf /datenschutz: zeigt, ob eine gespeicherte
- * Einwilligung für Calendly oder das Meta-Pixel besteht, und erlaubt den
+ * Einwilligung für das Meta-Pixel besteht, und erlaubt den
  * Widerruf mit einem Klick (Art. 7 Abs. 3 DSGVO: so einfach wie die
  * Erteilung). */
 export function ConsentSettings() {
-  const [calendly, setCalendly] = useState<boolean | null>(null);
   const [meta, setMeta] = useState<"granted" | "denied" | null | undefined>(undefined);
 
   useEffect(() => {
     const sync = () => {
-      setCalendly(hasConsent("calendly"));
       setMeta(consentState("meta"));
     };
     sync();
@@ -57,18 +50,7 @@ export function ConsentSettings() {
 
   return (
     <div className="mt-3 divide-y divide-snow/10 rounded-2xl border border-snow/10 p-5">
-      <ConsentRow
-        title="Calendly (Terminbuchung)"
-        status={
-          calendly === null
-            ? "Status wird geladen …"
-            : calendly
-              ? "Einwilligung gespeichert: Der Kalender lädt ohne Nachfrage."
-              : "Keine Einwilligung gespeichert: Wir fragen vor jedem Laden nach."
-        }
-        canRevoke={Boolean(calendly)}
-        onRevoke={() => revokeConsent("calendly")}
-      />
+      {!metaPixelEnabled && <p className="text-sm font-light text-snow/60">Keine Einwilligungen nötig: Es laden keine externen Dienste.</p>}
       {metaPixelEnabled && (
         <ConsentRow
           title="Meta-Pixel (E-Book-Seite)"

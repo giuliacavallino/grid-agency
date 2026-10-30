@@ -1,5 +1,5 @@
-/** Einwilligungen für externe Dienste: Calendly und das Meta-Pixel auf
- * der E-Book-Seite.
+/** Einwilligungen für externe Dienste: das Meta-Pixel auf der
+ * E-Book-Seite.
  *
  * Gespeichert wird nur, wenn die Person "merken" wählt, und zwar im
  * localStorage ihres Browsers, nicht als Cookie und nicht auf unserem
@@ -7,7 +7,7 @@
  * erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Widerruf jederzeit über
  * /datenschutz#einstellungen. */
 
-export type ConsentService = "calendly" | "meta";
+export type ConsentService = "meta";
 
 const KEY = (service: ConsentService) => `grid-consent-${service}`;
 const EVENT = "grid-consent-change";

@@ -1,7 +1,4 @@
-"use client";
-
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { EbookForm } from "@/components/EbookForm";
 
 const chapters = [
@@ -23,18 +20,11 @@ const facts = [
  * und Kapitel links, Cover und Formular rechts daneben. */
 export function EbookView() {
   return (
-    <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-12">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="lg:col-start-1 lg:row-start-1 lg:pt-4"
-      >
-        <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
-          Kostenloses E-Book für Unternehmer:innen
-        </p>
-        <h1 className="mt-3 text-4xl font-medium leading-[1.02] tracking-tight text-snow sm:text-5xl lg:text-6xl">
-          Social Media <span className="text-scroll-gradient">2027</span>
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[auto_1fr] lg:gap-x-16 lg:gap-y-12">
+      <div className="rise lg:col-start-1 lg:row-start-1 lg:pt-4">
+        <span className="eyebrow">Kostenloses E-Book für Unternehmer:innen</span>
+        <h1 className="mt-5 text-[2.75rem] font-semibold leading-[1] tracking-[-0.035em] text-snow lg:text-[clamp(3.5rem,6vw,6rem)]">
+          Social Media <span className="text-aurora">2027</span>
         </h1>
         <p className="mt-5 max-w-xl text-base font-light leading-relaxed text-snow/70 lg:text-lg">
           Der Wandel – und was du jetzt tun musst, um auf Social Media mehr
@@ -46,25 +36,20 @@ export function EbookView() {
           {facts.map((f) => (
             <div key={f.label}>
               <dt className="sr-only">{f.label}</dt>
-              <dd className="text-2xl font-medium tracking-tight text-snow">{f.value}</dd>
+              <dd className="text-3xl font-semibold tracking-tight text-snow">{f.value}</dd>
               <dd className="mt-0.5 text-xs font-light text-snow/50">{f.label}</dd>
             </div>
           ))}
         </dl>
-      </motion.div>
+      </div>
 
       {/* Auf dem Desktop bleiben Cover und Formular beim Scrollen sichtbar. */}
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, delay: 0.1 }}
-        className="lg:col-start-2 lg:row-span-2 lg:row-start-1"
-      >
+      <div className="rise lg:col-start-2 lg:row-span-2 lg:row-start-1" style={{ "--d": "100ms" } as React.CSSProperties}>
         <div className="lg:sticky lg:top-32">
           <div className="relative mx-auto w-40 sm:w-56 lg:w-64">
             <div
               aria-hidden
-              className="absolute -inset-6 rounded-[2rem] bg-[linear-gradient(92deg,#feda75,#fa7e1e,#d62976,#962fbf)] opacity-25 blur-3xl"
+              className="absolute -inset-6 rounded-[2rem] bg-[image:var(--aurora)] opacity-25 blur-3xl"
             />
             <Image
               src="/ebook/cover.jpg"
@@ -76,25 +61,18 @@ export function EbookView() {
             />
           </div>
 
-          <div className="card-rainbow mt-10 rounded-2xl border border-snow/10 bg-sky p-6 sm:p-7">
+          <div className="glass mt-10 rounded-[1.75rem] p-6 sm:p-7">
             <EbookForm />
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.15 }}
-        className="lg:col-start-1 lg:row-start-2"
-      >
-        <h2 className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
-          Das erwartet dich
-        </h2>
-        <ol className="mt-4 divide-y divide-snow/10 border-y border-snow/10">
+      <div className="rise lg:col-start-1 lg:row-start-2" style={{ "--d": "150ms" } as React.CSSProperties}>
+        <span className="eyebrow">Das erwartet dich</span>
+        <ol className="glass mt-5 divide-y divide-snow/10 rounded-[1.75rem] px-6">
           {chapters.map((c) => (
             <li key={c.n} className="flex gap-5 py-4">
-              <span className="text-scroll-gradient text-lg font-medium">{c.n}</span>
+              <span className="text-aurora text-lg font-semibold tabular-nums">{c.n}</span>
               <div>
                 <p className="text-base font-medium text-snow">{c.title}</p>
                 <p className="mt-0.5 text-sm font-light leading-relaxed text-snow/60">{c.text}</p>
@@ -102,7 +80,7 @@ export function EbookView() {
             </li>
           ))}
         </ol>
-      </motion.div>
+      </div>
     </div>
   );
 }

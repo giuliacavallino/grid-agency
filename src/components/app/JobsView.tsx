@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { ArrowDown, ChevronDown, Clock, MapPin } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { jobsIntro, type Job } from "@/lib/content";
 import { ApplicationForm } from "@/components/ApplicationForm";
 import { SearchedChip } from "@/components/SearchedChip";
@@ -15,7 +16,7 @@ function Bullets({ items }: { items: string[] }) {
           key={item}
           className="flex gap-2.5 text-sm font-light leading-relaxed text-snow/70"
         >
-          <span className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-dune" />
+          <span className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-pop" />
           {item}
         </li>
       ))}
@@ -54,8 +55,41 @@ const bts: BtsItem[] = [
  * Benefits, darunter das Bewerbungsformular. Alle Stellen sind immer
  * wählbar; welche wir gerade suchen (grüner Chip), steuert das Intranet
  * (Personal → Stellen). */
+/** Stummer Loop, der erst lädt und spielt, wenn er ins Bild läuft. */
+function LazyLoop({ src, poster, alt }: { src: string; poster: string; alt: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setNear(true);
+          void video.play().catch(() => {});
+        } else video.pause();
+      },
+      { rootMargin: "0px 200px" },
+    );
+    io.observe(video);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <video
+      ref={ref}
+      src={near ? src : undefined}
+      poster={poster}
+      muted
+      loop
+      playsInline
+      preload="none"
+      aria-label={alt}
+      className="h-full w-full object-cover"
+    />
+  );
+}
+
 export function JobsView({ jobs, searched }: { jobs: Job[]; searched: string[] }) {
-  const [open, setOpen] = useState<string | null>(jobs[0]?.slug ?? null);
   const [applyFor, setApplyFor] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -66,214 +100,111 @@ export function JobsView({ jobs, searched }: { jobs: Job[]; searched: string[] }
 
   return (
     <div>
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+      <PageHeader
+        eyebrow="Jobs"
+        title={
+          <>
+            Werde Teil von <span className="text-aurora">GRID</span>.
+          </>
+        }
+        text={jobsIntro}
       >
-        <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
-          Jobs
+        <p className="mt-3 max-w-2xl text-base font-light leading-relaxed text-snow/65">
+          Kleines Team, flache Hierarchien, viel Freiheit und Selbstständigkeit. Bewerben kannst du dich auf jede Rolle in
+          Berlin und Frankfurt, auch initiativ. Was wir gerade suchen, ist markiert.
         </p>
-        <h1 className="mt-2 text-3xl font-medium tracking-tight text-snow">
-          Werde Teil von <span className="text-scroll-gradient">GRID</span>.
-        </h1>
-        <p className="mt-4 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
-          {jobsIntro}
-        </p>
-        <p className="mt-3 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
-          Kleines Team, flache Hierarchien, ein lockeres Arbeitsumfeld mit
-          viel Freiheit und Selbstständigkeit. Bewerben kannst du dich auf
-          jede Rolle in Berlin und Frankfurt, auch initiativ. Was wir gerade
-          suchen, ist markiert.
-        </p>
-      </motion.div>
+      </PageHeader>
 
-      {/* Behind the Scenes: kurze Loops und Fotos von echten Drehs, damit
-          man sieht, wie die Arbeit bei GRID aussieht. Videos laden erst,
-          wenn sie im Viewport sind. */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.15 }}
-        className="mt-8"
-      >
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-          Behind the Scenes
-        </p>
-        {/* Laufender Streifen auf voller Breite, wie das Logo-Band. Feste
-            Kachelgrößen, damit lazy geladene Medien den Loop nicht
-            verschieben. */}
-        <div className="relative left-1/2 mt-3 w-screen -translate-x-1/2 overflow-hidden">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-sky to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-sky to-transparent" />
-          <div
-            className="marquee flex w-max items-stretch [&:hover]:[animation-play-state:paused]"
-            style={{ "--marquee-duration": `${bts.length * 5}s` } as React.CSSProperties}
-          >
-          {[...bts, ...bts].map((item, i) => (
-            <div
-              key={`${item.src}-${i}`}
-              className="mr-3 aspect-[4/5] h-56 shrink-0 overflow-hidden rounded-2xl border border-snow/10 bg-sky lg:h-72"
-            >
-              {item.kind === "video" ? (
-                <video
-                  src={item.src}
-                  poster={item.poster}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  aria-label={item.alt}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.src}
-                  alt={item.alt}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              )}
-            </div>
-          ))}
+      {/* Behind the Scenes als Laufband; Videos laden erst im Bild. */}
+      <section className="rise mt-12" style={{ "--d": "150ms" } as React.CSSProperties}>
+        <span className="eyebrow">Behind the Scenes</span>
+        <div className="fade-x relative left-1/2 mt-5 w-screen -translate-x-1/2 overflow-hidden">
+          <div className="marquee flex w-max items-stretch" style={{ "--marquee-duration": `${bts.length * 5}s` } as React.CSSProperties}>
+            {[...bts, ...bts].map((item, i) => (
+              <div key={`${item.src}-${i}`} className="relative mr-3 aspect-[4/5] h-60 shrink-0 overflow-hidden rounded-[1.5rem] border border-snow/10 bg-sky lg:h-80">
+                {item.kind === "video" ? (
+                  <LazyLoop src={item.src} poster={item.poster} alt={item.alt} />
+                ) : (
+                  <Image src={item.src} alt={item.alt} fill sizes="256px" className="object-cover" />
+                )}
+              </div>
+            ))}
           </div>
         </div>
-      </motion.div>
+      </section>
 
-      <div className="mt-8 space-y-4">
-        {jobs.map((job, i) => {
-          const isOpen = open === job.slug;
-          return (
-            <motion.div
-              key={job.slug}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: i * 0.06 }}
-              className="card-rainbow overflow-hidden rounded-2xl border border-snow/10"
-            >
-              <button
-                type="button"
-                onClick={() => setOpen(isOpen ? null : job.slug)}
-                aria-expanded={isOpen}
-                className="flex w-full items-start justify-between gap-4 p-5 text-left sm:p-6"
-              >
-                <div>
-                  {searched.includes(job.slug) && (
-                    <div className="mb-2">
-                      <SearchedChip />
-                    </div>
-                  )}
-                  <h2 className="card-rainbow-title text-xl font-medium tracking-tight text-snow">
-                    {job.title}
-                  </h2>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-light text-snow/60">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" strokeWidth={2} />
-                      {job.scope}
-                      {job.duration ? `, ${job.duration}` : ""}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5" strokeWidth={2} />
-                      {job.location}
-                    </span>
+      <div className="mt-12 space-y-3">
+        {jobs.map((job, i) => (
+          <details
+            key={job.slug}
+            open={i === 0}
+            className="reveal card-rainbow glass group overflow-hidden rounded-[1.75rem]"
+            style={{ "--d": `${i * 60}ms` } as React.CSSProperties}
+          >
+            <summary className="flex items-start justify-between gap-4 p-6 sm:p-7">
+              <div>
+                {searched.includes(job.slug) && (
+                  <div className="mb-2">
+                    <SearchedChip />
                   </div>
-                  {!isOpen && (
-                    <p className="mt-3 text-sm font-light leading-relaxed text-snow/65">
-                      {job.role}
-                    </p>
-                  )}
-                </div>
-                <ChevronDown
-                  className={`mt-1 h-5 w-5 shrink-0 text-snow/50 transition-transform duration-300 ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
-                  strokeWidth={2}
-                />
-              </button>
-
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="border-t border-snow/10 px-5 pb-6 pt-5 sm:px-6">
-                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-                        Deine Rolle
-                      </p>
-                      <p className="mt-2 text-sm font-light leading-relaxed text-snow/75">
-                        {job.role}
-                      </p>
-
-                      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-                            Deine Aufgaben
-                          </p>
-                          <Bullets items={job.tasks} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-[0.2em] text-dune">
-                            Dein Profil
-                          </p>
-                          <Bullets items={job.profile} />
-                        </div>
-                      </div>
-
-                      <p className="mt-6 text-xs font-medium uppercase tracking-[0.2em] text-dune">
-                        Was wir bieten
-                      </p>
-                      <Bullets items={job.benefits} />
-
-                      <div className="mt-6 rounded-xl bg-snow/[0.05] p-5">
-                        <p className="text-sm font-medium leading-relaxed text-snow">
-                          {job.pitch}
-                        </p>
-                        <p className="mt-2 text-sm font-light leading-relaxed text-snow/65">
-                          Dann bewirb dich jetzt mit deinem Lebenslauf. Wir
-                          freuen uns darauf, mehr über dich zu erfahren.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => apply(job.slug)}
-                          className="btn-rainbow mt-4 inline-flex items-center gap-2 rounded-full bg-snow px-6 py-3 text-sm font-medium text-sky"
-                        >
-                          Jetzt bewerben
-                          <ArrowDown className="h-4 w-4" strokeWidth={2} />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
                 )}
-              </AnimatePresence>
-            </motion.div>
-          );
-        })}
+                <h2 className="card-rainbow-title text-2xl font-semibold tracking-tight text-snow">{job.title}</h2>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-light text-snow/60">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" strokeWidth={2} />
+                    {job.scope}
+                    {job.duration ? `, ${job.duration}` : ""}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" strokeWidth={2} />
+                    {job.location}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-light leading-relaxed text-snow/65 group-open:hidden">{job.role}</p>
+              </div>
+              <span className="glass flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
+                <ChevronDown className="details-chevron h-4 w-4 text-snow transition-transform duration-300" strokeWidth={2} />
+              </span>
+            </summary>
+
+            <div className="details-body border-t border-snow/10 px-6 pb-7 pt-6 sm:px-7">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-snow/50">Deine Rolle</p>
+              <p className="mt-2 text-sm font-light leading-relaxed text-snow/75">{job.role}</p>
+              <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-snow/50">Deine Aufgaben</p>
+                  <Bullets items={job.tasks} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-snow/50">Dein Profil</p>
+                  <Bullets items={job.profile} />
+                </div>
+              </div>
+              <p className="mt-6 text-xs font-medium uppercase tracking-[0.2em] text-snow/50">Was wir bieten</p>
+              <Bullets items={job.benefits} />
+              <div className="mt-6 rounded-2xl bg-snow/[0.06] p-5">
+                <p className="text-sm font-medium leading-relaxed text-snow">{job.pitch}</p>
+                <p className="mt-2 text-sm font-light leading-relaxed text-snow/65">
+                  Dann bewirb dich jetzt mit deinem Lebenslauf. Wir freuen uns darauf, mehr über dich zu erfahren.
+                </p>
+                <button type="button" onClick={() => apply(job.slug)} className="btn btn-primary mt-4 px-6 py-3 text-sm">
+                  Jetzt bewerben
+                  <ArrowDown className="h-4 w-4" strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+          </details>
+        ))}
       </div>
 
-      <div ref={formRef} id="bewerben" className="mt-12 scroll-mt-24">
-        <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
-          Bewerben
-        </p>
-        <h2 className="mt-2 text-2xl font-medium tracking-tight text-snow">
-          Deine Bewerbung
-        </h2>
-        <p className="mt-2 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
-          Lebenslauf hochladen, ein paar Zeilen zu dir, fertig. Nichts
-          Passendes dabei? Wähl einfach „Initiativbewerbung“.
+      <div ref={formRef} id="bewerben" className="reveal glass mt-16 scroll-mt-28 rounded-[2rem] p-6 sm:p-8 lg:p-10">
+        <span className="eyebrow">Bewerben</span>
+        <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-snow lg:text-5xl">Deine Bewerbung</h2>
+        <p className="mt-3 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
+          Lebenslauf hochladen, ein paar Zeilen zu dir, fertig. Nichts Passendes dabei? Wähl einfach „Initiativbewerbung“.
         </p>
         <div className="mt-6">
-          <ApplicationForm
-            jobs={jobs}
-            searched={searched}
-            job={applyFor}
-            onJobChange={setApplyFor}
-          />
+          <ApplicationForm jobs={jobs} searched={searched} job={applyFor} onJobChange={setApplyFor} />
         </div>
       </div>
     </div>
