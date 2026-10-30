@@ -7,8 +7,9 @@ import { useRows } from "@/lib/data";
 import { byDue, today, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
 import { Empty, Select, Spinner } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
-import { usePeople } from "./project-board";
-import { DoneToggle, TaskMeta, TaskSheet } from "./task";
+import { usePeople } from "./project";
+import { TaskSheet } from "./task";
+import { ListHeader, TaskRow } from "./task-list";
 
 function inDays(days: number) {
   const d = new Date(`${today()}T12:00:00`);
@@ -70,39 +71,26 @@ export function MyTasks() {
       ) : mine.length === 0 ? (
         <Empty title="Nichts offen" text="Hier erscheinen alle To-dos, die dir zugewiesen sind." />
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto p-3 md:p-5">
-          <div className="mx-auto flex max-w-3xl flex-col gap-6">
-            {GROUPS.map((group) => {
-              const list = mine.filter((t) => group.test(t.due_on));
-              if (!list.length) return null;
-              return (
-                <section key={group.id}>
-                  <h2 className={clsx("mb-2 px-1 text-[13px] font-medium", group.id === "late" ? "text-error" : "text-snow/60")}>
-                    {group.label} <span className="text-snow/40">{list.length}</span>
-                  </h2>
-                  <ul className="overflow-hidden rounded-2xl border border-snow/[0.08] bg-surface">
-                    {list.map((task) => (
-                      <li key={task.id} className="border-b border-snow/[0.06] last:border-0">
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => setOpenId(task.id)}
-                          onKeyDown={(e) => e.key === "Enter" && setOpenId(task.id)}
-                          className="cursor-pointer px-4 py-3 hover:bg-snow/[0.03]"
-                        >
-                          <div className="flex items-start gap-2">
-                            <DoneToggle task={task} className="mt-px" />
-                            <p className={clsx("min-w-0 flex-1 text-[14px] leading-snug", task.done && "text-snow/45 line-through")}>{task.title}</p>
-                          </div>
-                          <TaskMeta task={{ ...task, assignee: null }} project={active.get(task.project_id)} />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              );
-            })}
-          </div>
+        <div className="min-h-0 flex-1 overflow-y-auto pb-10">
+          <ListHeader withProject />
+          {GROUPS.map((group) => {
+            const list = mine.filter((t) => group.test(t.due_on));
+            if (!list.length) return null;
+            return (
+              <section key={group.id} className="pt-5">
+                <h2 className={clsx("flex h-9 items-center gap-1.5 px-3 text-[15px] font-semibold md:px-8", group.id === "late" && "text-error")}>
+                  {group.label} <span className="text-[13px] font-normal text-snow/40">{list.length}</span>
+                </h2>
+                <ul className="border-t border-snow/[0.06]">
+                  {list.map((task) => (
+                    <li key={task.id}>
+                      <TaskRow task={task} people={people} onOpen={setOpenId} project={active.get(task.project_id)} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
         </div>
       )}
 

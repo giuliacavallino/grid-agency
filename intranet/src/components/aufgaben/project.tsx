@@ -1,31 +1,27 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
 import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { createRow, deleteRow, updateRow, useRows } from "@/lib/data";
-import { topPosition } from "@/lib/sales/types";
 import { isOverdue, PROJECT_COLORS, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
-import { Board, type BoardColumn } from "@/components/board";
 import { Badge, Button, Dialog, Empty, Field, IconButton, Input, MenuItem, Popover, Select, Spinner, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
 import { BriefingSheet } from "./briefing";
-import { TaskCard, TaskSheet } from "./task";
-
-type BoardTask = Task & { stage: string };
+import { TaskSheet } from "./task";
+import { ListHeader, SectionedList } from "./task-list";
 
 /** Alle Personen, die schon To-dos haben, für die Auswahl „Zuständig“ */
 export function usePeople(tasks: Task[] | undefined) {
   return useMemo(() => [...new Set((tasks ?? []).map((t) => t.assignee).filter((a): a is string => !!a))].sort(), [tasks]);
 }
 
-/** Board eines Kunden: Themen als Spalten, To-dos als Karten. */
-export function ProjectBoard({ id }: { id: string }) {
+/** To-dos eines Kunden als Liste, gruppiert nach Themen. */
+export function ProjectView({ id }: { id: string }) {
   const projects = useRows<TaskProject>("task_projects");
   const sectionRows = useRows<TaskSection>("task_sections");
   const taskRows = useRows<Task>("tasks");
-  const toast = useToast();
   const [query, setQuery] = useState("");
   const [showDone, setShowDone] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -41,25 +37,15 @@ export function ProjectBoard({ id }: { id: string }) {
   const allTasks = useMemo(() => (taskRows.data ?? []).filter((t) => t.project_id === id), [taskRows.data, id]);
   const people = usePeople(taskRows.data);
 
-  const columns: BoardColumn[] = useMemo(() => sections.map((s) => ({ id: s.id, label: s.name, color: project?.color ?? "#afaaa0" })), [sections, project]);
-  const items: BoardTask[] = useMemo(() => {
+  const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allTasks
       .filter((t) => showDone || !t.done)
-      .filter((t) => !q || [t.title, t.notes, t.assignee].some((v) => v?.toLowerCase().includes(q)))
-      .map((t) => ({ ...t, stage: sections.some((s) => s.id === t.section_id) ? t.section_id! : (sections[0]?.id ?? "") }));
-  }, [allTasks, showDone, query, sections]);
+      .filter((t) => !q || [t.title, t.notes, t.assignee].some((v) => v?.toLowerCase().includes(q)));
+  }, [allTasks, showDone, query]);
 
   const open = allTasks.filter((t) => !t.done);
   const overdue = open.filter(isOverdue).length;
-
-  async function move(task: BoardTask, stage: string, position: number) {
-    try {
-      await updateRow<Task>("tasks", task.id, { section_id: stage, position });
-    } catch {
-      toast("Verschieben fehlgeschlagen", "error");
-    }
-  }
 
   if (projects.error || sectionRows.error || taskRows.error) {
     return <Empty title="Aufgaben konnten nicht geladen werden" text={(projects.error ?? sectionRows.error ?? taskRows.error)?.message} />;
@@ -101,7 +87,7 @@ export function ProjectBoard({ id }: { id: string }) {
       {sections.length === 0 ? (
         <Empty
           title="Noch keine Themen"
-          text="Themen sind die Spalten des Boards, z. B. JourFix, Content Days oder Performance Marketing."
+          text="Themen gruppieren die To-dos, z. B. JourFix, Content Days oder Performance Marketing."
           action={
             <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setSectionDialog("new")}>
               Thema anlegen
@@ -109,16 +95,17 @@ export function ProjectBoard({ id }: { id: string }) {
           }
         />
       ) : (
-        <Board
-          columns={columns}
-          items={items}
-          onOpen={setOpenId}
-          onMove={move}
-          emptyText="Keine offenen To-dos"
-          renderCard={(task, overlay) => <TaskCard task={task} overlay={overlay} />}
-          columnActions={(column) => <SectionMenu section={sections.find((s) => s.id === column.id)!} onRename={setSectionDialog} />}
-          columnFooter={(column) => <QuickAdd projectId={project.id} sectionId={column.id} />}
-        />
+        <div className="min-h-0 flex-1 overflow-y-auto pb-10">
+          <ListHeader />
+          <SectionedList project={project} sections={sections} tasks={visible} people={people} onOpen={setOpenId} onEditSection={setSectionDialog} />
+          <button
+            type="button"
+            onClick={() => setSectionDialog("new")}
+            className="mt-6 ml-2 flex h-9 items-center gap-2 rounded-lg px-3 text-[14px] font-medium text-snow/55 hover:bg-snow/[0.06] hover:text-snow md:ml-6"
+          >
+            <Plus className="h-4 w-4" /> Thema hinzufügen
+          </button>
+        </div>
       )}
 
       <TaskSheet
@@ -187,67 +174,6 @@ function ProjectMenu({ project, onEdit, onAddSection }: { project: TaskProject; 
         </>
       )}
     </Popover>
-  );
-}
-
-function SectionMenu({ section, onRename }: { section: TaskSection; onRename: (section: TaskSection) => void }) {
-  return (
-    <IconButton label={`Thema „${section.name}“ bearbeiten`} className="-mr-1 h-6 w-6 text-snow/45" onClick={() => onRename(section)}>
-      <MoreHorizontal className="h-4 w-4" />
-    </IconButton>
-  );
-}
-
-/** Schnelleingabe unter jeder Spalte: Enter legt an, das Feld bleibt offen. */
-function QuickAdd({ projectId, sectionId }: { projectId: string; sectionId: string }) {
-  const toast = useToast();
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [busy, setBusy] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
-
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!title.trim() || busy) return;
-    setBusy(true);
-    try {
-      await createRow<Task>("tasks", { project_id: projectId, section_id: sectionId, title: title.trim(), position: topPosition() });
-      setTitle("");
-    } catch {
-      toast("Anlegen fehlgeschlagen", "error");
-    }
-    setBusy(false);
-    input.current?.focus();
-  }
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="mx-2 mb-2 flex h-9 items-center gap-2 rounded-xl px-2.5 text-[13px] text-snow/50 hover:bg-snow/[0.06] hover:text-snow"
-      >
-        <Plus className="h-4 w-4" /> To-do
-      </button>
-    );
-  }
-
-  return (
-    <form onSubmit={submit} className="relative mx-2 mb-2">
-      <Input
-        ref={input}
-        autoFocus
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onBlur={() => !title.trim() && !busy && setOpen(false)}
-        onKeyDown={(e) => e.key === "Escape" && (setTitle(""), setOpen(false))}
-        placeholder="Neues To-do, Enter zum Anlegen"
-        aria-label="Neues To-do"
-        aria-busy={busy || undefined}
-        className="h-9 pr-9 text-[13px]"
-      />
-      {busy && <Spinner className="absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2" />}
-    </form>
   );
 }
 

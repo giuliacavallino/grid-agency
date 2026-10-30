@@ -9,7 +9,7 @@ import { createRow, useRows } from "@/lib/data";
 import { byDue, dueLabel, isOverdue, PROJECT_COLORS, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
 import { Button, Dialog, Empty, Field, Input, Spinner, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
-import { ColorPicker } from "./project-board";
+import { ColorPicker } from "./project";
 import { DoneToggle } from "./task";
 
 /** Kacheln je Kunde: offene To-dos, Überfälliges, Themen und das Nächste. */

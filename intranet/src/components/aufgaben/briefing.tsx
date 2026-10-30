@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Copy, Pencil } from "lucide-react";
 import { updateRow } from "@/lib/data";
 import type { TaskProject } from "@/lib/tasks";
@@ -35,18 +35,32 @@ function BriefingBody({ project }: { project: TaskProject }) {
   const toast = useToast();
   const [editing, setEditing] = useState(!project.briefing);
   const [text, setText] = useState(project.briefing ?? "");
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(0);
+  const pending = useRef<string | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  async function save() {
-    setSaving(true);
+  // Speichert automatisch kurz nach dem Tippen, beim Verlassen und beim Schließen
+  const flush = useCallback(async () => {
+    clearTimeout(timer.current);
+    if (pending.current === null) return;
+    const value = pending.current.trim() || null;
+    pending.current = null;
+    setSaving((n) => n + 1);
     try {
-      await updateRow<TaskProject>("task_projects", project.id, { briefing: text.trim() || null });
-      setEditing(false);
-      toast("Briefing gespeichert");
+      await updateRow<TaskProject>("task_projects", project.id, { briefing: value });
     } catch {
       toast("Speichern fehlgeschlagen", "error");
     }
-    setSaving(false);
+    setSaving((n) => n - 1);
+  }, [project.id, toast]);
+
+  useEffect(() => () => void flush(), [flush]);
+
+  function change(value: string) {
+    setText(value);
+    pending.current = value;
+    clearTimeout(timer.current);
+    timer.current = setTimeout(flush, 800);
   }
 
   async function copy() {
@@ -63,27 +77,26 @@ function BriefingBody({ project }: { project: TaskProject }) {
       <div className="flex h-full flex-col gap-3 p-5">
         <Textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => change(e.target.value)}
+          onBlur={flush}
           autoFocus
           aria-label="Briefing"
           placeholder={"Über den Kunden, Ansprechpartner, Zugänge, Postingplan …"}
           className="min-h-[50dvh] flex-1 font-mono text-[13px]"
         />
-        <div className="flex gap-2">
-          <Button variant="primary" onClick={save} loading={saving} loadingText="Wird gespeichert …" disabled={text === (project.briefing ?? "")}>
-            Speichern
+        <div className="flex items-center gap-3">
+          <Button
+            variant="primary"
+            loading={saving > 0}
+            loadingText="Wird gespeichert …"
+            onClick={async () => {
+              await flush();
+              setEditing(false);
+            }}
+          >
+            Fertig
           </Button>
-          {project.briefing && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setText(project.briefing ?? "");
-                setEditing(false);
-              }}
-            >
-              Abbrechen
-            </Button>
-          )}
+          <p className="text-[12px] text-snow/45">Wird automatisch gespeichert</p>
         </div>
       </div>
     );

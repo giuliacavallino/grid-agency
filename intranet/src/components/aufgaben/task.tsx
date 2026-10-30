@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn as clsx } from "@/lib/cn";
-import { AlignLeft, CalendarDays, Check, ListChecks, Plus, Trash2, X } from "lucide-react";
+import { Check, Plus, Trash2, X } from "lucide-react";
 import { deleteRow, updateRow } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
-import { dueLabel, isOverdue, type ChecklistItem, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
-import { BoardCard } from "@/components/board";
-import { Avatar, Button, Dialog, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
+import type { ChecklistItem, Task, TaskProject, TaskSection } from "@/lib/tasks";
+import { Button, Dialog, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 
 /** Abhaken direkt auf der Karte, ohne die Karte zu öffnen oder zu ziehen */
 export function DoneToggle({ task, className }: { task: Task; className?: string }) {
@@ -46,64 +45,6 @@ export function DoneToggle({ task, className }: { task: Task; className?: string
   );
 }
 
-export function TaskMeta({ task, project }: { task: Task; project?: TaskProject }) {
-  const checked = task.checklist.filter((c) => c.done).length;
-  const late = isOverdue(task);
-  const hasMeta = project || task.due_on || task.notes || task.checklist.length || task.assignee;
-  if (!hasMeta) return null;
-  return (
-    <div className="mt-2 flex items-center gap-2.5 pl-[26px] text-[12px] text-snow/50">
-      {project && (
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: project.color }} />
-          <span className="truncate">{project.name}</span>
-        </span>
-      )}
-      {task.due_on && (
-        <span className={clsx("flex shrink-0 items-center gap-1", late && "font-medium text-error")}>
-          <CalendarDays className="h-3.5 w-3.5" />
-          {dueLabel(task.due_on)}
-        </span>
-      )}
-      {!!task.checklist.length && (
-        <span className="flex shrink-0 items-center gap-1">
-          <ListChecks className="h-3.5 w-3.5" />
-          {checked}/{task.checklist.length}
-        </span>
-      )}
-      {task.notes && <AlignLeft className="h-3.5 w-3.5 shrink-0" aria-label="mit Notiz" />}
-      {task.assignee && (
-        <span className="ml-auto" title={task.assignee}>
-          <Avatar name={task.assignee} className="h-5 w-5 text-[9px]" />
-        </span>
-      )}
-    </div>
-  );
-}
-
-export function TaskCard({ task, overlay }: { task: Task; overlay?: boolean }) {
-  return (
-    <BoardCard overlay={overlay}>
-      <div className="flex items-start gap-2">
-        <DoneToggle task={task} className="mt-px" />
-        <p className={clsx("min-w-0 flex-1 text-[14px] leading-snug", task.done && "text-snow/45 line-through")}>{task.title}</p>
-      </div>
-      <TaskMeta task={task} />
-    </BoardCard>
-  );
-}
-
-type Form = { title: string; section_id: string; assignee: string; due_on: string; notes: string; checklist: ChecklistItem[] };
-
-const toForm = (t: Task): Form => ({
-  title: t.title,
-  section_id: t.section_id ?? "",
-  assignee: t.assignee ?? "",
-  due_on: t.due_on ?? "",
-  notes: t.notes ?? "",
-  checklist: t.checklist,
-});
-
 export function TaskSheet({
   task,
   project,
@@ -124,46 +65,61 @@ export function TaskSheet({
   );
 }
 
+/** Detailansicht ohne Speichern-Knopf: Auswahlfelder und Checkliste
+ * speichern sofort, Texte kurz nach dem Tippen und beim Verlassen. */
 function TaskDetail({ task, sections, people, onClose }: { task: Task; sections: TaskSection[]; people: string[]; onClose: () => void }) {
   const toast = useToast();
-  const [form, setForm] = useState<Form>(() => toForm(task));
+  const [title, setTitle] = useState(task.title);
+  const [notes, setNotes] = useState(task.notes ?? "");
+  const [assignee, setAssignee] = useState(task.assignee ?? "");
   const [newItem, setNewItem] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const dirty = JSON.stringify(form) !== JSON.stringify(toForm(task));
-  const set = (key: keyof Form) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm((f) => ({ ...f, [key]: event.target.value }));
+  const pending = useRef<Partial<Task>>({});
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const setChecklist = (update: (items: ChecklistItem[]) => ChecklistItem[]) => setForm((f) => ({ ...f, checklist: update(f.checklist) }));
+  const commit = useCallback(
+    async (patch: Partial<Task>) => {
+      setSaving((n) => n + 1);
+      try {
+        await updateRow<Task>("tasks", task.id, patch);
+      } catch {
+        toast("Speichern fehlgeschlagen", "error");
+      }
+      setSaving((n) => n - 1);
+    },
+    [task.id, toast]
+  );
+
+  const flush = useCallback(() => {
+    clearTimeout(timer.current);
+    const patch = pending.current;
+    pending.current = {};
+    if (Object.keys(patch).length) commit(patch);
+  }, [commit]);
+
+  // Beim Schließen noch Ausstehendes speichern
+  useEffect(() => flush, [flush]);
+
+  function saveSoon(patch: Partial<Task>) {
+    pending.current = { ...pending.current, ...patch };
+    clearTimeout(timer.current);
+    timer.current = setTimeout(flush, 700);
+  }
+
+  const setChecklist = (items: ChecklistItem[]) => commit({ checklist: items });
 
   function addItem(event: React.FormEvent) {
     event.preventDefault();
     if (!newItem.trim()) return;
-    setChecklist((items) => [...items, { text: newItem.trim(), done: false }]);
+    setChecklist([...task.checklist, { text: newItem.trim(), done: false }]);
     setNewItem("");
   }
 
-  async function save() {
-    if (!form.title.trim()) return toast("Titel fehlt", "error");
-    setSaving(true);
-    try {
-      await updateRow<Task>("tasks", task.id, {
-        title: form.title.trim(),
-        section_id: form.section_id || null,
-        assignee: form.assignee.trim() || null,
-        due_on: form.due_on || null,
-        notes: form.notes.trim() || null,
-        checklist: form.checklist,
-      });
-      toast("Gespeichert");
-    } catch {
-      toast("Speichern fehlgeschlagen", "error");
-    }
-    setSaving(false);
-  }
-
   async function remove() {
+    clearTimeout(timer.current);
+    pending.current = {};
     setDeleting(true);
     try {
       await deleteRow("tasks", task.id);
@@ -179,8 +135,12 @@ function TaskDetail({ task, sections, people, onClose }: { task: Task; sections:
       <div className="flex items-start gap-3">
         <DoneToggle task={task} className="mt-3 h-6 w-6" />
         <Textarea
-          value={form.title}
-          onChange={set("title")}
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            if (e.target.value.trim()) saveSoon({ title: e.target.value.trim() });
+          }}
+          onBlur={() => (title.trim() ? flush() : setTitle(task.title))}
           rows={2}
           aria-label="Titel"
           className={clsx("min-h-0 resize-none text-[16px] font-medium", task.done && "text-snow/50 line-through")}
@@ -190,7 +150,7 @@ function TaskDetail({ task, sections, people, onClose }: { task: Task; sections:
       <div className="grid grid-cols-2 gap-3">
         <Field label="Thema">
           {(id) => (
-            <Select id={id} value={form.section_id} onChange={set("section_id")}>
+            <Select id={id} value={task.section_id ?? ""} onChange={(e) => commit({ section_id: e.target.value })}>
               {sections.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -199,11 +159,23 @@ function TaskDetail({ task, sections, people, onClose }: { task: Task; sections:
             </Select>
           )}
         </Field>
-        <Field label="Fällig am">{(id) => <Input id={id} type="date" value={form.due_on} onChange={set("due_on")} />}</Field>
+        <Field label="Fällig am">
+          {(id) => <Input id={id} type="date" value={task.due_on ?? ""} onChange={(e) => commit({ due_on: e.target.value || null })} />}
+        </Field>
         <Field label="Zuständig" className="col-span-2">
           {(id) => (
             <>
-              <Input id={id} value={form.assignee} onChange={set("assignee")} list={`${id}-people`} placeholder="Name" />
+              <Input
+                id={id}
+                value={assignee}
+                onChange={(e) => {
+                  setAssignee(e.target.value);
+                  saveSoon({ assignee: e.target.value.trim() || null });
+                }}
+                onBlur={flush}
+                list={`${id}-people`}
+                placeholder="Name"
+              />
               <datalist id={`${id}-people`}>
                 {people.map((p) => (
                   <option key={p} value={p} />
@@ -213,48 +185,67 @@ function TaskDetail({ task, sections, people, onClose }: { task: Task; sections:
           )}
         </Field>
         <Field label="Notizen" className="col-span-2">
-          {(id) => <Textarea id={id} rows={5} value={form.notes} onChange={set("notes")} />}
+          {(id) => (
+            <Textarea
+              id={id}
+              rows={5}
+              value={notes}
+              onChange={(e) => {
+                setNotes(e.target.value);
+                saveSoon({ notes: e.target.value.trim() || null });
+              }}
+              onBlur={flush}
+            />
+          )}
         </Field>
       </div>
 
       <div>
         <p className="mb-2 text-xs font-medium text-snow/60">
-          Checkliste{form.checklist.length > 0 && ` · ${form.checklist.filter((c) => c.done).length}/${form.checklist.length}`}
+          Checkliste{task.checklist.length > 0 && ` · ${task.checklist.filter((c) => c.done).length}/${task.checklist.length}`}
         </p>
         <ul className="flex flex-col gap-1">
-          {form.checklist.map((item, i) => (
+          {task.checklist.map((item, i) => (
             <li key={i} className="group flex items-center gap-2 rounded-xl px-1 py-1 hover:bg-snow/[0.04]">
               <input
                 type="checkbox"
                 checked={item.done}
-                onChange={() => setChecklist((items) => items.map((c, j) => (j === i ? { ...c, done: !c.done } : c)))}
+                onChange={() => setChecklist(task.checklist.map((c, j) => (j === i ? { ...c, done: !c.done } : c)))}
                 className="h-4 w-4 accent-[#30a46c]"
                 aria-label={item.text}
               />
               <span className={clsx("flex-1 text-sm", item.done && "text-snow/45 line-through")}>{item.text}</span>
-              <IconButton label="Punkt entfernen" className="h-6 w-6 opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => setChecklist((items) => items.filter((_, j) => j !== i))}>
+              <IconButton label="Punkt entfernen" className="h-6 w-6 opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => setChecklist(task.checklist.filter((_, j) => j !== i))}>
                 <X className="h-3.5 w-3.5" />
               </IconButton>
             </li>
           ))}
         </ul>
         <form onSubmit={addItem} className="mt-1 flex gap-2">
-          <Input value={newItem} onChange={(e) => setNewItem(e.target.value)} placeholder="Punkt hinzufügen" className="h-9" />
+          <Input value={newItem} onChange={(e) => setNewItem(e.target.value)} placeholder="Punkt hinzufügen, Enter" className="h-9" />
           <Button type="submit" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} disabled={!newItem.trim()}>
             Hinzufügen
           </Button>
         </form>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" onClick={save} loading={saving} loadingText="Wird gespeichert …" disabled={!dirty}>
-          Speichern
-        </Button>
-        <Button variant="ghost" className="ml-auto text-error" icon={<Trash2 className="h-4 w-4" />} onClick={() => setConfirmDelete(true)}>
+      <div className="flex flex-wrap items-center gap-2 border-t border-snow/[0.08] pt-4">
+        <p className="flex items-center gap-1.5 text-[12px] text-snow/45" aria-live="polite">
+          {saving > 0 ? (
+            <>
+              <Spinner className="h-3.5 w-3.5" /> Wird gespeichert …
+            </>
+          ) : (
+            <>
+              <Check className="h-3.5 w-3.5" /> Änderungen werden automatisch gespeichert
+            </>
+          )}
+        </p>
+        <Button variant="ghost" size="sm" className="ml-auto text-error" icon={<Trash2 className="h-4 w-4" />} onClick={() => setConfirmDelete(true)}>
           Löschen
         </Button>
       </div>
-      <p className="text-[12px] text-snow/40">
+      <p className="-mt-3 text-[12px] text-snow/40">
         Angelegt {formatDateTime(task.created_at)}
         {task.done_at && ` · erledigt ${formatDateTime(task.done_at)}`}
       </p>
