@@ -260,6 +260,7 @@ const EVENT_LABEL: Record<string, string> = {
   erstellt: "Mappe erstellt und von der Agentur unterschrieben",
   versendet: "Link zur Unterschrift versendet",
   geoeffnet: "Mappe geöffnet",
+  angenommen: "Angebot bestätigt, weiter zur Unterschrift",
   zugestimmt: "Elektronischer Unterschrift zugestimmt",
   unterschrieben: "Unterschrieben (Angebot angenommen, Vertrag und Mandat erteilt)",
   abgelehnt: "Abgelehnt",
@@ -321,7 +322,7 @@ export function renderBundle(input: BundleInput) {
   const c = input.settings.company;
   return renderToBuffer(
     <Document title={`Angebot ${input.offer.number ?? ""} · ${input.contract.title}`} author={c.name} creator={c.name} producer="GRID sign" language="de-DE">
-      <InvoicePage doc={input.offer} settings={input.settings} />
+      <InvoicePage doc={input.offer} settings={input.settings} payment={input.sepa_required ? "sepa" : "ueberweisung"} />
       <ContractPages input={input} />
       {input.sepa_required && <SepaPage input={input} />}
       {input.final && <ProtocolPage input={input} />}

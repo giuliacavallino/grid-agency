@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, CircleCheck, Download, FileText, Lock, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatIban, SEPA_TEXT, validIban } from "@/lib/contract";
@@ -9,8 +9,8 @@ import { Logo } from "@/components/logo";
 import { Button, Dialog, Field, Input, Spinner, Textarea } from "@/components/ui";
 import { SignaturePad } from "@/components/signature-pad";
 
-// Unterschriftsseite auf sign.grid-agency.de: Zustimmung → Angebot → Vertrag
-// → SEPA-Mandat → Unterschrift → fertig. Ohne Anmeldung, Zugang über den Link.
+// Unterschriftsseite auf sign.grid-agency.de: Angebot prüfen und annehmen →
+// Mappe (Vertrag, SEPA-Mandat) unterschreiben → fertig. Ohne Anmeldung, Zugang über den Link.
 
 type View = {
   status: "versendet" | "geoeffnet" | "unterschrieben" | "abgelehnt" | "widerrufen" | "abgelaufen";
@@ -37,7 +37,7 @@ type View = {
   contract: { title: string; sections: { heading: string; body: string }[] };
 };
 
-type Step = "start" | "angebot" | "vertrag" | "sepa" | "unterschrift";
+type Step = "angebot" | "unterschrift";
 
 const date = (value: string | null | undefined) => (value ? new Date(value.length === 10 ? `${value}T12:00:00` : value).toLocaleDateString("de-DE") : "");
 const qty = (value: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(value);
@@ -52,9 +52,9 @@ async function call<T>(token: string, body?: unknown): Promise<T> {
 export function Signing({ token }: { token: string }) {
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<Step>("start");
+  const [step, setStep] = useState<Step>("angebot");
   const [consent, setConsent] = useState(false);
-  const [readContract, setReadContract] = useState(false);
+  const [accepting, setAccepting] = useState(false);
   const [sepa, setSepa] = useState({ holder: "", street: "", zip: "", city: "", iban: "", bic: "", bank: "" });
   const [signature, setSignature] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
@@ -70,20 +70,21 @@ export function Signing({ token }: { token: string }) {
       .catch((e: Error) => setError(e.message));
   }, [token]);
 
-  const steps = useMemo<{ id: Step; label: string }[]>(
-    () => [
-      { id: "start", label: "Start" },
-      { id: "angebot", label: "Angebot" },
-      { id: "vertrag", label: "Vertrag" },
-      ...(view?.sepa_required ? [{ id: "sepa" as Step, label: "SEPA-Mandat" }] : []),
-      { id: "unterschrift", label: "Unterschrift" },
-    ],
-    [view?.sepa_required]
-  );
+  const steps: { id: Step; label: string }[] = [
+    { id: "angebot", label: "Angebot" },
+    { id: "unterschrift", label: "Unterschrift" },
+  ];
   const index = steps.findIndex((s) => s.id === step);
-  const next = () => setStep(steps[Math.min(steps.length - 1, index + 1)].id);
-  const back = () => setStep(steps[Math.max(0, index - 1)].id);
   const ibanOk = validIban(sepa.iban);
+
+  async function accept() {
+    setAccepting(true);
+    // Bestätigung landet im Protokoll; die Unterschrift bleibt auch ohne sie möglich
+    await call(token, { action: "annehmen" }).catch(() => undefined);
+    setAccepting(false);
+    setStep("unterschrift");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   async function sign() {
     setSigning(true);
@@ -174,53 +175,20 @@ export function Signing({ token }: { token: string }) {
             </nav>
 
             <section className="min-w-0">
-              {step === "start" && (
+              {step === "angebot" && (
                 <div className="flex flex-col gap-6">
                   <div>
-                    <p className="text-[11px] tracking-[0.25em] text-snow/50 uppercase">Unterlagen für</p>
+                    <p className="text-[11px] tracking-[0.25em] text-snow/50 uppercase">{view.offer.label} für</p>
                     <h1 className="mt-2 text-3xl font-medium tracking-tight md:text-4xl">
                       {view.customer.name.replace(/\.$/, "")}
                       <span className="text-dune">.</span>
                     </h1>
-                    <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-snow/70">
-                      {view.grid_signer} von {view.company.name} hat Ihnen {view.offer.label}, den {view.contract.title}
-                      {view.sepa_required ? " und ein SEPA-Lastschriftmandat" : ""} zur Unterschrift gesendet. {view.company.name} hat bereits unterschrieben.
+                    <p className="mt-3 text-[13px] text-snow/55">
+                      von {view.grid_signer}, {view.company.name} · vom {date(view.offer.date)}
+                      {view.offer.valid_until ? ` · gültig bis ${date(view.offer.valid_until)}` : ""}
                     </p>
                   </div>
-                  <ul className="grid gap-2 sm:grid-cols-3">
-                    {[view.offer.label, view.contract.title, ...(view.sepa_required ? ["SEPA-Lastschriftmandat"] : [])].map((label) => (
-                      <li key={label} className="flex items-center gap-2 rounded-2xl border border-snow/10 bg-surface px-4 py-3 text-[14px]">
-                        <FileText className="h-4 w-4 text-snow/50" />
-                        {label}
-                      </li>
-                    ))}
-                  </ul>
-                  <label className="flex max-w-2xl cursor-pointer items-start gap-3 rounded-2xl border border-snow/10 bg-surface p-4 text-[14px] leading-relaxed">
-                    <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 accent-current" />
-                    <span>
-                      Ich bin einverstanden, diese Unterlagen elektronisch zu unterschreiben. Mir ist bekannt, dass ich sie jederzeit als PDF speichern kann und
-                      nach der Unterschrift eine Kopie per E-Mail erhalte.
-                    </span>
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="primary" disabled={!consent} onClick={next}>
-                      Unterlagen prüfen
-                    </Button>
-                    <Button variant="ghost" onClick={() => setDeclining(true)}>
-                      Ablehnen
-                    </Button>
-                  </div>
-                  <p className="text-[12px] text-snow/45">Gültig bis {date(view.expires_at)}.</p>
-                </div>
-              )}
-
-              {step === "angebot" && (
-                <Panel eyebrow="Schritt 1" title={view.offer.label} onBack={back} onNext={next} nextLabel="Weiter zum Vertrag">
-                  <p className="text-[13px] text-snow/55">
-                    vom {date(view.offer.date)}
-                    {view.offer.valid_until ? ` · gültig bis ${date(view.offer.valid_until)}` : ""}
-                  </p>
-                  {view.offer.intro && <p className="text-[14px] whitespace-pre-line text-snow/75">{view.offer.intro}</p>}
+                  {view.offer.intro && <p className="max-w-2xl text-[15px] leading-relaxed whitespace-pre-line text-snow/75">{view.offer.intro}</p>}
                   <ul className="divide-y divide-snow/[0.08] rounded-2xl border border-snow/10 bg-surface">
                     {view.offer.items.map((item, i) =>
                       item.kind === "text" ? (
@@ -243,117 +211,137 @@ export function Signing({ token }: { token: string }) {
                       )
                     )}
                   </ul>
-                  <dl className="ml-auto w-full max-w-xs rounded-2xl bg-sky p-4 text-[13px] text-snow">
-                    <div className="flex justify-between text-snow/60">
-                      <dt>Netto</dt>
-                      <dd className="tabular-nums">{money(view.offer.amount_net, view.offer.currency)}</dd>
-                    </div>
-                    <div className="mt-1 flex justify-between text-snow/60">
-                      <dt>USt</dt>
-                      <dd className="tabular-nums">{money(view.offer.amount_vat, view.offer.currency)}</dd>
-                    </div>
-                    <div className="mt-3 flex items-baseline justify-between">
-                      <dt className="text-[11px] tracking-[0.2em] text-snow/50 uppercase">Gesamt</dt>
-                      <dd className="text-xl font-medium tabular-nums">{money(view.offer.amount_gross, view.offer.currency)}</dd>
-                    </div>
-                  </dl>
-                </Panel>
-              )}
-
-              {step === "vertrag" && (
-                <Panel
-                  eyebrow="Schritt 2"
-                  title={view.contract.title}
-                  onBack={back}
-                  onNext={next}
-                  nextDisabled={!readContract}
-                  nextLabel={view.sepa_required ? "Weiter zum SEPA-Mandat" : "Weiter zur Unterschrift"}
-                >
-                  <div className="max-h-[60dvh] overflow-y-auto rounded-2xl border border-snow/10 bg-surface p-5 text-[14px] leading-relaxed">
-                    {view.contract.sections.map((section) => (
-                      <div key={section.heading} className="mb-5 last:mb-0">
-                        <h3 className="mb-1.5 font-medium">{section.heading}</h3>
-                        {section.body.split("\n").map((p, i) => (
-                          <p key={i} className="mb-2 text-snow/75">
-                            {p}
-                          </p>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                  <label className="flex cursor-pointer items-start gap-3 text-[14px]">
-                    <input type="checkbox" checked={readContract} onChange={(e) => setReadContract(e.target.checked)} className="mt-1 h-4 w-4" />
-                    Ich habe den {view.contract.title} gelesen.
-                  </label>
-                </Panel>
-              )}
-
-              {step === "sepa" && (
-                <Panel eyebrow="Schritt 3" title="SEPA-Lastschriftmandat" onBack={back} onNext={next} nextDisabled={!sepa.holder.trim() || !ibanOk} nextLabel="Weiter zur Unterschrift">
-                  <div className="rounded-2xl border border-snow/10 bg-surface p-4 text-[13px] text-snow/70">
-                    <p>
-                      Zahlungsempfänger: <span className="text-snow">{view.company.name}</span> · Gläubiger-ID <span className="text-snow">{view.company.creditor_id}</span>
-                    </p>
-                    <p className="mt-1">Mandatsreferenz: wird mit der Unterschrift vergeben · wiederkehrende Zahlungen</p>
-                  </div>
-                  {SEPA_TEXT.replaceAll("{Gläubiger}", view.company.name)
-                    .split("\n")
-                    .map((p, i) => (
-                      <p key={i} className={cn("text-[14px] leading-relaxed", i ? "text-snow/55" : "text-snow/80")}>
-                        {p}
+                  <div className="grid gap-3 sm:grid-cols-[1fr_minmax(0,18rem)]">
+                    <div className="rounded-2xl border border-snow/10 bg-surface p-4 text-[13px] leading-relaxed text-snow/65">
+                      <p className="text-[11px] tracking-[0.2em] text-snow/50 uppercase">Zahlungsart</p>
+                      <p className="mt-1 text-[15px] font-medium text-snow">{view.sepa_required ? "SEPA-Lastschrift" : "Überweisung"}</p>
+                      <p className="mt-1">
+                        {view.sepa_required
+                          ? "Die Rechnungsbeträge ziehen wir per SEPA-Basislastschrift ein. Das Mandat erteilen Sie mit der Unterschrift im nächsten Schritt."
+                          : "Sie erhalten Rechnungen per E-Mail und überweisen den Betrag."}
                       </p>
-                    ))}
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Kontoinhaber" className="sm:col-span-2">
-                      {(id) => <Input id={id} value={sepa.holder} onChange={(e) => setSepa({ ...sepa, holder: e.target.value })} autoComplete="organization" />}
-                    </Field>
-                    <Field label="Straße" className="sm:col-span-2">
-                      {(id) => <Input id={id} value={sepa.street} onChange={(e) => setSepa({ ...sepa, street: e.target.value })} autoComplete="street-address" />}
-                    </Field>
-                    <Field label="PLZ">{(id) => <Input id={id} value={sepa.zip} onChange={(e) => setSepa({ ...sepa, zip: e.target.value })} autoComplete="postal-code" />}</Field>
-                    <Field label="Ort">{(id) => <Input id={id} value={sepa.city} onChange={(e) => setSepa({ ...sepa, city: e.target.value })} autoComplete="address-level2" />}</Field>
-                    <Field label="IBAN" className="sm:col-span-2" hint={sepa.iban && !ibanOk ? "Diese IBAN ist ungültig – bitte prüfen." : undefined}>
-                      {(id) => (
-                        <Input
-                          id={id}
-                          value={sepa.iban}
-                          onChange={(e) => setSepa({ ...sepa, iban: formatIban(e.target.value) })}
-                          placeholder="DE00 0000 0000 0000 0000 00"
-                          inputMode="text"
-                          autoComplete="off"
-                          className={cn("font-medium tracking-wide", sepa.iban && !ibanOk && "border-error/60")}
-                        />
-                      )}
-                    </Field>
-                    <Field label="BIC (optional)">{(id) => <Input id={id} value={sepa.bic} onChange={(e) => setSepa({ ...sepa, bic: e.target.value.toUpperCase() })} />}</Field>
-                    <Field label="Kreditinstitut (optional)">{(id) => <Input id={id} value={sepa.bank} onChange={(e) => setSepa({ ...sepa, bank: e.target.value })} />}</Field>
+                    </div>
+                    <dl className="rounded-2xl bg-sky p-4 text-[13px] text-snow">
+                      <div className="flex justify-between text-snow/60">
+                        <dt>Netto</dt>
+                        <dd className="tabular-nums">{money(view.offer.amount_net, view.offer.currency)}</dd>
+                      </div>
+                      <div className="mt-1 flex justify-between text-snow/60">
+                        <dt>USt</dt>
+                        <dd className="tabular-nums">{money(view.offer.amount_vat, view.offer.currency)}</dd>
+                      </div>
+                      <div className="mt-3 flex items-baseline justify-between">
+                        <dt className="text-[11px] tracking-[0.2em] text-snow/50 uppercase">Gesamt</dt>
+                        <dd className="text-xl font-medium tabular-nums">{money(view.offer.amount_gross, view.offer.currency)}</dd>
+                      </div>
+                    </dl>
                   </div>
-                </Panel>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="primary" icon={<Check className="h-4 w-4" />} loading={accepting} loadingText="Einen Moment …" onClick={accept}>
+                      Angebot annehmen
+                    </Button>
+                    <Button variant="ghost" onClick={() => setDeclining(true)}>
+                      Ablehnen
+                    </Button>
+                  </div>
+                  <p className="text-[12px] text-snow/45">
+                    Nach der Annahme unterschreiben Sie in einem Schritt die Mappe mit {view.contract.title}
+                    {view.sepa_required ? " und SEPA-Lastschriftmandat" : ""}. {view.company.name} hat bereits unterschrieben. Link gültig bis {date(view.expires_at)}.
+                  </p>
+                </div>
               )}
 
               {step === "unterschrift" && (
-                <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-6">
                   <div>
-                    <p className="text-[11px] tracking-[0.25em] text-snow/50 uppercase">Letzter Schritt</p>
-                    <h2 className="mt-1 text-2xl font-medium tracking-tight">
+                    <p className="text-[11px] tracking-[0.25em] text-snow/50 uppercase">Ihre Mappe</p>
+                    <h2 className="mt-1 text-2xl font-medium tracking-tight md:text-3xl">
                       Unterschreiben<span className="text-dune">.</span>
                     </h2>
+                    <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-snow/65">
+                      Eine Unterschrift für alle Unterlagen: {view.offer.label}, {view.contract.title}
+                      {view.sepa_required ? " und SEPA-Lastschriftmandat" : ""}.
+                    </p>
                   </div>
+
+                  <Doc title={view.contract.title} hint="Gegenseitig unterschrieben, sobald Sie unterschreiben">
+                    <div className="max-h-[50dvh] overflow-y-auto pr-1 text-[14px] leading-relaxed">
+                      {view.contract.sections.map((section) => (
+                        <div key={section.heading} className="mb-5 last:mb-0">
+                          <h3 className="mb-1.5 font-medium">{section.heading}</h3>
+                          {section.body.split("\n").map((p, i) => (
+                            <p key={i} className="mb-2 text-snow/75">
+                              {p}
+                            </p>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </Doc>
+
+                  {view.sepa_required && (
+                    <Doc title="SEPA-Lastschriftmandat" hint={`Zahlungsempfänger ${view.company.name} · Gläubiger-ID ${view.company.creditor_id} · Mandatsreferenz wird mit der Unterschrift vergeben`}>
+                      {SEPA_TEXT.replaceAll("{Gläubiger}", view.company.name)
+                        .split("\n")
+                        .map((p, i) => (
+                          <p key={i} className={cn("mb-2 text-[13px] leading-relaxed", i ? "text-snow/55" : "text-snow/80")}>
+                            {p}
+                          </p>
+                        ))}
+                      <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                        <Field label="Kontoinhaber" className="sm:col-span-2">
+                          {(id) => <Input id={id} value={sepa.holder} onChange={(e) => setSepa({ ...sepa, holder: e.target.value })} autoComplete="organization" />}
+                        </Field>
+                        <Field label="Straße" className="sm:col-span-2">
+                          {(id) => <Input id={id} value={sepa.street} onChange={(e) => setSepa({ ...sepa, street: e.target.value })} autoComplete="street-address" />}
+                        </Field>
+                        <Field label="PLZ">{(id) => <Input id={id} value={sepa.zip} onChange={(e) => setSepa({ ...sepa, zip: e.target.value })} autoComplete="postal-code" />}</Field>
+                        <Field label="Ort">{(id) => <Input id={id} value={sepa.city} onChange={(e) => setSepa({ ...sepa, city: e.target.value })} autoComplete="address-level2" />}</Field>
+                        <Field label="IBAN" className="sm:col-span-2" hint={sepa.iban && !ibanOk ? "Diese IBAN ist ungültig – bitte prüfen." : undefined}>
+                          {(id) => (
+                            <Input
+                              id={id}
+                              value={sepa.iban}
+                              onChange={(e) => setSepa({ ...sepa, iban: formatIban(e.target.value) })}
+                              placeholder="DE00 0000 0000 0000 0000 00"
+                              inputMode="text"
+                              autoComplete="off"
+                              className={cn("font-medium tracking-wide", sepa.iban && !ibanOk && "border-error/60")}
+                            />
+                          )}
+                        </Field>
+                        <Field label="BIC (optional)">{(id) => <Input id={id} value={sepa.bic} onChange={(e) => setSepa({ ...sepa, bic: e.target.value.toUpperCase() })} />}</Field>
+                        <Field label="Kreditinstitut (optional)">{(id) => <Input id={id} value={sepa.bank} onChange={(e) => setSepa({ ...sepa, bank: e.target.value })} />}</Field>
+                      </div>
+                    </Doc>
+                  )}
+
                   <div className="rounded-2xl border border-snow/10 bg-surface p-4">
                     <p className="mb-3 text-[13px] text-snow/60">Unterschrift von {view.signer_name}</p>
                     <SignaturePad onChange={setSignature} name={view.signer_name} />
                   </div>
-                  <p className="max-w-2xl text-[13px] leading-relaxed text-snow/60">
-                    Mit „Verbindlich unterschreiben“ nehme ich {view.offer.label} an, schließe den {view.contract.title} mit {view.company.name}
-                    {view.sepa_required ? ` und erteile das SEPA-Lastschriftmandat für das Konto ${sepa.iban.replace(/^(.{7}).*(.{4})$/, "$1 … $2")}` : ""}. Meine
-                    Unterschrift gilt für alle Unterlagen dieser Mappe.
-                  </p>
+                  <label className="flex max-w-2xl cursor-pointer items-start gap-3 text-[13px] leading-relaxed text-snow/70">
+                    <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0" />
+                    <span>
+                      Ich habe die Unterlagen gelesen und unterschreibe sie elektronisch. Damit nehme ich {view.offer.label} an, schließe den {view.contract.title} mit{" "}
+                      {view.company.name}
+                      {view.sepa_required && sepa.iban ? ` und erteile das SEPA-Lastschriftmandat für das Konto ${sepa.iban.replace(/^(.{7}).*(.{4})$/, "$1 … $2")}` : ""}. Eine Kopie
+                      kommt per E-Mail.
+                    </span>
+                  </label>
                   {signError && <p className="rounded-2xl bg-error/10 px-4 py-3 text-[13px] text-error">{signError}</p>}
                   <div className="flex flex-wrap gap-2">
-                    <Button variant="ghost" onClick={back}>
-                      Zurück
+                    <Button variant="ghost" onClick={() => setStep("angebot")}>
+                      Zurück zum Angebot
                     </Button>
-                    <Button variant="primary" icon={<ShieldCheck className="h-4 w-4" />} disabled={!signature || !consent} loading={signing} loadingText="Wird unterschrieben …" onClick={sign}>
+                    <Button
+                      variant="primary"
+                      icon={<ShieldCheck className="h-4 w-4" />}
+                      disabled={!signature || !consent || (view.sepa_required && (!sepa.holder.trim() || !ibanOk))}
+                      loading={signing}
+                      loadingText="Wird unterschrieben …"
+                      onClick={sign}
+                    >
                       Verbindlich unterschreiben
                     </Button>
                   </div>
@@ -380,41 +368,17 @@ export function Signing({ token }: { token: string }) {
   );
 }
 
-function Panel({
-  eyebrow,
-  title,
-  children,
-  onBack,
-  onNext,
-  nextLabel,
-  nextDisabled,
-}: {
-  eyebrow: string;
-  title: string;
-  children: React.ReactNode;
-  onBack: () => void;
-  onNext: () => void;
-  nextLabel: string;
-  nextDisabled?: boolean;
-}) {
+function Doc({ title, hint, children }: { title: string; hint: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <p className="text-[11px] tracking-[0.25em] text-snow/50 uppercase">{eyebrow}</p>
-        <h2 className="mt-1 text-2xl font-medium tracking-tight">
-          {title}
-          <span className="text-dune">.</span>
-        </h2>
+    <div className="rounded-2xl border border-snow/10 bg-surface p-4 md:p-5">
+      <div className="mb-3 flex items-start gap-2.5">
+        <FileText className="mt-0.5 h-4 w-4 shrink-0 text-snow/50" />
+        <div>
+          <h3 className="text-[15px] font-medium">{title}</h3>
+          <p className="text-[12px] text-snow/50">{hint}</p>
+        </div>
       </div>
       {children}
-      <div className="flex flex-wrap gap-2">
-        <Button variant="ghost" onClick={onBack}>
-          Zurück
-        </Button>
-        <Button variant="primary" disabled={nextDisabled} onClick={onNext}>
-          {nextLabel}
-        </Button>
-      </div>
     </div>
   );
 }

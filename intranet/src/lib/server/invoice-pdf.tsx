@@ -115,10 +115,12 @@ export type PdfInput = {
   /** Nummer und Datum des Originals (Storno, Gutschrift, Korrektur) */
   reference?: { label: string; number: string | null; date: string | null } | null;
   qr?: string | null;
+  /** Zahlungsart im Angebot; Standard SEPA-Lastschrift */
+  payment?: "sepa" | "ueberweisung";
 };
 
 /** Eine Belegseite (Rechnung, Storno, Gutschrift, Angebot); auch Teil der Unterschriftsmappe */
-export function InvoicePage({ doc, settings, reference, qr }: PdfInput) {
+export function InvoicePage({ doc, settings, reference, qr, payment = "sepa" }: PdfInput) {
   const c = settings.company;
   const title = DOC_TITLE[doc.kind] ?? KIND_LABEL[doc.kind];
   const label = `${title} ${doc.number ?? "(Entwurf)"}`;
@@ -281,6 +283,18 @@ export function InvoicePage({ doc, settings, reference, qr }: PdfInput) {
                   <Image src={qr} style={{ width: 52, height: 52 }} />
                 </View>
               )}
+            </View>
+          ) : doc.kind === "angebot" ? (
+            <View style={s.pay}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={s.eyebrowDark}>Zahlungsart</Text>
+                <Text style={s.payLead}>{payment === "sepa" ? "SEPA-Lastschrift." : "Überweisung."}</Text>
+                <Text style={s.payText}>
+                  {payment === "sepa"
+                    ? "Die Rechnungsbeträge ziehen wir per SEPA-Basislastschrift ein. Das Mandat erteilen Sie mit der Annahme dieses Angebots."
+                    : `Nach Rechnung auf ${c.bank} · IBAN ${c.iban}.`}
+                </Text>
+              </View>
             </View>
           ) : (
             <View style={{ flex: 1 }} />

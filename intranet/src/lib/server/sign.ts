@@ -174,14 +174,14 @@ export async function createEnvelope(offerId: string, input: CreateInput, user: 
     mail: {
       from: SHARED_MAILBOX,
       to: row.signer_email,
-      subject: `Angebot ${offer.number} und Agenturvertrag zur Unterschrift – ${settings.company.name}`,
+      subject: `Ihr Angebot ${offer.number} – ${settings.company.name}`,
       body: [
         `Guten Tag ${input.signer_name.trim()},`,
         "",
-        `anbei unser Angebot ${offer.number} über ${money(offer.amount_net, offer.currency)} netto${row.sepa_required ? ", der Agenturvertrag und das SEPA-Lastschriftmandat" : " und der Agenturvertrag"}. Wir haben bereits unterschrieben.`,
-        "",
-        "Über diesen Link sehen Sie alle Unterlagen ein und unterschreiben in einem Schritt elektronisch:",
+        `vielen Dank für Ihr Interesse. Über den Link finden Sie unser Angebot ${offer.number} über ${money(offer.amount_net, offer.currency)} netto${row.sepa_required ? " (Zahlungsart SEPA-Lastschrift)" : ""}:`,
         link,
+        "",
+        `Wenn alles passt, klicken Sie auf „Angebot annehmen“. Danach unterschreiben Sie in einem Schritt die Mappe mit Agenturvertrag${row.sepa_required ? " und SEPA-Lastschriftmandat" : ""}; wir haben bereits unterschrieben.`,
         "",
         `Der Link ist bis zum ${new Date(row.expires_at).toLocaleDateString("de-DE")} gültig. Nach der Unterschrift erhalten Sie die von beiden Seiten unterschriebenen Unterlagen per E-Mail.`,
         "",
@@ -354,6 +354,15 @@ export async function publicPdf(token: string) {
   }
   if (row.status === "widerrufen") throw new SignError("Diese Mappe wurde zurückgezogen");
   return { bytes: await renderBundle(await bundleInput(row, await offerOf(row))), name: "Unterlagen.pdf" };
+}
+
+/** Kunde bestätigt das Angebot und geht zur Unterschrift der Mappe */
+export async function acceptOffer(token: string, client: Client) {
+  if (DEMO) return;
+  const row = await byToken(token);
+  if (!["versendet", "geoeffnet"].includes(row.status) || expired(row)) throw new SignError("Die Mappe ist nicht mehr offen");
+  if (row.audit.some((e) => e.event === "angenommen")) return;
+  await appendAudit(row.id, [{ at: new Date().toISOString(), event: "angenommen", by: row.signer_name, ...client }]);
 }
 
 export async function decline(token: string, reason: string, client: Client) {

@@ -1,4 +1,4 @@
-import { decline, publicView, signEnvelope, SignError, type Client, type SignInput } from "@/lib/server/sign";
+import { acceptOffer, decline, publicView, signEnvelope, SignError, type Client, type SignInput } from "@/lib/server/sign";
 
 // Öffentliche API der Unterschriftsseite (sign.grid-agency.de). Zugang nur
 // über den geheimen Link; keine Anmeldung.
@@ -31,6 +31,10 @@ export async function POST(request: Request, { params }: Context) {
   const { token } = await params;
   const body = (await request.json().catch(() => ({}))) as { action?: string; reason?: string } & SignInput;
   try {
+    if (body.action === "annehmen") {
+      await acceptOffer(token, client(request));
+      return Response.json({ ok: true });
+    }
     if (body.action === "ablehnen") {
       await decline(token, String(body.reason ?? ""), client(request));
       return Response.json({ ok: true });
