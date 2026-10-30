@@ -1,12 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-// sign.grid-agency.de zeigt nur die Unterschriftsseiten (/s/…) und ihre API;
-// alles andere geht auf die Website. Das Intranet bleibt unter seiner Domain.
+// sign.grid-agency.de zeigt nur die Unterschriftsseiten (/s/…), die
+// Terminwahl für Bewerber*innen (/t/…) und ihre APIs; alles andere geht auf
+// die Website. Das Intranet bleibt unter seiner Domain.
 export function proxy(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
   if (!host.startsWith("sign.")) return NextResponse.next();
   const { pathname } = request.nextUrl;
-  if (pathname.startsWith("/s/") || pathname.startsWith("/api/sign/")) return NextResponse.next();
+  const allowed = ["/s/", "/api/sign/", "/t/", "/api/termin/"];
+  if (allowed.some((prefix) => pathname.startsWith(prefix))) return NextResponse.next();
   return NextResponse.redirect("https://grid-agency.de", 307);
 }
 

@@ -341,3 +341,54 @@ body {
     display: none;
   }
 }
+
+/* Terminwahl für Bewerber*innen: Aurora-Schrift, Einblenden, Haken */
+.text-aurora {
+  background-image: var(--aurora);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: rainbow-slide 6s linear infinite;
+}
+.border-aurora {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--aurora) border-box;
+}
+.rise-in {
+  animation: rise-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: var(--length);
+  }
+}
+.draw {
+  stroke-dasharray: var(--length);
+  animation: draw 0.6s ease-out both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes glow-pulse {
+  from {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+.glow-pulse {
+  animation: glow-pulse 1s ease-out 0.7s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .text-aurora,
+  .rise-in,
+  .draw,
+  .glow-pulse {
+    animation: none;
+  }
+}

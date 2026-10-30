@@ -235,6 +235,12 @@ export type Application = {
   link: string | null;
   /** Hochgeladene Unterlagen (Bucket „bewerbungen“) */
   files: ApplicationFile[];
+  /** Einladung zum Vorstellungsgespräch (Terminwahl über Link) */
+  invited_at: string | null;
+  invited_by: string | null;
+  invited_by_name: string | null;
+  interview_at: string | null;
+  interview_url: string | null;
   owner: string | null;
   next_step: string | null;
   next_step_at: string | null;

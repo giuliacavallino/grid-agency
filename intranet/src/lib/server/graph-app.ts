@@ -135,7 +135,15 @@ export async function listInboxSince(mailbox: string, since: Date) {
  * Unterschrift). Braucht die Anwendungsberechtigung Mail.Send. */
 export async function sendAppMail(
   mailbox: string,
-  mail: { to: string[]; cc?: string[]; subject: string; body: string; attachments?: { name: string; contentType: string; contentBytes: string }[] }
+  mail: {
+    to: string[];
+    cc?: string[];
+    subject: string;
+    body: string;
+    /** body ist HTML (z. B. Mail mit Button) statt Klartext */
+    html?: boolean;
+    attachments?: { name: string; contentType: string; contentBytes: string }[];
+  }
 ) {
   const recipients = (list: string[] = []) => list.map((address) => ({ emailAddress: { address } }));
   await appGraph(`${mailboxPath(mailbox)}/sendMail`, {
@@ -143,7 +151,7 @@ export async function sendAppMail(
     body: JSON.stringify({
       message: {
         subject: mail.subject,
-        body: { contentType: "Text", content: mail.body },
+        body: { contentType: mail.html ? "HTML" : "Text", content: mail.body },
         toRecipients: recipients(mail.to),
         ccRecipients: recipients(mail.cc),
         attachments: (mail.attachments ?? []).map((a) => ({ "@odata.type": "#microsoft.graph.fileAttachment", ...a })),
