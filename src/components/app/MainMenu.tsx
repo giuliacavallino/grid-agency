@@ -18,6 +18,7 @@ const items: Item[] = [
   { kind: "section", id: "team", label: "Über uns" },
   { kind: "page", href: "/jobs", label: "Jobs" },
   { kind: "page", href: "/faq", label: "FAQ" },
+  { kind: "page", href: "/ebook", label: "E-Book" },
 ];
 
 /** Vollbild-Menü (mobil) als Glasfläche. */

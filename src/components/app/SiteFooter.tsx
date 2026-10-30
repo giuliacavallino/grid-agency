@@ -13,6 +13,7 @@ const columns: { title: string; links: { label: string; href?: string; section?:
       { label: "Events", href: "/events" },
       { label: "Jobs", href: "/jobs" },
       { label: "FAQ", href: "/faq" },
+      { label: "E-Book", href: "/ebook" },
     ],
   },
   {
