@@ -3,8 +3,9 @@ import { CLIENT_ID, TENANT_ID } from "@/lib/config";
 
 // App-Zugriff (ohne angemeldete Person) auf die Postfächer aus MAILBOXES für
 // den Mail-Eingang. Braucht in Entra ein Client-Secret (MS_CLIENT_SECRET) und
-// die Anwendungsberechtigung Mail.Read mit Admin-Zustimmung – am besten per
-// Application Access Policy auf diese Postfächer beschränkt.
+// die Anwendungsberechtigung Mail.ReadWrite mit Admin-Zustimmung (ReadWrite,
+// weil erkannte Rechnungen in „Eingangsrechnungen“ verschoben werden) – am
+// besten per Application Access Policy auf diese Postfächer beschränkt.
 
 let cached: { token: string; expires: number } | null = null;
 
@@ -73,6 +74,48 @@ export async function attachmentNames(mail: GraphMail) {
     `${mailboxPath(mail.mailbox)}/messages/${encodeURIComponent(mail.id)}/attachments?$select=name,isInline`
   );
   return data.value.filter((a) => !a.isInline).map((a) => a.name);
+}
+
+/** Ordner für erfasste Rechnungen, je Postfach auf oberster Ebene */
+export const INVOICE_FOLDER = "Eingangsrechnungen";
+const invoiceFolders = new Map<string, string>();
+
+async function invoiceFolder(mailbox: string) {
+  const known = invoiceFolders.get(mailbox);
+  if (known) return known;
+  const find = async () => {
+    const filter = encodeURIComponent(`displayName eq '${INVOICE_FOLDER}'`);
+    const data = await appGraph<{ value: { id: string }[] }>(`${mailboxPath(mailbox)}/mailFolders?$filter=${filter}&$select=id`);
+    return data.value[0]?.id ?? null;
+  };
+  let id = await find();
+  if (!id) {
+    try {
+      const created = await appGraph<{ id: string }>(`${mailboxPath(mailbox)}/mailFolders`, {
+        method: "POST",
+        body: JSON.stringify({ displayName: INVOICE_FOLDER }),
+      });
+      id = created.id;
+    } catch (error) {
+      // Parallel angelegt (ErrorFolderExists) → nochmal suchen
+      id = await find();
+      if (!id) throw error;
+    }
+  }
+  invoiceFolders.set(mailbox, id);
+  return id;
+}
+
+/** Verschiebt eine Rechnungsmail nach „Eingangsrechnungen“, damit sie im
+ * Posteingang niemand ein zweites Mal bearbeitet. Liefert die neue Mail-ID
+ * (Graph vergibt beim Verschieben eine neue). */
+export async function moveToInvoiceFolder(mailbox: string, id: string) {
+  const destinationId = await invoiceFolder(mailbox);
+  const moved = await appGraph<{ id: string }>(`${mailboxPath(mailbox)}/messages/${encodeURIComponent(id)}/move`, {
+    method: "POST",
+    body: JSON.stringify({ destinationId }),
+  });
+  return moved.id;
 }
 
 /** Mails im Posteingang seit einem Zeitpunkt (für den täglichen Abgleich). */

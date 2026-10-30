@@ -52,7 +52,8 @@ export const TABLES = {
   invoices: {
     columns: [
       "stage", "position", "vendor", "vendor_email", "invoice_number", "invoice_date", "due_date",
-      "amount", "currency", "description", "notes",
+      "amount", "currency", "net_amount", "vat_amount", "payment_method", "category", "paid",
+      "description", "notes",
     ],
     filters: ["stage"],
     order: { column: "position", ascending: true },

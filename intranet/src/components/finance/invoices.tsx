@@ -8,9 +8,18 @@ import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
 import { createRow, deleteRow, updateRow, useResource, useRows } from "@/lib/data";
 import { formatDate, relativeTime } from "@/lib/format";
 import { graphErrorMessage, graphFor, useAsync } from "@/lib/graph";
-import { INVOICE_STAGES, topPosition, type Invoice, type InvoiceStage, type Settings } from "@/lib/sales/types";
+import {
+  INVOICE_CATEGORIES,
+  INVOICE_STAGES,
+  PAYMENT_METHODS,
+  topPosition,
+  type Invoice,
+  type InvoiceStage,
+  type PaymentMethod,
+  type Settings,
+} from "@/lib/sales/types";
 import { Board, BoardCard } from "@/components/board";
-import { Button, Dialog, Empty, Field, Input, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
+import { Button, Dialog, Empty, Field, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 import { Attachments } from "@/components/sales/mail/reading-pane";
 import { PageBar } from "@/components/sales/shell";
 
@@ -380,14 +389,20 @@ function ApprovalPane({
   onDetails: () => void;
   onBack: () => void;
 }) {
+  const toast = useToast();
   const late = overdue(invoice);
   const facts: [string, React.ReactNode, boolean?][] = [
     ["Nr.", invoice.invoice_number ?? "–"],
     ["Datum", formatDate(invoice.invoice_date)],
     ["Fällig", formatDate(invoice.due_date), late],
+    ["Netto", money(invoice.net_amount, invoice.currency)],
+    ["USt", money(invoice.vat_amount, invoice.currency)],
     ["Eingang", relativeTime(invoice.received_at ?? invoice.created_at)],
     ["Von", invoice.vendor_email ?? (invoice.mailbox ? mailboxLabel(invoice.mailbox) : "manuell erfasst")],
   ];
+  // Zahlung und Kategorie direkt hier ändern, ohne Details zu öffnen
+  const change = (patch: Partial<Invoice>) =>
+    updateRow<Invoice>("invoices", invoice.id, patch).catch(() => toast("Speichern fehlgeschlagen", "error"));
   return (
     <div className="flex flex-col gap-4 p-3 md:p-5">
       <div className="rounded-3xl border border-snow/10 bg-surface p-5 md:p-6">
@@ -417,14 +432,48 @@ function ApprovalPane({
           </span>
         </div>
 
-        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-5">
+        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {facts.map(([label, value, alert]) => (
             <div key={label} className="min-w-0">
               <dt className="text-[11px] font-semibold tracking-[0.1em] text-snow/45 uppercase">{label}</dt>
               <dd className={clsx("mt-1 truncate text-[14px] font-medium", alert && "text-error")}>{value}</dd>
             </div>
           ))}
+          <div className="min-w-0">
+            <dt>
+              <label htmlFor={`pay-${invoice.id}`} className="text-[11px] font-semibold tracking-[0.1em] text-snow/45 uppercase">
+                Zahlung
+              </label>
+            </dt>
+            <dd className="mt-0.5">
+              <InlineSelect
+                id={`pay-${invoice.id}`}
+                value={invoice.payment_method ?? ""}
+                onChange={(value) => change({ payment_method: (value || null) as PaymentMethod | null })}
+                options={PAYMENT_METHODS.map((m) => [m.id, m.label])}
+              />
+            </dd>
+          </div>
+          <div className="min-w-0">
+            <dt>
+              <label htmlFor={`cat-${invoice.id}`} className="text-[11px] font-semibold tracking-[0.1em] text-snow/45 uppercase">
+                Kategorie
+              </label>
+            </dt>
+            <dd className="mt-0.5">
+              <InlineSelect
+                id={`cat-${invoice.id}`}
+                value={invoice.category ?? ""}
+                onChange={(value) => change({ category: value || null })}
+                options={INVOICE_CATEGORIES.map((c) => [c, c])}
+              />
+            </dd>
+          </div>
         </dl>
+
+        <div className="mt-5">
+          <PaidCheckbox invoice={invoice} />
+        </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-snow/[0.08] pt-4 text-[13px]">
           <button type="button" onClick={onDetails} className="inline-flex items-center gap-1.5 text-snow/70 hover:text-snow">
@@ -438,6 +487,53 @@ function ApprovalPane({
 
       {invoice.mailbox && invoice.graph_id && <BelegPreview mailbox={invoice.mailbox} messageId={invoice.graph_id} />}
     </div>
+  );
+}
+
+/** Auswahl, die wie ein Wert aussieht (für die Eckdaten in der Freigabe) */
+function InlineSelect({
+  id,
+  value,
+  onChange,
+  options,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: [string, string][];
+}) {
+  return (
+    <select
+      id={id}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="-ml-1 max-w-full cursor-pointer truncate rounded-lg bg-transparent px-1 py-0.5 text-[14px] font-medium hover:bg-snow/[0.06] focus-visible:outline-2 focus-visible:outline-snow"
+    >
+      <option value="">–</option>
+      {options.map(([key, label]) => (
+        <option key={key} value={key}>
+          {label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** „Schon bezahlt“ wird sofort gespeichert */
+function PaidCheckbox({ invoice }: { invoice: Invoice }) {
+  const toast = useToast();
+  return (
+    <label className="inline-flex cursor-pointer items-center gap-2.5 text-[14px]">
+      <input
+        type="checkbox"
+        checked={!!invoice.paid}
+        onChange={(event) =>
+          updateRow<Invoice>("invoices", invoice.id, { paid: event.target.checked }).catch(() => toast("Speichern fehlgeschlagen", "error"))
+        }
+        className="h-4 w-4 accent-snow"
+      />
+      Schon bezahlt <span className="text-snow/50">(Karte, PayPal, Lastschrift)</span>
+    </label>
   );
 }
 
@@ -523,34 +619,61 @@ function InvoiceCard({ invoice, overlay }: { invoice: Invoice; overlay?: boolean
       )}
       <div className="mt-2.5 flex items-center justify-between text-[12px] text-snow/45">
         <span>{relativeTime(invoice.received_at ?? invoice.created_at)}</span>
-        {invoice.mailbox && <span>{mailboxLabel(invoice.mailbox)}</span>}
+        <span>{invoice.paid ? "bezahlt" : invoice.mailbox ? mailboxLabel(invoice.mailbox) : null}</span>
       </div>
     </BoardCard>
   );
 }
 
-type Form = Record<"vendor" | "invoice_number" | "invoice_date" | "due_date" | "amount" | "currency" | "description" | "notes", string>;
+type Form = Record<
+  | "vendor"
+  | "invoice_number"
+  | "invoice_date"
+  | "due_date"
+  | "amount"
+  | "net_amount"
+  | "vat_amount"
+  | "currency"
+  | "payment_method"
+  | "category"
+  | "description"
+  | "notes",
+  string
+>;
+
+const toInput = (value: number | null) => value?.toString().replace(".", ",") ?? "";
+const fromInput = (value: string) => {
+  const number = value.trim() ? Number(value.replace(/\./g, "").replace(",", ".")) : null;
+  return number !== null && Number.isFinite(number) ? number : null;
+};
 
 const toForm = (i: Invoice): Form => ({
   vendor: i.vendor ?? "",
   invoice_number: i.invoice_number ?? "",
   invoice_date: i.invoice_date ?? "",
   due_date: i.due_date ?? "",
-  amount: i.amount?.toString().replace(".", ",") ?? "",
+  amount: toInput(i.amount),
+  net_amount: toInput(i.net_amount),
+  vat_amount: toInput(i.vat_amount),
   currency: i.currency ?? "EUR",
+  payment_method: i.payment_method ?? "",
+  category: i.category ?? "",
   description: i.description ?? "",
   notes: i.notes ?? "",
 });
 
 function fromForm(f: Form): Partial<Invoice> {
-  const amount = f.amount.trim() ? Number(f.amount.replace(/\./g, "").replace(",", ".")) : null;
   return {
     vendor: f.vendor.trim(),
     invoice_number: f.invoice_number.trim() || null,
     invoice_date: f.invoice_date || null,
     due_date: f.due_date || null,
-    amount: amount !== null && Number.isFinite(amount) ? amount : null,
+    amount: fromInput(f.amount),
+    net_amount: fromInput(f.net_amount),
+    vat_amount: fromInput(f.vat_amount),
     currency: f.currency.trim().toUpperCase() || "EUR",
+    payment_method: (f.payment_method || null) as PaymentMethod | null,
+    category: f.category || null,
     description: f.description.trim() || null,
     notes: f.notes.trim() || null,
   };
@@ -592,7 +715,7 @@ function InvoiceDetail({ invoice, datevAddress, onClose }: { invoice: Invoice; d
   const [busy, setBusy] = useState<"save" | "approve" | "datev" | "reset" | "reject" | "delete" | null>(null);
   const [confirm, setConfirm] = useState<"reject" | "delete" | null>(null);
   const dirty = JSON.stringify(form) !== JSON.stringify(toForm(invoice));
-  const set = (key: keyof Form) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  const set = (key: keyof Form) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [key]: event.target.value }));
 
   async function run(kind: NonNullable<typeof busy>, action: () => Promise<unknown>, success: string, failure: string) {
@@ -715,11 +838,38 @@ function InvoiceDetail({ invoice, datevAddress, onClose }: { invoice: Invoice; d
         <Field label="Betrag (brutto)">
           {(id) => <Input id={id} inputMode="decimal" value={form.amount} onChange={set("amount")} placeholder="z. B. 1.428,00" />}
         </Field>
+        <Field label="Netto">{(id) => <Input id={id} inputMode="decimal" value={form.net_amount} onChange={set("net_amount")} />}</Field>
+        <Field label="USt">{(id) => <Input id={id} inputMode="decimal" value={form.vat_amount} onChange={set("vat_amount")} />}</Field>
+        <Field label="Zahlung">
+          {(id) => (
+            <Select id={id} value={form.payment_method} onChange={set("payment_method")}>
+              <option value="">–</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Field label="Kategorie">
+          {(id) => (
+            <Select id={id} value={form.category} onChange={set("category")}>
+              <option value="">–</option>
+              {INVOICE_CATEGORIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </Select>
+          )}
+        </Field>
         <Field label="Rechnungsdatum">{(id) => <Input id={id} type="date" value={form.invoice_date} onChange={set("invoice_date")} />}</Field>
         <Field label="Fällig am">{(id) => <Input id={id} type="date" value={form.due_date} onChange={set("due_date")} />}</Field>
         <Field label="Leistung" className="col-span-2">
           {(id) => <Input id={id} value={form.description} onChange={set("description")} />}
         </Field>
+        <div className="col-span-2">
+          <PaidCheckbox invoice={invoice} />
+        </div>
         <Field label="Notiz" className="col-span-2">
           {(id) => <Textarea id={id} rows={3} value={form.notes} onChange={set("notes")} />}
         </Field>

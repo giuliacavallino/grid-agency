@@ -1,9 +1,22 @@
 import "server-only";
+import { PREPAID_METHODS } from "@/lib/sales/types";
 import { classifyMail } from "./classify";
 import { db } from "./db";
-import { attachmentNames, type GraphMail } from "./graph-app";
+import { attachmentNames, moveToInvoiceFolder, type GraphMail } from "./graph-app";
 
 const isoDate = (value: string | null | undefined) => (value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null);
+const money = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : null);
+
+/** Rechnungsmail in den Ordner „Eingangsrechnungen“ des Postfachs verschieben.
+ * Fehler (z. B. fehlende Berechtigung) halten den Eingang nicht auf. */
+async function fileInvoiceMail(mailbox: string, id: string) {
+  try {
+    return await moveToInvoiceFolder(mailbox, id);
+  } catch (error) {
+    console.error(`Rechnungsmail in ${mailbox} nicht verschoben:`, error);
+    return null;
+  }
+}
 
 /** Verarbeitet eine eingegangene Mail genau einmal: einordnen, protokollieren
  * und an die richtige Stelle im Hub legen – Anfrage → Kachel in „Neuer Lead“
@@ -12,7 +25,12 @@ const isoDate = (value: string | null | undefined) => (value && /^\d{4}-\d{2}-\d
 export async function ingestMail(mail: GraphMail) {
   const store = db();
   const key = mail.internetMessageId || mail.id;
-  if (await store.get("inbound_messages", key)) return "bekannt";
+  const known = await store.get("inbound_messages", key);
+  if (known) {
+    // Dieselbe Rechnung auch in einem anderen Postfach: dort ebenfalls wegräumen
+    if (known.classification === "rechnung" && known.mailbox !== mail.mailbox) await fileInvoiceMail(mail.mailbox, mail.id);
+    return "bekannt";
+  }
 
   const fromEmail = mail.from?.emailAddress.address ?? "";
   const fromName = mail.from?.emailAddress.name ?? fromEmail;
@@ -70,7 +88,7 @@ export async function ingestMail(mail: GraphMail) {
 
   if (result.classification === "rechnung") {
     const invoice = result.invoice;
-    const amount = typeof invoice?.amount === "number" && Number.isFinite(invoice.amount) ? invoice.amount : null;
+    const method = invoice?.payment_method ?? null;
     const row = await store.insertIgnore("invoices", {
       ...origin,
       stage: "neu",
@@ -79,13 +97,23 @@ export async function ingestMail(mail: GraphMail) {
       invoice_number: invoice?.invoice_number ?? null,
       invoice_date: isoDate(invoice?.invoice_date),
       due_date: isoDate(invoice?.due_date),
-      amount,
+      amount: money(invoice?.amount),
+      net_amount: money(invoice?.net_amount),
+      vat_amount: money(invoice?.vat_amount),
       currency: invoice?.currency || "EUR",
+      payment_method: method,
+      category: invoice?.category ?? null,
+      // Karte, PayPal, Lastschrift: meist schon abgebucht
+      paid: !!method && PREPAID_METHODS.includes(method),
       description: invoice?.description ?? mail.subject,
       attachment_names: attachments,
       raw,
     });
-    if (row) await store.update("inbound_messages", key, { invoice_id: row.id });
+    if (row) {
+      const movedId = await fileInvoiceMail(mail.mailbox, mail.id);
+      if (movedId) await store.update("invoices", row.id, { graph_id: movedId });
+      await store.update("inbound_messages", key, { invoice_id: row.id, ...(movedId && { graph_id: movedId }) });
+    }
   }
 
   return result.classification;
