@@ -12,6 +12,7 @@ import {
   Download,
   FileText,
   Inbox,
+  Landmark,
   Maximize2,
   Plus,
   Search,
@@ -20,14 +21,13 @@ import {
   X,
   XCircle,
 } from "lucide-react";
-import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
+import { FINANCE_MAILBOX } from "@/lib/config";
 import { createRow, deleteRow, updateRow, useResource, useRows } from "@/lib/data";
 import { formatDate, relativeTime } from "@/lib/format";
 import { api, apiFetch } from "@/lib/api";
 import { graphErrorMessage, graphFor, type FileAttachment } from "@/lib/graph";
 import {
   INVOICE_CATEGORIES,
-  INVOICE_STAGES,
   PAYMENT_METHODS,
   topPosition,
   type Invoice,
@@ -35,7 +35,6 @@ import {
   type PaymentMethod,
   type Settings,
 } from "@/lib/sales/types";
-import { Board, BoardCard } from "@/components/board";
 import { Button, Dialog, Empty, Field, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 import { Attachments, MailBody } from "@/components/sales/mail/reading-pane";
 import { PageBar } from "@/components/sales/shell";
@@ -76,11 +75,11 @@ type View = "freigabe" | "alle";
 
 /** Eingangsrechnungen: „Zur Freigabe“ ist eine Liste mit Beleg-Vorschau, in
  * der ein Klick auf „Freigeben“ die Rechnung direkt an DATEV schickt.
- * „Alle Rechnungen“ zeigt das Board Neu → Freigegeben → An DATEV gesendet. */
+ * „Alle Rechnungen“ ist eine Tabelle mit Beträgen, Fälligkeit und Zahlstatus
+ * aus dem Bank-Abgleich. */
 export function Invoices() {
   const { data: invoices, loading, error } = useRows<Invoice>("invoices");
   const { data: settings } = useResource<Settings>("/api/sales/settings");
-  const toast = useToast();
   const [view, setView] = useState<View>("freigabe");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -89,22 +88,13 @@ export function Invoices() {
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (invoices ?? []).filter(
-      (i) => i.stage !== "abgelehnt" && (!q || [i.vendor, i.invoice_number, i.description].some((v) => v?.toLowerCase().includes(q)))
+      (i) => !q || [i.vendor, i.invoice_number, i.description, i.category].some((v) => v?.toLowerCase().includes(q))
     );
   }, [invoices, query]);
 
-  const open = visible.filter((i) => i.stage !== "datev");
+  const open = visible.filter((i) => i.stage !== "datev" && i.stage !== "abgelehnt");
   const openSum = open.reduce((sum, i) => sum + (i.amount ?? 0), 0);
   const late = open.filter(overdue).length;
-
-  async function move(invoice: Invoice, stage: string, position: number) {
-    try {
-      await updateRow<Invoice>("invoices", invoice.id, { stage: stage as InvoiceStage, position });
-      if (stage === "freigegeben" && invoice.stage === "neu") toast("Freigegeben – an DATEV senden in der Rechnung");
-    } catch {
-      toast("Verschieben fehlgeschlagen", "error");
-    }
-  }
 
   return (
     <div className="flex h-full flex-col">
@@ -178,21 +168,7 @@ export function Invoices() {
           blocked={!!openId || creating}
         />
       ) : (
-        <Board
-          columns={INVOICE_STAGES}
-          items={visible}
-          onOpen={setOpenId}
-          onMove={move}
-          // Nach DATEV nur über „An DATEV senden“, gesendete bleiben dort
-          canDrop={(invoice, stage) => stage !== "datev" && invoice.stage !== "datev"}
-          onAdd={() => setCreating(true)}
-          addLabel="Rechnung erfassen"
-          summary={(items) => {
-            const sum = items.reduce((s, i) => s + (i.amount ?? 0), 0);
-            return sum > 0 ? money(sum) : null;
-          }}
-          renderCard={(invoice, overlay) => <InvoiceCard invoice={invoice} overlay={overlay} />}
-        />
+        <InvoiceTable invoices={visible} onOpen={setOpenId} />
       )}
 
       <InvoiceSheet id={openId} invoices={invoices ?? []} datevAddress={settings?.datev.upload_address ?? ""} onClose={() => setOpenId(null)} />
@@ -645,28 +621,154 @@ function Frame({ children }: { children: React.ReactNode }) {
   return <div className="relative min-h-80 flex-1 overflow-hidden rounded-3xl border border-snow/10 bg-surface">{children}</div>;
 }
 
-function InvoiceCard({ invoice, overlay }: { invoice: Invoice; overlay?: boolean }) {
-  const late = overdue(invoice);
+const today = () => new Date().toISOString().slice(0, 10);
+
+/** Offen = noch nicht bezahlt (Bank-Abgleich oder von Hand „bezahlt“) */
+const unpaidLate = (i: Invoice) => !i.paid && !!i.due_date && i.due_date < today();
+
+const STAGE_LABEL: Record<InvoiceStage, string> = {
+  neu: "Zur Freigabe",
+  freigegeben: "Freigegeben",
+  datev: "An DATEV",
+  abgelehnt: "Abgelehnt",
+};
+
+const FILTERS = [
+  { id: "alle", label: "Alle", test: (i: Invoice) => i.stage !== "abgelehnt" },
+  { id: "offen", label: "Offen", test: (i: Invoice) => i.stage !== "abgelehnt" && !i.paid },
+  { id: "ueberfaellig", label: "Überfällig", test: (i: Invoice) => i.stage !== "abgelehnt" && unpaidLate(i) },
+  { id: "bezahlt", label: "Bezahlt", test: (i: Invoice) => i.stage !== "abgelehnt" && i.paid },
+  { id: "abgelehnt", label: "Abgelehnt", test: (i: Invoice) => i.stage === "abgelehnt" },
+] as const;
+
+/** Alle Eingangsrechnungen als Tabelle; „bezahlt“ kommt aus dem Bank-Abgleich
+ * (Finance → Bank), sonst aus dem Häkchen in den Details. */
+function InvoiceTable({ invoices, onOpen }: { invoices: Invoice[]; onOpen: (id: string) => void }) {
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]["id"]>("alle");
+  const rows = useMemo(
+    () =>
+      invoices
+        .filter(FILTERS.find((f) => f.id === filter)!.test)
+        .sort((a, b) => (b.invoice_date ?? b.received_at ?? b.created_at).localeCompare(a.invoice_date ?? a.received_at ?? a.created_at)),
+    [invoices, filter]
+  );
+  // Summen nur in Euro; Fremdwährungen (Supabase in $, …) zählen nicht mit
+  const euro = rows.filter((i) => (i.currency || "EUR") === "EUR");
+  const sum = (pick: (i: Invoice) => number | null) => euro.reduce((total, i) => total + (pick(i) ?? 0), 0);
+
   return (
-    <BoardCard overlay={overlay}>
-      <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-medium">{invoice.vendor}</p>
-          <p className="truncate text-[12px] text-snow/55">{invoice.invoice_number ? `Nr. ${invoice.invoice_number}` : invoice.description}</p>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-3 md:px-5">
+        {FILTERS.map((f) => {
+          const count = invoices.filter(f.test).length;
+          return (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={filter === f.id}
+              onClick={() => setFilter(f.id)}
+              className={clsx(
+                "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors",
+                filter === f.id ? "border-snow bg-snow text-sky" : "border-snow/10 text-snow/65 hover:text-snow"
+              )}
+            >
+              {f.label}
+              <span className="tabular-nums opacity-60">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {rows.length === 0 ? (
+        <Empty title="Keine Rechnungen" text="In dieser Ansicht gibt es gerade nichts." />
+      ) : (
+        <div className="min-h-0 flex-1 overflow-auto px-4 pb-4 md:px-5">
+          <table className="w-full min-w-[720px] border-separate border-spacing-0 text-[13px]">
+            <thead className="sticky top-0 z-10 bg-sky text-left text-[11px] font-semibold tracking-[0.08em] text-snow/45 uppercase">
+              <tr>
+                <th className="border-b border-snow/10 py-2.5 pr-3 font-semibold">Rechnungssteller</th>
+                <th className="border-b border-snow/10 px-3 py-2.5 font-semibold">Nr.</th>
+                <th className="border-b border-snow/10 px-3 py-2.5 font-semibold">Datum</th>
+                <th className="border-b border-snow/10 px-3 py-2.5 font-semibold">Fällig</th>
+                <th className="border-b border-snow/10 px-3 py-2.5 text-right font-semibold">Netto</th>
+                <th className="border-b border-snow/10 px-3 py-2.5 text-right font-semibold">USt</th>
+                <th className="border-b border-snow/10 px-3 py-2.5 text-right font-semibold">Brutto</th>
+                <th className="border-b border-snow/10 px-3 py-2.5 font-semibold">Zahlung</th>
+                <th className="border-b border-snow/10 py-2.5 pl-3 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((invoice) => {
+                const late = unpaidLate(invoice);
+                return (
+                  <tr
+                    key={invoice.id}
+                    onClick={() => onOpen(invoice.id)}
+                    className="cursor-pointer transition-colors hover:bg-snow/[0.04]"
+                  >
+                    <td className="max-w-64 border-b border-snow/[0.06] py-2.5 pr-3">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onOpen(invoice.id);
+                        }}
+                        className="block max-w-full truncate text-left font-medium hover:underline"
+                      >
+                        {invoice.vendor}
+                      </button>
+                      {(invoice.category || invoice.description) && (
+                        <span className="block truncate text-[12px] text-snow/50">{invoice.category ?? invoice.description}</span>
+                      )}
+                    </td>
+                    <td className="max-w-40 truncate border-b border-snow/[0.06] px-3 py-2.5 text-snow/75">{invoice.invoice_number ?? "–"}</td>
+                    <td className="border-b border-snow/[0.06] px-3 py-2.5 whitespace-nowrap text-snow/75">{formatDate(invoice.invoice_date)}</td>
+                    <td className={clsx("border-b border-snow/[0.06] px-3 py-2.5 whitespace-nowrap", late ? "font-medium text-error" : "text-snow/75")}>
+                      {formatDate(invoice.due_date)}
+                    </td>
+                    <td className="border-b border-snow/[0.06] px-3 py-2.5 text-right whitespace-nowrap tabular-nums text-snow/75">
+                      {money(invoice.net_amount, invoice.currency)}
+                    </td>
+                    <td className="border-b border-snow/[0.06] px-3 py-2.5 text-right whitespace-nowrap tabular-nums text-snow/75">
+                      {money(invoice.vat_amount, invoice.currency)}
+                    </td>
+                    <td className="border-b border-snow/[0.06] px-3 py-2.5 text-right font-medium whitespace-nowrap tabular-nums">
+                      {money(invoice.amount, invoice.currency)}
+                    </td>
+                    <td className="border-b border-snow/[0.06] px-3 py-2.5 whitespace-nowrap">
+                      {invoice.paid ? (
+                        <span className="inline-flex items-center gap-1.5 text-snow/80" title={invoice.bank_transaction_id ? "Über das Bankkonto zugeordnet" : "Von Hand als bezahlt markiert"}>
+                          {invoice.bank_transaction_id ? <Landmark className="h-3.5 w-3.5 text-snow/50" /> : <Check className="h-3.5 w-3.5 text-snow/50" />}
+                          bezahlt{invoice.paid_at && ` ${formatDate(invoice.paid_at, { day: "2-digit", month: "2-digit" })}`}
+                        </span>
+                      ) : (
+                        <span className={clsx("inline-flex items-center gap-1.5", late ? "font-medium text-error" : "text-snow/60")}>
+                          {late && <CalendarClock className="h-3.5 w-3.5" />}
+                          {late ? "überfällig" : "offen"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="border-b border-snow/[0.06] py-2.5 pl-3 whitespace-nowrap text-snow/60">{STAGE_LABEL[invoice.stage]}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="text-[12px] text-snow/55">
+                <td className="py-2.5 pr-3" colSpan={4}>
+                  {rows.length} Rechnungen
+                  {euro.length < rows.length && ` · Summe ohne ${rows.length - euro.length} in Fremdwährung`}
+                </td>
+                <td className="px-3 py-2.5 text-right tabular-nums">{money(sum((i) => i.net_amount))}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums">{money(sum((i) => i.vat_amount))}</td>
+                <td className="px-3 py-2.5 text-right font-medium text-snow tabular-nums">{money(sum((i) => i.amount))}</td>
+                <td colSpan={2} />
+              </tr>
+            </tfoot>
+          </table>
         </div>
-        <span className="shrink-0 text-[13px] font-medium">{money(invoice.amount, invoice.currency)}</span>
-      </div>
-      {invoice.due_date && invoice.stage !== "datev" && (
-        <p className={clsx("mt-2 flex items-center gap-1.5 text-[12px]", late ? "text-error" : "text-snow/60")}>
-          <CalendarClock className="h-3.5 w-3.5 shrink-0" />
-          {late ? "Überfällig seit" : "Fällig"} {formatDate(invoice.due_date, { day: "numeric", month: "short" })}
-        </p>
       )}
-      <div className="mt-2.5 flex items-center justify-between text-[12px] text-snow/45">
-        <span>{relativeTime(invoice.received_at ?? invoice.created_at)}</span>
-        <span>{invoice.paid ? "bezahlt" : invoice.mailbox ? mailboxLabel(invoice.mailbox) : null}</span>
-      </div>
-    </BoardCard>
+    </div>
   );
 }
 
@@ -951,7 +1053,7 @@ function InvoiceDetail({ invoice, datevAddress, onClose }: { invoice: Invoice; d
           </>
         }
       >
-        <p className="text-sm text-snow/60">Die Rechnung verschwindet vom Board und wird nicht an DATEV gesendet. Die Mail bleibt im Postfach.</p>
+        <p className="text-sm text-snow/60">Die Rechnung verschwindet aus der Freigabe und wird nicht an DATEV gesendet. Die Mail bleibt im Postfach.</p>
       </Dialog>
       <Dialog
         open={confirm === "delete"}

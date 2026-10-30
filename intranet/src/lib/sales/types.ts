@@ -172,6 +172,9 @@ export type Invoice = {
   payment_method: PaymentMethod | null;
   category: string | null;
   paid: boolean;
+  /** Buchungsdatum der zugeordneten Abbuchung (Bank-Abgleich) */
+  paid_at: string | null;
+  bank_transaction_id: string | null;
   description: string | null;
   attachment_names: string[] | null;
   approved_by: string | null;
