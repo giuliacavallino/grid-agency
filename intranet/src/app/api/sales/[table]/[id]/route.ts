@@ -1,6 +1,6 @@
 import { forbidden, withUser } from "@/lib/server/auth";
 import { removeApplicationFiles } from "@/lib/server/application-files";
-import { canUseTable, db, isTable, mayTouch, pick, READ_ONLY } from "@/lib/server/db";
+import { canUseTable, customerNumberTaken, db, isTable, mayTouch, pick, READ_ONLY } from "@/lib/server/db";
 
 type Context = { params: Promise<{ table: string; id: string }> };
 
@@ -13,6 +13,13 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
   if (!(await mayTouch(user, table, await db().get(table, id)))) return forbidden();
   const patch = pick(table, await request.json());
   const store = db();
+
+  if (table === "customers" && "customer_number" in patch) {
+    if (!patch.customer_number) return Response.json({ error: "Kundennummer fehlt" }, { status: 400 });
+    if (await customerNumberTaken(patch.customer_number, id)) {
+      return Response.json({ error: `Kundennummer ${patch.customer_number} ist schon vergeben` }, { status: 409 });
+    }
+  }
 
   // Lead gewonnen → Kunde anlegen, falls noch keiner verknüpft ist.
   let customer = null;

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Building2, ChevronDown, ChevronUp, ChevronsUpDown, Globe, Mail, Pencil, Phone, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowRight, ArrowUpNarrowWide, Building2, ChevronDown, ChevronUp, ChevronsUpDown, Globe, Mail, Pencil, Phone, Plus, Search, Trash2 } from "lucide-react";
+import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { createRow, deleteRow, revalidate, updateRow, useRows } from "@/lib/data";
 import { euro, formatDate, num } from "@/lib/format";
@@ -54,6 +55,17 @@ const COLUMNS: { key: SortKey; label: string; className: string }[] = [
   { key: "since", label: "Kunde seit", className: "px-5" },
 ];
 
+const SORT_STORAGE = "intranet.kunden.sort";
+
+/** Zuletzt gewählte Sortierung (pro Browser); Tabelle rendert erst nach dem Laden der Daten. */
+function loadSort(): Sort {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SORT_STORAGE) ?? "null");
+    if (COLUMNS.some((c) => c.key === saved?.key) && (saved.dir === 1 || saved.dir === -1)) return saved;
+  } catch {}
+  return { key: "name", dir: 1 };
+}
+
 /** Leere Werte landen immer unten, egal in welche Richtung sortiert wird. */
 function compare(a: string | number | null | undefined, b: string | number | null | undefined, dir: 1 | -1) {
   const emptyA = a == null || a === "";
@@ -98,7 +110,15 @@ export function Customers() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [creating, setCreating] = useState(false);
-  const [sort, setSort] = useState<Sort>({ key: "name", dir: 1 });
+  const [sort, setSortState] = useState<Sort>(loadSort);
+  const setSort = (update: (s: Sort) => Sort) =>
+    setSortState((s) => {
+      const next = update(s);
+      try {
+        localStorage.setItem(SORT_STORAGE, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
   const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "mrr" || key === "since" ? -1 : 1 }));
 
   // Geöffneter Kunde steht in der URL (?id=…), damit Pipeline und Links ihn öffnen
@@ -208,6 +228,19 @@ export function Customers() {
               ))}
             </tbody>
           </table>
+          <div className="flex items-center gap-2 border-b border-snow/[0.08] px-4 py-2 md:hidden">
+            <span className="text-[12px] text-snow/50">Sortieren</span>
+            <Select value={sort.key} onChange={(e) => setSort((s) => ({ key: e.target.value as SortKey, dir: s.dir }))} className="h-8 w-auto text-[13px]" aria-label="Sortieren nach">
+              {COLUMNS.map((column) => (
+                <option key={column.key} value={column.key}>
+                  {column.label === "Nr." ? "Kundennummer" : column.label}
+                </option>
+              ))}
+            </Select>
+            <IconButton label={sort.dir === 1 ? "Aufsteigend – umkehren" : "Absteigend – umkehren"} onClick={() => setSort((s) => ({ key: s.key, dir: s.dir === 1 ? -1 : 1 }))}>
+              {sort.dir === 1 ? <ArrowUpNarrowWide className="h-4 w-4" /> : <ArrowDownWideNarrow className="h-4 w-4" />}
+            </IconButton>
+          </div>
           <ul className="divide-y divide-snow/[0.06] md:hidden">
             {rows.map((c) => (
               <li key={c.id}>
@@ -233,83 +266,97 @@ export function Customers() {
       )}
 
       <CustomerSheet id={openId} onClose={() => open(null)} retainers={retainers} />
-      <NewCustomerDialog open={creating} onClose={() => setCreating(false)} onCreated={(c) => open(c.id)} />
+      <CustomerDialog open={creating} onClose={() => setCreating(false)} customer={null} customers={customers} onCreated={(c) => open(c.id)} />
     </div>
   );
 }
 
 // ---------- Detail ----------
 
-type Form = Record<"name" | "contact_name" | "email" | "phone" | "website" | "industry" | "city" | "status" | "notes", string>;
+type Form = Record<
+  | "customer_number" | "name" | "status" | "industry" | "contact_name" | "email" | "phone" | "website"
+  | "street" | "zip" | "city" | "country" | "billing_email" | "vat_id" | "payment_terms_days" | "notes",
+  string
+>;
 
-const toForm = (c: Customer): Form => ({
-  name: c.name,
-  contact_name: c.contact_name ?? "",
-  email: c.email ?? "",
-  phone: c.phone ?? "",
-  website: c.website ?? "",
-  industry: c.industry ?? "",
-  city: c.city ?? "",
-  status: c.status,
-  notes: c.notes ?? "",
+const toForm = (c: Customer | null): Form => ({
+  customer_number: c?.customer_number ?? "",
+  name: c?.name ?? "",
+  status: c?.status ?? "aktiv",
+  industry: c?.industry ?? "",
+  contact_name: c?.contact_name ?? "",
+  email: c?.email ?? "",
+  phone: c?.phone ?? "",
+  website: c?.website ?? "",
+  street: c?.street ?? "",
+  zip: c?.zip ?? "",
+  city: c?.city ?? "",
+  country: c?.country ?? "DE",
+  billing_email: c?.billing_email ?? "",
+  vat_id: c?.vat_id ?? "",
+  payment_terms_days: c?.payment_terms_days != null ? String(c.payment_terms_days) : "",
+  notes: c?.notes ?? "",
 });
 
-const fromForm = (f: Form): Partial<Customer> => ({
-  name: f.name.trim(),
-  contact_name: f.contact_name.trim() || null,
-  email: f.email.trim() || null,
-  phone: f.phone.trim() || null,
-  website: f.website.trim() || null,
-  industry: f.industry.trim() || null,
-  city: f.city.trim() || null,
-  status: f.status as Customer["status"],
-  notes: f.notes.trim() || null,
-});
-
-function CustomerFields({ form, set }: { form: Form; set: (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void }) {
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      <Field label="Firma / Name *" className="col-span-2 sm:col-span-1">
-        {(id) => <Input id={id} value={form.name} onChange={set("name")} />}
-      </Field>
-      <Field label="Ansprechpartner*in" className="col-span-2 sm:col-span-1">
-        {(id) => <Input id={id} value={form.contact_name} onChange={set("contact_name")} />}
-      </Field>
-      <Field label="E-Mail">{(id) => <Input id={id} type="email" value={form.email} onChange={set("email")} />}</Field>
-      <Field label="Telefon">{(id) => <Input id={id} type="tel" value={form.phone} onChange={set("phone")} />}</Field>
-      <Field label="Website">{(id) => <Input id={id} type="url" value={form.website} onChange={set("website")} placeholder="https://" />}</Field>
-      <Field label="Status">
-        {(id) => (
-          <Select id={id} value={form.status} onChange={set("status")}>
-            {CUSTOMER_STATUS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </Select>
-        )}
-      </Field>
-      <Field label="Branche">{(id) => <Input id={id} value={form.industry} onChange={set("industry")} placeholder="z. B. Gastronomie" />}</Field>
-      <Field label="Stadt">{(id) => <Input id={id} value={form.city} onChange={set("city")} />}</Field>
-      <Field label="Notizen" className="col-span-2">
-        {(id) => <Textarea id={id} value={form.notes} onChange={set("notes")} className="min-h-20" />}
-      </Field>
-    </div>
-  );
+function fromForm(f: Form): Partial<Customer> {
+  const text = (key: keyof Form) => f[key].trim() || null;
+  return {
+    customer_number: text("customer_number"),
+    name: f.name.trim(),
+    status: f.status as Customer["status"],
+    industry: text("industry"),
+    contact_name: text("contact_name"),
+    email: text("email"),
+    phone: text("phone"),
+    website: text("website"),
+    street: text("street"),
+    zip: text("zip"),
+    city: text("city"),
+    country: text("country")?.toUpperCase() ?? "DE",
+    billing_email: text("billing_email"),
+    vat_id: text("vat_id"),
+    payment_terms_days: f.payment_terms_days.trim() ? Number(f.payment_terms_days) : null,
+    notes: text("notes"),
+  };
 }
+
+const nextNumber = (customers: Customer[] | undefined) =>
+  String(Math.max(0, ...(customers ?? []).map((c) => Number(c.customer_number)).filter(Number.isFinite)) + 1);
 
 function CustomerSheet({ id, onClose, retainers }: { id: string | null; onClose: () => void; retainers: Retainer[] | undefined }) {
   const { data: customers, loading } = useRows<Customer>("customers");
   const customer = customers?.find((c) => c.id === id) ?? null;
+  const [editing, setEditing] = useState(false);
   return (
     <Sheet
       open={!!id}
       onClose={onClose}
       title={customer?.name ?? "Kunde"}
-      subtitle={customer && `Kundennr. ${customerNo(customer)} · Kunde seit ${formatDate(customer.created_at, { month: "long", year: "numeric" })}`}
+      subtitle={
+        customer && (
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="tabular-nums">Nr. {customerNo(customer)}</span>
+            <StatusBadge status={customer.status} />
+            <span>seit {formatDate(customer.created_at, { month: "long", year: "numeric" })}</span>
+          </span>
+        )
+      }
+      actions={
+        customer && (
+          <Button size="sm" icon={<Pencil className="h-3.5 w-3.5" />} onClick={() => setEditing(true)}>
+            Bearbeiten
+          </Button>
+        )
+      }
     >
       {customer ? (
-        <CustomerDetail key={customer.id} customer={customer} retainers={retainers?.filter((r) => r.customer_id === customer.id) ?? []} onClose={onClose} />
+        <CustomerDetail
+          key={customer.id}
+          customer={customer}
+          retainers={retainers?.filter((r) => r.customer_id === customer.id) ?? []}
+          onEdit={() => setEditing(true)}
+          onClose={onClose}
+        />
       ) : loading ? (
         <div className="grid h-40 place-items-center">
           <Spinner />
@@ -317,37 +364,95 @@ function CustomerSheet({ id, onClose, retainers }: { id: string | null; onClose:
       ) : (
         <Empty title="Kunde nicht gefunden" text="Vielleicht wurde er gelöscht." />
       )}
+      {customer && <CustomerDialog key={customer.id} open={editing} onClose={() => setEditing(false)} customer={customer} customers={customers} />}
     </Sheet>
   );
 }
 
-function CustomerDetail({ customer, retainers, onClose }: { customer: Customer; retainers: Retainer[]; onClose: () => void }) {
+/** Eine Zeile der Stammdaten; leere Werte als Strich */
+function Fact({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+  const empty = children == null || children === "" || children === false;
+  return (
+    <div className={cn("min-w-0", className)}>
+      <dt className="text-[11px] text-snow/45">{label}</dt>
+      <dd className={cn("mt-0.5 text-[13px] break-words", empty ? "text-snow/35" : "text-snow/90")}>{empty ? "–" : children}</dd>
+    </div>
+  );
+}
+
+function FactGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl bg-ink/60 px-4 py-3">
+      <p className="mb-2.5 text-[11px] font-medium tracking-wide text-snow/55 uppercase">{title}</p>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3">{children}</dl>
+    </div>
+  );
+}
+
+const textLink = "underline decoration-snow/25 underline-offset-2 hover:decoration-snow";
+
+function MasterData({ customer, onEdit }: { customer: Customer; onEdit: () => void }) {
+  const address = [customer.street, [customer.zip, customer.city].filter(Boolean).join(" "), customer.country && customer.country !== "DE" ? customer.country : null]
+    .filter(Boolean);
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-xs font-medium text-snow/60">Stammdaten</p>
+        <Button size="sm" variant="ghost" icon={<Pencil className="h-3.5 w-3.5" />} onClick={onEdit}>
+          Bearbeiten
+        </Button>
+      </div>
+      <div className="flex flex-col gap-2">
+        <FactGroup title="Kontakt">
+          <Fact label="Ansprechpartner*in">{customer.contact_name}</Fact>
+          <Fact label="Telefon">{customer.phone && <a href={`tel:${customer.phone}`} className={textLink}>{customer.phone}</a>}</Fact>
+          <Fact label="E-Mail">{customer.email && <a href={`mailto:${customer.email}`} className={textLink}>{customer.email}</a>}</Fact>
+          <Fact label="Website">
+            {customer.website && (
+              <a href={customer.website} target="_blank" rel="noopener" className={textLink}>
+                {customer.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
+              </a>
+            )}
+          </Fact>
+        </FactGroup>
+        <FactGroup title="Adresse & Rechnung">
+          <Fact label="Anschrift">
+            {address.length > 0 && (
+              <span className="whitespace-pre-line">{address.join("\n")}</span>
+            )}
+          </Fact>
+          <Fact label="Rechnungs-E-Mail">{customer.billing_email ?? (customer.email && <span className="text-snow/45">wie Kontakt-E-Mail</span>)}</Fact>
+          <Fact label="USt-IdNr.">{customer.vat_id}</Fact>
+          <Fact label="Zahlungsziel">{customer.payment_terms_days != null ? `${customer.payment_terms_days} Tage` : <span className="text-snow/45">Standard</span>}</Fact>
+        </FactGroup>
+        <FactGroup title="Intern">
+          <Fact label="Kundennummer">{customer.customer_number && <span className="tabular-nums">{customer.customer_number}</span>}</Fact>
+          <Fact label="Branche">{customer.industry}</Fact>
+          <Fact label="Quelle">{customer.source && <Source source={customer.source} />}</Fact>
+          <Fact label="Status">
+            <StatusBadge status={customer.status} />
+          </Fact>
+          {customer.notes && (
+            <Fact label="Notizen" className="col-span-2">
+              <span className="whitespace-pre-line">{customer.notes}</span>
+            </Fact>
+          )}
+        </FactGroup>
+      </div>
+    </section>
+  );
+}
+
+function CustomerDetail({ customer, retainers, onEdit, onClose }: { customer: Customer; retainers: Retainer[]; onEdit: () => void; onClose: () => void }) {
   const toast = useToast();
-  const [form, setForm] = useState<Form>(() => toForm(customer));
-  const [saving, setSaving] = useState(false);
   const [retainer, setRetainer] = useState<Retainer | null | "new">(null);
   const [confirm, setConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const dirty = JSON.stringify(form) !== JSON.stringify(toForm(customer));
-  const set = (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const { start, end } = monthRange(0);
   const running = retainers.filter((r) => countsInMonth(r, start, end));
   const mrr = running.reduce((sum, r) => sum + Number(r.monthly_fee), 0);
   const hours = running.reduce((sum, r) => sum + Number(r.hours_per_month), 0);
-
-  async function save() {
-    if (!form.name.trim()) return toast("Name fehlt", "error");
-    setSaving(true);
-    try {
-      await updateRow<Customer>("customers", customer.id, fromForm(form));
-      toast("Gespeichert");
-    } catch {
-      toast("Speichern fehlgeschlagen", "error");
-    }
-    setSaving(false);
-  }
 
   async function remove() {
     setDeleting(true);
@@ -381,28 +486,27 @@ function CustomerDetail({ customer, retainers, onClose }: { customer: Customer; 
         ))}
       </div>
 
-      <CustomerFields form={form} set={set} />
+      {(customer.email || customer.phone || customer.website) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {customer.email && (
+            <Link href={`/sales/posteingang?to=${encodeURIComponent(customer.email)}`} className={link}>
+              <Mail className="h-4 w-4" /> Mail schreiben
+            </Link>
+          )}
+          {customer.phone && (
+            <a href={`tel:${customer.phone}`} className={link}>
+              <Phone className="h-4 w-4" /> Anrufen
+            </a>
+          )}
+          {customer.website && (
+            <a href={customer.website} target="_blank" rel="noopener" className={link}>
+              <Globe className="h-4 w-4" /> Website
+            </a>
+          )}
+        </div>
+      )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" onClick={save} loading={saving} loadingText="Wird gespeichert …" disabled={!dirty}>
-          Speichern
-        </Button>
-        {customer.email && (
-          <Link href={`/sales/posteingang?to=${encodeURIComponent(customer.email)}`} className={link}>
-            <Mail className="h-4 w-4" /> Mail schreiben
-          </Link>
-        )}
-        {customer.phone && (
-          <a href={`tel:${customer.phone}`} className={link}>
-            <Phone className="h-4 w-4" /> Anrufen
-          </a>
-        )}
-        {customer.website && (
-          <a href={customer.website} target="_blank" rel="noopener" className={link}>
-            <Globe className="h-4 w-4" /> Website
-          </a>
-        )}
-      </div>
+      <MasterData customer={customer} onEdit={onEdit} />
 
       <section>
         <div className="mb-2 flex items-center justify-between">
@@ -476,42 +580,176 @@ function CustomerDetail({ customer, retainers, onClose }: { customer: Customer; 
   );
 }
 
-function NewCustomerDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (c: Customer) => void }) {
-  const empty: Form = { name: "", contact_name: "", email: "", phone: "", website: "", industry: "", city: "", status: "aktiv", notes: "" };
-  const [form, setForm] = useState<Form>(empty);
-  const [busy, setBusy] = useState(false);
+function FormGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <fieldset className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+      <legend className="mb-3 text-[11px] font-medium tracking-wide text-snow/55 uppercase">{title}</legend>
+      {children}
+    </fieldset>
+  );
+}
+
+/** Stammdaten anlegen (customer = null) oder bearbeiten, gruppiert im Popup. */
+function CustomerDialog({
+  open,
+  onClose,
+  customer,
+  customers,
+  onCreated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  customer: Customer | null;
+  customers: Customer[] | undefined;
+  onCreated?: (c: Customer) => void;
+}) {
+  const formId = useId();
   const toast = useToast();
+  const [form, setForm] = useState<Form>(() => toForm(customer));
+  const [busy, setBusy] = useState(false);
   const set = (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  // Beim Öffnen immer mit dem aktuellen Stand beginnen
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setForm(toForm(customer));
+  }
+
+  const number = form.customer_number.trim();
+  const taken = !!number && !!customers?.some((c) => c.id !== customer?.id && c.customer_number === number);
+  const numberMissing = !!customer && !number;
+  const dirty = JSON.stringify(form) !== JSON.stringify(toForm(customer));
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!form.name.trim()) return toast("Bitte einen Namen eintragen", "error");
+    if (taken || numberMissing) return;
     setBusy(true);
     try {
-      const customer = await createRow<Customer>("customers", { ...fromForm(form), source: "manuell" });
-      toast("Kunde angelegt");
-      setForm(empty);
-      onClose();
-      onCreated(customer);
-    } catch {
-      toast("Anlegen fehlgeschlagen", "error");
+      if (customer) {
+        await updateRow<Customer>("customers", customer.id, fromForm(form));
+        toast("Gespeichert");
+        onClose();
+      } else {
+        const created = await createRow<Customer>("customers", { ...fromForm(form), source: "manuell" });
+        toast(`Kunde ${created.customer_number ?? ""} angelegt`.replace("  ", " "));
+        onClose();
+        onCreated?.(created);
+      }
+    } catch (error) {
+      toast(error instanceof ApiError && error.status < 500 ? error.message : customer ? "Speichern fehlgeschlagen" : "Anlegen fehlgeschlagen", "error");
     }
     setBusy(false);
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title="Neuer Kunde">
-      <form onSubmit={submit}>
-        <CustomerFields form={form} set={set} />
-        <div className="flex justify-end gap-2 pt-5">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={customer ? "Stammdaten bearbeiten" : "Neuer Kunde"}
+      width="max-w-2xl"
+      footer={
+        <>
           <Button variant="ghost" onClick={onClose}>
             Abbrechen
           </Button>
-          <Button type="submit" variant="primary" loading={busy} loadingText="Wird angelegt …">
-            Kunde anlegen
+          <Button
+            type="submit"
+            form={formId}
+            variant="primary"
+            loading={busy}
+            loadingText={customer ? "Wird gespeichert …" : "Wird angelegt …"}
+            disabled={taken || numberMissing || (!!customer && !dirty)}
+          >
+            {customer ? "Speichern" : "Kunde anlegen"}
           </Button>
-        </div>
+        </>
+      }
+    >
+      <form id={formId} onSubmit={submit} className="flex flex-col gap-6 pt-1">
+        <FormGroup title="Allgemein">
+          <Field label="Kundennr." className="col-span-1 sm:col-span-2">
+            {(id) => (
+              <>
+                <Input
+                  id={id}
+                  value={form.customer_number}
+                  title={customer ? undefined : "Leer lassen für die nächste freie Nummer"}
+                  onChange={set("customer_number")}
+                  placeholder={customer ? undefined : `${nextNumber(customers)} (automatisch)`}
+                  inputMode="numeric"
+                  aria-invalid={taken || numberMissing || undefined}
+                  className={cn("tabular-nums", (taken || numberMissing) && "border-error/60")}
+                />
+                {taken && <p className="text-xs text-error">Schon vergeben</p>}
+                {numberMissing && <p className="text-xs text-error">Pflichtfeld</p>}
+              </>
+            )}
+          </Field>
+          <Field label="Status" className="col-span-1 sm:col-span-2">
+            {(id) => (
+              <Select id={id} value={form.status} onChange={set("status")}>
+                {CUSTOMER_STATUS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+          <Field label="Branche" className="col-span-2">
+            {(id) => <Input id={id} value={form.industry} onChange={set("industry")} placeholder="z. B. Gastronomie" />}
+          </Field>
+          <Field label="Firma / Name *" className="col-span-2 sm:col-span-6">
+            {(id) => <Input id={id} value={form.name} onChange={set("name")} autoFocus={!customer} />}
+          </Field>
+        </FormGroup>
+
+        <FormGroup title="Kontakt">
+          <Field label="Ansprechpartner*in" className="col-span-2 sm:col-span-3">
+            {(id) => <Input id={id} value={form.contact_name} onChange={set("contact_name")} />}
+          </Field>
+          <Field label="Telefon" className="col-span-2 sm:col-span-3">
+            {(id) => <Input id={id} type="tel" value={form.phone} onChange={set("phone")} />}
+          </Field>
+          <Field label="E-Mail" className="col-span-2 sm:col-span-3">
+            {(id) => <Input id={id} type="email" value={form.email} onChange={set("email")} />}
+          </Field>
+          <Field label="Website" className="col-span-2 sm:col-span-3">
+            {(id) => <Input id={id} type="url" value={form.website} onChange={set("website")} placeholder="https://" />}
+          </Field>
+        </FormGroup>
+
+        <FormGroup title="Adresse">
+          <Field label="Straße und Hausnummer" className="col-span-2 sm:col-span-6">
+            {(id) => <Input id={id} value={form.street} onChange={set("street")} autoComplete="street-address" />}
+          </Field>
+          <Field label="PLZ" className="col-span-1 sm:col-span-1">
+            {(id) => <Input id={id} value={form.zip} onChange={set("zip")} inputMode="numeric" autoComplete="postal-code" />}
+          </Field>
+          <Field label="Stadt" className="col-span-1 sm:col-span-4">
+            {(id) => <Input id={id} value={form.city} onChange={set("city")} />}
+          </Field>
+          <Field label="Land" className="col-span-2 sm:col-span-1">
+            {(id) => <Input id={id} value={form.country} onChange={set("country")} maxLength={2} className="uppercase" placeholder="DE" />}
+          </Field>
+        </FormGroup>
+
+        <FormGroup title="Rechnung">
+          <Field label="Rechnungs-E-Mail" className="col-span-2 sm:col-span-3">
+            {(id) => <Input id={id} type="email" value={form.billing_email} onChange={set("billing_email")} />}
+          </Field>
+          <Field label="USt-IdNr." className="col-span-1 sm:col-span-2">
+            {(id) => <Input id={id} value={form.vat_id} onChange={set("vat_id")} placeholder="DE…" />}
+          </Field>
+          <Field label="Zahlungsziel" className="col-span-1 sm:col-span-1">
+            {(id) => <Input id={id} type="number" min={0} value={form.payment_terms_days} onChange={set("payment_terms_days")} placeholder="Tage" className="tabular-nums" />}
+          </Field>
+        </FormGroup>
+
+        <Field label="Notizen">{(id) => <Textarea id={id} value={form.notes} onChange={set("notes")} className="min-h-20" />}</Field>
       </form>
     </Dialog>
   );
