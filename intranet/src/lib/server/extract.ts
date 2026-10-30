@@ -24,6 +24,8 @@ type Extracted = {
 };
 
 const nullable = (type: string) => ({ type: [type, "null"] });
+// Auswahl oder null. Nicht als type ["string", "null"] mit enum: das lehnt die API ab.
+const oneOf = (values: readonly string[]) => ({ anyOf: [{ type: "string", enum: [...values] }, { type: "null" }] });
 
 const SCHEMA = {
   type: "object",
@@ -35,8 +37,8 @@ const SCHEMA = {
     net_amount: nullable("number"),
     vat_amount: nullable("number"),
     currency: nullable("string"),
-    payment_method: { type: ["string", "null"], enum: [...PAYMENT_METHODS.map((m) => m.id), null] },
-    category: { type: ["string", "null"], enum: [...INVOICE_CATEGORIES, null] },
+    payment_method: oneOf(PAYMENT_METHODS.map((m) => m.id)),
+    category: oneOf(INVOICE_CATEGORIES),
     description: nullable("string"),
     paid: { type: "boolean" },
     paid_date: nullable("string"),
