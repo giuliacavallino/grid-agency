@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AccountMenu } from "@/components/hub";
+import { TeamsButton } from "@/components/teams";
 import { Logo } from "@/components/logo";
 import { useRows } from "@/lib/data";
 
@@ -182,6 +183,13 @@ export function AreaShell({ title, nav, children }: { title: string; nav: NavIte
           <NavList nav={nav} collapsed={collapsed} />
         </nav>
         <div className="mt-4 flex flex-col gap-0.5 border-t border-snow/[0.08] pt-3">
+          <TeamsButton
+            label={!collapsed}
+            className={clsx(
+              "flex h-10 items-center gap-3 rounded-xl text-[14px] text-snow/65 hover:bg-snow/[0.06] hover:text-snow",
+              collapsed ? "w-full justify-center" : "px-3"
+            )}
+          />
           <Link
             href="/"
             title={collapsed ? "Übersicht" : undefined}
@@ -224,6 +232,7 @@ export function AreaShell({ title, nav, children }: { title: string; nav: NavIte
             <Menu className="h-5 w-5" />
           </button>
           <span className="flex-1 truncate text-[15px] font-medium">{current?.label ?? title}</span>
+          <TeamsButton className="h-9 w-9" />
           <AccountMenu />
         </div>
 
