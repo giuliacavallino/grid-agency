@@ -3,9 +3,10 @@
 -- in den Bucket „bewerbungen“, die Bewerbung über submit_application()
 -- direkt als Karte in Personal → Bewerbungen.
 
--- Offene Stellen: Texte stehen auf der Website (src/lib/content.ts), hier
--- nur der An/Aus-Regler aus Personal → Stellen. Neue Stelle = Eintrag in
--- content.ts plus Zeile mit demselben slug.
+-- Stellen: Texte stehen auf der Website (src/lib/content.ts) und sind immer
+-- alle sichtbar und wählbar. active = „Wird gesucht“ (grüner Chip), Regler
+-- in Personal → Stellen. Neue Stelle = Eintrag in content.ts plus Zeile mit
+-- demselben slug.
 create table public.job_postings (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
@@ -23,7 +24,7 @@ insert into public.job_postings (slug, title, position) values
   ('praktikum-social-media', 'Praktikum (w/m/d) Social Media Marketing', 4);
 
 alter table public.job_postings enable row level security;
--- Die Website liest als anon, welche Stellen gerade offen sind
+-- Die Website liest als anon, welche Stellen gerade gesucht werden
 create policy job_postings_public_read on public.job_postings
   for select to anon using (true);
 

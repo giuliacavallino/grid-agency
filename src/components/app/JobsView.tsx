@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ChevronDown, Clock, MapPin } from "lucide-react";
 import { jobsIntro, type Job } from "@/lib/content";
-import { ApplicationForm, INITIATIVE } from "@/components/ApplicationForm";
+import { ApplicationForm } from "@/components/ApplicationForm";
 
 function Bullets({ items }: { items: string[] }) {
   return (
@@ -49,10 +49,21 @@ const bts: BtsItem[] = [
   { kind: "video", src: "/jobs/bts-cafe.mp4", poster: "/jobs/bts-cafe.jpg", alt: "Arbeiten im Café: Planung und Schnitt" },
 ];
 
-/** Offene Stellen: jede Stelle als aufklappbare Karte mit Rolle,
- * Aufgaben, Profil und Benefits, darunter das Bewerbungsformular. Welche
- * Stellen online sind, steuert das Intranet (Personal → Stellen). */
-export function JobsView({ jobs }: { jobs: Job[] }) {
+/** Grüner Chip an Stellen, die wir gerade aktiv besetzen wollen. */
+function SearchedChip() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-[0.6875rem] font-medium text-emerald-300">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+      Wird gesucht
+    </span>
+  );
+}
+
+/** Stellen: jede als aufklappbare Karte mit Rolle, Aufgaben, Profil und
+ * Benefits, darunter das Bewerbungsformular. Alle Stellen sind immer
+ * wählbar; welche wir gerade suchen (grüner Chip), steuert das Intranet
+ * (Personal → Stellen). */
+export function JobsView({ jobs, searched }: { jobs: Job[]; searched: string[] }) {
   const [open, setOpen] = useState<string | null>(jobs[0]?.slug ?? null);
   const [applyFor, setApplyFor] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
@@ -80,10 +91,9 @@ export function JobsView({ jobs }: { jobs: Job[] }) {
         </p>
         <p className="mt-3 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
           Kleines Team, flache Hierarchien, ein lockeres Arbeitsumfeld mit
-          viel Freiheit und Selbstständigkeit.{" "}
-          {jobs.length
-            ? "Das sind unsere offenen Stellen in Berlin und Frankfurt:"
-            : "Gerade haben wir keine Stelle ausgeschrieben, Initiativbewerbungen sind aber jederzeit willkommen."}
+          viel Freiheit und Selbstständigkeit. Bewerben kannst du dich auf
+          jede Rolle in Berlin und Frankfurt, auch initiativ. Was wir gerade
+          suchen, ist markiert.
         </p>
       </motion.div>
 
@@ -159,6 +169,11 @@ export function JobsView({ jobs }: { jobs: Job[] }) {
                 className="flex w-full items-start justify-between gap-4 p-5 text-left sm:p-6"
               >
                 <div>
+                  {searched.includes(job.slug) && (
+                    <div className="mb-2">
+                      <SearchedChip />
+                    </div>
+                  )}
                   <h2 className="card-rainbow-title text-xl font-medium tracking-tight text-snow">
                     {job.title}
                   </h2>
@@ -258,13 +273,14 @@ export function JobsView({ jobs }: { jobs: Job[] }) {
           Deine Bewerbung
         </h2>
         <p className="mt-2 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
-          Lebenslauf hochladen, ein paar Zeilen zu dir, fertig.
-          {jobs.length > 0 && " Nichts Passendes dabei? Wähl einfach „Initiativbewerbung“."}
+          Lebenslauf hochladen, ein paar Zeilen zu dir, fertig. Nichts
+          Passendes dabei? Wähl einfach „Initiativbewerbung“.
         </p>
         <div className="mt-6">
           <ApplicationForm
             jobs={jobs}
-            job={applyFor || (jobs.length ? "" : INITIATIVE)}
+            searched={searched}
+            job={applyFor}
             onJobChange={setApplyFor}
           />
         </div>

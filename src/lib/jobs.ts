@@ -1,14 +1,12 @@
-import { jobs, type Job } from "@/lib/content";
 import { getSupabase } from "@/lib/supabase";
 
-/** Stellen, die im Intranet (Personal → Stellen) auf „online“ stehen. Ist
- * die Datenbank nicht erreichbar, bleiben alle Stellen aus content.ts
- * sichtbar statt einer leeren Jobseite. */
-export async function openJobs(): Promise<Job[]> {
+/** Slugs der Stellen, die im Intranet (Personal → Stellen) auf „Wird
+ * gesucht“ stehen. Alle Stellen aus content.ts bleiben immer sichtbar und
+ * wählbar; ohne Datenbank fehlt nur der Chip. */
+export async function searchedJobs(): Promise<string[]> {
   const supabase = getSupabase();
-  if (!supabase) return jobs;
-  const { data, error } = await supabase.from("job_postings").select("slug, active");
-  if (error || !data) return jobs;
-  const active = new Set(data.filter((row) => row.active).map((row) => row.slug));
-  return jobs.filter((job) => active.has(job.slug));
+  if (!supabase) return [];
+  const { data, error } = await supabase.from("job_postings").select("slug").eq("active", true);
+  if (error || !data) return [];
+  return data.map((row) => row.slug as string);
 }

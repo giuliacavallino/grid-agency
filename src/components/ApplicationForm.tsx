@@ -15,7 +15,7 @@ import {
 
 const initialState: ApplicationFormState = { status: "idle" };
 
-export const INITIATIVE = "initiativ";
+const INITIATIVE = "initiativ";
 
 const inputClasses =
   "w-full rounded-lg border border-snow/15 bg-transparent px-4 py-3 text-sm text-snow placeholder:text-snow/40 outline-none transition-colors focus:border-dune";
@@ -45,10 +45,12 @@ function SubmitButton({ pending }: { pending: boolean }) {
  * Karte in Personal → Bewerbungen im Intranet. */
 export function ApplicationForm({
   jobs,
+  searched,
   job,
   onJobChange,
 }: {
   jobs: Job[];
+  searched: string[];
   job: string;
   onJobChange: (slug: string) => void;
 }) {
@@ -119,6 +121,7 @@ export function ApplicationForm({
         {jobs.map((j) => (
           <option key={j.slug} value={j.slug} className="bg-sky text-snow">
             {j.title}
+            {searched.includes(j.slug) ? " · wird gesucht" : ""}
           </option>
         ))}
         <option value={INITIATIVE} className="bg-sky text-snow">

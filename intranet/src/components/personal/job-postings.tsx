@@ -11,9 +11,9 @@ import { PageBar } from "@/components/sales/shell";
 
 const JOBS_URL = `https://${DOMAIN}/jobs`;
 
-/** Offene Stellen auf der Website an- und ausschalten. Aktive Stellen stehen
- * auf /jobs und im Bewerbungsformular; die Website übernimmt Änderungen
- * nach spätestens einer Minute. */
+/** Stellen der Website als „Wird gesucht“ markieren. Alle Stellen stehen
+ * immer auf /jobs und im Bewerbungsformular; markierte bekommen dort einen
+ * grünen Chip. Die Website übernimmt Änderungen nach spätestens einer Minute. */
 export function JobPostings() {
   const { data: jobs, loading, error } = useRows<JobPosting>("job_postings");
   const { data: applications } = useRows<Application>("applications");
@@ -21,7 +21,7 @@ export function JobPostings() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageBar title="Stellen" meta={jobs && `${active} von ${jobs.length} online`}>
+      <PageBar title="Stellen" meta={jobs && `${active} von ${jobs.length} gesucht`}>
         <a
           href={JOBS_URL}
           target="_blank"
@@ -41,8 +41,8 @@ export function JobPostings() {
       ) : (
         <div className="flex-1 overflow-y-auto p-4 md:p-5">
           <p className="mb-4 max-w-2xl text-[13px] text-snow/55">
-            Aktive Stellen erscheinen auf der Jobseite und im Bewerbungsformular. Initiativbewerbungen sind immer möglich.
-            Neue Bewerbungen landen als Karte unter Bewerbungen.
+            Alle Stellen stehen immer auf der Jobseite und im Bewerbungsformular. Was wir gerade suchen, bekommt dort den grünen
+            Chip „Wird gesucht“. Neue Bewerbungen landen als Karte unter Bewerbungen.
           </p>
           <ul className="grid max-w-2xl gap-2">
             {jobs?.map((job) => (
@@ -63,7 +63,7 @@ function JobRow({ job, count }: { job: JobPosting; count: number }) {
     setToggling(true);
     try {
       await updateRow<JobPosting>("job_postings", job.id, { active: !job.active });
-      toast(job.active ? "Stelle offline" : "Stelle online");
+      toast(job.active ? "Nicht mehr gesucht" : "Wird gesucht");
     } catch {
       toast("Ändern fehlgeschlagen", "error");
     }
@@ -73,18 +73,18 @@ function JobRow({ job, count }: { job: JobPosting; count: number }) {
   return (
     <li className="flex items-center gap-4 rounded-2xl border border-snow/[0.06] bg-surface px-4 py-3.5">
       <div className="min-w-0 flex-1">
-        <p className={clsx("truncate text-[15px] font-medium", !job.active && "text-snow/50")}>{job.title}</p>
+        <p className={clsx("truncate text-[15px] font-medium", !job.active && "text-snow/60")}>{job.title}</p>
         <p className="text-[12px] text-snow/45">
           {count === 1 ? "1 Bewerbung" : `${count} Bewerbungen`} über die Website
         </p>
       </div>
       <label className="flex shrink-0 cursor-pointer items-center gap-2 text-[13px] text-snow/60" aria-busy={toggling || undefined}>
-        {toggling ? <Spinner className="h-3.5 w-3.5" /> : <span>{job.active ? "Online" : "Offline"}</span>}
+        {toggling ? <Spinner className="h-3.5 w-3.5" /> : <span>{job.active ? "Wird gesucht" : "Nicht gesucht"}</span>}
         <button
           type="button"
           role="switch"
           aria-checked={job.active}
-          aria-label={`${job.title} ${job.active ? "offline nehmen" : "online stellen"}`}
+          aria-label={`${job.title}: wird gesucht`}
           disabled={toggling}
           onClick={toggle}
           className={clsx("relative h-6 w-11 rounded-full transition-colors disabled:cursor-progress", job.active ? "bg-success" : "bg-snow/20")}
