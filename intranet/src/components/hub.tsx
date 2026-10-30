@@ -242,8 +242,8 @@ export function Hub() {
       </div>
 
       {kpis && kpis.length > 0 && (
-        <div className="-mx-5 mt-3 shrink-0 overflow-x-auto px-5 lg:hidden">
-          <KpiList kpis={kpis} className="glass w-max gap-0.5 rounded-2xl p-1" />
+        <div className="mt-3 shrink-0 lg:hidden">
+          <KpiList kpis={kpis} compact className="glass w-full justify-between rounded-2xl p-1" />
         </div>
       )}
 

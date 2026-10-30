@@ -5,26 +5,25 @@ import { clsx } from "clsx";
 import { useAuth } from "@/lib/auth";
 import { useResource } from "@/lib/data";
 import { euro } from "@/lib/format";
-import type { Application, Invoice, Lead, Retainer } from "@/lib/sales/types";
+import type { Invoice, Lead, Retainer } from "@/lib/sales/types";
 import { isOverdue, type Task, type TaskProject } from "@/lib/tasks";
 import { monthTotals } from "./sales/orderbook";
 import { useCan } from "./access";
 
-export type Kpi = { id: string; label: string; value: string; href: string; alert?: string };
+/** short: knappes Label fürs Handy */
+export type Kpi = { id: string; label: string; short?: string; value: string; href: string; alert?: string };
 
-/** Kennzahlen für die Kopfleiste der Übersicht, je nach freigegebenen
- * Bereichen. Dieselben URLs wie in den Bereichen, damit der Cache greift. */
+/** Kennzahlen für die Kopfleiste der Übersicht (MRR, Pipeline, Rechnungen
+ * zur Freigabe, Meine To-dos), je nach freigegebenen Bereichen. Dieselben URLs wie in den Bereichen, damit der Cache greift. */
 export function useKpis(): Kpi[] | null {
   const auth = useAuth();
   const sales = useCan("sales");
   const finance = useCan("finance");
-  const personal = useCan("personal");
   const aufgaben = useCan("aufgaben");
 
   const retainers = useResource<Retainer[]>(sales ? "/api/sales/retainers" : null);
   const leads = useResource<Lead[]>(sales ? "/api/sales/leads?status=offen" : null);
   const invoices = useResource<Invoice[]>(finance ? "/api/sales/invoices?stage=neu" : null);
-  const applications = useResource<Application[]>(personal ? "/api/sales/applications?stage=neu" : null);
   const projects = useResource<TaskProject[]>(aufgaben ? "/api/sales/task_projects" : null);
   const tasks = useResource<Task[]>(aufgaben ? "/api/sales/tasks" : null);
 
@@ -40,18 +39,11 @@ export function useKpis(): Kpi[] | null {
       value: leads.data ? euro(open.reduce((sum, l) => sum + Number(l.value ?? 0), 0)) : "…",
       href: "/sales",
     });
-    const fresh = open.filter((l) => l.stage === "neu").length;
-    kpis.push({ id: "leads", label: "Neue Leads", value: leads.data ? String(fresh) : "…", href: "/sales", alert: fresh ? "neu" : undefined });
   }
 
   if (finance) {
     const count = invoices.data?.filter((i) => i.stage === "neu").length ?? 0;
-    kpis.push({ id: "invoices", label: "Zur Freigabe", value: invoices.data ? String(count) : "…", href: "/finance", alert: count ? "offen" : undefined });
-  }
-
-  if (personal) {
-    const count = applications.data?.filter((a) => a.stage === "neu").length ?? 0;
-    kpis.push({ id: "applications", label: "Bewerbungen", value: applications.data ? String(count) : "…", href: "/personal", alert: count ? "neu" : undefined });
+    kpis.push({ id: "invoices", label: "Zur Freigabe", short: "Freigabe", value: invoices.data ? String(count) : "…", href: "/finance", alert: count ? "offen" : undefined });
   }
 
   if (aufgaben) {
@@ -67,6 +59,7 @@ export function useKpis(): Kpi[] | null {
     kpis.push({
       id: "tasks",
       label: "Meine To-dos",
+      short: "To-dos",
       value: tasks.data && projects.data ? String(mine.length) : "…",
       href: "/aufgaben/meine",
       alert: overdue ? `${overdue} überfällig` : undefined,
@@ -77,17 +70,20 @@ export function useKpis(): Kpi[] | null {
 }
 
 /** Kennzahlen nebeneinander; Klick führt in den Bereich. */
-export function KpiList({ kpis, className }: { kpis: Kpi[]; className?: string }) {
+export function KpiList({ kpis, compact = false, className }: { kpis: Kpi[]; compact?: boolean; className?: string }) {
   return (
     <ul className={clsx("flex items-stretch", className)}>
       {kpis.map((kpi) => (
         <li key={kpi.id}>
           <Link
             href={kpi.href}
-            className="group flex h-full flex-col justify-center rounded-2xl px-3 py-1 whitespace-nowrap transition-colors hover:bg-snow/[0.08]"
+            className={clsx(
+              "group flex h-full flex-col justify-center rounded-2xl py-1 whitespace-nowrap transition-colors hover:bg-snow/[0.08]",
+              compact ? "px-2" : "px-3"
+            )}
           >
-            <span className="flex items-center gap-1.5 text-[10.5px] font-medium tracking-[0.08em] text-snow/55 uppercase">
-              {kpi.label}
+            <span className={clsx("flex items-center gap-1.5 text-[10.5px] font-medium text-snow/55 uppercase", compact ? "tracking-[0.04em]" : "tracking-[0.08em]")}>
+              {compact ? (kpi.short ?? kpi.label) : kpi.label}
               {kpi.alert && <span className="h-1.5 w-1.5 rounded-full bg-[#fa7e1e]" aria-label={kpi.alert} title={kpi.alert} />}
             </span>
             <span className="text-[17px] leading-tight font-medium tabular-nums">{kpi.value}</span>
