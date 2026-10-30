@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
-import { CalendarClock, Check, Inbox, Search, Send, Undo2, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Check, CheckCheck, FileText, Inbox, Plus, Search, Send, Undo2, X, XCircle } from "lucide-react";
 import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
 import { createRow, deleteRow, updateRow, useResource, useRows } from "@/lib/data";
 import { formatDate, relativeTime } from "@/lib/format";
-import { graphFor } from "@/lib/graph";
+import { graphErrorMessage, graphFor, useAsync } from "@/lib/graph";
 import { INVOICE_STAGES, topPosition, type Invoice, type InvoiceStage, type Settings } from "@/lib/sales/types";
 import { Board, BoardCard } from "@/components/board";
 import { Button, Dialog, Empty, Field, Input, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
@@ -20,12 +20,41 @@ const money = (amount: number | null, currency = "EUR") =>
 const overdue = (invoice: Invoice) =>
   invoice.stage !== "datev" && !!invoice.due_date && new Date(`${invoice.due_date}T23:59:59`) < new Date();
 
-/** Eingangsrechnungen: Neu (aus den Postfächern erfasst) → Freigegeben →
- * An DATEV gesendet (Upload-Mail von buchhaltung@). */
+/** Ein Klick: freigeben und die Belege der Rechnungsmail von buchhaltung@ an
+ * die DATEV-Upload-Adresse (DATEV Unternehmen online) schicken. Manuell
+ * erfasste Rechnungen ohne Mail werden nur freigegeben. */
+async function release(invoice: Invoice, datevAddress: string): Promise<"datev" | "freigegeben"> {
+  if (!invoice.mailbox || !invoice.graph_id) {
+    await updateRow<Invoice>("invoices", invoice.id, { stage: "freigegeben", position: topPosition() });
+    return "freigegeben";
+  }
+  if (!datevAddress) throw new Error("Keine DATEV-Upload-Adresse hinterlegt");
+  const files = await graphFor(invoice.mailbox).files(invoice.graph_id);
+  if (!files.length) throw new Error("Die Mail hat keine Dateianhänge");
+  const subject = [invoice.vendor, invoice.invoice_number].filter(Boolean).join(" · ");
+  await graphFor(FINANCE_MAILBOX).send({ to: [datevAddress], cc: [], subject: subject || "Eingangsrechnung", body: "" }, files);
+  await updateRow<Invoice>("invoices", invoice.id, { stage: "datev", position: topPosition() });
+  return "datev";
+}
+
+const releasedText = (invoice: Invoice, result: "datev" | "freigegeben") =>
+  result === "datev" ? `${invoice.vendor}: an DATEV gesendet` : `${invoice.vendor}: freigegeben (kein Beleg, nicht an DATEV)`;
+
+/** Fällige zuerst, Rechnungen ohne Fälligkeit nach Eingang */
+const byDue = (a: Invoice, b: Invoice) =>
+  (a.due_date ?? "9999").localeCompare(b.due_date ?? "9999") ||
+  (a.received_at ?? a.created_at).localeCompare(b.received_at ?? b.created_at);
+
+type View = "freigabe" | "alle";
+
+/** Eingangsrechnungen: „Zur Freigabe“ ist eine Liste mit Beleg-Vorschau, in
+ * der ein Klick auf „Freigeben“ die Rechnung direkt an DATEV schickt.
+ * „Alle Rechnungen“ zeigt das Board Neu → Freigegeben → An DATEV gesendet. */
 export function Invoices() {
   const { data: invoices, loading, error } = useRows<Invoice>("invoices");
   const { data: settings } = useResource<Settings>("/api/sales/settings");
   const toast = useToast();
+  const [view, setView] = useState<View>("freigabe");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -44,7 +73,7 @@ export function Invoices() {
   async function move(invoice: Invoice, stage: string, position: number) {
     try {
       await updateRow<Invoice>("invoices", invoice.id, { stage: stage as InvoiceStage, position });
-      if (stage === "freigegeben" && invoice.stage === "neu") toast("Freigegeben");
+      if (stage === "freigegeben" && invoice.stage === "neu") toast("Freigegeben – an DATEV senden in der Rechnung");
     } catch {
       toast("Verschieben fehlgeschlagen", "error");
     }
@@ -63,12 +92,39 @@ export function Invoices() {
           )
         }
       >
-        <div className="relative min-w-0 flex-1 md:max-w-56">
+        <div className="flex shrink-0 rounded-full bg-snow/[0.06] p-1" role="tablist" aria-label="Ansicht">
+          {(
+            [
+              ["freigabe", "Zur Freigabe"],
+              ["alle", "Alle Rechnungen"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={view === id}
+              onClick={() => setView(id)}
+              className={clsx(
+                "inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors",
+                view === id ? "bg-snow text-sky" : "text-snow/65 hover:text-snow"
+              )}
+            >
+              {label}
+              {id === "freigabe" && invoices && (
+                <span className={clsx("rounded-full px-1.5 text-[11px] tabular-nums", view === id ? "bg-sky/15" : "bg-snow/10")}>
+                  {visible.filter((i) => i.stage === "neu").length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="relative hidden min-w-0 flex-1 md:block md:max-w-56">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-snow/40" />
           <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Suchen" aria-label="Rechnungen durchsuchen" className="h-9 w-full pl-9" />
         </div>
-        <Button variant="primary" size="sm" className="h-9" onClick={() => setCreating(true)}>
-          Rechnung erfassen
+        <Button variant="primary" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)} aria-label="Rechnung erfassen">
+          <span className="hidden md:inline">Rechnung erfassen</span>
         </Button>
       </PageBar>
 
@@ -87,6 +143,13 @@ export function Invoices() {
         <div className="grid flex-1 place-items-center">
           <Spinner />
         </div>
+      ) : view === "freigabe" ? (
+        <ApprovalQueue
+          invoices={visible}
+          datevAddress={settings?.datev.upload_address ?? ""}
+          onDetails={setOpenId}
+          blocked={!!openId || creating}
+        />
       ) : (
         <Board
           columns={INVOICE_STAGES}
@@ -107,6 +170,336 @@ export function Invoices() {
 
       <InvoiceSheet id={openId} invoices={invoices ?? []} datevAddress={settings?.datev.upload_address ?? ""} onClose={() => setOpenId(null)} />
       <NewInvoiceDialog open={creating} onClose={() => setCreating(false)} onCreated={(id) => setOpenId(id)} />
+    </div>
+  );
+}
+
+/** Freigabe-Liste: links die neuen Rechnungen, rechts die gewählte mit Beleg.
+ * „Freigeben“ (oder Pfeil rechts) schickt sie an DATEV und springt sofort zur
+ * nächsten; der Versand läuft im Hintergrund weiter. */
+function ApprovalQueue({
+  invoices,
+  datevAddress,
+  onDetails,
+  blocked,
+}: {
+  invoices: Invoice[];
+  datevAddress: string;
+  onDetails: (id: string) => void;
+  /** Sheet oder Dialog offen: Tastenkürzel aus */
+  blocked: boolean;
+}) {
+  const toast = useToast();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sending, setSending] = useState<ReadonlySet<string>>(new Set());
+  const [rejecting, setRejecting] = useState<Invoice | null>(null);
+  const [rejectBusy, setRejectBusy] = useState(false);
+  // Auf dem Handy: Liste oder Rechnung
+  const [paneOpen, setPaneOpen] = useState(false);
+
+  const queue = useMemo(() => invoices.filter((i) => i.stage === "neu").sort(byDue), [invoices]);
+  const ready = queue.filter((i) => !sending.has(i.id));
+  const selected = ready.find((i) => i.id === selectedId) ?? ready[0] ?? null;
+
+  /** Nach Freigabe/Ablehnung die nächste Rechnung zeigen */
+  const advance = useCallback(
+    (invoice: Invoice) => {
+      const index = ready.findIndex((i) => i.id === invoice.id);
+      const next = ready[index + 1] ?? ready[index - 1];
+      setSelectedId(next?.id ?? null);
+      if (!next) setPaneOpen(false);
+    },
+    [ready]
+  );
+
+  const approve = useCallback(
+    async (invoice: Invoice) => {
+      advance(invoice);
+      setSending((set) => new Set(set).add(invoice.id));
+      try {
+        toast(releasedText(invoice, await release(invoice, datevAddress)));
+      } catch (error) {
+        toast(`${invoice.vendor}: Senden fehlgeschlagen – ${graphErrorMessage(error)}`, "error");
+      }
+      setSending((set) => {
+        const rest = new Set(set);
+        rest.delete(invoice.id);
+        return rest;
+      });
+    },
+    [advance, datevAddress, toast]
+  );
+
+  async function reject(invoice: Invoice) {
+    setRejectBusy(true);
+    try {
+      await updateRow<Invoice>("invoices", invoice.id, { stage: "abgelehnt" });
+      advance(invoice);
+      setRejecting(null);
+      toast(`${invoice.vendor}: zurückgewiesen`);
+    } catch {
+      toast("Das hat nicht geklappt", "error");
+    }
+    setRejectBusy(false);
+  }
+
+  // Pfeil rechts = Freigeben, Pfeil hoch/runter = vorige/nächste Rechnung
+  useEffect(() => {
+    if (blocked || rejecting) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.defaultPrevented || event.repeat || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+      if ((event.target as HTMLElement).closest("input, textarea, select, [contenteditable=true]")) return;
+      if (!selected) return;
+      const index = ready.indexOf(selected);
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        approve(selected);
+      } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        const next = ready[index + (event.key === "ArrowDown" ? 1 : -1)];
+        if (!next) return;
+        event.preventDefault();
+        setSelectedId(next.id);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [blocked, rejecting, selected, ready, approve]);
+
+  if (!queue.length) {
+    return (
+      <Empty
+        icon={<CheckCheck className="h-8 w-8" />}
+        title="Alles freigegeben"
+        text="Neue Rechnungen an buchhaltung@ landen automatisch hier."
+      />
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1">
+      <aside
+        className={clsx(
+          "w-full shrink-0 overflow-y-auto border-snow/[0.08] p-3 md:block md:w-80 md:border-r",
+          paneOpen && "hidden"
+        )}
+      >
+        <p className="px-2 pt-2 pb-3 text-[11px] font-semibold tracking-[0.12em] text-snow/50 uppercase">
+          {queue.length} zur Freigabe
+        </p>
+        <ul className="flex flex-col gap-1">
+          {queue.map((invoice) => {
+            const busy = sending.has(invoice.id);
+            const active = !busy && invoice.id === selected?.id;
+            return (
+              <li key={invoice.id}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-busy={busy || undefined}
+                  aria-current={active || undefined}
+                  onClick={() => {
+                    setSelectedId(invoice.id);
+                    setPaneOpen(true);
+                  }}
+                  className={clsx(
+                    "flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors",
+                    active ? "border-snow/15 bg-snow/[0.08]" : "border-transparent hover:bg-snow/[0.05]",
+                    busy && "cursor-progress opacity-60"
+                  )}
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-snow/[0.06] text-snow/60">
+                    {busy ? <Spinner className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-medium">{invoice.vendor}</span>
+                    <span className={clsx("block truncate text-[12px]", overdue(invoice) && !busy ? "text-error" : "text-snow/55")}>
+                      {busy
+                        ? "Wird an DATEV gesendet …"
+                        : [money(invoice.amount, invoice.currency), invoice.due_date && `fällig ${formatDate(invoice.due_date)}`]
+                            .filter(Boolean)
+                            .join(" · ")}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </aside>
+
+      <section className={clsx("min-w-0 flex-1 overflow-y-auto", !paneOpen && "hidden md:block")}>
+        {selected ? (
+          <ApprovalPane
+            key={selected.id}
+            invoice={selected}
+            onApprove={() => approve(selected)}
+            onReject={() => setRejecting(selected)}
+            onDetails={() => onDetails(selected.id)}
+            onBack={() => setPaneOpen(false)}
+          />
+        ) : (
+          <div className="grid h-full place-items-center">
+            <Spinner />
+          </div>
+        )}
+      </section>
+
+      <Dialog
+        open={!!rejecting}
+        onClose={() => setRejecting(null)}
+        title="Rechnung zurückweisen?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setRejecting(null)}>
+              Abbrechen
+            </Button>
+            <Button variant="danger" loading={rejectBusy} loadingText="Wird zurückgewiesen …" onClick={() => rejecting && reject(rejecting)}>
+              Zurückweisen
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-snow/60">
+          {rejecting?.vendor} geht nicht an DATEV und verschwindet aus der Freigabe. Die Mail bleibt im Postfach.
+        </p>
+      </Dialog>
+    </div>
+  );
+}
+
+function ApprovalPane({
+  invoice,
+  onApprove,
+  onReject,
+  onDetails,
+  onBack,
+}: {
+  invoice: Invoice;
+  onApprove: () => void;
+  onReject: () => void;
+  onDetails: () => void;
+  onBack: () => void;
+}) {
+  const late = overdue(invoice);
+  const facts: [string, React.ReactNode, boolean?][] = [
+    ["Nr.", invoice.invoice_number ?? "–"],
+    ["Datum", formatDate(invoice.invoice_date)],
+    ["Fällig", formatDate(invoice.due_date), late],
+    ["Eingang", relativeTime(invoice.received_at ?? invoice.created_at)],
+    ["Von", invoice.vendor_email ?? (invoice.mailbox ? mailboxLabel(invoice.mailbox) : "manuell erfasst")],
+  ];
+  return (
+    <div className="flex flex-col gap-4 p-3 md:p-5">
+      <div className="rounded-3xl border border-snow/10 bg-surface p-5 md:p-6">
+        <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-1.5 text-[13px] text-snow/60 md:hidden">
+          <ArrowLeft className="h-4 w-4" /> Liste
+        </button>
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-medium">{invoice.vendor}</h2>
+            {invoice.description && <p className="mt-0.5 truncate text-sm text-snow/55">{invoice.description}</p>}
+          </div>
+          <span className="shrink-0 text-2xl font-semibold tabular-nums">{money(invoice.amount, invoice.currency)}</span>
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <Button variant="danger" icon={<X className="h-4 w-4" />} onClick={onReject}>
+            Zurückweisen
+          </Button>
+          <Button variant="primary" icon={<Check className="h-4 w-4" />} onClick={onApprove} aria-keyshortcuts="ArrowRight" title="Pfeil rechts">
+            Freigeben
+          </Button>
+          <span className="ml-1 hidden items-center gap-1 text-[12px] text-snow/45 md:inline-flex">
+            oder
+            <kbd className="inline-grid h-5 min-w-5 place-items-center rounded-md border border-snow/15 px-1">
+              <ArrowRight className="h-3 w-3" />
+            </kbd>
+          </span>
+        </div>
+
+        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-5">
+          {facts.map(([label, value, alert]) => (
+            <div key={label} className="min-w-0">
+              <dt className="text-[11px] font-semibold tracking-[0.1em] text-snow/45 uppercase">{label}</dt>
+              <dd className={clsx("mt-1 truncate text-[14px] font-medium", alert && "text-error")}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-snow/[0.08] pt-4 text-[13px]">
+          <button type="button" onClick={onDetails} className="inline-flex items-center gap-1.5 text-snow/70 hover:text-snow">
+            Details bearbeiten <ArrowRight className="h-4 w-4" />
+          </button>
+          <span className="text-snow/45">
+            {invoice.graph_id ? "Freigeben schickt den Beleg von buchhaltung@ an DATEV Unternehmen online." : "Kein Beleg – wird nur freigegeben."}
+          </span>
+        </div>
+      </div>
+
+      {invoice.mailbox && invoice.graph_id && <BelegPreview mailbox={invoice.mailbox} messageId={invoice.graph_id} />}
+    </div>
+  );
+}
+
+/** Vorschau der Belege aus der Rechnungsmail (PDF/Bild direkt im Browser). */
+function BelegPreview({ mailbox, messageId }: { mailbox: string; messageId: string }) {
+  const { data, error } = useAsync(`attachments:${mailbox}:${messageId}`, () => graphFor(mailbox).attachments(messageId));
+  const files = data?.filter((a) => !a.isInline) ?? [];
+  const [index, setIndex] = useState(0);
+  const file = files[index] ?? files[0];
+  const pdf = !!file && (file.contentType === "application/pdf" || /\.pdf$/i.test(file.name));
+  const image = !!file && file.contentType.startsWith("image/");
+  const previewable = pdf || image || file?.contentType.startsWith("text/");
+
+  // Graph liefert oft application/octet-stream; mit dem richtigen Typ zeigt der Browser das PDF an
+  const preview = useAsync(file && previewable ? `download:${mailbox}:${messageId}:${file.id}` : null, async () => {
+    const blob = await graphFor(mailbox).download(messageId, file!.id);
+    return URL.createObjectURL(new Blob([blob], { type: pdf ? "application/pdf" : blob.type || file!.contentType }));
+  });
+  const url = preview.data;
+  useEffect(() => () => {
+    if (url) URL.revokeObjectURL(url);
+  }, [url]);
+
+  if (error || preview.error) return <p className="px-2 text-sm text-error">Beleg konnte nicht geladen werden.</p>;
+  if (data && !files.length) return <p className="px-2 text-sm text-snow/55">Die Mail hat keinen Anhang.</p>;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {files.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {files.map((f, i) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setIndex(i)}
+              className={clsx(
+                "max-w-64 truncate rounded-full border px-3 py-1 text-[13px]",
+                f === file ? "border-snow/25 bg-snow/[0.08]" : "border-snow/10 text-snow/60 hover:text-snow"
+              )}
+            >
+              {f.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {file && !previewable ? (
+        <div className="rounded-3xl border border-snow/10 bg-surface p-5 text-sm text-snow/60">
+          Keine Vorschau für {file.name}.
+          <Attachments mailbox={mailbox} messageId={messageId} />
+        </div>
+      ) : url ? (
+        image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt={file!.name} className="w-full rounded-3xl border border-snow/10 bg-white" />
+        ) : (
+          <iframe src={url} title={file!.name} className="h-[80vh] w-full rounded-3xl border border-snow/10 bg-white" />
+        )
+      ) : (
+        <div className="grid h-[60vh] place-items-center rounded-3xl border border-snow/10 bg-surface">
+          <Spinner />
+        </div>
+      )}
     </div>
   );
 }
@@ -197,7 +590,7 @@ function InvoiceDetail({ invoice, datevAddress, onClose }: { invoice: Invoice; d
   const toast = useToast();
   const [form, setForm] = useState<Form>(() => toForm(invoice));
   const [busy, setBusy] = useState<"save" | "approve" | "datev" | "reset" | "reject" | "delete" | null>(null);
-  const [confirm, setConfirm] = useState<"datev" | "reject" | "delete" | null>(null);
+  const [confirm, setConfirm] = useState<"reject" | "delete" | null>(null);
   const dirty = JSON.stringify(form) !== JSON.stringify(toForm(invoice));
   const set = (key: keyof Form) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: event.target.value }));
@@ -219,45 +612,45 @@ function InvoiceDetail({ invoice, datevAddress, onClose }: { invoice: Invoice; d
     return run("save", () => updateRow<Invoice>("invoices", invoice.id, fromForm(form)), "Gespeichert", "Speichern fehlgeschlagen");
   };
 
-  const approve = () =>
-    run(
-      "approve",
-      async () => {
-        if (dirty) await updateRow<Invoice>("invoices", invoice.id, fromForm(form));
-        await updateRow<Invoice>("invoices", invoice.id, { stage: "freigegeben", position: topPosition() });
-      },
-      "Freigegeben",
-      "Freigabe fehlgeschlagen"
-    );
-
-  /** Anhänge aus der Original-Mail holen und von buchhaltung@ an DATEV schicken */
-  const sendToDatev = () =>
-    run(
-      "datev",
-      async () => {
-        if (!datevAddress) throw new Error("Keine DATEV-Upload-Adresse hinterlegt");
-        if (!invoice.mailbox || !invoice.graph_id) throw new Error("Rechnung hat keine Mail mit Anhang");
-        const files = await graphFor(invoice.mailbox).files(invoice.graph_id);
-        if (!files.length) throw new Error("Die Mail hat keine Dateianhänge");
-        const subject = [invoice.vendor, invoice.invoice_number].filter(Boolean).join(" · ");
-        await graphFor(FINANCE_MAILBOX).send({ to: [datevAddress], cc: [], subject: subject || "Eingangsrechnung", body: "" }, files);
-        await updateRow<Invoice>("invoices", invoice.id, { stage: "datev", position: topPosition() });
-      },
-      "An DATEV gesendet",
-      "Senden fehlgeschlagen"
-    );
+  /** Freigeben schickt direkt an DATEV; „An DATEV senden“ holt den Versand
+   * für schon freigegebene Rechnungen nach. */
+  async function approve(kind: "approve" | "datev") {
+    if (!form.vendor.trim()) return toast("Rechnungssteller fehlt", "error");
+    setBusy(kind);
+    try {
+      if (dirty) await updateRow<Invoice>("invoices", invoice.id, fromForm(form));
+      toast(releasedText(invoice, await release({ ...invoice, ...fromForm(form) }, datevAddress)));
+    } catch (error) {
+      toast(`Senden fehlgeschlagen: ${graphErrorMessage(error)}`, "error");
+    }
+    setBusy(null);
+  }
 
   return (
     <div className="flex flex-col gap-6 p-5">
       <div className="flex flex-wrap items-center gap-2">
         {invoice.stage === "neu" && (
-          <Button variant="primary" icon={<Check className="h-4 w-4" />} onClick={approve} loading={busy === "approve"} loadingText="Wird freigegeben …">
+          <Button
+            variant="primary"
+            icon={<Check className="h-4 w-4" />}
+            onClick={() => approve("approve")}
+            loading={busy === "approve"}
+            loadingText="Wird an DATEV gesendet …"
+            disabled={!!busy}
+          >
             Freigeben
           </Button>
         )}
         {invoice.stage === "freigegeben" && (
           <>
-            <Button variant="primary" icon={<Send className="h-4 w-4" />} onClick={() => setConfirm("datev")}>
+            <Button
+              variant="primary"
+              icon={<Send className="h-4 w-4" />}
+              onClick={() => approve("datev")}
+              loading={busy === "datev"}
+              loadingText="Wird gesendet …"
+              disabled={!!busy}
+            >
               An DATEV senden
             </Button>
             <Button
@@ -341,26 +734,6 @@ function InvoiceDetail({ invoice, datevAddress, onClose }: { invoice: Invoice; d
         </Button>
       </div>
 
-      <Dialog
-        open={confirm === "datev"}
-        onClose={() => setConfirm(null)}
-        title="An DATEV senden?"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setConfirm(null)}>
-              Abbrechen
-            </Button>
-            <Button variant="primary" loading={busy === "datev"} loadingText="Wird gesendet …" onClick={sendToDatev}>
-              Senden
-            </Button>
-          </>
-        }
-      >
-        <p className="text-sm text-snow/60">
-          Die Belege aus der Rechnungsmail gehen von <b>{FINANCE_MAILBOX}</b> an <b>{datevAddress || "(keine Adresse hinterlegt)"}</b>.
-          DATEV legt jeden Anhang als eigenen Beleg an.
-        </p>
-      </Dialog>
       <Dialog
         open={confirm === "reject"}
         onClose={() => setConfirm(null)}
