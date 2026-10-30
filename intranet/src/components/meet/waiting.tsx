@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, Heart, Play, Share2, TrendingUp, UserPlus } from "lucide-react";
+import { Eye, Heart, Play, Repeat, Share2, TrendingUp, UserPlus } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
 import { Avatar } from "@/components/ui";
 import { EbookCard, LogoMarquee } from "./brand";
@@ -153,8 +153,19 @@ function WaitTimer() {
   );
 }
 
-/** Bühne der Warteseite. `selfView` ist das eigene Kamerabild (oder ein Platzhalter). */
-export function WaitingStage({ isHost, hostName, selfView }: { isHost: boolean; hostName: string | null; selfView: React.ReactNode }) {
+/** Bühne der Warteseite. `selfView` ist das eigene Kamerabild (oder ein
+ * Platzhalter); `series` beim Jour fixe der Rhythmus mit dem aktuellen Termin. */
+export function WaitingStage({
+  isHost,
+  hostName,
+  selfView,
+  series,
+}: {
+  isHost: boolean;
+  hostName: string | null;
+  selfView: React.ReactNode;
+  series?: string | null;
+}) {
   const [round, setRound] = useState(0);
   useEffect(() => {
     const id = window.setInterval(() => setRound((r) => r + 1), CYCLE_MS);
@@ -184,6 +195,12 @@ export function WaitingStage({ isHost, hostName, selfView }: { isHost: boolean; 
               </span>
               Wartebereich
             </p>
+            {series && (
+              <p className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-snow/70">
+                <Repeat className="h-4 w-4" />
+                Jour fixe · {series}
+              </p>
+            )}
             <h2 className="mt-4 text-[2.5rem] leading-[1.02] font-semibold tracking-tight md:text-6xl [@media(max-height:700px)]:text-4xl">
               {isHost ? (
                 <>

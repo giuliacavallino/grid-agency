@@ -1,4 +1,5 @@
 import "server-only";
+import { DEMO_JOURFIX } from "@/lib/graph-demo";
 import type { Row, Store, TableName } from "./db";
 
 // Speicher für die lokale Vorschau (NEXT_PUBLIC_INTRANET_DEMO=1): Beispieldaten
@@ -304,6 +305,13 @@ const tasks: Row[] = [
 // Calls (meet.grid-agency.de): ein ausgewerteter Call, einer in Auswertung
 const meetings: Row[] = [
   { id: "demo-meet-1", created_at: ago(3), code: "kfd-mqtr-x2p", group_id: "demo-group-1", title: "Monatsreporting Frittenwerk", starts_at: ago(1), ends_at: ago(1), host: "giulia.cavallino@grid-agency.de", host_name: "Giulia Cavallino", lead_id: null, customer_id: null, application_id: null, participants: [{ name: "Giulia Cavallino" }, { name: "Jan Becker" }] },
+  // Jour fixe: ein Raum für die ganze Serie (wie im Vorschau-Kalender)
+  {
+    id: "demo-meet-jf", created_at: ago(40), code: DEMO_JOURFIX.code, group_id: "demo-group-jf", title: DEMO_JOURFIX.title,
+    starts_at: new Date(DEMO_JOURFIX.start).toISOString(), ends_at: new Date(DEMO_JOURFIX.start + DEMO_JOURFIX.minutes * 60_000).toISOString(),
+    host: "giulia.cavallino@grid-agency.de", host_name: "Giulia Cavallino", lead_id: null, customer_id: customers[1].id, application_id: null, participants: [],
+    recurrence: { ...DEMO_JOURFIX.recurrence, video: true, location: null }, valid_until: null, event_id: "demo-series-jf", mailbox: "giulia.cavallino@grid-agency.de", cancelled_at: null,
+  },
   { id: "demo-meet-2", created_at: ago(0), code: "pwx-hhab-7rn", group_id: "demo-group-2", title: "Erstgespräch GRID × Meinberg Finance GmbH", starts_at: ago(0), ends_at: ago(0), host: "giulia.cavallino@grid-agency.de", host_name: "Giulia Cavallino", lead_id: null, customer_id: null, application_id: null, participants: [{ name: "Giulia Cavallino" }, { name: "Simon Meinberg" }] },
 ];
 const meetingRecordings: Row[] = [

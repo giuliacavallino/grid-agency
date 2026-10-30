@@ -78,6 +78,8 @@ export type CalEvent = {
   joinUrl: string | null;
   bodyPreview: string;
   webLink: string | null;
+  /** Termin einer Serie (z. B. Jour fixe) */
+  recurring?: boolean;
 };
 
 export type NewEvent = {
@@ -282,7 +284,9 @@ function realGraph(mailbox: string): GraphApi {
     },
 
     async events(calendar, start, end) {
-      const fields = "id,subject,start,end,isAllDay,location,organizer,attendees,onlineMeeting,bodyPreview,webLink";
+      // calendarView liefert Serien schon aufgelöst: jeder Termin einzeln
+      // (type „occurrence“ bzw. „exception“), nie der Serien-Master
+      const fields = "id,type,subject,start,end,isAllDay,location,organizer,attendees,onlineMeeting,bodyPreview,webLink";
       let url: string | null =
         `/calendars/${calendar.id}/calendarView?startDateTime=${start.toISOString()}&endDateTime=${end.toISOString()}&$select=${fields}&$top=200&$orderby=start/dateTime`;
       const events: CalEvent[] = [];
@@ -308,6 +312,7 @@ function realGraph(mailbox: string): GraphApi {
             joinUrl: e.onlineMeeting?.joinUrl ?? (e.location?.displayName?.startsWith(`https://meet.${DOMAIN}/`) ? e.location.displayName : null),
             bodyPreview: e.bodyPreview ?? "",
             webLink: e.webLink ?? null,
+            recurring: e.type === "occurrence" || e.type === "exception",
           });
         }
         url = data["@odata.nextLink"] ?? null;

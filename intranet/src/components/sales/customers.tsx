@@ -11,6 +11,7 @@ import { euro, formatDate, num } from "@/lib/format";
 import { SOURCES, type Customer, type Lead, type Retainer } from "@/lib/sales/types";
 import { Avatar, Badge, Button, Dialog, Empty, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 import { CustomerFiles } from "./customer-files";
+import { JourFixSection } from "./jourfix";
 import { EasybillSync } from "./easybill-sync";
 import { PageBar } from "./shell";
 import { SourceBadge } from "./source";
@@ -539,6 +540,8 @@ function CustomerDetail({ customer, retainers, onEdit, onClose }: { customer: Cu
           </ul>
         )}
       </section>
+
+      <JourFixSection customer={customer} />
 
       <CustomerFiles customer={customer} />
 
