@@ -1,7 +1,15 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
-import { CircleCheck, LoaderCircle, Paperclip } from "lucide-react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, ChevronDown, CircleCheck, LoaderCircle, Paperclip } from "lucide-react";
 import {
   submitApplication,
   type ApplicationFormState,
@@ -12,6 +20,7 @@ import {
   APPLICATION_MAX_BYTES,
   APPLICATION_MAX_FILES,
 } from "@/lib/application";
+import { SearchedChip } from "@/components/SearchedChip";
 
 const initialState: ApplicationFormState = { status: "idle" };
 
@@ -41,6 +50,153 @@ function SubmitButton({ pending }: { pending: boolean }) {
   );
 }
 
+type JobOption = { value: string; label: string; searched: boolean };
+
+/** Stellenauswahl im Look der Seite statt des nativen Dropdowns, damit
+ * gesuchte Stellen den grünen Chip zeigen. Bedienbar wie ein Select:
+ * Pfeiltasten, Enter, Escape, Tippen auf eine Option. Der Wert geht über
+ * ein verstecktes Feld ins Formular. */
+function JobSelect({
+  options,
+  value,
+  onChange,
+  invalid,
+  buttonRef,
+}: {
+  options: JobOption[];
+  value: string;
+  onChange: (value: string) => void;
+  invalid: boolean;
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
+}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const selected = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+
+  const show = () => {
+    setActive(Math.max(0, options.findIndex((o) => o.value === value)));
+    setOpen(true);
+    requestAnimationFrame(() => list.current?.focus());
+  };
+
+  const choose = (option: JobOption) => {
+    onChange(option.value);
+    setOpen(false);
+    buttonRef.current?.focus();
+  };
+
+  const onListKey = (event: React.KeyboardEvent) => {
+    if (event.key === "ArrowDown") setActive((i) => Math.min(options.length - 1, i + 1));
+    else if (event.key === "ArrowUp") setActive((i) => Math.max(0, i - 1));
+    else if (event.key === "Home") setActive(0);
+    else if (event.key === "End") setActive(options.length - 1);
+    else if (event.key === "Enter" || event.key === " ") choose(options[active]);
+    else if (event.key === "Escape") {
+      setOpen(false);
+      buttonRef.current?.focus();
+    } else if (event.key === "Tab") setOpen(false);
+    else return;
+    if (event.key !== "Tab") event.preventDefault();
+  };
+
+  useEffect(() => {
+    if (open) list.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [open, active]);
+
+  return (
+    <div ref={root} className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={`${id}-list`}
+        onClick={() => (open ? setOpen(false) : show())}
+        onKeyDown={(event) => {
+          if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+            event.preventDefault();
+            show();
+          }
+        }}
+        className={`${inputClasses} flex items-center justify-between gap-3 text-left ${
+          invalid ? "border-red-400/70" : ""
+        } ${open ? "border-dune" : ""}`}
+      >
+        {selected ? (
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+            <span>{selected.label}</span>
+            {selected.searched && <SearchedChip />}
+          </span>
+        ) : (
+          <span className="text-snow/40">Auf welche Stelle bewirbst du dich? *</span>
+        )}
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-snow/50 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          strokeWidth={2}
+        />
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.ul
+            ref={list}
+            id={`${id}-list`}
+            role="listbox"
+            tabIndex={-1}
+            aria-label="Stelle"
+            aria-activedescendant={`${id}-${active}`}
+            onKeyDown={onListKey}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="glass-dark absolute inset-x-0 top-full z-30 mt-2 max-h-80 overflow-y-auto rounded-2xl p-1.5 shadow-2xl outline-none"
+          >
+            {options.map((option, i) => {
+              const isSelected = option.value === value;
+              return (
+                <li
+                  key={option.value}
+                  id={`${id}-${i}`}
+                  data-index={i}
+                  role="option"
+                  aria-selected={isSelected}
+                  onPointerEnter={() => setActive(i)}
+                  onClick={() => choose(option)}
+                  className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+                    i === active ? "bg-snow/10" : ""
+                  } ${isSelected ? "text-snow" : "text-snow/80"}`}
+                >
+                  <Check
+                    className={`h-4 w-4 shrink-0 text-dune ${isSelected ? "" : "invisible"}`}
+                    strokeWidth={2.25}
+                  />
+                  <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2.5 gap-y-1">
+                    <span>{option.label}</span>
+                    {option.searched && <SearchedChip />}
+                  </span>
+                </li>
+              );
+            })}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 /** Bewerbungsformular auf /jobs: Angaben und Unterlagen gehen direkt als
  * Karte in Personal → Bewerbungen im Intranet. */
 export function ApplicationForm({
@@ -56,11 +212,24 @@ export function ApplicationForm({
 }) {
   const [state, formAction, pending] = useActionState(submitApplication, initialState);
   const [files, setFiles] = useState<File[]>([]);
+  const [jobMissing, setJobMissing] = useState(false);
+  const jobButton = useRef<HTMLButtonElement>(null);
+
+  const options: JobOption[] = [
+    ...jobs.map((j) => ({ value: j.slug, label: j.title, searched: searched.includes(j.slug) })),
+    { value: INITIATIVE, label: "Initiativbewerbung", searched: false },
+  ];
 
   // Absenden ohne <form action>: React würde das Formular danach leeren,
   // auch bei einem Fehler, und Angaben samt Dateien wären weg.
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    // Die eigene Stellenauswahl hat keine Browser-Pflichtfeldprüfung
+    if (!job) {
+      setJobMissing(true);
+      jobButton.current?.focus();
+      return;
+    }
     const data = new FormData(event.currentTarget);
     startTransition(() => formAction(data));
   };
@@ -107,27 +276,22 @@ export function ApplicationForm({
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
       />
 
-      <select
-        name="job"
-        required
-        value={job}
-        onChange={(e) => onJobChange(e.target.value)}
-        aria-label="Stelle"
-        className={`${inputClasses} has-[option[value='']:checked]:text-snow/40`}
-      >
-        <option value="" disabled>
-          Auf welche Stelle bewirbst du dich? *
-        </option>
-        {jobs.map((j) => (
-          <option key={j.slug} value={j.slug} className="bg-sky text-snow">
-            {j.title}
-            {searched.includes(j.slug) ? " · wird gesucht" : ""}
-          </option>
-        ))}
-        <option value={INITIATIVE} className="bg-sky text-snow">
-          Initiativbewerbung
-        </option>
-      </select>
+      <input type="hidden" name="job" value={job} />
+      <div>
+        <JobSelect
+          options={options}
+          value={job}
+          onChange={(value) => {
+            setJobMissing(false);
+            onJobChange(value);
+          }}
+          invalid={jobMissing}
+          buttonRef={jobButton}
+        />
+        {jobMissing && (
+          <p className="mt-2 text-xs text-red-400">Bitte wähl eine Stelle oder „Initiativbewerbung“.</p>
+        )}
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
         <input

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ChevronDown, Clock, MapPin } from "lucide-react";
 import { jobsIntro, type Job } from "@/lib/content";
 import { ApplicationForm } from "@/components/ApplicationForm";
+import { SearchedChip } from "@/components/SearchedChip";
 
 function Bullets({ items }: { items: string[] }) {
   return (
@@ -48,16 +49,6 @@ const bts: BtsItem[] = [
   { kind: "video", src: "/jobs/bts-laden.mp4", poster: "/jobs/bts-laden.jpg", alt: "Behind the Scenes: Filmen im Laden" },
   { kind: "video", src: "/jobs/bts-cafe.mp4", poster: "/jobs/bts-cafe.jpg", alt: "Arbeiten im Café: Planung und Schnitt" },
 ];
-
-/** Grüner Chip an Stellen, die wir gerade aktiv besetzen wollen. */
-function SearchedChip() {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-[0.6875rem] font-medium text-emerald-300">
-      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-      Wird gesucht
-    </span>
-  );
-}
 
 /** Stellen: jede als aufklappbare Karte mit Rolle, Aufgaben, Profil und
  * Benefits, darunter das Bewerbungsformular. Alle Stellen sind immer
