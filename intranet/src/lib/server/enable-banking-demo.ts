@@ -2,7 +2,7 @@ import "server-only";
 
 // Beispielantworten von Enable Banking für die lokale Vorschau: ein
 // Commerzbank-Geschäftskonto mit Umsätzen, die teils zu den Beispiel-
-// Eingangsrechnungen und den easybill-Beispielrechnungen passen.
+// Eingangsrechnungen und den Beispiel-Ausgangsrechnungen passen.
 
 const day = (offset: number) => new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
 

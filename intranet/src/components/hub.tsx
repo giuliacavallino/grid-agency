@@ -11,6 +11,7 @@ import { useMe } from "./access";
 import { TeamsButton } from "./teams";
 import { usePhoto } from "./person";
 import { signOut, useAuth } from "@/lib/auth";
+import { BankReminder } from "./finance/bank-reminder";
 import { Logo } from "./logo";
 import { Button, Popover } from "./ui";
 import { KpiList, useKpis } from "./kpis";
@@ -239,6 +240,10 @@ export function Hub() {
         <h1 className="text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
           {now ? greeting(now.getHours()) : "Hallo"}, {firstName}
         </h1>
+      </div>
+
+      <div className="shrink-0">
+        <BankReminder />
       </div>
 
       {kpis && kpis.length > 0 && (

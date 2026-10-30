@@ -112,8 +112,9 @@ const TABLE_AREAS: Record<keyof typeof TABLES, string[]> = {
   invoices: ["finance"],
   applications: ["personal"],
   job_postings: ["personal"],
-  bank_accounts: ["finance"],
-  bank_transactions: ["finance"],
+  // Bank nur für die Geschäftsführung (Admin)
+  bank_accounts: ["admin"],
+  bank_transactions: ["admin"],
   task_projects: ["aufgaben", "admin"],
   task_sections: ["aufgaben"],
   tasks: ["aufgaben"],
