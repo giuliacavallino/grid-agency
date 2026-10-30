@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageShell } from "@/components/app/PageShell";
 import { EbookView } from "@/components/app/EbookView";
+import { MetaPixelConsent } from "@/components/app/MetaPixelConsent";
 
 export const metadata: Metadata = {
   title: "E-Book: Social Media 2027 | GRID Agency",
@@ -22,6 +23,7 @@ export default function EbookPage() {
   return (
     <PageShell>
       <EbookView />
+      <MetaPixelConsent />
     </PageShell>
   );
 }

@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, Check, LoaderCircle } from "lucide-react";
 import { requestEbook, type EbookFormState } from "@/app/actions/ebook";
 import { CalendlyLink } from "@/components/app/CalendlyProvider";
+import { trackMetaLead } from "@/lib/metaPixel";
 
 const initialState: EbookFormState = { status: "idle" };
 
@@ -57,6 +58,11 @@ export function EbookForm() {
         input.value = params.get(input.name) ?? "";
       });
   }, []);
+
+  // Conversion für die Meta-Anzeigen, nur mit Einwilligung (siehe metaPixel.ts)
+  useEffect(() => {
+    if (state.status === "success") trackMetaLead();
+  }, [state]);
 
   return (
     <AnimatePresence mode="wait" initial={false}>
