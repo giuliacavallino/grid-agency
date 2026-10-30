@@ -9,6 +9,7 @@ import { formatDateTime, relativeTime } from "@/lib/format";
 import { SOURCES, STAGES, topPosition, type Activity, type Lead, type Stage } from "@/lib/sales/types";
 import { Button, Dialog, Field, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 import { SourceBadge } from "./source";
+import { LeadActions, LostDialog } from "./lead-actions";
 
 type Form = Record<
   "name" | "company" | "email" | "phone" | "value" | "budget" | "owner" | "next_step" | "next_step_at" | "source",
@@ -123,7 +124,7 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
       {/* Phase */}
       <div>
         <p className="mb-2 text-xs font-medium text-snow/60">Phase</p>
-        <div className="grid grid-cols-5 gap-1 rounded-2xl bg-ink/60 p-1">
+        <div className="grid grid-cols-4 gap-1 rounded-2xl bg-ink/60 p-1">
           {STAGES.map((stage, index) => {
             const reached = STAGES.findIndex((s) => s.id === lead.stage) >= index;
             return (
@@ -147,6 +148,9 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
               </button>
             );
           })}
+        </div>
+        <div className="mt-3">
+          <LeadActions lead={lead} size="md" />
         </div>
         {lead.customer_id && (
           <Link
@@ -230,7 +234,7 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         </Button>
       </div>
 
-      <ConfirmLost open={confirm === "lost"} lead={lead} onClose={() => setConfirm(null)} onDone={onClose} />
+      <LostDialog open={confirm === "lost"} lead={lead} onClose={() => setConfirm(null)} onDone={onClose} />
       <ConfirmDelete open={confirm === "delete"} lead={lead} onClose={() => setConfirm(null)} onDone={onClose} />
     </div>
   );
@@ -297,45 +301,6 @@ function Timeline({ leadId }: { leadId: string }) {
         </ol>
       )}
     </section>
-  );
-}
-
-function ConfirmLost({ open, lead, onClose, onDone }: { open: boolean; lead: Lead; onClose: () => void; onDone: () => void }) {
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const toast = useToast();
-  async function submit() {
-    setBusy(true);
-    try {
-      await updateRow<Lead>("leads", lead.id, { status: "verloren", lost_reason: reason.trim() || null });
-      revalidate("/api/sales/leads");
-      toast("Lead als verloren markiert");
-      onClose();
-      onDone();
-    } catch {
-      toast("Das hat nicht geklappt", "error");
-    }
-    setBusy(false);
-  }
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title="Als verloren markieren"
-      footer={
-        <>
-          <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
-          <Button variant="primary" onClick={submit} loading={busy} loadingText="Wird gespeichert …">
-            Verloren
-          </Button>
-        </>
-      }
-    >
-      <p className="mb-4 text-sm text-snow/60">Der Lead verschwindet aus der Pipeline und zählt in Analytics als verloren.</p>
-      <Field label="Grund (optional)">
-        {(id) => <Input id={id} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="z. B. Budget zu klein" />}
-      </Field>
-    </Dialog>
   );
 }
 

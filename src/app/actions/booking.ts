@@ -5,7 +5,7 @@ export type Slot = { start: string; end: string };
 export type BookingState = {
   status: "idle" | "success" | "error";
   message?: string;
-  slot?: Slot;
+  slot?: Slot & { url?: string | null };
 };
 
 // Freie Zeiten und Buchung kommen vom Intranet (Kalender von Giulia und
@@ -13,12 +13,25 @@ export type BookingState = {
 // Domain; die Anfrage ans Intranet läuft hier auf dem Server.
 const API = `${process.env.INTRANET_URL ?? "https://intranet.grid-agency.de"}/api/public/booking`;
 
-/** Freie Erstgespräch-Zeiten; null, wenn der Kalender gerade nicht erreichbar ist. */
-export async function getSlots(): Promise<Slot[] | null> {
+export type BookingInfo = {
+  slots: Slot[];
+  /** Mit Einladungslink: Dauer, bekannte Angaben, ggf. schon gebuchter Termin */
+  minutes?: number;
+  prefill?: { name: string; email: string; company: string } | null;
+  booked?: { start: string; url: string | null } | null;
+  error?: string;
+};
+
+/** Freie Zeiten (Erstgespräch, mit Link auch Kick-off); null, wenn der
+ * Kalender gerade nicht erreichbar ist. */
+export async function getSlots(kind: "erstgespraech" | "kickoff" = "erstgespraech", token: string | null = null): Promise<BookingInfo | null> {
+  const params = new URLSearchParams({ ...(token ? { l: token } : {}), ...(kind === "kickoff" ? { art: "kickoff" } : {}) });
   try {
-    const res = await fetch(API, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    const res = await fetch(`${API}${params.size ? `?${params}` : ""}`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    const data = (await res.json().catch(() => ({}))) as BookingInfo;
+    if (res.status === 400) return { slots: [], error: data.error };
     if (!res.ok) return null;
-    return ((await res.json()) as { slots: Slot[] }).slots;
+    return data;
   } catch {
     return null;
   }
@@ -43,6 +56,9 @@ export async function bookSlot(_prev: BookingState, formData: FormData): Promise
         phone: field("phone"),
         message: field("message"),
         website: field("website"),
+        token: field("token"),
+        kind: field("kind"),
+        altcha: field("altcha"),
       }),
       signal: AbortSignal.timeout(20000),
     });

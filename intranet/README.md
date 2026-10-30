@@ -100,6 +100,17 @@ Finance → Ausgangsrechnungen schreibt Rechnungen, Gutschriften und Serienrechn
 - **Serienrechnungen**: Der Cron `GET /api/cron/billing` (täglich, `vercel.json`) erzeugt fällige Rechnungen, schreibt sie fest und verschickt sie ohne angemeldete Person. Dafür braucht die Entra-App zusätzlich die **Anwendungsberechtigung `Mail.Send`** mit Admin-Zustimmung (am besten per Application Access Policy auf buchhaltung@ beschränkt). Scheitert der Versand, steht der Fehler am Beleg und er lässt sich von Hand senden. easybill-Serien laufen in easybill weiter, bis sie im Intranet „übernommen“ werden; vorher in easybill stoppen.
 - **Rechnungspapier** (`src/lib/server/invoice-pdf.tsx`, react-pdf): Look der Website, Readex Pro (statische Schnitte in `src/lib/server/fonts`, per `outputFileTracingIncludes` in die Funktionen gepackt), GiroCode für Banking-Apps. Firmendaten und Texte stehen in Finance → Einstellungen.
 
+## Pipeline (Sales)
+
+Vier Spalten, jede mit dem nächsten Schritt direkt an der Karte:
+
+- **Neuer Lead**: „Termin einladen“ schickt von hello@ eine Mail mit persönlichem Buchungslink (`grid-agency.de/termin?l=…`, nur der SHA-256 liegt am Lead). „Absage“ nimmt den Lead mit Grund (z. B. Spam) aus der Pipeline.
+- **Erstgespräch**: Leads buchen selbst auf der Website (Kontaktbereich bzw. `/termin?l=…` aus der Einladung) über `/api/public/booking` (`src/lib/server/booking.ts`: freie Zeiten von Giulia und hello@, Termin bei hello@ mit Teams-Link). Die Buchung verschiebt den eingeladenen bzw. per E-Mail gefundenen Lead hierher oder legt ihn neu an; Termin und Teams-Link stehen an der Karte. Nach dem Gespräch: „Angebot erstellen“ (Kunde, Leistungen, Vertrag, SEPA, Unterschrift) → „Abschicken“ legt den Kunden an, schreibt das Angebot fest und schickt die Mappe von hello@.
+- **Angebot verschickt**: Die Unterschrift auf sign.grid-agency.de schiebt den Lead automatisch auf „Kunde gewonnen“, eine Ablehnung nimmt ihn als verloren heraus.
+- **Kunde gewonnen**: „Onboarding starten“ legt in Aufgaben den Abschnitt „Onboarding“ mit Standard-To-dos an, erzeugt die Serienrechnung aus den monatlichen Positionen des Angebots (ab Vertragsbeginn, läuft sofort) und schickt die Einladung zum Kick-off (60 Min, Buchungslink).
+
+Kontaktformular und Buchung der Website gehen über `/api/public/kontakt` und `/api/public/booking` des Intranets und sind mit ALTCHA geschützt (Proof of Work, `src/lib/server/altcha.ts`; Schlüssel `ALTCHA_HMAC_KEY` oder aus dem Service-Key abgeleitet, jede Lösung gilt einmal). Braucht in Entra die Anwendungsberechtigungen `Calendars.ReadWrite` und `Mail.Send`.
+
 ## Angebote und Unterschrift (sign.grid-agency.de)
 
 Ein Angebot geht als Mappe zur Unterschrift: Angebot, Agenturvertrag (Text aus dem easybill-„Auftrag“, in Finance → Einstellungen bearbeitbar, Platzhalter wie `{Mindestlaufzeit}`) und optional SEPA-Lastschriftmandat.

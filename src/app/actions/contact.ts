@@ -1,6 +1,6 @@
 "use server";
 
-import { getSupabase } from "@/lib/supabase";
+import { intranet } from "@/lib/intranet";
 
 export type ContactFormState = {
   status: "idle" | "success" | "error";
@@ -29,26 +29,16 @@ export async function submitContactForm(
     return { status: "error", message: "Bitte gib eine gültige E-Mail-Adresse ein." };
   }
 
-  const supabase = getSupabase();
-  if (!supabase) {
+  // Das Intranet prüft das Captcha und legt die Anfrage als Lead an.
+  try {
+    await intranet("/api/public/kontakt", {
+      method: "POST",
+      body: JSON.stringify({ name, email, company, budget, message, altcha: String(formData.get("altcha") ?? "") }),
+    });
+  } catch (error) {
     return {
       status: "error",
-      message: "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
-    };
-  }
-
-  const { error } = await supabase.from("contact_submissions").insert({
-    name,
-    email,
-    company: company || null,
-    message,
-    budget: budget || null,
-  });
-
-  if (error) {
-    return {
-      status: "error",
-      message: "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
+      message: error instanceof Error ? error.message : "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
     };
   }
 

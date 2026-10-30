@@ -3,8 +3,9 @@
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { CalendarCheck, LoaderCircle, Video } from "lucide-react";
-import { bookSlot, getSlots, type BookingState, type Slot } from "@/app/actions/booking";
+import { bookSlot, getSlots, type BookingInfo, type BookingState, type Slot } from "@/app/actions/booking";
 import { inputClasses } from "@/components/ContactForm";
+import { Altcha } from "@/components/Altcha";
 
 const TZ = "Europe/Berlin";
 const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
@@ -26,10 +27,22 @@ function SubmitButton() {
 
 /** Erstgespräch buchen, direkt in Giulias Kalender: Tag und Uhrzeit wählen,
  * Kontaktdaten eintragen, Einladung mit Teams-Link kommt per Mail. Freie
- * Zeiten werden erst geladen, wenn der Kalender ins Bild kommt. */
-export function BookingWidget({ onUnavailable }: { onUnavailable?: () => void }) {
+ * Zeiten werden erst geladen, wenn der Kalender ins Bild kommt. Mit
+ * Einladungslink (`token`) sind die Angaben vorausgefüllt; `kickoff` bucht
+ * den Kick-off nach der Unterschrift. */
+export function BookingWidget({
+  onUnavailable,
+  kind = "erstgespraech",
+  token = null,
+}: {
+  onUnavailable?: () => void;
+  kind?: "erstgespraech" | "kickoff";
+  token?: string | null;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const [slots, setSlots] = useState<Slot[] | null | undefined>(undefined);
+  const [info, setInfo] = useState<BookingInfo | null | undefined>(undefined);
+  const slots = info === undefined ? undefined : info === null ? null : info.slots;
+  const prefill = info?.prefill ?? null;
   const [day, setDay] = useState<string | null>(null);
   const [picked, setPicked] = useState<Slot | null>(null);
   const [state, action] = useActionState<BookingState, FormData>(bookSlot, { status: "idle" });
@@ -41,17 +54,17 @@ export function BookingWidget({ onUnavailable }: { onUnavailable?: () => void })
       ([entry]) => {
         if (!entry.isIntersecting) return;
         io.disconnect();
-        getSlots().then(setSlots);
+        getSlots(kind, token).then(setInfo);
       },
       { rootMargin: "400px" },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [kind, token]);
 
   // Die Zeit war weg: neu laden, damit sie nicht mehr angeboten wird
   useEffect(() => {
-    if (state.status === "error" && picked) getSlots().then(setSlots);
+    if (state.status === "error" && picked) getSlots(kind, token).then(setInfo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
@@ -67,7 +80,8 @@ export function BookingWidget({ onUnavailable }: { onUnavailable?: () => void })
   const activeDay = day ?? days[0]?.[0] ?? null;
   const daySlots = days.find(([key]) => key === activeDay)?.[1] ?? [];
 
-  if (state.status === "success" && state.slot) {
+  const done = state.status === "success" && state.slot ? state.slot : info?.booked ? { start: info.booked.start, end: info.booked.start } : null;
+  if (done) {
     return (
       <div role="status" className="flex flex-col items-start gap-4 py-6">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-snow text-sky">
@@ -76,7 +90,7 @@ export function BookingWidget({ onUnavailable }: { onUnavailable?: () => void })
         <div>
           <p className="text-xl font-semibold tracking-tight text-snow">Du bist im Kalender. 🎉</p>
           <p className="mt-2 max-w-md text-sm font-light leading-relaxed text-snow/70">
-            {long.format(new Date(state.slot.start))} um {time.format(new Date(state.slot.start))} Uhr. Die Einladung
+            {long.format(new Date(done.start))} um {time.format(new Date(done.start))} Uhr. Die Einladung
             mit Teams-Link kommt gleich per Mail von hello@grid-agency.de. Giulia freut sich auf dich.
           </p>
         </div>
@@ -91,7 +105,15 @@ export function BookingWidget({ onUnavailable }: { onUnavailable?: () => void })
           <Video className="h-4 w-4 text-snow" strokeWidth={1.8} />
         </span>
         <p>
-          <span className="font-medium text-snow">Erstgespräch mit Giulia</span> · 30 Min · Teams · kostenlos
+          {kind === "kickoff" ? (
+            <>
+              <span className="font-medium text-snow">Kick-off mit Giulia</span> · {info?.minutes ?? 60} Min · Teams
+            </>
+          ) : (
+            <>
+              <span className="font-medium text-snow">Erstgespräch mit Giulia</span> · 30 Min · Teams · kostenlos
+            </>
+          )}
         </p>
       </div>
 
@@ -115,7 +137,7 @@ export function BookingWidget({ onUnavailable }: { onUnavailable?: () => void })
         <div className="mt-5 rounded-2xl border border-snow/10 p-5 text-sm font-light text-snow/70">
           {slots === null
             ? "Der Kalender ist gerade nicht erreichbar."
-            : "In den nächsten Wochen ist leider alles voll."}{" "}
+            : (info?.error ?? "In den nächsten Wochen ist leider alles voll.")}{" "}
           {onUnavailable && (
             <button type="button" onClick={onUnavailable} className="font-medium text-snow underline underline-offset-4">
               Schreib uns stattdessen eine Nachricht
@@ -178,17 +200,29 @@ export function BookingWidget({ onUnavailable }: { onUnavailable?: () => void })
                 <span className="font-medium text-snow">{long.format(new Date(picked.start))}</span>, {time.format(new Date(picked.start))} Uhr
               </p>
               <input type="hidden" name="start" value={picked.start} />
+              {token && <input type="hidden" name="token" value={token} />}
+              <input type="hidden" name="kind" value={kind} />
               {/* Honeypot */}
               <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
               <div className="grid grid-cols-2 gap-3">
-                <input name="name" required placeholder="Name *" autoComplete="name" className={inputClasses} />
-                <input name="email" type="email" required placeholder="E-Mail *" autoComplete="email" className={inputClasses} />
+                <input name="name" required placeholder="Name *" autoComplete="name" defaultValue={prefill?.name} className={inputClasses} />
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="E-Mail *"
+                  autoComplete="email"
+                  defaultValue={prefill?.email}
+                  readOnly={!!prefill?.email}
+                  className={inputClasses}
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <input name="company" placeholder="Marke / Unternehmen" autoComplete="organization" className={inputClasses} />
+                <input name="company" placeholder="Marke / Unternehmen" autoComplete="organization" defaultValue={prefill?.company} className={inputClasses} />
                 <input name="phone" type="tel" placeholder="Telefon" autoComplete="tel" className={inputClasses} />
               </div>
-              <textarea name="message" rows={3} placeholder="Worum geht's? (optional)" className={inputClasses} />
+              {kind === "erstgespraech" && <textarea name="message" rows={3} placeholder="Worum geht's? (optional)" className={inputClasses} />}
+              <Altcha />
               <div className="flex flex-col items-start gap-3 pt-1 sm:flex-row sm:items-center">
                 <SubmitButton />
                 {state.status === "error" && <p className="text-sm text-red-400">{state.message}</p>}
