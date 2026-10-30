@@ -10,6 +10,12 @@ export type TaskProject = {
   position: number;
   archived: boolean;
   briefing: string | null;
+  restricted?: boolean;
+  /** Kundenchat des Absender-Kontos für automatische Updates */
+  teams_chat_id?: string | null;
+  teams_chat_title?: string | null;
+  weekly_update?: boolean;
+  monthly_report?: boolean;
 };
 
 export type TaskSection = {
