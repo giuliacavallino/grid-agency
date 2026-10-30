@@ -3,8 +3,8 @@
 -- Die Website schreibt als anon, daher security definer (wie
 -- submit_application). Herkunft 'meta', wenn die Anfrage aus einer
 -- Meta-Anzeige kommt (utm_source oder fbclid), sonst 'website'.
--- Pro E-Mail-Adresse nur ein Lead: Wer das E-Book zweimal anfordert,
--- bekommt es erneut, im CRM bleibt es bei einer Karte.
+-- Pro E-Mail-Adresse und Herkunft nur ein Lead: Wer das E-Book zweimal
+-- anfordert, bekommt es erneut, im CRM bleibt es bei einer Karte.
 create function public.submit_ebook_lead(
   p_name text,
   p_email text,
