@@ -1,7 +1,7 @@
 import "server-only";
 import { DEMO } from "@/lib/config";
 import { appGraph, mailboxPath } from "./graph-app";
-import { createRoom, meetEnabled } from "./meet";
+import { createRoom, meetEnabled, type RoomLink } from "./meet";
 
 // Freie Termine aus einem Outlook-Kalender und Termin anlegen (Video-Call
 // unter meet.grid-agency.de, ohne ACS-Zugang als Teams-Besprechung).
@@ -114,13 +114,13 @@ export async function freeSlots(mailbox: string, rules: SlotRules, extra: Busy[]
  * Teams-Besprechung; mit `location` vor Ort. */
 export async function createMeeting(
   mailbox: string,
-  input: { subject: string; text: string; start: number; minutes: number; attendee: { email: string; name: string }; location?: string; hostName?: string }
+  input: { subject: string; text: string; start: number; minutes: number; attendee: { email: string; name: string }; location?: string; hostName?: string; link?: RoomLink }
 ) {
   if (DEMO) return { id: `demo-event-${input.start}`, joinUrl: "https://meet.grid-agency.de/demo" };
   const iso = (ms: number) => new Date(ms).toISOString().slice(0, 19);
   const room =
     !input.location && meetEnabled()
-      ? await createRoom({ title: input.subject, start: input.start, minutes: input.minutes, host: mailbox, hostName: input.hostName })
+      ? await createRoom({ title: input.subject, start: input.start, minutes: input.minutes, host: mailbox, hostName: input.hostName, link: input.link })
       : null;
   const online = room
     ? { location: { displayName: room.url, locationUri: room.url } }

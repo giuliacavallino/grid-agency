@@ -190,8 +190,24 @@ export default function DatenschutzPage() {
             der Name, den du beim Beitreten angibst, technische
             Verbindungsdaten (z. B. IP-Adresse, Browser, Zeitpunkt und Dauer)
             sowie Ton und Bild, solange du Mikrofon und Kamera eingeschaltet
-            hast. Gespräche werden nicht aufgezeichnet. Kamera und Mikrofon
-            nutzt die Seite nur nach deiner Freigabe im Browser.
+            hast. Kamera und Mikrofon nutzt die Seite nur nach deiner Freigabe
+            im Browser.
+          </p>
+          <p className="mt-2">
+            Aufzeichnung und Transkript: Wenn du mit Klick auf „Jetzt
+            beitreten“ zustimmst, zeichnen wir den Ton des Calls auf (kein
+            Bild) und lassen ihn mit Azure AI Speech transkribieren. Aus dem
+            Transkript erstellt Azure OpenAI (beides Microsoft, Rechenzentren
+            in der EU, im Rahmen des Vertrags zur Auftragsverarbeitung) eine
+            Zusammenfassung und Vorschläge für die nächsten Aufgaben, die
+            unser Team prüft. Die Tonaufnahme löschen wir direkt nach dem
+            Transkribieren; Transkript und Zusammenfassung speichern wir bei
+            Supabase, solange wir sie für das Projekt bzw. die Anbahnung
+            brauchen. Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1
+            lit. a DSGVO). Du kannst sie jederzeit mit Wirkung für die Zukunft
+            widerrufen, z. B. per Mail an hello@grid-agency.de; dann löschen
+            wir Transkript und Zusammenfassung. Während der Aufnahme siehst du
+            im Call den Hinweis „Aufnahme“.
           </p>
           <p className="mt-2">
             Rechtsgrundlage ist die Anbahnung einer Zusammenarbeit (Art. 6

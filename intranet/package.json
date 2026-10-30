@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
+    "@azure/communication-call-automation": "^1.6.0",
     "@azure/communication-calling": "^2.0.0",
     "@azure/communication-common": "^2.5.0",
     "@azure/communication-identity": "^2.0.0",

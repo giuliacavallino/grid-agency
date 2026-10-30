@@ -1,4 +1,5 @@
 import { joinRoom, MeetError, roomView } from "@/lib/server/meet";
+import { recordingEnabled } from "@/lib/server/meet-recording";
 
 // Öffentliche API der Video-Calls (meet.grid-agency.de/…). Zugang nur über
 // den Code aus dem Link; keine Anmeldung.
@@ -16,16 +17,18 @@ function fail(error: unknown) {
 export async function GET(_request: Request, { params }: Context) {
   const { code } = await params;
   try {
-    return Response.json(await roomView(code), { headers });
+    // recording: Hinweis zur Aufzeichnung unter „Jetzt beitreten“
+    return Response.json({ ...(await roomView(code)), recording: recordingEnabled() }, { headers });
   } catch (error) {
     return fail(error);
   }
 }
 
-export async function POST(_request: Request, { params }: Context) {
+export async function POST(request: Request, { params }: Context) {
   const { code } = await params;
+  const body = (await request.json().catch(() => ({}))) as { name?: string };
   try {
-    return Response.json(await joinRoom(code), { headers });
+    return Response.json(await joinRoom(code, String(body.name ?? "")), { headers });
   } catch (error) {
     return fail(error);
   }

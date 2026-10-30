@@ -194,6 +194,7 @@ export async function bookWithLink(input: BookingInput) {
     minutes: RULES.kickoff.minutes,
     attendee: { email, name },
     hostName: HOST_NAME,
+    link: { lead_id: lead.id as string, customer_id: (lead.customer_id as string | null) ?? null },
   });
   await db().update("leads", lead.id, { kickoff_at: slot.start, kickoff_event_id: event.id, kickoff_url: event.joinUrl });
   await note(lead.id, "termin", `Kick-off gebucht: ${dateTimeDe(start)}`, name);

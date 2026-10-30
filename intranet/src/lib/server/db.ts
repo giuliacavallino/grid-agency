@@ -99,6 +99,23 @@ export const TABLES = {
     filters: ["project_id", "done"],
     order: { column: "position", ascending: false },
   },
+  // Calls (meet.grid-agency.de): Aufnahmen und vorgeschlagene Aufgaben;
+  // Übernehmen/Verwerfen läuft über /api/aufgaben/vorschlaege
+  meetings: {
+    columns: [],
+    filters: ["lead_id", "customer_id"],
+    order: { column: "starts_at", ascending: false },
+  },
+  meeting_recordings: {
+    columns: [],
+    filters: ["meeting_id", "status"],
+    order: { column: "created_at", ascending: false },
+  },
+  meeting_tasks: {
+    columns: ["title", "notes", "owner", "due_on", "project_id"],
+    filters: ["recording_id", "status"],
+    order: { column: "position", ascending: true },
+  },
 } as const;
 
 /** Bereiche, zu denen eine Tabelle gehört: Lesen und Schreiben darf, wer
@@ -119,6 +136,9 @@ const TABLE_AREAS: Record<keyof typeof TABLES, string[]> = {
   task_projects: ["aufgaben", "admin"],
   task_sections: ["aufgaben"],
   tasks: ["aufgaben"],
+  meetings: ["aufgaben", "sales"],
+  meeting_recordings: ["aufgaben"],
+  meeting_tasks: ["aufgaben"],
 };
 
 export const canUseTable = (user: User, table: TableName) => TABLE_AREAS[table].some((area) => hasArea(user.member, area));

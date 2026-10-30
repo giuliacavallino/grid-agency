@@ -33,8 +33,11 @@ function newCode() {
   return `${chars.slice(0, 3)}-${chars.slice(3, 7)}-${chars.slice(7)}`;
 }
 
+/** Wozu der Raum gehört; daraus findet die Auswertung das Kundenprojekt */
+export type RoomLink = { lead_id?: string | null; customer_id?: string | null; application_id?: string | null };
+
 /** Legt einen Raum für einen Termin an und liefert dessen Link */
-export async function createRoom(input: { title: string; start: number; minutes: number; host?: string; hostName?: string }) {
+export async function createRoom(input: { title: string; start: number; minutes: number; host?: string; hostName?: string; link?: RoomLink }) {
   const code = newCode();
   const { error } = await sb()
     .from("meetings")
@@ -45,9 +48,16 @@ export async function createRoom(input: { title: string; start: number; minutes:
       ends_at: new Date(input.start + input.minutes * 60_000).toISOString(),
       host: input.host ?? null,
       host_name: input.hostName ?? null,
+      ...input.link,
     });
   if (error) throw new Error(error.message);
   return { code, url: meetUrl(code) };
+}
+
+/** Raum nachträglich zuordnen (z. B. sobald der Lead feststeht) */
+export async function linkRoom(code: string, link: RoomLink) {
+  const { error } = await sb().from("meetings").update(link).eq("code", code);
+  if (error) console.error(error);
 }
 
 async function room(code: string) {
@@ -56,7 +66,16 @@ async function room(code: string) {
   if (error) throw new Error(error.message);
   if (!data) throw new MeetError("Diesen Link gibt es nicht.");
   if (Date.parse(data.ends_at) + GRACE_MS < Date.now()) throw new MeetError("Dieser Call ist vorbei.", 410);
-  return data as { code: string; group_id: string; title: string; starts_at: string; ends_at: string; host_name: string | null };
+  return data as {
+    id: string;
+    code: string;
+    group_id: string;
+    title: string;
+    starts_at: string;
+    ends_at: string;
+    host_name: string | null;
+    participants: { name: string; at: string }[] | null;
+  };
 }
 
 export type RoomView = { title: string; starts_at: string; ends_at: string; host_name: string | null };
@@ -67,10 +86,23 @@ export async function roomView(code: string): Promise<RoomView> {
   return { title, starts_at, ends_at, host_name };
 }
 
-/** Zugang zum Anruf: neue ACS-Identität mit VoIP-Token (4 Stunden) */
-export async function joinRoom(code: string) {
-  const { group_id } = await room(code);
+/** ID des Raums für die Aufnahme (wirft, wenn es ihn nicht gibt) */
+export async function roomId(code: string) {
+  return (await room(code)).id;
+}
+
+/** Zugang zum Anruf: neue ACS-Identität mit VoIP-Token (4 Stunden). Der
+ * Name kommt in die Teilnehmerliste (für die Auswertung des Transkripts). */
+export async function joinRoom(code: string, name: string) {
+  const { id, group_id, participants } = await room(code);
   if (!meetEnabled()) throw new MeetError("Video-Calls sind gerade nicht verfügbar.", 503);
+  const clean = name.trim().slice(0, 80);
+  if (clean && !(participants ?? []).some((p) => p.name === clean)) {
+    await sb()
+      .from("meetings")
+      .update({ participants: [...(participants ?? []), { name: clean, at: new Date().toISOString() }] })
+      .eq("id", id);
+  }
   const client = new CommunicationIdentityClient(process.env.ACS_CONNECTION_STRING!);
   const { token, expiresOn } = await client.createUserAndToken(["voip"], { tokenExpiresInMinutes: 240 });
   return { token, expires_on: expiresOn.toISOString(), group_id };

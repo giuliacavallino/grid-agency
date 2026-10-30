@@ -56,6 +56,7 @@ async function createEvent(application: Row, start: number) {
     minutes: SLOT_MINUTES,
     attendee: { email: String(application.email), name },
     hostName: application.invited_by_name ? String(application.invited_by_name) : undefined,
+    link: { application_id: String(application.id) },
   });
 }
 

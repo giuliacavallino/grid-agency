@@ -22,7 +22,8 @@ import { WaitingStage } from "./waiting";
 // Services: Vorschau mit Kamera und Mikro, Name eintragen, beitreten. Das
 // SDK läuft nur im Browser und wird erst hier nachgeladen.
 
-type View = { title: string; starts_at: string; ends_at: string; host_name: string | null };
+/** recording: Calls werden aufgezeichnet und transkribiert (Hinweis unter „Jetzt beitreten“) */
+type View = { title: string; starts_at: string; ends_at: string; host_name: string | null; recording?: boolean };
 type Phase = "lobby" | "joining" | "call" | "left";
 
 const TZ = "Europe/Berlin";
@@ -189,7 +190,18 @@ export function MeetRoom({ code }: { code: string }) {
     next.on("isMutedChanged", bump);
     next.on("isLocalVideoStartedChanged", bump);
     next.on("isScreenSharingOnChanged", bump);
+    let recordingAsked = false;
     next.on("stateChanged", () => {
+      // Aufnahme starten, sobald der Anruf steht (der Server startet sie nur einmal)
+      if (next.state === "Connected" && view?.recording && !recordingAsked) {
+        recordingAsked = true;
+        next.info
+          .getServerCallId()
+          .then((serverCallId) =>
+            fetch(`/api/meet/${code}/aufnahme`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serverCallId }) })
+          )
+          .catch((e) => console.error(e));
+      }
       if (next.state === "Disconnected") void finish(next.callEndReason?.code ? "Die Verbindung wurde getrennt." : null);
       bump();
     });
@@ -211,7 +223,11 @@ export function MeetRoom({ code }: { code: string }) {
     setJoinError(null);
     setPhase("joining");
     try {
-      const response = await fetch(`/api/meet/${code}`, { method: "POST" });
+      const response = await fetch(`/api/meet/${code}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Beitreten hat nicht geklappt.");
       const sdk = await loadSdk();
@@ -319,6 +335,15 @@ export function MeetRoom({ code }: { code: string }) {
         <header className="flex h-14 shrink-0 items-center gap-3 px-4">
           <MeetMark className="shrink-0 [&_img]:h-5 [&_span]:text-lg" />
           <p className="min-w-0 flex-1 truncate border-l border-snow/15 pl-3 text-sm font-medium">{view.title}</p>
+          {view.recording && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-error/12 px-2.5 py-1 text-[11px] font-medium tracking-wide text-error uppercase" title="Der Call wird aufgezeichnet und transkribiert">
+              <span className="relative flex h-2 w-2">
+                <span className="meet-ping absolute inset-0 rounded-full bg-error" />
+                <span className="relative h-2 w-2 rounded-full bg-error" />
+              </span>
+              Aufnahme
+            </span>
+          )}
           <span className="inline-flex items-center gap-1.5 text-xs text-snow/60">
             <Users className="h-3.5 w-3.5" /> {people.length + 1}
           </span>
@@ -457,6 +482,16 @@ export function MeetRoom({ code }: { code: string }) {
             <Button type="submit" variant="primary" className="w-full" loading={joining} loadingText="Wird verbunden …" disabled={!name.trim() || !devicesReady}>
               {phase === "left" ? "Wieder beitreten" : "Jetzt beitreten"}
             </Button>
+            {view.recording && (
+              <p className="text-xs leading-relaxed text-snow/55">
+                Mit Klick auf „Jetzt beitreten“ stimmst du zu, dass der Call aufgezeichnet (nur Ton) und transkribiert wird. Daraus erstellen wir eine
+                Zusammenfassung und die nächsten Aufgaben. Die Tonaufnahme löschen wir direkt nach dem Transkribieren. Mehr in der{" "}
+                <a href="https://grid-agency.de/datenschutz#video-call" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-snow">
+                  Datenschutzerklärung
+                </a>
+                .
+              </p>
+            )}
           </form>
         </div>
       </div>

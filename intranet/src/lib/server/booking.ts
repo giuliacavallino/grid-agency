@@ -2,7 +2,7 @@ import "server-only";
 import { DEMO, DOMAIN, SHARED_MAILBOX } from "@/lib/config";
 import { appGraph, mailboxPath } from "./graph-app";
 import { db, sb } from "./db";
-import { createRoom, meetEnabled } from "./meet";
+import { createRoom, linkRoom, meetEnabled } from "./meet";
 
 // Erstgespräch-Buchung von der Website (statt Calendly). Freie Zeiten kommen
 // aus Giulias Kalender und dem von hello@; gebucht wird im Kalender von
@@ -183,9 +183,10 @@ export async function book(input: BookingInput, leadId: string | null = null) {
 
   let eventId = `demo-${slot.start}`;
   let joinUrl: string | null = DEMO ? "https://meet.grid-agency.de/demo" : null;
+  let room: { code: string; url: string } | null = null;
   if (!DEMO) {
     const subject = `Erstgespräch GRID × ${who}`;
-    const room = meetEnabled()
+    room = meetEnabled()
       ? await createRoom({ title: subject, start: Date.parse(slot.start), minutes: (Date.parse(slot.end) - Date.parse(slot.start)) / 60_000, host: BOOKING.host, hostName: BOOKING.hostName })
       : null;
     const event = {
@@ -255,6 +256,7 @@ export async function book(input: BookingInput, leadId: string | null = null) {
       owner: BOOKING.host,
     });
   }
+  if (lead && room) await linkRoom(room.code, { lead_id: String(lead.id), customer_id: (lead.customer_id as string | null) ?? null });
   if (lead) {
     await db().insert("lead_activities", {
       lead_id: lead.id,
