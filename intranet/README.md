@@ -23,6 +23,7 @@ Welche Postfächer wo erscheinen, steht in `MAILBOXES` in `src/lib/config.ts`.
 - `src/app/api/sales/*` – Daten-API. Prüft das Microsoft-ID-Token (Signatur, Tenant, Client-ID) und spricht mit Supabase über den Service-Key.
 - `src/app/api/webhooks/*` – Lead-Eingang aus Meta, LinkedIn und hello@
 - `supabase/migrations` – Schema der Sales-Tabellen (RLS an, ohne Policies: nur der Server hat Zugriff)
+- `supabase/functions/easybill-history` – einmaliger Import der easybill-Historie (siehe unten)
 
 Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in `src/app/globals.css`: `snow` ist immer die Vordergrundfarbe, `sky` der Hintergrund.
 
@@ -63,3 +64,16 @@ Hell- und Dunkelmodus folgen der Systemeinstellung. Farben kommen aus Tokens in 
 
 **Mail-Abos:** Der Cron (täglich, `vercel.json`) legt je Postfach ein Graph-Abo an und verlängert es. Zum Start einmal manuell aufrufen:
 `curl -H "Authorization: Bearer $CRON_SECRET" https://intranet.grid-agency.de/api/cron/mail`
+
+## easybill-Historie (Ausgangsrechnungen)
+
+Alle easybill-Belege (Rechnungen, Stornos, Angebote, Serienrechnungen, Mahnungen …) mit Positionen, Zahlungen und PDFs liegen in `billing_documents`, `billing_items`, `billing_payments` und im privaten Storage-Bucket `billing`. Kunden und Artikel bekommen dabei Anschrift, Kundennummer, USt-IdNr. und Steuersatz. Geladen hat sie die Edge Function `easybill-history`. Sie liest `EASYBILL_API_KEY` aus den Supabase-Secrets und ist wiederholbar (Abgleich über die easybill-ID):
+
+```bash
+curl -X POST https://pmjfgzjoaloggzbpvnrq.supabase.co/functions/v1/easybill-history \
+  -H "x-import-token: $TOKEN" -d '{"step":"data"}'
+curl -X POST https://pmjfgzjoaloggzbpvnrq.supabase.co/functions/v1/easybill-history \
+  -H "x-import-token: $TOKEN" -d '{"step":"pdfs","after":0}'
+```
+
+Der Token wird nur als SHA-256-Hash in `sales_settings.easybill_import` gespeichert; für einen neuen Lauf einen neuen Token erzeugen und den Hash dort ersetzen. `pdfs` arbeitet in Portionen und gibt `cursor` und `remaining` zurück. Den Plan für das eigene Rechnungstool beschreibt `docs/rechnungsausgang.md`.
