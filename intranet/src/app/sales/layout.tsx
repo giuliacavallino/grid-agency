@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Sales" };
 
 export default function SalesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RequireAuth>
+    <RequireAuth area="sales">
       <SalesShell>{children}</SalesShell>
     </RequireAuth>
   );

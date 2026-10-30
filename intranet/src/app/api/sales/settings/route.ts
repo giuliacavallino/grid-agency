@@ -9,7 +9,7 @@ export const GET = withUser(async () => {
   const capacity = (await store.getSetting("capacity")) ?? DEFAULT_CAPACITY;
   const datev = (await store.getSetting("datev")) ?? DEFAULT_DATEV;
   return Response.json({ capacity, datev });
-});
+}, ["sales", "finance"]);
 
 /** Im Browser änderbar: Teamkapazität und die DATEV-Upload-Adresse. */
 export const PUT = withUser(async (_user, request) => {
@@ -39,4 +39,4 @@ export const PUT = withUser(async (_user, request) => {
     capacity: result.capacity ?? (await store.getSetting("capacity")) ?? DEFAULT_CAPACITY,
     datev: result.datev ?? (await store.getSetting("datev")) ?? DEFAULT_DATEV,
   });
-});
+}, ["sales", "finance"]);

@@ -6,6 +6,7 @@ import { updateRow } from "@/lib/data";
 import type { TaskProject } from "@/lib/tasks";
 import { accentText } from "@/lib/theme";
 import { Button, Empty, Sheet, Textarea, useToast } from "@/components/ui";
+import { ProjectVault } from "@/components/admin/vault";
 
 const LINK_PATTERN = /(https?:\/\/[^\s]+|[\w.+-]+@[\w-]+\.[\w.-]+)/g;
 const LINK_CLASS = "break-all underline-offset-2 hover:underline";
@@ -63,7 +64,7 @@ function BriefingText({ text }: { text: string }) {
  * Nur für angemeldete Mitarbeitende sichtbar (wie alles im Intranet). */
 export function BriefingSheet({ project, open, onClose }: { project: TaskProject; open: boolean; onClose: () => void }) {
   return (
-    <Sheet open={open} onClose={onClose} title="Briefing" subtitle={project.name} width="max-w-2xl">
+    <Sheet open={open} onClose={onClose} title="Briefing & Zugänge" subtitle={project.name} width="max-w-2xl">
       <BriefingBody key={project.id} project={project} />
     </Sheet>
   );
@@ -142,12 +143,14 @@ function BriefingBody({ project }: { project: TaskProject }) {
 
   return (
     <div className="flex flex-col gap-3 p-5">
-      <div className="flex gap-2">
-        <Button size="sm" icon={<Pencil className="h-3.5 w-3.5" />} onClick={() => setEditing(true)}>
-          Bearbeiten
-        </Button>
+      <ProjectVault projectId={project.id} />
+      <div className="mt-4 flex items-center gap-2">
+        <p className="mr-auto text-[13px] font-semibold">Briefing</p>
         <Button size="sm" variant="ghost" icon={<Copy className="h-3.5 w-3.5" />} onClick={copy}>
           Kopieren
+        </Button>
+        <Button size="sm" icon={<Pencil className="h-3.5 w-3.5" />} onClick={() => setEditing(true)}>
+          Bearbeiten
         </Button>
       </div>
       {project.briefing ? (

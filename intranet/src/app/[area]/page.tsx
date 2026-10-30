@@ -4,7 +4,7 @@ import { RequireAuth } from "@/components/login";
 import { AREAS } from "@/lib/areas";
 
 // Bereiche ohne eigene Seite zeigen vorerst einen Platzhalter.
-const BUILT = ["sales", "finance", "personal", "mail", "aufgaben"];
+const BUILT = ["sales", "finance", "personal", "mail", "aufgaben", "admin"];
 const PLACEHOLDERS = AREAS.filter((area) => !area.external && !BUILT.includes(area.id));
 
 export function generateStaticParams() {
@@ -17,7 +17,7 @@ export default async function AreaPage({ params }: PageProps<"/[area]">) {
   const { area } = await params;
   if (!PLACEHOLDERS.some((a) => a.id === area)) notFound();
   return (
-    <RequireAuth>
+    <RequireAuth area={area}>
       <AreaPlaceholder id={area} />
     </RequireAuth>
   );
