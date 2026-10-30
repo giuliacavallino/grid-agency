@@ -155,6 +155,13 @@ export const READ_ONLY: readonly TableName[] = ["inbound_messages", "bank_accoun
 export type EasybillTable = "customers" | "articles" | "retainers";
 export type Row = Record<string, unknown> & { id: string };
 
+/** Kundennummer schon an andere Kund*innen vergeben? */
+export async function customerNumberTaken(number: unknown, exceptId?: string) {
+  if (typeof number !== "string" || !number) return false;
+  const rows = await db().list("customers", { customer_number: number });
+  return rows.some((row) => row.id !== exceptId);
+}
+
 export function isTable(name: string): name is TableName {
   return Object.hasOwn(TABLES, name);
 }
