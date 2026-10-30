@@ -61,7 +61,8 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
   // Rückfragen statt Automatik: vorhandener Kunde? offenes Angebot ersetzen?
   const [customerChoice, setCustomerChoice] = useState<string | null>(null);
   const [replaceOpen, setReplaceOpen] = useState(false);
-  const openOffer = lead.stage === "angebot" && !!lead.offer_id;
+  // Ein Angebot ist (evtl.) noch unterwegs, egal in welcher Spalte der Lead steht
+  const openOffer = !!lead.offer_id && lead.stage !== "gewonnen";
 
   // Passende Kunden (gleiche E-Mail oder gleicher Name), wenn der Lead noch keinen hat
   const matches = useMemo(() => {
