@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { clsx } from "clsx";
-import { CalendarClock, Download, ExternalLink, Globe, Mail, Paperclip, Search } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { CalendarClock, CalendarPlus, Download, ExternalLink, Globe, Mail, Paperclip, Search, Video } from "lucide-react";
+import { api, apiFetch } from "@/lib/api";
 import { mailboxLabel } from "@/lib/config";
-import { createRow, deleteRow, updateRow, useRows } from "@/lib/data";
+import { createRow, deleteRow, mutate, updateRow, useRows } from "@/lib/data";
 import { formatDateTime, relativeTime } from "@/lib/format";
 import { APPLICATION_STAGES, topPosition, type Application, type ApplicationFile, type ApplicationStage } from "@/lib/sales/types";
 import { Board, BoardCard } from "@/components/board";
@@ -74,13 +74,68 @@ export function Applications() {
   );
 }
 
+const interviewTime = (value: string) => {
+  const d = new Date(value);
+  const day = d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "numeric" });
+  return `${day} · ${d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}`;
+};
+
+/** Einladung zum Vorstellungsgespräch: Mail von hello@ mit Link zur
+ * Terminwahl in deinem Outlook-Kalender, Karte wandert nach „Gespräch“. */
+function useInvite(a: Application) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  async function invite() {
+    setBusy(true);
+    try {
+      const result = await api<{ application: Application; link: string | null }>(`/api/personal/applications/${a.id}/invite`, { method: "POST" });
+      mutate<Application[]>("/api/sales/applications", (rows) => rows.map((row) => (row.id === a.id ? { ...row, ...result.application } : row)));
+      toast(`Einladung an ${a.email} gesendet`);
+      if (result.link) console.info("Terminwahl (Vorschau):", result.link);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Einladen fehlgeschlagen", "error");
+    }
+    setBusy(false);
+  }
+  return { invite, busy, canInvite: !!a.email && !a.interview_at };
+}
+
+/** Ein Klick auf der Karte: lädt ein, ohne die Karte zu öffnen oder zu ziehen. */
+function InviteButton({ application }: { application: Application }) {
+  const { invite, busy } = useInvite(application);
+  const stop = (event: React.SyntheticEvent) => event.stopPropagation();
+  return (
+    <button
+      type="button"
+      onPointerDown={stop}
+      onKeyDown={stop}
+      onClick={(event) => {
+        event.stopPropagation();
+        invite();
+      }}
+      disabled={busy}
+      aria-busy={busy || undefined}
+      className="mt-2.5 inline-flex h-7 items-center gap-1.5 rounded-full whitespace-nowrap border border-snow/15 bg-snow/[0.06] px-2.5 text-[12px] font-medium text-snow/85 transition-colors hover:bg-snow/12 hover:text-snow disabled:cursor-progress"
+    >
+      {busy ? <Spinner className="h-3.5 w-3.5" /> : <CalendarPlus className="h-3.5 w-3.5" />}
+      {busy ? "Wird eingeladen …" : "Einladen"}
+    </button>
+  );
+}
+
 function ApplicationCard({ application: a, overlay }: { application: Application; overlay?: boolean }) {
   const late = a.next_step_at && new Date(a.next_step_at) < new Date();
+  const open = a.stage !== "zusage" && a.stage !== "absage";
   return (
     <BoardCard overlay={overlay}>
       <p className="truncate text-[14px] font-medium">{a.name}</p>
       {a.position_title && <p className="truncate text-[12px] text-snow/55">{a.position_title}</p>}
-      {a.next_step && (
+      {a.interview_at ? (
+        <p className="mt-2 flex items-center gap-1.5 text-[12px] text-snow/80">
+          <Video className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{interviewTime(a.interview_at)} Uhr</span>
+        </p>
+      ) : a.next_step && (
         <p className={clsx("mt-2 flex items-center gap-1.5 text-[12px]", late ? "text-error" : "text-snow/65")}>
           <CalendarClock className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">
@@ -102,6 +157,7 @@ function ApplicationCard({ application: a, overlay }: { application: Application
           a.mailbox && <span>{mailboxLabel(a.mailbox)}</span>
         )}
       </div>
+      {!overlay && open && a.email && !a.invited_at && !a.interview_at && <InviteButton application={a} />}
     </BoardCard>
   );
 }
@@ -225,6 +281,8 @@ function ApplicationDetail({ application: a, onClose }: { application: Applicati
         </div>
       </div>
 
+      <InterviewSection application={a} />
+
       {a.source === "website" && (
         <div>
           <p className="text-xs font-medium text-snow/60">Unterlagen</p>
@@ -324,6 +382,55 @@ function ApplicationDetail({ application: a, onClose }: { application: Applicati
             : "Die Karte wird entfernt. Die Mail im Postfach bleibt erhalten."}
         </p>
       </Dialog>
+    </div>
+  );
+}
+
+function InterviewSection({ application: a }: { application: Application }) {
+  const { invite, busy, canInvite } = useInvite(a);
+  return (
+    <div>
+      <p className="mb-2 text-xs font-medium text-snow/60">Vorstellungsgespräch</p>
+      {a.interview_at ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-snow/[0.04] p-4">
+          <Video className="h-4 w-4 shrink-0 text-snow/60" />
+          <div className="min-w-0 flex-1 text-[13px]">
+            <p className="font-medium">{interviewTime(a.interview_at)} Uhr</p>
+            <p className="text-snow/55">Teams-Termin im Kalender von {a.invited_by_name ?? a.invited_by}</p>
+          </div>
+          {a.interview_url && (
+            <a
+              href={a.interview_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full border border-snow/15 bg-snow/[0.06] px-3.5 text-[13px] font-medium hover:bg-snow/12"
+            >
+              <ExternalLink className="h-3.5 w-3.5" /> Teams
+            </a>
+          )}
+        </div>
+      ) : a.invited_at ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-snow/[0.04] p-4">
+          <CalendarClock className="h-4 w-4 shrink-0 text-snow/60" />
+          <p className="min-w-0 flex-1 text-[13px] text-snow/70">
+            Eingeladen {relativeTime(a.invited_at)} von {a.invited_by_name ?? a.invited_by}, wartet auf Terminwahl
+          </p>
+          <Button size="sm" onClick={invite} loading={busy} loadingText="Wird gesendet …">
+            Erneut senden
+          </Button>
+        </div>
+      ) : canInvite ? (
+        <Button variant="primary" icon={<CalendarPlus className="h-4 w-4" />} onClick={invite} loading={busy} loadingText="Wird eingeladen …">
+          Zum Gespräch einladen
+        </Button>
+      ) : (
+        <p className="text-[13px] text-snow/45">Zum Einladen fehlt die E-Mail-Adresse.</p>
+      )}
+      {!a.interview_at && canInvite && (
+        <p className="mt-2 text-[12px] text-snow/45">
+          Mail von hello@ mit Button zur Terminwahl in deinem Outlook-Kalender (30 Min., Teams).
+        </p>
+      )}
     </div>
   );
 }
