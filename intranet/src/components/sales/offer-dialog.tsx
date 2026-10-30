@@ -35,14 +35,15 @@ export function OfferDialog({ lead, onClose }: { lead: Lead; onClose: () => void
   const { data: articles } = useRows<Article>("articles");
   const { data: customers } = useRows<Customer>("customers");
   const known = customers?.find((c) => c.id === lead.customer_id);
+  const booked = lead.raw?.booking?.address;
 
   const [customer, setCustomer] = useState({
     name: known?.name ?? lead.company ?? lead.name,
     contact_name: known?.contact_name ?? lead.name,
     email: known?.billing_email ?? known?.email ?? lead.email ?? "",
-    street: known?.street ?? "",
-    zip: known?.zip ?? "",
-    city: known?.city ?? "",
+    street: known?.street ?? [booked?.street, booked?.number].filter(Boolean).join(" "),
+    zip: known?.zip ?? booked?.zip ?? "",
+    city: known?.city ?? booked?.city ?? "",
   });
   const [lines, setLines] = useState<Line[]>(() => [{ ...newLine(), unit_price_net: lead.value ? String(lead.value) : "" }]);
   const [title, setTitle] = useState("Social Media Betreuung");

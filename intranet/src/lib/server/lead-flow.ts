@@ -12,7 +12,7 @@ import { sendAppMail } from "./graph-app";
 import { createEnvelope, markEnvelopeSent } from "./sign";
 import { createMeeting, freeSlots, type Busy, type SlotRules } from "./slots";
 import { verifyAltcha } from "./altcha";
-import { book as bookErstgespraech, freeSlots as freeErstgespraech, type Slot } from "./booking";
+import { book as bookErstgespraech, freeSlots as freeErstgespraech, type BookingInput as ErstgespraechInput, type Slot } from "./booking";
 
 // Pipeline-Automatik: Neuer Lead → Erstgespräch (Lead bucht selbst auf der
 // Website, mit oder ohne Einladungslink) → Angebot verschickt (Angebot +
@@ -158,7 +158,17 @@ export async function bookingView(kind: MeetingKind, token: string | null): Prom
   };
 }
 
-export type BookingInput = { kind: MeetingKind; token: string; start: string; name: string; email: string; company: string; phone: string; message: string };
+export type BookingInput = {
+  kind: MeetingKind;
+  token: string;
+  start: string;
+  name: string;
+  email: string;
+  company: string;
+  phone: string;
+  message: string;
+  address?: ErstgespraechInput["address"];
+};
 
 /** Buchung über einen Einladungslink: Erstgespräch über die Website-Buchung
  * (hello@ als Organisator), Kick-off im Kalender von BOOKING_MAILBOX */
@@ -170,7 +180,7 @@ export async function bookWithLink(input: BookingInput) {
   const email = String(lead.email ?? input.email).trim();
 
   if (kind === "erstgespraech") {
-    return bookErstgespraech({ start: input.start, name, email, company: input.company, phone: input.phone, message: input.message }, lead.id);
+    return bookErstgespraech({ start: input.start, name, email, company: input.company, phone: input.phone, message: input.message, address: input.address }, lead.id);
   }
 
   const start = Date.parse(input.start);

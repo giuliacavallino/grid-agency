@@ -48,7 +48,11 @@ export type Lead = {
   onboarding_at: string | null;
   kickoff_at: string | null;
   kickoff_url: string | null;
+  /** Rohdaten der Quelle, z. B. die Anschrift aus der Website-Buchung */
+  raw: { booking?: { address?: BookingAddress | null } } | null;
 };
+
+export type BookingAddress = { street?: string; number?: string; zip?: string; city?: string; country?: string };
 
 export type Activity = {
   id: string;

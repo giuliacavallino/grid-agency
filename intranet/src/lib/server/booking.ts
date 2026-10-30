@@ -228,6 +228,7 @@ export async function book(input: BookingInput, leadId: string | null = null) {
       ...(!lead.phone && input.phone ? { phone: input.phone } : {}),
       ...(!lead.company && input.company ? { company: input.company } : {}),
       ...(!lead.message && note ? { message: note } : {}),
+      ...(input.address ? { raw: { ...(lead.raw as object | null), booking: { address: input.address } } } : {}),
     });
   } else {
     lead = await db().insertIgnore("leads", {
