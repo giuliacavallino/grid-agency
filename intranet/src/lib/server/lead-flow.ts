@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { DEMO, SHARED_MAILBOX } from "@/lib/config";
-import { OFFER_TEXTS, todayBerlin, type ItemInput } from "@/lib/billing";
+import { isMonthlyUnit, OFFER_TEXTS, todayBerlin, type ItemInput } from "@/lib/billing";
 import type { ContractTerms } from "@/lib/contract";
 import { check, getBilling } from "./billing";
 import { finalize, saveDraft } from "./billing-write";
@@ -280,7 +280,6 @@ export type OfferInput = {
   grid_signature: string;
 };
 
-const monthly = (unit: string | null | undefined) => !!unit && /monat/i.test(unit);
 
 /** Ein Klick nach dem Erstgespräch: Kunde anlegen, Angebot festschreiben,
  * Mappe (Angebot, Vertrag, SEPA) von hello@ verschicken, Lead weiter */
@@ -370,7 +369,7 @@ export async function createOffer(id: string, input: OfferInput, user: { email: 
   await sendAppMail(SHARED_MAILBOX, { to: [envelope.mail.to], subject: envelope.mail.subject, body: envelope.mail.body, html: envelope.mail.html });
   await markEnvelopeSent(envelope.id, user.name, envelope.mail.to);
 
-  const value = items.filter((i) => monthly(i.unit)).reduce((sum, i) => sum + Number(i.quantity) * Number(i.unit_price_net), 0);
+  const value = items.filter((i) => isMonthlyUnit(i.unit)).reduce((sum, i) => sum + Number(i.quantity) * Number(i.unit_price_net), 0);
   const offer = await getBilling(offerId);
   const updated = await db().update("leads", id, {
     stage: "angebot",
@@ -475,7 +474,7 @@ export async function startOnboarding(id: string, user: { email: string; name: s
   // 2. Serienrechnung aus den monatlichen Positionen des Angebots
   if (offer) {
     const positions = offer.items.filter((i) => i.kind === "position");
-    const lines = positions.filter((i) => monthly(i.unit));
+    const lines = positions.filter((i) => isMonthlyUnit(i.unit));
     if (lines.length) {
       await saveDraft(null, {
         kind: "serie",

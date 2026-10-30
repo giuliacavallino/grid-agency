@@ -10,8 +10,10 @@ import {
   computeTotals,
   lineNet,
   money,
+  monthlyUnitFor,
   plain,
   todayBerlin,
+  UNIT_LABEL,
   type BillingDetail,
   type DraftInput,
   type ItemInput,
@@ -53,7 +55,6 @@ const RHYTHMS = [
   { id: "WEEKLY:1", label: "wöchentlich" },
 ];
 
-const UNIT_LABEL: Record<string, string> = { monatlich: "Monat", einmalig: "Pauschal", stunde: "Std.", tag: "Tag" };
 
 let keySeq = 0;
 const nextKey = () => `l${++keySeq}`;
@@ -208,7 +209,7 @@ function EditorForm({
       article_id: a.id,
       number: a.number ?? null,
       description: [a.name, a.description].filter(Boolean).join("\n"),
-      unit: UNIT_LABEL[a.unit] ?? "Pauschal",
+      unit: a.unit === "monatlich" ? monthlyUnitFor(a.count_label) : (UNIT_LABEL[a.unit] ?? "Pauschal"),
       unit_price_net: Number(a.price),
       vat_percent: Number(a.vat_percent ?? 19),
     });

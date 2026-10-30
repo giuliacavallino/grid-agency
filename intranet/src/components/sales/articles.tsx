@@ -128,7 +128,10 @@ function ArticleCard({ article, usage, onEdit }: { article: Article; usage: numb
         <h3 className="text-[15px] font-medium">{article.name}</h3>
         {article.description && <p className="mt-1 line-clamp-3 text-[13px] leading-snug text-snow/55">{article.description}</p>}
         <p className="mt-auto pt-4 text-[20px] font-semibold tracking-tight">
-          {euro(article.price)} <span className="text-[13px] font-normal text-snow/50">{unitLabel(article.unit)}</span>
+          {euro(article.price)}{" "}
+          <span className="text-[13px] font-normal text-snow/50">
+            {article.count_label ? `pro ${article.count_label} und Monat` : unitLabel(article.unit)}
+          </span>
         </p>
       </button>
       <div className="mt-3 flex items-center gap-3 border-t border-snow/[0.06] pt-3 text-[12px] text-snow/55">
@@ -167,7 +170,7 @@ function ArticleCard({ article, usage, onEdit }: { article: Article; usage: numb
   );
 }
 
-type Form = { name: string; category: string; description: string; price: string; unit: Article["unit"]; hours: string; active: boolean };
+type Form = { name: string; category: string; description: string; price: string; unit: Article["unit"]; count_label: string; hours: string; active: boolean };
 
 function ArticleDialog({
   open,
@@ -194,6 +197,7 @@ function ArticleDialog({
       description: article?.description ?? "",
       price: article ? String(article.price) : "",
       unit: article?.unit ?? "monatlich",
+      count_label: article?.count_label ?? "",
       hours: article ? String(article.hours) : "",
       active: article?.active ?? true,
     });
@@ -215,6 +219,7 @@ function ArticleDialog({
       description: form.description.trim() || null,
       price: Number(form.price.replace(",", ".")) || 0,
       unit: form.unit,
+      count_label: form.unit === "monatlich" ? form.count_label.trim() || null : null,
       hours: Number(form.hours.replace(",", ".")) || 0,
       active: form.active,
     };
@@ -271,7 +276,14 @@ function ArticleDialog({
             </Select>
           )}
         </Field>
-        <Field label="Preis (€, netto)">{(id) => <Input id={id} inputMode="decimal" value={form.price} onChange={set("price")} />}</Field>
+        <Field label={form.unit === "laufzeit" ? "Preis je Monat Laufzeit (€, netto)" : "Preis (€, netto)"}>
+          {(id) => <Input id={id} inputMode="decimal" value={form.price} onChange={set("price")} />}
+        </Field>
+        {form.unit === "monatlich" && (
+          <Field label="Gezählt pro (optional)" hint="z. B. „Account“ – im Angebot wird dann die Anzahl eingetragen">
+            {(id) => <Input id={id} value={form.count_label} onChange={set("count_label")} placeholder="Account" />}
+          </Field>
+        )}
         <Field label={form.unit === "monatlich" ? "Aufwand (Std. pro Monat)" : "Aufwand (Std.)"}>
           {(id) => <Input id={id} inputMode="decimal" value={form.hours} onChange={set("hours")} />}
         </Field>

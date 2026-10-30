@@ -96,6 +96,7 @@ export const UNITS = [
   { id: "einmalig", label: "einmalig" },
   { id: "stunde", label: "pro Stunde" },
   { id: "tag", label: "pro Tag" },
+  { id: "laufzeit", label: "je Monat Laufzeit (einmalig)" },
 ] as const;
 
 export type Article = {
@@ -110,6 +111,8 @@ export type Article = {
   active: boolean;
   number?: string | null;
   vat_percent?: number;
+  /** Zählbare Monatsleistung, z. B. „Account“: Menge = Anzahl */
+  count_label?: string | null;
 };
 
 export type Retainer = {
