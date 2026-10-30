@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, Clock, Copy, MapPin } from "lucide-react";
-import { jobs, jobsEmail, jobsIntro } from "@/lib/content";
+import { ArrowDown, ChevronDown, Clock, MapPin } from "lucide-react";
+import { jobsIntro, type Job } from "@/lib/content";
+import { ApplicationForm } from "@/components/ApplicationForm";
 
 function Bullets({ items }: { items: string[] }) {
   return (
@@ -48,53 +49,29 @@ const bts: BtsItem[] = [
   { kind: "video", src: "/jobs/bts-cafe.mp4", poster: "/jobs/bts-cafe.jpg", alt: "Arbeiten im Café: Planung und Schnitt" },
 ];
 
-/** Die Bewerbungsadresse ausgeschrieben, bewusst kein mailto-Link: der
- * würde auf dem Laptop das Mailprogramm öffnen. Stattdessen lässt sich die
- * Adresse mit einem Klick kopieren. */
-function EmailCopy() {
-  const [copied, setCopied] = useState(false);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(jobsEmail);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Ohne Clipboard-Zugriff bleibt die Adresse einfach markierbar.
-    }
-  };
-
+/** Grüner Chip an Stellen, die wir gerade aktiv besetzen wollen. */
+function SearchedChip() {
   return (
-    <span className="inline-flex flex-wrap items-center gap-2">
-      <span className="select-all text-base font-medium text-snow">
-        {jobsEmail}
-      </span>
-      <button
-        type="button"
-        onClick={copy}
-        aria-label="E-Mail-Adresse kopieren"
-        className="inline-flex items-center gap-1.5 rounded-full border border-snow/20 px-3 py-1 text-xs font-medium text-snow/80 transition-colors hover:bg-snow/10 active:scale-95"
-      >
-        {copied ? (
-          <>
-            <Check className="h-3.5 w-3.5 text-dune" strokeWidth={2.5} />
-            Kopiert
-          </>
-        ) : (
-          <>
-            <Copy className="h-3.5 w-3.5" strokeWidth={2} />
-            Kopieren
-          </>
-        )}
-      </button>
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-[0.6875rem] font-medium text-emerald-300">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+      Wird gesucht
     </span>
   );
 }
 
-/** Offene Stellen: jede Stelle als aufklappbare Karte mit Rolle,
- * Aufgaben, Profil, Benefits und ausgeschriebener Bewerbungsadresse. */
-export function JobsView() {
+/** Stellen: jede als aufklappbare Karte mit Rolle, Aufgaben, Profil und
+ * Benefits, darunter das Bewerbungsformular. Alle Stellen sind immer
+ * wählbar; welche wir gerade suchen (grüner Chip), steuert das Intranet
+ * (Personal → Stellen). */
+export function JobsView({ jobs, searched }: { jobs: Job[]; searched: string[] }) {
   const [open, setOpen] = useState<string | null>(jobs[0]?.slug ?? null);
+  const [applyFor, setApplyFor] = useState("");
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const apply = (slug: string) => {
+    setApplyFor(slug);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <div>
@@ -114,8 +91,9 @@ export function JobsView() {
         </p>
         <p className="mt-3 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
           Kleines Team, flache Hierarchien, ein lockeres Arbeitsumfeld mit
-          viel Freiheit und Selbstständigkeit. Das sind unsere offenen
-          Stellen in Berlin und Frankfurt:
+          viel Freiheit und Selbstständigkeit. Bewerben kannst du dich auf
+          jede Rolle in Berlin und Frankfurt, auch initiativ. Was wir gerade
+          suchen, ist markiert.
         </p>
       </motion.div>
 
@@ -191,6 +169,11 @@ export function JobsView() {
                 className="flex w-full items-start justify-between gap-4 p-5 text-left sm:p-6"
               >
                 <div>
+                  {searched.includes(job.slug) && (
+                    <div className="mb-2">
+                      <SearchedChip />
+                    </div>
+                  )}
                   <h2 className="card-rainbow-title text-xl font-medium tracking-tight text-snow">
                     {job.title}
                   </h2>
@@ -261,16 +244,17 @@ export function JobsView() {
                           {job.pitch}
                         </p>
                         <p className="mt-2 text-sm font-light leading-relaxed text-snow/65">
-                          Dann bewirb dich jetzt. Schick uns deinen Lebenslauf
-                          und ein Anschreiben mit dem Betreff „Bewerbung:{" "}
-                          {job.title}“ an
+                          Dann bewirb dich jetzt mit deinem Lebenslauf. Wir
+                          freuen uns darauf, mehr über dich zu erfahren.
                         </p>
-                        <div className="mt-3">
-                          <EmailCopy />
-                        </div>
-                        <p className="mt-3 text-sm font-light leading-relaxed text-snow/65">
-                          Wir freuen uns darauf, mehr über dich zu erfahren.
-                        </p>
+                        <button
+                          type="button"
+                          onClick={() => apply(job.slug)}
+                          className="btn-rainbow mt-4 inline-flex items-center gap-2 rounded-full bg-snow px-6 py-3 text-sm font-medium text-sky"
+                        >
+                          Jetzt bewerben
+                          <ArrowDown className="h-4 w-4" strokeWidth={2} />
+                        </button>
                       </div>
                     </div>
                   </motion.div>
@@ -281,10 +265,24 @@ export function JobsView() {
         })}
       </div>
 
-      <div className="mt-10 text-center text-sm font-light text-snow/50">
-        <p>Nichts Passendes dabei? Schick uns deine Initiativbewerbung an</p>
-        <div className="mt-2 flex justify-center">
-          <EmailCopy />
+      <div ref={formRef} id="bewerben" className="mt-12 scroll-mt-24">
+        <p className="text-xs font-medium uppercase tracking-[0.25em] text-dune">
+          Bewerben
+        </p>
+        <h2 className="mt-2 text-2xl font-medium tracking-tight text-snow">
+          Deine Bewerbung
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm font-light leading-relaxed text-snow/65">
+          Lebenslauf hochladen, ein paar Zeilen zu dir, fertig. Nichts
+          Passendes dabei? Wähl einfach „Initiativbewerbung“.
+        </p>
+        <div className="mt-6">
+          <ApplicationForm
+            jobs={jobs}
+            searched={searched}
+            job={applyFor}
+            onJobChange={setApplyFor}
+          />
         </div>
       </div>
     </div>

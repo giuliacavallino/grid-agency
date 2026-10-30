@@ -1,4 +1,5 @@
 import { forbidden, withUser } from "@/lib/server/auth";
+import { removeApplicationFiles } from "@/lib/server/application-files";
 import { canUseTable, db, isTable, mayTouch, pick, READ_ONLY } from "@/lib/server/db";
 
 type Context = { params: Promise<{ table: string; id: string }> };
@@ -61,7 +62,9 @@ export const DELETE = withUser(async (user, _request, { params }: Context) => {
     return Response.json({ error: "Unbekannt" }, { status: 404 });
   }
   if (!canUseTable(user, table)) return forbidden();
-  if (!(await mayTouch(user, table, await db().get(table, id)))) return forbidden();
+  const row = await db().get(table, id);
+  if (!(await mayTouch(user, table, row))) return forbidden();
   await db().remove(table, id);
+  if (table === "applications" && row) await removeApplicationFiles(row);
   return new Response(null, { status: 204 });
 });

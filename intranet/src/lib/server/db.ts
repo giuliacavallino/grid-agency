@@ -66,6 +66,11 @@ export const TABLES = {
     filters: ["stage"],
     order: { column: "position", ascending: true },
   },
+  job_postings: {
+    columns: ["active"],
+    filters: ["active"],
+    order: { column: "position", ascending: true },
+  },
   // Bank: nur lesen; Zuordnungen laufen über /api/finance/bank
   bank_accounts: {
     columns: [],
@@ -106,6 +111,7 @@ const TABLE_AREAS: Record<keyof typeof TABLES, string[]> = {
   inbound_messages: ["sales", "finance", "mail"],
   invoices: ["finance"],
   applications: ["personal"],
+  job_postings: ["personal"],
   bank_accounts: ["finance"],
   bank_transactions: ["finance"],
   task_projects: ["aufgaben", "admin"],
