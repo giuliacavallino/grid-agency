@@ -13,8 +13,9 @@ import type {
 } from "@azure/communication-calling";
 import { CalendarClock, Mic, MicOff, MonitorUp, PhoneOff, Users, Video, VideoOff } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
-import { Logo } from "@/components/logo";
 import { Avatar, Button, Input, Spinner } from "@/components/ui";
+import { MeetMark, MeetShell } from "./brand";
+import { WaitingStage } from "./waiting";
 
 // Video-Call unter meet.grid-agency.de/<code> mit Azure Communication
 // Services: Vorschau mit Kamera und Mikro, Name eintragen, beitreten. Das
@@ -270,21 +271,19 @@ export function MeetRoom({ code }: { code: string }) {
 
   if (error) {
     return (
-      <Shell>
-        <div className="mx-auto max-w-md py-24 text-center">
-          <p className="text-lg font-medium">{error}</p>
-          <p className="mt-2 text-sm text-snow/60">Prüf den Link aus deiner Einladung oder schreib uns an hello@grid-agency.de.</p>
+      <MeetShell center>
+        <div className="max-w-md py-16 text-center">
+          <p className="text-3xl font-semibold tracking-tight">{error}</p>
+          <p className="mt-3 text-sm text-snow/60">Prüf den Link aus deiner Einladung oder schreib uns an hello@grid-agency.de.</p>
         </div>
-      </Shell>
+      </MeetShell>
     );
   }
   if (!view) {
     return (
-      <Shell>
-        <div className="grid h-80 place-items-center">
-          <Spinner />
-        </div>
-      </Shell>
+      <MeetShell center>
+        <Spinner />
+      </MeetShell>
     );
   }
 
@@ -295,11 +294,21 @@ export function MeetRoom({ code }: { code: string }) {
       .find(({ stream }) => stream.mediaStreamType === "ScreenSharing" && stream.isAvailable);
     const own = call.localVideoStreams.find((s) => s.mediaStreamType === "Video");
     const connecting = call.state !== "Connected";
+    const waiting = people.length === 0 && !connecting;
+    const hostFirst = view.host_name?.split(" ")[0]?.toLowerCase();
+    const isHost = !!hostFirst && name.trim().toLowerCase().startsWith(hostFirst);
+    const selfView = own ? (
+      <StreamView key={own.source.id} stream={own} mirrored />
+    ) : (
+      <div className="absolute inset-0 grid place-items-center">
+        <Avatar name={name || "Du"} className="h-10 w-10 text-sm" />
+      </div>
+    );
     return (
       <div className="flex h-dvh flex-col bg-sky text-snow">
         <header className="flex h-14 shrink-0 items-center gap-3 px-4">
-          <Logo className="h-5" />
-          <p className="min-w-0 flex-1 truncate text-sm font-medium">{view.title}</p>
+          <MeetMark className="shrink-0 [&_img]:h-5 [&_span]:text-lg" />
+          <p className="min-w-0 flex-1 truncate border-l border-snow/15 pl-3 text-sm font-medium">{view.title}</p>
           <span className="inline-flex items-center gap-1.5 text-xs text-snow/60">
             <Users className="h-3.5 w-3.5" /> {people.length + 1}
           </span>
@@ -314,12 +323,13 @@ export function MeetRoom({ code }: { code: string }) {
               </span>
             </div>
           )}
-          {people.length === 0 ? (
-            <div className="grid place-items-center rounded-2xl border border-snow/10 bg-surface/60 p-6 text-center">
+          {waiting ? (
+            <WaitingStage isHost={isHost} selfView={selfView} />
+          ) : people.length === 0 ? (
+            <div className="grid place-items-center rounded-3xl border border-snow/10 bg-surface/60 p-6 text-center">
               <div>
-                {connecting ? <Spinner /> : <Avatar name={view.host_name ?? "GRID"} className="mx-auto h-16 w-16 text-xl" />}
-                <p className="mt-4 text-base font-medium">{connecting ? "Wird verbunden …" : `Warte auf ${view.host_name ?? "die anderen"} …`}</p>
-                {!connecting && <p className="mt-1 text-sm text-snow/60">Du bist drin. Sobald jemand dazukommt, siehst du es hier.</p>}
+                <Spinner />
+                <p className="mt-4 text-base font-medium">Wird verbunden …</p>
               </div>
             </div>
           ) : (
@@ -338,19 +348,15 @@ export function MeetRoom({ code }: { code: string }) {
             </div>
           )}
 
-          {/* Eigenes Bild klein in der Ecke */}
-          <div className="absolute right-6 bottom-6 aspect-video w-32 overflow-hidden rounded-xl bg-surface shadow-lg ring-1 ring-snow/15 md:w-48">
-            {own ? (
-              <StreamView key={own.source.id} stream={own} mirrored />
-            ) : (
-              <div className="absolute inset-0 grid place-items-center">
-                <Avatar name={name || "Du"} className="h-10 w-10 text-sm" />
-              </div>
-            )}
-            <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full bg-sky/75 px-2 py-0.5 text-[11px] backdrop-blur">
-              {call.isMuted && <MicOff className="h-3 w-3" aria-label="stumm" />} Du
-            </span>
-          </div>
+          {/* Eigenes Bild klein in der Ecke (beim Warten steckt es in der Bühne) */}
+          {!waiting && (
+            <div className="absolute right-6 bottom-6 aspect-video w-32 overflow-hidden rounded-xl bg-surface shadow-lg ring-1 ring-snow/15 md:w-48">
+              {selfView}
+              <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full bg-sky/75 px-2 py-0.5 text-[11px] backdrop-blur">
+                {call.isMuted && <MicOff className="h-3 w-3" aria-label="stumm" />} Du
+              </span>
+            </div>
+          )}
         </main>
 
         <footer className="flex shrink-0 items-center justify-center gap-3 pt-1 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -376,8 +382,8 @@ export function MeetRoom({ code }: { code: string }) {
   const start = new Date(view.starts_at);
   const joining = phase === "joining";
   return (
-    <Shell>
-      <div className="grid gap-8 py-8 md:grid-cols-[1.4fr_1fr] md:items-center md:py-16">
+    <MeetShell>
+      <div className="grid gap-8 py-6 md:grid-cols-[1.4fr_1fr] md:items-center md:py-14">
         <div className="relative aspect-video overflow-hidden rounded-3xl bg-surface ring-1 ring-snow/10">
           {camOn && camera && phase !== "left" ? (
             <StreamView key={camera.source.id} stream={camera} mirrored />
@@ -432,20 +438,6 @@ export function MeetRoom({ code }: { code: string }) {
           </form>
         </div>
       </div>
-    </Shell>
-  );
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="aurora min-h-dvh bg-sky text-snow">
-      <header className="border-b border-snow/[0.08] backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4 md:px-6">
-          <Logo className="h-6" priority />
-          <span className="rounded-full border border-snow/15 px-2.5 py-0.5 text-[11px] tracking-[0.2em] text-snow/60 uppercase">meet</span>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 md:px-6">{children}</main>
-    </div>
+    </MeetShell>
   );
 }

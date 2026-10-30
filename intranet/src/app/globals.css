@@ -392,3 +392,206 @@ body {
     animation: none;
   }
 }
+
+/* ---------- Meet: gebrandete Warteseite mit Motion Graphics ---------- */
+
+@keyframes meet-blob {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(8%, -6%) scale(1.15);
+  }
+  100% {
+    transform: translate(-6%, 5%) scale(0.95);
+  }
+}
+.meet-blob {
+  animation: meet-blob 14s ease-in-out infinite alternate;
+  animation-delay: var(--delay, 0s);
+}
+/* Perspektivisches Raster, das auf einen zufliegt: Skalierung */
+@keyframes meet-grid-run {
+  to {
+    background-position: 0 56px;
+  }
+}
+.meet-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-snow) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-snow) 9%, transparent) 1px, transparent 1px);
+  background-size: 56px 56px;
+  transform: perspective(520px) rotateX(62deg);
+  transform-origin: bottom;
+  mask-image: linear-gradient(to top, black 10%, transparent 85%);
+  animation: meet-grid-run 1.4s linear infinite;
+}
+/* Wachstumskurve zeichnet sich, der Punkt klettert mit */
+@keyframes meet-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.meet-curve {
+  stroke-dasharray: 1;
+  animation: meet-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes meet-area {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.meet-area {
+  animation: meet-area 2.4s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+.meet-dot {
+  offset-path: var(--path);
+  offset-rotate: 0deg;
+  animation: meet-climb 2.4s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes meet-climb {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+@keyframes meet-ping {
+  from {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+.meet-ping {
+  animation: meet-ping 1.6s ease-out infinite;
+}
+/* Herzen und Reaktionen steigen auf wie im Live-Stream */
+@keyframes meet-float {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+    transform: translate(calc(var(--drift) * 0.2), -24px) scale(1);
+  }
+  100% {
+    transform: translate(var(--drift), var(--rise, -300px)) scale(0.9);
+    opacity: 0;
+  }
+}
+.meet-float {
+  animation: meet-float var(--duration, 4s) ease-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+/* Benachrichtigungen ploppen nacheinander auf */
+@keyframes meet-toast {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+  6%,
+  28% {
+    opacity: 1;
+    transform: none;
+  }
+  34% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+.meet-toast {
+  opacity: 0;
+  animation: meet-toast 9s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation-delay: var(--delay, 0s);
+}
+/* Kennzahl wechselt mit Blur */
+@keyframes meet-stat-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(18px) scale(0.96);
+  }
+}
+.meet-stat {
+  animation: meet-stat-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes meet-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.meet-progress {
+  transform-origin: left;
+  animation: meet-progress var(--duration, 5s) linear both;
+}
+@keyframes meet-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.meet-marquee {
+  animation: meet-marquee var(--duration, 40s) linear infinite;
+}
+.meet-fade-x {
+  mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+}
+@keyframes meet-bars {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.meet-bar {
+  transform-origin: bottom;
+  animation: meet-bars 1.2s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes meet-hover {
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.meet-hover {
+  animation: meet-hover 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .meet-blob,
+  .meet-grid,
+  .meet-curve,
+  .meet-area,
+  .meet-dot,
+  .meet-ping,
+  .meet-stat,
+  .meet-progress,
+  .meet-marquee,
+  .meet-bar,
+  .meet-hover {
+    animation: none;
+  }
+  .meet-dot {
+    offset-distance: 100%;
+  }
+  .meet-float,
+  .meet-toast {
+    display: none;
+  }
+}
