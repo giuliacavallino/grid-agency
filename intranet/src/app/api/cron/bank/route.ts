@@ -7,8 +7,13 @@ export const maxDuration = 120;
 /** Abgleichzeiten (deutsche Zeit): 8:30, 11, 15 und 20 Uhr */
 const SLOTS = [8, 11, 15, 20];
 
-const berlinHour = () =>
-  Number(new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+// formatToParts statt format: de-DE hängt sonst „Uhr“ an
+const berlinHour = (date = new Date()) =>
+  Number(
+    new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", hour: "numeric", hourCycle: "h23" })
+      .formatToParts(date)
+      .find((part) => part.type === "hour")!.value
+  );
 
 /** Bank-Abgleich (vercel.json). Vercel-Crons laufen in UTC; je Uhrzeit gibt
  * es einen Eintrag für Winter- und einen für Sommerzeit (?slot=8 …). Es läuft
