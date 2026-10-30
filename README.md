@@ -31,6 +31,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 - `src/components` — UI-Sektionen (Hero, Services, Clients, Process, Contact, Footer …)
 - `src/app/actions/contact.ts` — Server Action für das Kontaktformular
 - `src/lib/supabase.ts` — Supabase-Client
+- `ebook/` — E-Book „Social Media 2027“ (Leadmagnet): `social-media-2027.html` ist die Quelle, `node ebook/render.mjs` erzeugt daraus `public/ebook/social-media-2027.pdf` und das Cover. Landingpage: `/ebook`, Anfragen landen über `submit_ebook_lead()` als Lead im Intranet
 - `public/brand` — Logo, Monogramm und Pattern in allen Markenfarben, extrahiert aus den offiziellen Brand Guidelines
 
 ## Deployment

@@ -98,7 +98,7 @@ export default function DatenschutzPage() {
         </section>
 
         <section>
-          <LegalHeading id="kontaktformular">4. Kontaktformular, E-Mail und Telefon</LegalHeading>
+          <LegalHeading id="kontaktformular">4. Kontaktformular, E-Book, E-Mail und Telefon</LegalHeading>
           <p>
             Wenn du uns über das Kontaktformular schreibst, verarbeiten wir
             die Angaben, die du machst (Name, E-Mail-Adresse, optional
@@ -119,6 +119,20 @@ export default function DatenschutzPage() {
             Interesse an der Beantwortung von Anfragen (Art. 6 Abs. 1 lit. f
             DSGVO). Wir löschen die Daten, sobald deine Anfrage erledigt ist
             und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
+          </p>
+          <p id="ebook" className="mt-2 scroll-mt-24 lg:scroll-mt-32">
+            Wenn du auf unserer Website unser E-Book anforderst, verarbeiten
+            wir Name, E-Mail-Adresse, optional dein Unternehmen sowie die
+            Kampagnen-Angaben aus dem Link, über den du gekommen bist (z. B.
+            utm-Parameter oder die Klick-ID einer Meta-Anzeige). Wir
+            speichern sie wie beim Kontaktformular bei Supabase, um dir das
+            E-Book bereitzustellen und dich, wie von dir erlaubt, per E-Mail
+            oder Telefon zu Social Media und einer kostenlosen Erstberatung zu
+            kontaktieren. Rechtsgrundlage ist deine Einwilligung
+            (Art. 6 Abs. 1 lit. a DSGVO), die du jederzeit mit Wirkung für
+            die Zukunft widerrufen kannst, etwa per E-Mail an uns. Nach einem
+            Widerruf oder spätestens zwei Jahre nach dem letzten Kontakt
+            löschen wir die Daten.
           </p>
         </section>
 
