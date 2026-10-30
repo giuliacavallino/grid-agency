@@ -12,9 +12,9 @@ import { sb } from "../db";
 const BUCKET = "social-media";
 const demoFiles = new Map<string, { bytes: Uint8Array; mime: string }>();
 
-const EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif", "video/mp4": "mp4", "video/quicktime": "mov", "application/pdf": "pdf" };
+const EXT: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif", "video/mp4": "mp4", "video/quicktime": "mov", "application/pdf": "pdf", "audio/mpeg": "mp3", "audio/wav": "wav", "audio/mp4": "m4a" };
 
-export const mediaKind = (mime: string): MediaItem["kind"] => (mime.startsWith("video/") ? "video" : "image");
+export const mediaKind = (mime: string): MediaItem["kind"] => (mime.startsWith("video/") ? "video" : mime.startsWith("audio/") ? "audio" : "image");
 
 export function publicMediaUrl(path: string, origin?: string) {
   // Live ist INTRANET_URL gesetzt (Meta/TikTok brauchen absolute Adressen);

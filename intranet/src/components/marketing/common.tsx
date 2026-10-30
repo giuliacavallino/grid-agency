@@ -13,6 +13,8 @@ export type MarketingStatus = {
   vault: boolean;
   agent: boolean;
   canva: SocialAccount | null;
+  tools: { creatomate: boolean; whisper: boolean; elevenlabs: boolean };
+  tool_env: { creatomate: string; whisper: string; elevenlabs: string };
 };
 
 export const useMarketingStatus = () => useResource<MarketingStatus>("/api/marketing/status");

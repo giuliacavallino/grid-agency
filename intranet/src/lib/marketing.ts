@@ -39,7 +39,8 @@ export type SocialAccount = {
 export type MediaItem = {
   path: string;
   mime: string;
-  kind: "image" | "video";
+  /** audio: Voiceover/Musik für Videos, nicht direkt postbar */
+  kind: "image" | "video" | "audio";
   width?: number;
   height?: number;
   canva_design_id?: string;
@@ -108,6 +109,8 @@ export type Brand = {
   dos: string[];
   donts: string[];
   hashtags: string[];
+  /** Stimme für Voiceovers (ElevenLabs Voice-ID) */
+  voice_id?: string;
   notes: string;
 };
 
@@ -131,6 +134,7 @@ export function agentBrief(name: string, brand: Brand) {
     brand.dos.length && `## Dos\n${list(brand.dos)}`,
     brand.donts.length && `## Don'ts\n${list(brand.donts)}`,
     brand.hashtags.length && `## Hashtags\n${brand.hashtags.join(" ")}`,
+    brand.voice_id && `## Stimme (Voiceover)\nElevenLabs Voice-ID: ${brand.voice_id}`,
     brand.notes && `## Weitere Hinweise\n${brand.notes}`,
   ];
   return parts.filter(Boolean).join("\n\n");

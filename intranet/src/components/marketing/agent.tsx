@@ -18,6 +18,13 @@ const ENDPOINTS: [string, string, string][] = [
   ["GET", "/api/marketing/posts?workspace=…", "Posts einer Kundenwelt"],
   ["POST", "/api/marketing/posts", "Post { workspace_id, caption, media, account_ids, scheduled_at? | publish_now? }"],
   ["PATCH", "/api/marketing/posts/{id}", "Ändern, planen (status: scheduled) oder zurück in den Entwurf"],
+  ["GET", "/api/marketing/video/templates", "Creatomate-Vorlagen (Motion Design, Reels)"],
+  ["POST", "/api/marketing/video/render", "Video rendern { template_id, modifications } oder { source } (Schnitt) → id"],
+  ["GET", "/api/marketing/video/render/{id}?store=1", "Status; fertig → media zum Posten"],
+  ["POST", "/api/marketing/video/transcribe", "Untertitel/Transkript { path, format: srt|vtt|text } (Whisper)"],
+  ["GET", "/api/marketing/video/voices", "ElevenLabs-Stimmen"],
+  ["POST", "/api/marketing/video/voiceover", "Voiceover (MP3) { text, voice_id?, workspace_id? }"],
+  ["POST", "/api/marketing/video/music", "Musik (MP3) { prompt, seconds? }"],
   ["POST", "/api/marketing/posts/{id}/publish", "Sofort veröffentlichen / fehlgeschlagene Kanäle erneut"],
 ];
 
@@ -38,6 +45,9 @@ export function AgentApi() {
     [status.data.configured.meta, "Meta-App (META_APP_ID / META_APP_SECRET)"],
     [status.data.configured.linkedin, "LinkedIn Community Management (LINKEDIN_CM_CLIENT_ID / _SECRET)"],
     [status.data.configured.tiktok, "TikTok (TIKTOK_CLIENT_KEY / _SECRET)"],
+    [status.data.tools.creatomate, "Creatomate: Rendern, Schnitt, Motion Design (CREATOMATE_API_KEY)"],
+    [status.data.tools.whisper, "Whisper: Untertitel und Transkripte (OPENAI_API_KEY)"],
+    [status.data.tools.elevenlabs, "ElevenLabs: Voiceover und Musik (ELEVENLABS_API_KEY)"],
   ];
   return (
     <div className="flex h-full flex-col">

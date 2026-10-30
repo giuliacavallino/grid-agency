@@ -135,6 +135,7 @@ export function cleanBrand(input: Partial<Brand>): Brand {
     dos: lines(input.dos),
     donts: lines(input.donts),
     hashtags: lines(input.hashtags, 30).map((h) => (h.startsWith("#") ? h : `#${h}`).replace(/\s+/g, "")),
+    voice_id: text(input.voice_id, 64) || undefined,
     notes: text(input.notes, 8000),
   };
 }
