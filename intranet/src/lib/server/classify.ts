@@ -48,6 +48,8 @@ Kategorien:
 Fülle nur Felder, die in der Mail oder den Dateinamen der Anhänge stehen. Bei "rechnung" das Feld invoice: Rechnungssteller, Rechnungsnummer, Rechnungsdatum und Fälligkeit als YYYY-MM-DD, Bruttobetrag, Nettobetrag und Umsatzsteuer als Zahlen (bei Reverse Charge oder Kleinunternehmern USt 0), Währung (ISO, meist EUR), Zahlungsart (nur wenn erkennbar: Karte/Kreditkarte, PayPal, Lastschrift/SEPA-Einzug, Überweisung, Bar), Kategorie aus der Liste (${INVOICE_CATEGORIES.join(", ")}) und eine kurze Beschreibung der Leistung. Bei allen anderen Kategorien sind alle Felder von invoice null. Bei "bewerbung" position_title mit der Stelle. Die Begründung ist ein kurzer deutscher Satz.`;
 
 const nullable = (type: string) => ({ type: [type, "null"] });
+// Auswahl oder null. Nicht als type ["string", "null"] mit enum: das lehnt die API ab.
+const oneOf = (values: readonly string[]) => ({ anyOf: [{ type: "string", enum: [...values] }, { type: "null" }] });
 
 const SCHEMA = {
   type: "object",
@@ -70,8 +72,8 @@ const SCHEMA = {
         net_amount: nullable("number"),
         vat_amount: nullable("number"),
         currency: nullable("string"),
-        payment_method: { type: ["string", "null"], enum: [...PAYMENT_METHODS.map((m) => m.id), null] },
-        category: { type: ["string", "null"], enum: [...INVOICE_CATEGORIES, null] },
+        payment_method: oneOf(PAYMENT_METHODS.map((m) => m.id)),
+        category: oneOf(INVOICE_CATEGORIES),
         description: nullable("string"),
       },
       required: [
