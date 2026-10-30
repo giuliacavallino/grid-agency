@@ -1,5 +1,6 @@
-// Rendert das E-Book als PDF nach public/ebook/, von dort lädt die
-// Landingpage /ebook es herunter, dazu das Cover als Bild für die Seite.
+// Rendert das E-Book als PDF ins Intranet, das es per Mail von hello@
+// verschickt (nicht öffentlich), dazu das Cover als Bild für die Website.
+// Das PDF muss unter 3 MB bleiben (Anhang-Grenze von Microsoft Graph).
 // Aufruf: node ebook/render.mjs
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -10,9 +11,10 @@ import { createRequire } from "node:module";
 const { chromium } = createRequire(import.meta.url)("playwright");
 
 const here = dirname(fileURLToPath(import.meta.url));
-const out = join(here, "..", "public", "ebook", "social-media-2027.pdf");
+const out = join(here, "..", "intranet", "src", "lib", "server", "ebook", "social-media-2027.pdf");
 const cover = join(here, "..", "public", "ebook", "cover.jpg");
 mkdirSync(dirname(out), { recursive: true });
+mkdirSync(dirname(cover), { recursive: true });
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ deviceScaleFactor: 2 });
@@ -24,7 +26,7 @@ await page.evaluate(() => document.fonts.ready);
 // echtem Text zeigen manche PDF-Viewer mit der variablen Schrift als Fläche.
 await page.evaluate(() => {
   const stops = [[0, "#feda75"], [0.35, "#fa7e1e"], [0.7, "#d62976"], [1, "#962fbf"]];
-  const scale = 4;
+  const scale = 3;
   document.querySelectorAll(".grad").forEach((el) => {
     const box = el.getBoundingClientRect();
     const probe = document.createElement("span");

@@ -2,15 +2,14 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { ArrowDown, Check, LoaderCircle } from "lucide-react";
+import { Check, LoaderCircle } from "lucide-react";
 import { requestEbook, type EbookFormState } from "@/app/actions/ebook";
 import { ContactLink } from "@/components/ui/ContactLink";
 import { inputClasses } from "@/components/ContactForm";
+import { Altcha } from "@/components/Altcha";
 import { trackMetaLead } from "@/lib/metaPixel";
 
 const initialState: EbookFormState = { status: "idle" };
-
-export const EBOOK_PDF = "/ebook/social-media-2027.pdf";
 
 const TRACKING_FIELDS = [
   "utm_source",
@@ -33,15 +32,16 @@ function SubmitButton() {
       {pending && (
         <LoaderCircle className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
       )}
-      {pending ? "Wird angefordert…" : "E-Book kostenlos herunterladen"}
+      {pending ? "Wird gesendet…" : "E-Book kostenlos anfordern"}
     </button>
   );
 }
 
-/** Anforderung des E-Books: Name, E-Mail, optional Unternehmen und die
- * Einwilligung zur Kontaktaufnahme. Kampagnen-Parameter aus der URL
- * (utm_*, fbclid) gehen über versteckte Felder mit, damit der Lead im
- * Intranet als Meta-Lead erkennbar ist. Danach gibt es den Download. */
+/** Anforderung des E-Books: Name, E-Mail, optional Unternehmen. Mit dem
+ * Button stimmt die Person Versand und Kontaktaufnahme zu (Text darunter).
+ * Kampagnen-Parameter aus der URL (utm_*, fbclid) gehen über versteckte
+ * Felder mit, damit der Lead im Intranet als Meta-Lead erkennbar ist. Das
+ * PDF kommt per Mail von hello@. */
 export function EbookForm() {
   const [state, formAction] = useActionState(requestEbook, initialState);
   const trackingRef = useRef<HTMLDivElement>(null);
@@ -69,21 +69,15 @@ export function EbookForm() {
             <Check className="h-5 w-5" strokeWidth={2.5} aria-hidden />
           </span>
           <h2 className="mt-4 text-xl font-medium tracking-tight text-snow">
-            Dein E-Book ist bereit.
+            Check dein Postfach.
           </h2>
           <p className="mt-2 text-sm font-light leading-relaxed text-snow/65">
-            Viel Spaß beim Lesen. Wenn du den Fahrplan nicht allein umsetzen
-            willst, buch dir direkt eine kostenlose Erstberatung.
+            Dein E-Book ist unterwegs, von hello@grid-agency.de. Nichts
+            angekommen? Schau kurz im Spam-Ordner nach. Wenn du den Fahrplan
+            nicht allein umsetzen willst, buch dir direkt eine kostenlose
+            Erstberatung.
           </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <a
-              href={EBOOK_PDF}
-              download
-              className="btn btn-primary px-7 py-3.5 text-sm"
-            >
-              <ArrowDown className="h-4 w-4" strokeWidth={2} aria-hidden />
-              PDF herunterladen
-            </a>
+          <div className="mt-6">
             <ContactLink tab="termin" className="btn btn-glass px-7 py-3.5 text-sm">
               Erstberatung buchen
             </ContactLink>
@@ -95,19 +89,11 @@ export function EbookForm() {
           <input name="email" type="email" required autoComplete="email" placeholder="E-Mail *" className={inputClasses} />
           <input name="company" type="text" autoComplete="organization" placeholder="Unternehmen" className={inputClasses} />
 
-          <label className="flex cursor-pointer gap-3 pt-1 text-[0.75rem] font-light leading-relaxed text-snow/60">
-            <input
-              name="consent"
-              type="checkbox"
-              required
-              className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#ff7a1a]"
-            />
-            <span>
-              Ja, schickt mir das E-Book. GRID darf mich per E-Mail oder
-              Telefon zu Social Media und einer kostenlosen Erstberatung
-              kontaktieren. Die Einwilligung kann ich jederzeit widerrufen. *
-            </span>
-          </label>
+          {/* Captcha löst sich beim Laden selbst; unsichtbar, damit kein
+              zweiter Haken neben der Zustimmung per Button steht. */}
+          <div aria-hidden className="sr-only">
+            <Altcha />
+          </div>
 
           {/* Honeypot gegen Bots */}
           <input
@@ -131,11 +117,12 @@ export function EbookForm() {
             <p className="text-sm text-red-400">{state.message}</p>
           )}
           <p className="text-[0.6875rem] font-light leading-relaxed text-snow/45">
-            Mehr zur Verarbeitung deiner Daten in unserer{" "}
+            Mit dem Klick stimmst du zu, dass wir dir das E-Book per E-Mail
+            schicken und dich zu einer kostenlosen Erstberatung kontaktieren.
+            Widerruf jederzeit.{" "}
             <a href="/datenschutz#ebook" className="underline underline-offset-2 hover:text-snow/70">
-              Datenschutzerklärung
+              Datenschutz
             </a>
-            .
           </p>
         </form>
       )}

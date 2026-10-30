@@ -1,6 +1,6 @@
 "use server";
 
-import { getSupabase } from "@/lib/supabase";
+import { intranet } from "@/lib/intranet";
 
 export type EbookFormState = {
   status: "idle" | "success" | "error";
@@ -17,10 +17,10 @@ const TRACKING_FIELDS = [
   "fbclid",
 ] as const;
 
-const META_SOURCES = ["facebook", "fb", "instagram", "ig", "meta"];
-
-/** E-Book-Anforderung von /ebook: wird über submit_ebook_lead() direkt als
- * Lead in Sales → Pipeline im Intranet angelegt. */
+/** E-Book-Anforderung von /ebook: Das Intranet prüft das Captcha, legt den
+ * Lead in Sales → Pipeline an und schickt das PDF von hello@. Mit dem
+ * Absenden stimmt die Person dem Versand und der Kontaktaufnahme zu (Text
+ * unter dem Button). */
 export async function requestEbook(
   _prevState: EbookFormState,
   formData: FormData
@@ -31,7 +31,6 @@ export async function requestEbook(
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const company = String(formData.get("company") ?? "").trim();
-  const consent = formData.get("consent") === "on";
 
   if (!name || !email) {
     return { status: "error", message: "Bitte gib deinen Namen und deine E-Mail-Adresse ein." };
@@ -39,38 +38,22 @@ export async function requestEbook(
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { status: "error", message: "Bitte gib eine gültige E-Mail-Adresse ein." };
   }
-  if (!consent) {
-    return { status: "error", message: "Bitte bestätige die Einwilligung, um das E-Book zu erhalten." };
-  }
 
   const tracking: Record<string, string> = {};
   for (const field of TRACKING_FIELDS) {
     const value = String(formData.get(field) ?? "").trim().slice(0, 200);
     if (value) tracking[field] = value;
   }
-  const fromMeta =
-    Boolean(tracking.fbclid) ||
-    META_SOURCES.includes((tracking.utm_source ?? "").toLowerCase());
 
-  const supabase = getSupabase();
-  if (!supabase) {
+  try {
+    await intranet("/api/public/ebook", {
+      method: "POST",
+      body: JSON.stringify({ name, email, company, tracking, altcha: String(formData.get("altcha") ?? "") }),
+    });
+  } catch (error) {
     return {
       status: "error",
-      message: "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
-    };
-  }
-
-  const { error } = await supabase.rpc("submit_ebook_lead", {
-    p_name: name,
-    p_email: email,
-    p_company: company || null,
-    p_from_meta: fromMeta,
-    p_tracking: tracking,
-  });
-  if (error) {
-    return {
-      status: "error",
-      message: "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
+      message: error instanceof Error ? error.message : "Da ist etwas schiefgelaufen. Bitte versuch es später erneut.",
     };
   }
 
