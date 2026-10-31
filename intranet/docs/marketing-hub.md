@@ -86,6 +86,26 @@ Alle Werte in Vercel als „Sensitive“ anlegen, für Production und Preview. D
 - Jede Kundenwelt bekommt `Kundenwelten/<Kunde>/<JJJJ-MM>/`. Alle Bilder und Videos eines Posts werden dort zusätzlich abgelegt.
 - „SharePoint“ auf der Kanäle-Seite öffnet den Ordner und legt ihn bei Bedarf an.
 
+## Bildbearbeitung
+
+Rohbilder bearbeitet man im Post-Dialog: ein Klick auf ein Bild öffnet den Editor. Der Agent nutzt dieselben Funktionen über die Schnittstelle. Das Original bleibt erhalten; das Ergebnis ist ein neues Medium.
+
+| Werkzeug | Was | Schlüssel |
+| --- | --- | --- |
+| Im Intranet (sharp) | Zuschnitt auf 4:5, 9:16, 1:1, 16:9 und 1.91:1, wobei der Ausschnitt automatisch dem Motiv folgt; Helligkeit, Kontrast, Sättigung, Schärfen; Logo aus der CI-Welt als Wasserzeichen; Ausgabe als JPG, PNG oder WebP | keiner |
+| Photoroom | Hintergrund entfernen (freistellen) oder per KI ersetzen, z. B. „Holztisch in warmem Tageslicht“; ideal für Produkt- und Food-Fotos | `PHOTOROOM_API_KEY` (photoroom.com → API, Plan „Plus“ für KI-Hintergründe) |
+| Claid.ai | Rohbilder automatisch verbessern (Licht, Farbe, Rauschen, Schärfe), hochskalieren, auf das Format zuschneiden | `CLAID_API_KEY` (claid.ai → API Keys) |
+
+Kamera-RAW-Dateien (CR3, NEF, ARW, DNG) vorher als JPG oder TIFF exportieren, z. B. aus Lightroom. Mit Adobe-Firefly-Services ließen sich später auch RAW-Dateien und Lightroom-Presets per API bearbeiten; dafür ist ein Adobe-Enterprise-Vertrag nötig.
+
+Endpunkte für den Agenten:
+
+- `POST /api/marketing/image/edit`: `{ path, format, brightness, contrast, saturation, sharpen, logo: { workspace_id, position } }`
+- `POST /api/marketing/image/background`: `{ path, background_color? | background_prompt? }`
+- `POST /api/marketing/image/enhance`: `{ path, upscale?, format? }`
+
+Jeder Endpunkt liefert ein neues Medium (`path`, `url`), das direkt in einen Post kann.
+
 ## Video-Werkzeuge
 
 Für die Video-Werkzeuge braucht es nur je einen API-Schlüssel, keine App-Prüfung. Jeden Schlüssel in Vercel als „Sensitive“ anlegen, danach ein Redeploy auslösen. Was angebunden ist, zeigt Marketing → Agent & API.

@@ -9,6 +9,7 @@ import { POST_STATUS, PROVIDERS, type MediaItem, type SocialAccount, type Social
 import { Badge, Button, Dialog, Empty, IconButton, Input, Spinner, Textarea, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
 import { ProviderMark, useMarketingStatus } from "./common";
+import { ImageEditor } from "./image-editor";
 import { URL_WORKSPACES, useCurrentWorkspace, WorkspaceSwitcher } from "./workspace";
 
 const postsUrl = (workspaceId: string) => `/api/marketing/posts?workspace=${workspaceId}`;
@@ -154,6 +155,7 @@ function Composer({ post, workspaceId, accounts, onClose }: { post: SocialPost |
   const [at, setAt] = useState(toLocal(post?.scheduled_at ?? null));
   const [busy, setBusy] = useState<string | null>(null);
   const [canva, setCanva] = useState(false);
+  const [editingImage, setEditingImage] = useState<MediaItem | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const refresh = () => {
@@ -176,8 +178,8 @@ function Composer({ post, workspaceId, accounts, onClose }: { post: SocialPost |
         // Vorschau ohne Storage: kleine Dateien direkt
         const form = new FormData();
         form.append("file", file);
-        setMedia((list) => [...list, item]);
-        await api("/api/marketing/media", { method: "POST", body: form });
+        const stored = await api<MediaItem>("/api/marketing/media", { method: "POST", body: form });
+        setMedia((list) => [...list, stored]);
       }
     } catch (error) {
       toast(error instanceof Error ? error.message : "Hochladen fehlgeschlagen", "error");
@@ -286,8 +288,10 @@ function Composer({ post, workspaceId, accounts, onClose }: { post: SocialPost |
             {media.map((m) => (
               <div key={m.path} className="relative">
                 {m.kind === "image" && m.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- Medien aus dem Storage
-                  <img src={m.url} alt="" className="h-20 w-20 rounded-lg object-cover" />
+                  <button type="button" disabled={locked} onClick={() => setEditingImage(m)} title="Bild bearbeiten" aria-label="Bild bearbeiten" className="block rounded-lg disabled:cursor-default">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- Medien aus dem Storage */}
+                    <img src={m.url} alt="" className="h-20 w-20 rounded-lg object-cover" />
+                  </button>
                 ) : (
                   <span className="grid h-20 w-20 place-items-center rounded-lg bg-snow/[0.06] text-[11px] text-snow/55">{m.kind === "video" ? "Video" : "Bild"}</span>
                 )}
@@ -372,6 +376,14 @@ function Composer({ post, workspaceId, accounts, onClose }: { post: SocialPost |
         )}
       </div>
       {canva && <CanvaPicker workspaceId={workspaceId} onClose={() => setCanva(false)} onPicked={(items) => setMedia((list) => [...list, ...items])} />}
+      {editingImage && (
+        <ImageEditor
+          image={editingImage}
+          workspaceId={workspaceId}
+          onClose={() => setEditingImage(null)}
+          onSaved={(edited) => setMedia((list) => list.map((x) => (x.path === editingImage.path ? edited : x)))}
+        />
+      )}
     </Dialog>
   );
 }
