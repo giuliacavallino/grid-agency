@@ -7,10 +7,11 @@ import { insertPost, listPosts } from "@/lib/server/social/store";
 
 export const maxDuration = 300;
 
-/** Posts einer Kundenwelt (?workspace=…&status=…) */
+/** Posts einer Kundenwelt (?workspace=…&status=…&limit=…, höchstens 500) */
 export const GET = withMarketing(async (_actor, request) => {
   const params = new URL(request.url).searchParams;
-  const posts = await listPosts({ workspace_id: params.get("workspace") ?? undefined, status: params.get("status") ?? undefined });
+  const limit = Math.min(Math.max(Number(params.get("limit")) || 100, 1), 500);
+  const posts = await listPosts({ workspace_id: params.get("workspace") ?? undefined, status: params.get("status") ?? undefined, limit });
   const origin = new URL(request.url).origin;
   return Response.json(posts.map((p) => ({ ...p, media: withUrls(p.media, origin) })));
 });
