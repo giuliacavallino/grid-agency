@@ -68,7 +68,9 @@ Alle Werte in Vercel als „Sensitive“ anlegen, für Production und Preview. D
 
 - LinkedIn verlangt für die „Community Management API“ eine **eigene App**, in der nur dieses Produkt aktiv ist. Darum gibt es eigene Keys neben der Lead-Sync-App.
 - Redirect-URL: `…/api/social/callback/linkedin`.
-- Scopes: `r_organization_social`, `w_organization_social`, `rw_organization_admin`.
+- Scopes: `r_organization_social`, `w_organization_social`, `rw_organization_admin`, `w_member_social`.
+- Ein Login verbindet das **persönliche Profil** der Person (z. B. Giulia) und **alle Unternehmensseiten**, auf denen sie Admin ist (z. B. GRID). Beide erscheinen als eigene Kanäle und lassen sich in Posts auswählen.
+- Bis LinkedIn die App freigibt (Development Tier), gehen nur Seiten, auf denen das verbindende Konto Admin ist. Für Kundenseiten ist der Standard Tier nötig (Antrag mit Screencast im Developer Portal).
 - Der Zugang gilt 60 Tage. Wenn LinkedIn Refresh-Tokens freischaltet, erneuert der Hub ihn selbst, sonst erscheint „neu verbinden“.
 - Optional `LINKEDIN_API_VERSION` (z. B. `202607`). Standard ist der Monat vor drei Monaten.
 
@@ -135,8 +137,24 @@ Artlist hat keine öffentliche Schnittstelle, die ein Agent nutzen könnte. Musi
 - Was jede Plattform kann:
   - **Instagram:** Bild, Karussell (bis 10) oder Reel. Text allein geht nicht.
   - **Facebook:** Text, Bild, mehrere Bilder oder Video.
-  - **LinkedIn:** Text oder Bilder. Videos folgen.
+  - **LinkedIn:** Text oder Bilder, als Seite oder persönliches Profil. Videos folgen.
   - **TikTok:** Video oder Foto-Post.
+
+## Community Management (LinkedIn)
+
+Marketing → **Community** zeigt die Kommentare unter den letzten 10 Posts jeder verbundenen LinkedIn-Unternehmensseite, dazu Antworten in Gesprächen, in denen wir in den letzten 7 Tagen geantwortet haben.
+
+- **Abruf:** stündlich mit dem Cron `/api/cron/social`, sofort mit „Jetzt abrufen“. Beim ersten Abruf gelten alle vorhandenen Kommentare als „älter“ und werden nicht beantwortet.
+- **Autopilot** (je Seite, Standard an): Claude liest CI-Vorgabe, Post und Gesprächsverlauf und entscheidet selbst. Normale Kommentare beantwortet er sofort im Namen der Seite, Spam bleibt ohne Antwort, Heikles (Beschwerden, Preise, Recht, Bewerbungen …) landet unter „Fürs Team“ mit einem Antwortvorschlag. Braucht `ANTHROPIC_API_KEY`.
+- **Kommentieren:** „Post kommentieren“ kommentiert beliebige Posts als Seite oder als Person (Adresse des Posts einfügen).
+- **Persönliches Profil:** Posten und Kommentieren gehen. Kommentare unter eigenen Profil-Posts gibt LinkedIn per Schnittstelle nicht heraus (`r_member_social` ist gesperrt); die beantwortet man in LinkedIn selbst.
+
+## Outreach (Nachrichten und Kontaktanfragen)
+
+LinkedIn gibt Nachrichten (Messages API) und Kontaktanfragen (Invitations API) nur ausgewählten Partnern frei. Tools, die das per Browser-Cookie automatisieren, verstoßen gegen die Nutzervereinbarung und riskieren die Sperre des Profils. Darum:
+
+1. Der Agent legt Entwürfe an: `POST /api/marketing/outreach` mit `{ workspace_id, kind: "message" | "invitation", recipient, profile_url, text, context? }`. Notizen zu Kontaktanfragen höchstens 300 Zeichen (ohne Premium sind nur wenige Notizen pro Monat möglich).
+2. Unter Marketing → **Outreach** prüft das Team, klickt „Kopieren & öffnen“, fügt den Text auf LinkedIn ein und markiert den Entwurf als gesendet.
 
 ## Agent
 
@@ -154,6 +172,10 @@ POST /api/marketing/posts                      { workspace_id, caption, media, a
                                                  scheduled_at: "2026-11-03T17:00:00+01:00" }
                                                oder publish_now: true
 GET  /api/marketing/posts?workspace=…          → Status und Ergebnisse je Kanal
+GET  /api/marketing/comments?workspace=…&status=needs_human → was das Team klären muss
+POST /api/marketing/comments/{id}              { text }  → antworten
+POST /api/marketing/linkedin/comment           { account_id, post, text } → fremde Posts kommentieren
+POST /api/marketing/outreach                   { workspace_id, kind, recipient, profile_url, text }
 ```
 
 Eigene Dateien: `POST /api/marketing/media` mit `{ url }` oder als Datei bis 4 MB. Größere Dateien über `POST /api/marketing/media/upload-url`, dann per PUT an die gelieferte Adresse.
