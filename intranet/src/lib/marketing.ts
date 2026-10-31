@@ -34,6 +34,10 @@ export type SocialAccount = {
   error: string | null;
   connected_by: string | null;
   connected_at: string;
+  /** LinkedIn: Unternehmensseite oder persönliches Profil */
+  kind?: "organization" | "member";
+  /** LinkedIn-Seiten: Agent beantwortet Kommentare selbstständig */
+  auto_reply?: boolean;
 };
 
 export type MediaItem = {
@@ -79,7 +83,7 @@ export const PROVIDERS: Record<Provider, { label: string; color: string }> = {
 
 export const CONNECTORS: { id: ConnectProvider; label: string; text: string; providers: Provider[] }[] = [
   { id: "meta", label: "Instagram + Facebook", text: "Facebook-Seiten und die verknüpften Instagram-Business-Konten", providers: ["instagram", "facebook"] },
-  { id: "linkedin", label: "LinkedIn", text: "Unternehmensseiten, auf denen das Konto Admin ist", providers: ["linkedin"] },
+  { id: "linkedin", label: "LinkedIn", text: "Persönliches Profil und alle Unternehmensseiten, auf denen das Konto Admin ist", providers: ["linkedin"] },
   { id: "tiktok", label: "TikTok", text: "TikTok-Konto (Videos und Foto-Posts)", providers: ["tiktok"] },
 ];
 
@@ -139,3 +143,59 @@ export function agentBrief(name: string, brand: Brand) {
   ];
   return parts.filter(Boolean).join("\n\n");
 }
+
+// ---------- Community Management (LinkedIn) ----------
+
+export type CommentStatus = "new" | "replied" | "skipped" | "needs_human" | "failed" | "own" | "old";
+
+export type SocialComment = {
+  id: string;
+  workspace_id: string;
+  account_id: string;
+  post_urn: string;
+  object_urn: string;
+  comment_urn: string;
+  parent_urn: string | null;
+  author_urn: string;
+  text: string;
+  post_text: string;
+  commented_at: string | null;
+  status: CommentStatus;
+  reason: string | null;
+  reply_text: string | null;
+  reply_urn: string | null;
+  replied_by: string | null;
+  replied_at: string | null;
+  error: string | null;
+};
+
+export const COMMENT_STATUS: Record<CommentStatus, { label: string; color?: string }> = {
+  new: { label: "Offen", color: "#7fa8ff" },
+  replied: { label: "Beantwortet", color: "#30a46c" },
+  skipped: { label: "Ohne Antwort" },
+  needs_human: { label: "Fürs Team", color: "#f5a524" },
+  failed: { label: "Fehler", color: "#e5484d" },
+  own: { label: "Eigener" },
+  old: { label: "Älter" },
+};
+
+export type OutreachKind = "message" | "invitation";
+
+export type Outreach = {
+  id: string;
+  created_at: string;
+  workspace_id: string;
+  account_id: string | null;
+  kind: OutreachKind;
+  recipient: string;
+  profile_url: string;
+  text: string;
+  context: string | null;
+  status: "draft" | "sent" | "discarded";
+  created_by: string | null;
+  sent_at: string | null;
+  sent_by: string | null;
+};
+
+/** Notiz zur Kontaktanfrage: LinkedIn erlaubt höchstens 300 Zeichen */
+export const INVITATION_LIMIT = 300;

@@ -47,6 +47,12 @@ export const publicAccount = (a: AccountRow): SocialAccount => ({
   error: a.error,
   connected_by: a.connected_by,
   connected_at: a.connected_at,
+  ...(a.provider === "linkedin"
+    ? {
+        kind: a.external_id.startsWith("urn:li:organization:") ? ("organization" as const) : ("member" as const),
+        auto_reply: a.external_id.startsWith("urn:li:organization:") ? a.meta?.auto_reply !== false : undefined,
+      }
+    : {}),
 });
 
 // ---------- Kundenwelten ----------
@@ -245,6 +251,15 @@ export async function updateTokens(id: string, tokens: { token: string; refresh_
   if (tokens.refresh_expires_at !== undefined) patch.refresh_expires_at = tokens.refresh_expires_at;
   if (DEMO) return void Object.assign(demo.accounts.find((a) => a.id === id) ?? {}, patch);
   check(await sb().from("social_accounts").update(patch).eq("id", id));
+}
+
+/** Einstellungen eines Kanals ändern (z. B. Autopilot) */
+export async function updateAccountMeta(id: string, patch: Record<string, unknown>) {
+  const account = await getAccount(id);
+  if (!account) throw new Error("Kanal nicht gefunden");
+  const meta = { ...(account.meta ?? {}), ...patch };
+  if (DEMO) return void Object.assign(account, { meta });
+  check(await sb().from("social_accounts").update({ meta, updated_at: new Date().toISOString() }).eq("id", id));
 }
 
 export async function markAccountError(id: string, error: string) {
