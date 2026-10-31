@@ -26,6 +26,9 @@ const month = new Intl.DateTimeFormat("de-DE", { timeZone: TZ, month: "short" })
 const time = new Intl.DateTimeFormat("de-DE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
 const long = new Intl.DateTimeFormat("de-DE", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" });
 
+// Etwas flachere Felder, damit Schritt 1 ohne Scrollen ins Popup passt
+const fieldClasses = inputClasses.replace("py-3", "py-2.5");
+
 const STEPS = ["Deine Daten", "Termin wählen", "Bestätigung"];
 const COUNTRIES = ["Deutschland", "Österreich", "Schweiz", "Anderes Land"];
 
@@ -57,7 +60,7 @@ function Field({
 }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1.5 block text-sm font-medium text-snow">
+      <span className="mb-1 block text-sm font-medium text-snow">
         {label} {optional && <span className="font-light text-snow/50">(optional)</span>}
       </span>
       {children}
@@ -233,7 +236,7 @@ export function BookingDialog() {
         aria-labelledby="booking-title"
         // Feste Höhe für alle drei Schritte, damit das Popup beim Wechsel nicht
         // springt; wird es zu eng, scrollt nur der Inhalt rechts
-        className="glass relative flex h-[92dvh] w-full max-w-5xl flex-col overflow-hidden rounded-t-[2rem] bg-sky/70 [animation:rise_0.45s_var(--ease-spring)_backwards] sm:h-[min(50rem,92dvh)] sm:rounded-[2rem] lg:grid lg:h-[min(46rem,90dvh)] lg:grid-cols-[17rem_minmax(0,1fr)]"
+        className="glass relative flex h-[92dvh] w-full max-w-5xl flex-col overflow-hidden rounded-t-[2rem] bg-sky/70 [animation:rise_0.45s_var(--ease-spring)_backwards] sm:h-[min(50rem,92dvh)] sm:rounded-[2rem] lg:grid lg:h-[min(46rem,calc(100dvh-3rem))] lg:grid-cols-[17rem_minmax(0,1fr)]"
       >
         <button
           type="button"
@@ -270,7 +273,7 @@ export function BookingDialog() {
           </div>
         </aside>
 
-        <div ref={content} className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain p-6 lg:p-10">
+        <div ref={content} className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain p-6 lg:p-8">
           {booked ? (
             <div role="status" className="flex h-full flex-col items-start justify-center gap-5 [animation:rise_0.5s_var(--ease-spring)_backwards]">
               <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-snow text-sky">
@@ -294,47 +297,47 @@ export function BookingDialog() {
                 setStep(1);
               }}
             >
-              <h3 className="text-3xl font-semibold tracking-[-0.03em] text-snow">Wer bist du?</h3>
-              <p className="mt-2 text-base font-light text-snow/65">Damit wir uns gut vorbereiten können.</p>
+              <h3 className="text-2xl font-semibold tracking-[-0.03em] text-snow lg:text-3xl">Wer bist du?</h3>
+              <p className="mt-1 text-sm font-light text-snow/65 lg:text-base">Damit wir uns gut vorbereiten können.</p>
 
               {/* Honeypot */}
               <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" value={details.website} onChange={set("website")} />
 
-              <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-snow/50">Ansprechpartner</p>
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-snow/50">Ansprechpartner</p>
+              <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
                 <Field label="Vorname">
-                  <input required autoComplete="given-name" value={details.firstName} onChange={set("firstName")} className={inputClasses} />
+                  <input required autoComplete="given-name" value={details.firstName} onChange={set("firstName")} className={fieldClasses} />
                 </Field>
                 <Field label="Nachname">
-                  <input required autoComplete="family-name" value={details.lastName} onChange={set("lastName")} className={inputClasses} />
+                  <input required autoComplete="family-name" value={details.lastName} onChange={set("lastName")} className={fieldClasses} />
                 </Field>
                 <Field label="E-Mail">
-                  <input required type="email" autoComplete="email" value={details.email} onChange={set("email")} className={inputClasses} />
+                  <input required type="email" autoComplete="email" value={details.email} onChange={set("email")} className={fieldClasses} />
                 </Field>
                 <Field label="Telefon" optional>
-                  <input type="tel" autoComplete="tel" value={details.phone} onChange={set("phone")} className={inputClasses} />
+                  <input type="tel" autoComplete="tel" value={details.phone} onChange={set("phone")} className={fieldClasses} />
                 </Field>
               </div>
 
-              <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-snow/50">Firma</p>
-              <div className="mt-4 grid grid-cols-6 gap-4">
+              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-snow/50">Firma</p>
+              <div className="mt-3 grid grid-cols-6 gap-x-4 gap-y-3">
                 <Field label="Firmenname inkl. Rechtsform" className="col-span-6 sm:col-span-3">
-                  <input required autoComplete="organization" placeholder="Muster GmbH" value={details.company} onChange={set("company")} className={inputClasses} />
+                  <input required autoComplete="organization" placeholder="Muster GmbH" value={details.company} onChange={set("company")} className={fieldClasses} />
                 </Field>
                 <Field label="Straße" className="col-span-4 sm:col-span-2">
-                  <input required autoComplete="address-line1" value={details.street} onChange={set("street")} className={inputClasses} />
+                  <input required autoComplete="address-line1" value={details.street} onChange={set("street")} className={fieldClasses} />
                 </Field>
                 <Field label="Nr." className="col-span-2 sm:col-span-1">
-                  <input required value={details.number} onChange={set("number")} className={inputClasses} />
+                  <input required value={details.number} onChange={set("number")} className={fieldClasses} />
                 </Field>
                 <Field label="PLZ" className="col-span-2 sm:col-span-1">
-                  <input required autoComplete="postal-code" inputMode="numeric" value={details.zip} onChange={set("zip")} className={inputClasses} />
+                  <input required autoComplete="postal-code" inputMode="numeric" value={details.zip} onChange={set("zip")} className={fieldClasses} />
                 </Field>
                 <Field label="Ort" className="col-span-4 sm:col-span-3">
-                  <input required autoComplete="address-level2" value={details.city} onChange={set("city")} className={inputClasses} />
+                  <input required autoComplete="address-level2" value={details.city} onChange={set("city")} className={fieldClasses} />
                 </Field>
                 <Field label="Land" className="col-span-6 sm:col-span-2">
-                  <select value={details.country} onChange={set("country")} className={inputClasses}>
+                  <select value={details.country} onChange={set("country")} className={fieldClasses}>
                     {COUNTRIES.map((c) => (
                       <option key={c} value={c} className="bg-sky text-snow">
                         {c}
@@ -344,7 +347,7 @@ export function BookingDialog() {
                 </Field>
               </div>
 
-              <button type="submit" className="btn btn-primary mt-8 py-2 pl-6 pr-2 text-[0.9375rem]">
+              <button type="submit" className="btn btn-primary mt-6 py-2 pl-6 pr-2 text-[0.9375rem]">
                 Weiter
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky text-snow">
                   <ArrowRight className="h-4 w-4" strokeWidth={2.4} />
