@@ -396,3 +396,13 @@ export const isMonthlyUnit = (unit: string | null | undefined) => !!unit && /(^|
 
 /** Einheit für zählbare Monatsleistungen, z. B. „Account / Monat“ */
 export const monthlyUnitFor = (countLabel: string | null | undefined) => (countLabel ? `${countLabel} / Monat` : "Monat");
+
+/** Monatliche Rechnungen gehen immer am 20. raus, für den laufenden Monat */
+export const BILLING_DAY = 20;
+
+/** Erster Rechnungstag ab Vertragsbeginn: der 20. im Startmonat, nach dem 20. der im Folgemonat */
+export function firstBillingDate(start: string) {
+  const [y, m, d] = start.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1 + (d > BILLING_DAY ? 1 : 0), BILLING_DAY));
+  return date.toISOString().slice(0, 10);
+}

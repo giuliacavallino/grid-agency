@@ -1,12 +1,13 @@
 import "server-only";
 import { addPeriod, computeTotals, plain, todayBerlin, type BillingAddress, type Recurring } from "@/lib/billing";
 import { check, getBilling } from "./billing";
-import { ensurePdf, finalize, sendFromServer } from "./billing-write";
+import { DATEV_KINDS, ensurePdf, finalize, sendFromServer, sendToDatev } from "./billing-write";
 import { sb } from "./db";
 
 // Serienrechnungen (täglicher Cron): Für jede fällige Serie, die im Intranet
 // läuft, entsteht eine Rechnung (series_key verhindert Doppelte), wird
-// festgeschrieben, als PDF abgelegt und von buchhaltung@ verschickt.
+// festgeschrieben, als PDF abgelegt, von buchhaltung@ verschickt und an
+// DATEV (Rechnungsausgang) übertragen.
 // Jeder Schritt wird beim nächsten Lauf nachgeholt, falls er scheitert.
 
 type Series = {
@@ -70,10 +71,14 @@ async function createDue(series: Series, today: string, run: SeriesRun) {
       break;
     }
     const following = addPeriod(next, frequency, interval);
-    const end = new Date(`${following}T12:00:00Z`);
+    // Leistungszeitraum: bei Monatsserien die Kalendermonate ab dem Monat der
+    // Rechnung (Rechnung am 20. für den laufenden Monat), sonst bis zum
+    // nächsten Termin; einmalige Rechnung (Enddatum = Termin): ein Tag
+    const oneShot = r.end_date === next;
+    const serviceFrom = !oneShot && frequency === "MONTHLY" ? `${next.slice(0, 7)}-01` : next;
+    const end = new Date(`${frequency === "MONTHLY" && !oneShot ? addPeriod(serviceFrom, "MONTHLY", interval) : following}T12:00:00Z`);
     end.setUTCDate(end.getUTCDate() - 1);
-    // Letzter Zeitraum endet spätestens am Enddatum (einmalige Rechnung: ein Tag)
-    const serviceTo = r.end_date && r.end_date < end.toISOString().slice(0, 10) ? r.end_date : end.toISOString().slice(0, 10);
+    const serviceTo = oneShot ? next : r.end_date && r.end_date < end.toISOString().slice(0, 10) ? r.end_date : end.toISOString().slice(0, 10);
     const { data: inserted, error } = await sb()
       .from("billing_documents")
       .upsert(
@@ -88,7 +93,7 @@ async function createDue(series: Series, today: string, run: SeriesRun) {
           recipient_email: series.recipient_email ?? series.customers?.billing_email ?? series.customers?.email ?? null,
           payment_terms_days: series.payment_terms_days,
           document_date: next,
-          service_from: next,
+          service_from: serviceFrom,
           service_to: serviceTo,
           title: series.title,
           intro: series.intro,
@@ -180,6 +185,24 @@ export async function runSeries(today = todayBerlin()): Promise<SeriesRun> {
           .update({ send_attempts: d.send_attempts + 1, send_error: message.slice(0, 500) })
           .eq("id", d.id)
       );
+    }
+  }
+  // 4. Versendete Ausgangsrechnungen an DATEV (falls beim Versand gescheitert)
+  const forDatev = check(
+    await sb()
+      .from("billing_documents")
+      .select("id,number")
+      .eq("source", "intranet")
+      .in("kind", DATEV_KINDS)
+      .not("sent_at", "is", null)
+      .is("datev_sent_at", null)
+      .limit(50)
+  ) as { id: string; number: string }[];
+  for (const d of forDatev) {
+    try {
+      await sendToDatev(d.id);
+    } catch (error) {
+      run.errors.push(`DATEV ${d.number}: ${error instanceof Error ? error.message : error}`);
     }
   }
   return run;

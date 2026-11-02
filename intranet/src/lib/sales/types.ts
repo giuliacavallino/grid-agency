@@ -269,7 +269,7 @@ export type JobPosting = { id: string; slug: string; title: string; active: bool
 
 export type Settings = {
   capacity: { team_hours_per_month: number };
-  datev: { upload_address: string };
+  datev: { upload_address: string; outgoing_address: string };
   billing: import("@/lib/billing").BillingSettings;
   contract: import("@/lib/contract").ContractTemplate;
   grid_signature: { signer: string; image: string } | null;
