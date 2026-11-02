@@ -199,3 +199,64 @@ export type Outreach = {
 
 /** Notiz zur Kontaktanfrage: LinkedIn erlaubt höchstens 300 Zeichen */
 export const INVITATION_LIMIT = 300;
+
+// ---------- Posts vorschlagen (Trend-Recherche) und Autopilot ----------
+
+export type PostProvider = Exclude<Provider, "canva">;
+
+export type IdeaVisual = {
+  /** Kurze Zeile für die Grafik (max. ~70 Zeichen) */
+  headline: string;
+  /** Zweite Zeile, optional */
+  subline?: string;
+  /** Bildformat der Grafik */
+  format: "1:1" | "4:5" | "9:16" | "1.91:1";
+};
+
+export type PostIdea = {
+  id: string;
+  created_at: string;
+  workspace_id: string;
+  status: "new" | "used" | "dismissed";
+  provider: PostProvider;
+  title: string;
+  /** Warum das Thema gerade relevant ist (Trend, Anlass) */
+  trend: string;
+  caption: string;
+  hashtags: string[];
+  visual: IdeaVisual;
+  sources: { title: string; url: string }[];
+  post_id: string | null;
+  created_by: string | null;
+};
+
+/** Autopilot je Kundenwelt: recherchiert jede Woche, erstellt und plant Posts */
+export type Autopilot = {
+  enabled: boolean;
+  providers: PostProvider[];
+  /** Posts pro Woche je Plattform */
+  per_week: number;
+  /** Wochentage 1 = Mo … 7 = So */
+  weekdays: number[];
+  /** Uhrzeit (Berlin), z. B. "09:00" */
+  time: string;
+  /** auto: wird gepostet; review: landet als Entwurf mit Termin zur Freigabe */
+  mode: "auto" | "review";
+  /** Themen, auf die sich die Recherche konzentriert */
+  focus: string;
+  /** To-dos aus Calls automatisch übernehmen und an den Agenten geben */
+  agent_calls: boolean;
+  last_run?: string | null;
+  last_result?: string | null;
+};
+
+export const DEFAULT_AUTOPILOT: Autopilot = { enabled: false, providers: ["linkedin"], per_week: 2, weekdays: [2, 4], time: "09:00", mode: "review", focus: "", agent_calls: false };
+
+export const WEEKDAY_LABELS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+/** Lesbare Schrift auf einer Farbfläche (hell auf dunkel, dunkel auf hell) */
+export function inkOn(hex: string) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return "#ffffff";
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4 ? "#141414" : "#ffffff";
+}

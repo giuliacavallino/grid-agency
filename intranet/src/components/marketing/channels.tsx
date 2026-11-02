@@ -6,9 +6,9 @@ import { api } from "@/lib/api";
 import { revalidate } from "@/lib/data";
 import { CONNECTORS, type ConnectProvider, type SocialAccount } from "@/lib/marketing";
 import { Button, Dialog, Empty, IconButton, Spinner, useToast } from "@/components/ui";
-import { PageBar } from "@/components/sales/shell";
+import { AkteHeader } from "@/components/akte/header";
 import { AccountLine, ProviderMark, useConnectFeedback, useMarketingStatus } from "./common";
-import { URL_WORKSPACES, useCurrentWorkspace, WorkspaceSwitcher } from "./workspace";
+import { URL_WORKSPACES, useCurrentWorkspace } from "./workspace";
 
 /** Marketing → Kanäle der aktuellen Kundenwelt: verbinden (selbst oder per
  * Link durch den Kunden), Status sehen, trennen */
@@ -82,8 +82,7 @@ export function Channels() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageBar title="Kanäle" meta={workspace.name}>
-        <WorkspaceSwitcher />
+      <AkteHeader title="Kanäle" meta="Social-Media-Konten dieser Akte: selbst verbinden oder per Link durch den Kunden">
         <Button size="sm" variant="ghost" className="h-9" icon={<FolderOpen className="h-4 w-4" />} loading={busy === "folder"} loadingText="Öffnet …" onClick={openFolder}>
           SharePoint
         </Button>
@@ -92,7 +91,7 @@ export function Channels() {
             Link für Kunden
           </Button>
         )}
-      </PageBar>
+      </AkteHeader>
       <div className="min-h-0 flex-1 overflow-y-auto pb-10">
         {!status.data.vault && (
           <p className="mx-4 mt-4 max-w-3xl rounded-xl bg-snow/[0.06] px-3.5 py-2.5 text-[13px] text-snow/75 md:mx-6">

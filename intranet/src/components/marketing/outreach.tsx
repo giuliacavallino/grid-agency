@@ -8,7 +8,7 @@ import { revalidate, useResource } from "@/lib/data";
 import { INVITATION_LIMIT, type Outreach, type OutreachKind } from "@/lib/marketing";
 import { Badge, Button, Dialog, Empty, IconButton, Input, Spinner, Textarea, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
-import { useCurrentWorkspace, WorkspaceSwitcher } from "./workspace";
+import { useCurrentWorkspace } from "./workspace";
 
 // Marketing → Outreach: Nachrichten und Kontaktanfragen für LinkedIn. Der
 // Agent (oder das Team) legt Entwürfe an. LinkedIn erlaubt das Senden per API
@@ -77,7 +77,6 @@ export function OutreachPage() {
   return (
     <div className="flex h-full flex-col">
       <PageBar title="Outreach" meta={workspace.name}>
-        <WorkspaceSwitcher />
         <Button size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)}>
           Entwurf
         </Button>

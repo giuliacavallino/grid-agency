@@ -10,7 +10,7 @@ import { Badge, Button, Dialog, Empty, Input, Spinner, Textarea, useToast } from
 import { PageBar } from "@/components/sales/shell";
 import { Switch } from "@/components/sales/jourfix";
 import { ProviderMark } from "./common";
-import { URL_WORKSPACES, useCurrentWorkspace, WorkspaceSwitcher } from "./workspace";
+import { URL_WORKSPACES, useCurrentWorkspace } from "./workspace";
 
 // Marketing → Community: Kommentare unter den LinkedIn-Posts der Kundenwelt.
 // Mit Autopilot antwortet der Agent selbst (Cron, stündlich); Heikles landet
@@ -92,7 +92,6 @@ export function Community() {
   return (
     <div className="flex h-full flex-col">
       <PageBar title="Community" meta={workspace.name}>
-        <WorkspaceSwitcher />
         <Button size="sm" variant="ghost" className="h-9" icon={<MessageSquareReply className="h-4 w-4" />} disabled={!linkedin.length} onClick={() => setCommenting(true)}>
           Post kommentieren
         </Button>
@@ -102,7 +101,7 @@ export function Community() {
       </PageBar>
       <div className="min-h-0 flex-1 overflow-y-auto pb-10">
         {!linkedin.length ? (
-          <Empty title="Kein LinkedIn verbunden" text="Unter Kanäle → LinkedIn → Selbst verbinden. Dabei werden das persönliche Profil und alle Seiten verbunden, auf denen das Konto Admin ist." />
+          <Empty title="Kein LinkedIn verbunden" text="Unter Einstellungen → Kanäle → LinkedIn → Selbst verbinden. Dabei werden das persönliche Profil und alle Seiten verbunden, auf denen das Konto Admin ist." />
         ) : (
           <>
             <ul className="flex max-w-5xl flex-wrap gap-3 px-4 pt-4 md:px-6">

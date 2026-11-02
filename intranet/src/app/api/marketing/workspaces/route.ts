@@ -1,4 +1,5 @@
 import { after } from "next/server";
+import { db } from "@/lib/server/db";
 import { withMarketing } from "@/lib/server/social/auth";
 import { workspaceFolder } from "@/lib/server/social/sharepoint";
 import { createWorkspace, listAccounts, listPosts, listWorkspaces, publicAccount } from "@/lib/server/social/store";
@@ -20,7 +21,9 @@ export const GET = withMarketing(async () => {
 export const POST = withMarketing(async (_actor, request) => {
   const body = (await request.json()) as { name?: string; color?: string; secondary_color?: string | null; project_id?: string | null };
   if (!body.name?.trim()) return Response.json({ error: "Name fehlt" }, { status: 400 });
-  const workspace = await createWorkspace({ name: body.name, color: body.color, secondary_color: body.secondary_color, project_id: body.project_id ?? null });
+  // Jede Kundenakte hat eine Aufgabenliste (To-dos, Briefing, Calls)
+  const projectId = body.project_id ?? String((await db().insert("task_projects", { name: body.name.trim().slice(0, 120), color: body.color ?? "#afaaa0" })).id);
+  const workspace = await createWorkspace({ name: body.name, color: body.color, secondary_color: body.secondary_color, project_id: projectId });
   // SharePoint-Ordner gleich mit anlegen (falls eingerichtet)
   after(() => workspaceFolder(workspace.id).then(() => undefined).catch((error) => console.error("SharePoint-Ordner", error)));
   return Response.json(workspace, { status: 201 });

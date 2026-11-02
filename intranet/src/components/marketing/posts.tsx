@@ -8,10 +8,10 @@ import { cn as clsx } from "@/lib/cn";
 import { POST_STATUS, type SocialAccount, type SocialPost } from "@/lib/marketing";
 import { accentFill } from "@/lib/theme";
 import { Button, Empty, IconButton, Spinner, useToast } from "@/components/ui";
-import { PageBar } from "@/components/sales/shell";
+import { AkteHeader } from "@/components/akte/header";
 import { ProviderMark } from "./common";
 import { PostEditor, postsUrl } from "./post-editor";
-import { URL_WORKSPACES, useCurrentWorkspace, WorkspaceSwitcher } from "./workspace";
+import { URL_WORKSPACES, useCurrentWorkspace } from "./workspace";
 
 // Marketing → Posts & Planung: Redaktionskalender der aktuellen Kundenwelt.
 // Links Entwürfe und Ideen ohne Termin, rechts Woche oder Monat. Posts lassen
@@ -136,9 +136,8 @@ export function Posts() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageBar title="Posts & Planung" meta={workspace.name}>
+      <AkteHeader title="Planung" meta="Redaktionskalender: Entwürfe per Drag & Drop einplanen">
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
-        <WorkspaceSwitcher />
         <div className="flex items-center rounded-full border border-snow/12 p-0.5">
           {(["week", "month"] as View[]).map((v) => (
             <button
@@ -168,7 +167,7 @@ export function Posts() {
           Neuer Post
         </Button>
         </div>
-      </PageBar>
+      </AkteHeader>
 
       {posts.error ? (
         <Empty title="Posts konnten nicht geladen werden" text={posts.error.message} />
