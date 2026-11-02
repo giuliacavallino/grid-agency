@@ -82,6 +82,20 @@ Noch nicht enthalten (nächste Stufe):
 - Rohvideos schneiden.
 - Performance-Auswertung.
 
+## CI aus Canva übernehmen
+
+Die Canva-Schnittstelle gibt Brand Kits nicht heraus. Deshalb legt man je Kunde in Canva ein Design **„CI – <Kunde>“** an:
+
+- **Seite 1:** nur das Logo, am besten mit transparentem Hintergrund.
+- **Seite 2:** Farben (gern mit Hex-Werten) und Schriften, gern auch Tonalität und Dos & Don'ts. Weitere Seiten sind möglich, gelesen werden bis zu vier.
+
+„Übernehmen“ unter Akte → Einstellungen → Stammdaten erledigt dann zwei Dinge (`POST /api/marketing/workspaces/<id>/canva-ci`):
+
+1. Seite 1 als PNG exportieren, Ränder abschneiden und als Hauptlogo der Akte setzen.
+2. Die weiteren Seiten mit Claude auslesen und Farben, Schriften und Vorgaben in die CI-Welt eintragen. Die Primärfarbe färbt dann auch die Akte.
+
+Danach unter „CI & Agent“ prüfen.
+
 ## CI-Welt je Kunde (Vorgabe für den Agenten)
 
 Unter Marketing → **CI & Vorgaben** liegt für jede Kundenwelt:
