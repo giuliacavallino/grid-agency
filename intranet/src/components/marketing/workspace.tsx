@@ -70,7 +70,15 @@ export function WorkspaceDot({ color, className }: { color: string; className?: 
 
 /** Logo der Kundenwelt (CI), sonst ein Punkt in ihrer Farbe */
 export function WorkspaceLogo({ workspace, size = 20, wide = false }: { workspace: Pick<Workspace, "logo_url" | "color" | "name">; size?: number; wide?: boolean }) {
-  if (!workspace.logo_url) return <WorkspaceDot color={workspace.color} />;
+  if (!workspace.logo_url) {
+    if (size < 24) return <WorkspaceDot color={workspace.color} />;
+    // Ohne Logo: Kürzel in der CI-Farbe, gleich groß wie ein Logo
+    return (
+      <span className="grid shrink-0 place-items-center rounded-md text-[10px] font-semibold text-white" style={{ width: size, height: size, background: workspace.color }} aria-hidden>
+        {workspace.name.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 2).toUpperCase()}
+      </span>
+    );
+  }
   return (
     // eslint-disable-next-line @next/next/no-img-element -- Logo aus dem Storage
     <img
@@ -78,7 +86,7 @@ export function WorkspaceLogo({ workspace, size = 20, wide = false }: { workspac
       alt={workspace.name}
       width={size}
       height={size}
-      className="shrink-0 rounded-md bg-white object-contain"
+      className="shrink-0 rounded-md bg-white object-contain p-0.5"
       // wide: Querformat-Logos in voller Breite (z. B. Überschrift im Hub)
       style={{ height: size, width: wide ? "auto" : size, maxWidth: wide ? size * 4 : size, padding: wide ? 4 : 0, boxShadow: `0 0 0 1.5px ${workspace.color}` }}
     />
@@ -126,7 +134,7 @@ export function WorkspaceSwitcher({ className, compact = false, onPick }: { clas
           )}
           style={{ borderColor: workspace.kind === "customer" ? workspace.color : "color-mix(in srgb, var(--color-snow) 12%, transparent)" }}
         >
-          <WorkspaceLogo workspace={workspace} />
+          <WorkspaceLogo workspace={workspace} size={24} />
           {!compact && <span className="truncate">{workspace.name}</span>}
           <ChevronDown className="h-4 w-4 shrink-0 text-snow/60" />
         </button>
@@ -148,7 +156,7 @@ export function WorkspaceSwitcher({ className, compact = false, onPick }: { clas
                 }}
                 className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[14px] hover:bg-snow/[0.08]"
               >
-                <WorkspaceLogo workspace={w} />
+                <WorkspaceLogo workspace={w} size={28} />
                 <span className="flex-1 truncate">{w.name}</span>
                 {w.id === workspace.id && <Check className="h-4 w-4 text-snow/70" />}
               </button>

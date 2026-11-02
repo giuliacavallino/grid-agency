@@ -97,12 +97,16 @@ export const POST_STATUS: Record<PostStatus, { label: string; color?: string }> 
 export type BrandColor = { name: string; hex: string; role: "Primär" | "Sekundär" | "Akzent" | "Hintergrund" | "Text" | "Sonstige" };
 export type BrandFont = { role: string; family: string; source?: string; notes?: string };
 export type BrandLogo = { path: string; variant: string; notes?: string; url?: string };
+/** Bildmaterial im Markenkit: Fotos, Grafiken, Icons (für Team und Agent) */
+export type BrandAsset = { path: string; kind: "Foto" | "Grafik" | "Icon"; notes?: string; url?: string };
+export const ASSET_KINDS: BrandAsset["kind"][] = ["Foto", "Grafik", "Icon"];
 
 export type Brand = {
   website?: string;
   colors: BrandColor[];
   fonts: BrandFont[];
   logos: BrandLogo[];
+  assets: BrandAsset[];
   tone: string;
   audience: string;
   imagery: string;
@@ -114,7 +118,7 @@ export type Brand = {
   notes: string;
 };
 
-export const EMPTY_BRAND: Brand = { colors: [], fonts: [], logos: [], tone: "", audience: "", imagery: "", dos: [], donts: [], hashtags: [], notes: "" };
+export const EMPTY_BRAND: Brand = { colors: [], fonts: [], logos: [], assets: [], tone: "", audience: "", imagery: "", dos: [], donts: [], hashtags: [], notes: "" };
 
 export const COLOR_ROLES: BrandColor["role"][] = ["Primär", "Sekundär", "Akzent", "Hintergrund", "Text", "Sonstige"];
 
@@ -128,6 +132,7 @@ export function agentBrief(name: string, brand: Brand) {
     brand.colors.length && `## Farben\n${list(brand.colors.map((c) => `${c.role}: ${c.name} ${c.hex}`))}`,
     brand.fonts.length && `## Schriften\n${list(brand.fonts.map((f) => `${f.role}: ${f.family}${f.notes ? ` (${f.notes})` : ""}`))}`,
     brand.logos.length && `## Logos\n${list(brand.logos.map((l) => `${l.variant}${l.notes ? `: ${l.notes}` : ""}${l.url ? ` – ${l.url}` : ""}`))}`,
+    brand.assets.length && `## Bildmaterial (Medienpfade für Posts)\n${list(brand.assets.map((a) => `${a.kind}${a.notes ? `: ${a.notes}` : ""} – ${a.path}`))}`,
     brand.tone && `## Tonalität\n${brand.tone}`,
     brand.audience && `## Zielgruppe\n${brand.audience}`,
     brand.imagery && `## Bildsprache\n${brand.imagery}`,
