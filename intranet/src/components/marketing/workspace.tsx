@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useSyncExternalStore } from "react";
 import { Check, ChevronDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { cn as clsx } from "@/lib/cn";
@@ -44,10 +44,14 @@ export function useWorkspaces() {
   return useResource<WorkspaceSummary[]>(can ? URL_WORKSPACES : null);
 }
 
-/** Aktuelle Kundenwelt (Standard: GRID selbst) */
+/** In einer Kundenakte gilt die Kundenwelt der Akte (aus der Adresse) */
+export const AkteWorkspace = createContext<string | null>(null);
+
+/** Aktuelle Kundenwelt: in einer Akte deren Kunde, sonst die zuletzt gewählte (Standard: GRID selbst) */
 export function useCurrentWorkspace() {
   const { data } = useWorkspaces();
-  const stored = useSyncExternalStore(subscribe, read, () => null);
+  const akte = useContext(AkteWorkspace);
+  const stored = useSyncExternalStore(subscribe, read, () => null) ;
 
   // ?welt=<id> aus Links (z. B. nach dem Verbinden) übernehmen
   useEffect(() => {
@@ -55,7 +59,7 @@ export function useCurrentWorkspace() {
     if (welt && welt !== read()) setCurrentWorkspace(welt);
   }, []);
 
-  const current = data?.find((w) => w.id === stored) ?? data?.find((w) => w.kind === "agency") ?? data?.[0] ?? null;
+  const current = (akte ? data?.find((w) => w.id === akte) : null) ?? data?.find((w) => w.id === stored) ?? data?.find((w) => w.kind === "agency") ?? data?.[0] ?? null;
   const select = useCallback((id: string) => setCurrentWorkspace(id), []);
   return { workspace: current, workspaces: data ?? [], select };
 }
@@ -100,8 +104,10 @@ export function WorkspaceAccent() {
 }
 
 /** Auswahl der Kundenwelt, z. B. oben im Hub oder im Marketing */
-export function WorkspaceSwitcher({ className, compact = false }: { className?: string; compact?: boolean }) {
-  const { workspace, workspaces, select } = useCurrentWorkspace();
+export function WorkspaceSwitcher({ className, compact = false, onPick }: { className?: string; compact?: boolean; onPick?: (workspace: WorkspaceSummary) => void }) {
+  const { workspace: current, workspaces, select } = useCurrentWorkspace();
+  // Mit onPick (Übersicht): Auswahl öffnet die Kundenakte, angezeigt bleibt GRID
+  const workspace = onPick ? workspaces.find((w) => w.kind === "agency") ?? current : current;
   if (!workspace) return null;
   const agency = workspaces.filter((w) => w.kind === "agency");
   const customers = workspaces.filter((w) => w.kind === "customer");
@@ -136,7 +142,8 @@ export function WorkspaceSwitcher({ className, compact = false }: { className?: 
               <button
                 type="button"
                 onClick={() => {
-                  select(w.id);
+                  if (onPick) onPick(w);
+                  else select(w.id);
                   close();
                 }}
                 className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[14px] hover:bg-snow/[0.08]"
@@ -148,11 +155,11 @@ export function WorkspaceSwitcher({ className, compact = false }: { className?: 
             </div>
           ))}
           <Link
-            href="/marketing?neu=1"
+            href="/marketing/einstellungen/kundenakten?neu=1"
             onClick={close}
             className="mt-1 flex items-center gap-2.5 rounded-xl border-t border-snow/[0.08] px-2.5 py-2 text-[13px] text-snow/65 hover:bg-snow/[0.08] hover:text-snow"
           >
-            <Plus className="h-4 w-4" /> Neue Kundenwelt
+            <Plus className="h-4 w-4" /> Neue Kundenakte
           </Link>
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, FileText, RotateCcw, Video, X } from "lucide-react";
+import { AlertTriangle, Bot, Check, ChevronDown, FileText, RotateCcw, Video, X } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
 import { api } from "@/lib/api";
 import { revalidate, useRows } from "@/lib/data";
@@ -41,20 +41,22 @@ const dateTime = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", w
 const dateShort = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", day: "numeric", month: "short" });
 const clock = (ms: number) => `${Math.floor(ms / 60_000)}:${String(Math.floor((ms % 60_000) / 1000)).padStart(2, "0")}`;
 
-function ProposalRow({ proposal, projects }: { proposal: Proposal; projects: TaskProject[] }) {
+function ProposalRow({ proposal, projects, fixed }: { proposal: Proposal; projects: TaskProject[]; fixed?: string }) {
   const toast = useToast();
-  const [project, setProject] = useState(proposal.project_id ?? "");
-  const [busy, setBusy] = useState<"uebernehmen" | "verwerfen" | null>(null);
+  const [project, setProject] = useState(fixed ?? proposal.project_id ?? "");
+  const [busy, setBusy] = useState<"uebernehmen" | "agent" | "verwerfen" | null>(null);
   const open = proposal.status === "vorschlag";
 
-  async function decide(action: "uebernehmen" | "verwerfen") {
-    setBusy(action);
+  async function decide(action: "uebernehmen" | "verwerfen", agent = false) {
+    setBusy(agent ? "agent" : action);
     try {
-      await api(`/api/aufgaben/vorschlaege/${proposal.id}`, { method: "POST", body: JSON.stringify({ action, project_id: project || undefined }) });
+      const saved = await api<Proposal & { task_id?: string | null }>(`/api/aufgaben/vorschlaege/${proposal.id}`, { method: "POST", body: JSON.stringify({ action, project_id: project || undefined }) });
+      // Übernommen und direkt an den Agenten: er bearbeitet das To-do sofort
+      if (agent && saved.task_id) await api(`/api/aufgaben/agent/${saved.task_id}`, { method: "POST" });
       revalidate("/api/sales/meeting_tasks");
       if (action === "uebernehmen") {
         revalidate("/api/sales/tasks");
-        toast(`„${proposal.title}“ übernommen`);
+        toast(agent ? `„${proposal.title}“ an den Agenten übergeben` : `„${proposal.title}“ übernommen`);
       }
     } catch (e) {
       toast(e instanceof Error ? e.message : "Hat nicht geklappt", "error");
@@ -81,15 +83,20 @@ function ProposalRow({ proposal, projects }: { proposal: Proposal; projects: Tas
       </div>
       {open && (
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Select value={project} onChange={(e) => setProject(e.target.value)} aria-label="Kunde" className="h-9 w-48">
+          {!fixed && <Select value={project} onChange={(e) => setProject(e.target.value)} aria-label="Kunde" className="h-9 w-48">
             <option value="">Kunde wählen …</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
-          </Select>
-          <Button size="sm" variant="primary" icon={<Check className="h-4 w-4" />} onClick={() => decide("uebernehmen")} disabled={!project || !!busy} loading={busy === "uebernehmen"} loadingText="Wird übernommen …">
+          </Select>}
+          {proposal.owner !== "kunde" && (
+            <Button size="sm" variant="primary" icon={<Bot className="h-4 w-4" />} onClick={() => decide("uebernehmen", true)} disabled={!project || !!busy} loading={busy === "agent"} loadingText="Wird übergeben …">
+              An Agent
+            </Button>
+          )}
+          <Button size="sm" variant={proposal.owner === "kunde" ? "primary" : "secondary"} icon={<Check className="h-4 w-4" />} onClick={() => decide("uebernehmen")} disabled={!project || !!busy} loading={busy === "uebernehmen"} loadingText="Wird übernommen …">
             Übernehmen
           </Button>
           <Button size="sm" variant="ghost" onClick={() => decide("verwerfen")} disabled={!!busy} loading={busy === "verwerfen"} loadingText="…">
@@ -101,7 +108,7 @@ function ProposalRow({ proposal, projects }: { proposal: Proposal; projects: Tas
   );
 }
 
-function RecordingCard({ recording, meeting, proposals, projects }: { recording: Recording; meeting?: Meeting; proposals: Proposal[]; projects: TaskProject[] }) {
+function RecordingCard({ recording, meeting, proposals, projects, fixed }: { recording: Recording; meeting?: Meeting; proposals: Proposal[]; projects: TaskProject[]; fixed?: string }) {
   const toast = useToast();
   const [retrying, setRetrying] = useState(false);
   const [showTranscript, setShowTranscript] = useState(false);
@@ -159,7 +166,7 @@ function RecordingCard({ recording, meeting, proposals, projects }: { recording:
       {proposals.length > 0 && (
         <ul className="mt-4 flex flex-col gap-2">
           {proposals.map((p) => (
-            <ProposalRow key={p.id} proposal={p} projects={projects} />
+            <ProposalRow key={p.id} proposal={p} projects={projects} fixed={fixed} />
           ))}
         </ul>
       )}
@@ -188,26 +195,29 @@ function RecordingCard({ recording, meeting, proposals, projects }: { recording:
   );
 }
 
-export function CallResults() {
+/** Alle Calls (Aufgaben → Aus Calls) oder nur die eines Kunden (Kundenakte) */
+export function CallResults({ projectId, header }: { projectId?: string; header?: React.ReactNode } = {}) {
   const recordings = useRows<Recording>("meeting_recordings");
   const proposals = useRows<Proposal>("meeting_tasks");
   const meetings = useRows<Meeting>("meetings");
   const projects = useRows<TaskProject>("task_projects");
   const active = useMemo(() => (projects.data ?? []).filter((p) => !p.archived).sort((a, b) => a.name.localeCompare(b.name, "de")), [projects.data]);
   const byMeeting = useMemo(() => new Map((meetings.data ?? []).map((m) => [m.id, m])), [meetings.data]);
-  const openCount = (proposals.data ?? []).filter((p) => p.status === "vorschlag").length;
+  const relevant = (proposals.data ?? []).filter((p) => !projectId || p.project_id === projectId);
+  const openCount = relevant.filter((p) => p.status === "vorschlag").length;
+  const shown = (recordings.data ?? []).filter((r) => !projectId || relevant.some((p) => p.recording_id === r.id));
   const error = recordings.error ?? proposals.error ?? meetings.error;
 
   return (
     <div className="flex h-full flex-col">
-      <PageBar title="Aus Calls" meta={proposals.data && `${openCount} ${openCount === 1 ? "Vorschlag" : "Vorschläge"} offen`} />
+      {header ?? <PageBar title="Aus Calls" meta={proposals.data && `${openCount} ${openCount === 1 ? "Vorschlag" : "Vorschläge"} offen`} />}
       {error ? (
         <Empty title="Calls konnten nicht geladen werden" text={error.message} />
       ) : recordings.loading || proposals.loading ? (
         <div className="grid flex-1 place-items-center">
           <Spinner />
         </div>
-      ) : !recordings.data?.length ? (
+      ) : !shown.length ? (
         <Empty
           icon={<Video className="h-8 w-8" />}
           title="Noch keine Calls ausgewertet"
@@ -216,13 +226,14 @@ export function CallResults() {
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto flex max-w-4xl flex-col gap-4 p-4 pb-10 md:p-6">
-            {recordings.data.map((r) => (
+            {shown.map((r) => (
               <RecordingCard
                 key={r.id}
                 recording={r}
                 meeting={byMeeting.get(r.meeting_id)}
-                proposals={(proposals.data ?? []).filter((p) => p.recording_id === r.id)}
+                proposals={relevant.filter((p) => p.recording_id === r.id)}
                 projects={active}
+                fixed={projectId}
               />
             ))}
           </div>

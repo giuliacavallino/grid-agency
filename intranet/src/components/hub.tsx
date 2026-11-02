@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { clsx } from "clsx";
-import { ArrowLeft, ArrowUpRight, CalendarDays, LayoutGrid, Link2, ListChecks, LogOut, Menu, Palette } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, LayoutGrid, LogOut, Menu } from "lucide-react";
 import { AREAS, type Area } from "@/lib/areas";
 import { hasArea } from "@/lib/access";
-import { useCan, useMe } from "./access";
+import { useMe } from "./access";
 import { TeamsButton } from "./teams";
 import { usePhoto } from "./person";
 import { signOut, useAuth } from "@/lib/auth";
@@ -15,7 +15,7 @@ import { BankReminder } from "./finance/bank-reminder";
 import { Logo } from "./logo";
 import { Button, Popover } from "./ui";
 import { KpiList, useKpis } from "./kpis";
-import { setCurrentWorkspace, useCurrentWorkspace, WorkspaceAccent, WorkspaceLogo, WorkspaceSwitcher, type WorkspaceSummary } from "./marketing/workspace";
+import { WorkspaceSwitcher, type WorkspaceSummary } from "./marketing/workspace";
 
 /** Bereiche, die das angemeldete Konto sehen darf */
 function useAreas() {
@@ -105,6 +105,8 @@ function AccountPopover({
 /** Kopfleiste als schwebende Glas-Pill wie TopBar.tsx der Website. */
 export function TopBar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const openAkte = (workspace: WorkspaceSummary) => router.push(`/akte/${workspace.id}`);
   const areas = useAreas();
   const kpis = useKpis();
   return (
@@ -122,9 +124,9 @@ export function TopBar() {
             </span>
           </Link>
 
-          {/* Kundenwelt wechseln: GRID oder ein Kunde (nur mit Marketing-Zugang) */}
-          <WorkspaceSwitcher className="relative mr-auto hidden sm:flex" />
-          <WorkspaceSwitcher compact className="relative mr-auto sm:hidden" />
+          {/* Kundenakte öffnen (nur mit Marketing-Zugang); gewechselt wird nur hier */}
+          <WorkspaceSwitcher className="relative mr-auto hidden sm:flex" onPick={openAkte} />
+          <WorkspaceSwitcher compact className="relative mr-auto sm:hidden" onPick={openAkte} />
 
           {kpis && kpis.length > 0 && (
             <nav className="relative hidden min-w-0 lg:block" aria-label="Kennzahlen">
@@ -222,26 +224,9 @@ function greeting(hour: number) {
   return "Guten Abend";
 }
 
-/** Kacheln einer Kundenwelt: alles, was für diesen Kunden zählt */
-function customerTiles(workspace: WorkspaceSummary, aufgaben: boolean): Area[] {
-  const channels = workspace.accounts.filter((a) => a.provider !== "canva").length;
-  return [
-    { id: "posts", title: "Posts & Planung", text: `${workspace.scheduled} geplant · Posts bauen und veröffentlichen`, icon: CalendarDays, href: "/marketing/posts" },
-    { id: "kanaele", title: "Kanäle", text: channels ? `${channels} verbunden · Instagram, Facebook, LinkedIn, TikTok` : "Noch nichts verbunden · Link für den Kunden erstellen", icon: Link2, href: "/marketing/kanaele" },
-    { id: "ci", title: "CI & Vorgaben", text: "Farben, Logos, Typo, Tonalität, Dos & Don'ts für Team und Agent", icon: Palette, href: "/marketing/ci" },
-    ...(workspace.project_id && aufgaben
-      ? [{ id: "aufgaben", title: "Aufgaben & Briefing", text: "To-dos, Briefing und Zugänge", icon: ListChecks, href: `/aufgaben/${workspace.project_id}` }]
-      : []),
-  ];
-}
-
 export function Hub() {
   const auth = useAuth();
-  const { workspace, workspaces: allWorkspaces } = useCurrentWorkspace();
-  const canAufgaben = useCan("aufgaben");
-  const customer = workspace?.kind === "customer" ? workspace : null;
-  const allAreas = useAreas();
-  const areas = customer ? customerTiles(customer, canAufgaben) : allAreas;
+  const areas = useAreas();
   const kpis = useKpis();
   const firstName = auth.status === "signed-in" ? auth.account.name.split(" ")[0] : "";
   // Datum und Tageszeit erst im Browser, damit Server und Client gleich rendern
@@ -255,42 +240,20 @@ export function Hub() {
 
   return (
     <HubFrame fit>
-      <WorkspaceAccent />
       <div className="shrink-0">
         <p className="mb-1.5 h-4 text-[11px] font-medium uppercase tracking-[0.3em] text-snow/50">
           {now?.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}
         </p>
-        {customer ? (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <h1 className="flex items-center gap-3 text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
-              <WorkspaceLogo workspace={customer} size={44} wide />
-              {customer.name}
-            </h1>
-            <button
-              type="button"
-              onClick={() => {
-                const agency = allWorkspaces.find((w) => w.kind === "agency");
-                if (agency) setCurrentWorkspace(agency.id);
-              }}
-              className="flex h-8 items-center gap-1.5 rounded-full border border-snow/15 px-3 text-[13px] text-snow/70 hover:bg-snow/[0.08] hover:text-snow"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Zurück zu GRID
-            </button>
-          </div>
-        ) : (
           <h1 className="text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
-            {now ? greeting(now.getHours()) : "Hallo"}, {firstName}
-          </h1>
-        )}
+          {now ? greeting(now.getHours()) : "Hallo"}, {firstName}
+        </h1>
       </div>
 
-      {!customer && (
-        <div className="shrink-0">
-          <BankReminder />
-        </div>
-      )}
+      <div className="shrink-0">
+        <BankReminder />
+      </div>
 
-      {!customer && kpis && kpis.length > 0 && (
+      {kpis && kpis.length > 0 && (
         <div className="mt-3 shrink-0 lg:hidden">
           <KpiList kpis={kpis} compact className="glass w-full justify-between rounded-2xl p-1" />
         </div>

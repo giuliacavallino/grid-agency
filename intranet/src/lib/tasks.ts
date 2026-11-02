@@ -41,6 +41,21 @@ export type Task = {
   due_on: string | null;
   checklist: ChecklistItem[];
   position: number;
+  /** An den Agenten übergeben: Status, Protokoll und Ergebnis */
+  agent_status?: AgentStatus | null;
+  agent_log?: { at: string; text: string }[];
+  agent_result?: string | null;
+  agent_at?: string | null;
+};
+
+export type AgentStatus = "queued" | "running" | "review" | "done" | "failed";
+
+export const AGENT_STATUS: Record<AgentStatus, { label: string; color: string }> = {
+  queued: { label: "Agent: wartet", color: "#9085e9" },
+  running: { label: "Agent arbeitet", color: "#9085e9" },
+  review: { label: "Agent: bitte prüfen", color: "#f5a524" },
+  done: { label: "Agent: erledigt", color: "#30a46c" },
+  failed: { label: "Agent: Fehler", color: "#e5484d" },
 };
 
 /** Farben zur Auswahl für neue Kunden */

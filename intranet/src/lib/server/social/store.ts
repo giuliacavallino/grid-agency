@@ -82,7 +82,7 @@ export async function agencyWorkspace() {
   return ws;
 }
 
-export type BrandInput = { name?: string; color?: string; secondary_color?: string | null; logo_path?: string | null };
+export type BrandInput = { name?: string; color?: string; secondary_color?: string | null; logo_path?: string | null; project_id?: string | null };
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -93,6 +93,8 @@ function brand(input: BrandInput) {
   if (input.color && HEX.test(input.color)) row.color = input.color.toLowerCase();
   if (input.secondary_color === null || (input.secondary_color && HEX.test(input.secondary_color))) row.secondary_color = input.secondary_color?.toLowerCase() ?? null;
   if (input.logo_path === null || (input.logo_path && /^[0-9a-f-]{36}\/[a-z0-9-_]+\.(png|jpg|webp)$/i.test(input.logo_path))) row.logo_path = input.logo_path;
+  // Aufgabenliste des Kunden (Aufgaben, Briefing, Calls)
+  if (input.project_id === null || (typeof input.project_id === "string" && /^[0-9a-z-]{6,40}$/i.test(input.project_id))) row.project_id = input.project_id;
   return row;
 }
 
@@ -408,3 +410,11 @@ export async function duePosts(now: Date): Promise<SocialPost[]> {
 }
 
 export const resultEntry = (result: Omit<PostResult, "at">): PostResult => ({ ...result, at: new Date().toISOString() });
+
+/** Storage-Pfad des Logos (für Grafiken), sonst das erste Logo aus der CI */
+export async function workspaceLogoPath(id: string): Promise<string | null> {
+  const row = DEMO
+    ? demo.workspaces.find((w) => w.id === id)
+    : (check(await sb().from("workspaces").select("logo_path").eq("id", id).maybeSingle()) as { logo_path: string | null } | null);
+  return row?.logo_path ?? (await getBrand(id)).logos[0]?.path ?? null;
+}

@@ -41,7 +41,7 @@ export async function startConnect(provider: ConnectProvider, workspaceId: strin
   // Canva gehört GRID, alle anderen Kanäle einer Kundenwelt
   const workspace = provider === "canva" ? await agencyWorkspace() : workspaceId ? await getWorkspace(workspaceId) : null;
   if (!workspace) throw new Error("Kundenwelt nicht gefunden");
-  const back = returnPath ?? (provider === "canva" ? "/marketing" : `/marketing/kanaele?welt=${workspace.id}`);
+  const back = returnPath ?? (provider === "canva" ? "/marketing/einstellungen/anbindungen" : `/akte/${workspace.id}/einstellungen`);
 
   if (DEMO) {
     await saveAccount({

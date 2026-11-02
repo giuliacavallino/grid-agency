@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { useTeam } from "@/components/access";
 import { SendViaTeams } from "@/components/teams";
 import { Button, Dialog, Field, IconButton, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
+import { AgentPanel } from "./agent";
 
 /** Gerade abgehakte To-dos bleiben in der Liste stehen (grün, durchgestrichen),
  * bis man die Seite verlässt – wie in Asana. Die Liste stellt die Funktion
@@ -216,6 +217,8 @@ function TaskDetail({
           )}
         </Field>
       </div>
+
+      <AgentPanel task={task} />
 
       <div>
         <p className="mb-2 text-xs font-medium text-snow/60">
