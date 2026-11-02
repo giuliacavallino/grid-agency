@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 import { DEMO, FINANCE_MAILBOX } from "@/lib/config";
 import {
   CORRECTION_TEXTS,
@@ -15,7 +16,7 @@ import {
   type ItemInput,
 } from "@/lib/billing";
 import { BUCKET, billingSettings, check, getBilling } from "./billing";
-import { sb } from "./db";
+import { db, sb } from "./db";
 import { sendAppMail } from "./graph-app";
 import { renderInvoicePdf } from "./invoice-pdf";
 
@@ -366,6 +367,39 @@ export async function removePayment(id: string, paymentId: string) {
 export async function markSent(id: string, to: string) {
   guardDemo();
   check(await sb().from("billing_documents").update({ sent_at: new Date().toISOString(), sent_to: to, send_error: null }).eq("id", id));
+  // Nach dem Versand gleich an DATEV; scheitert das, holt der Serien-Cron es nach
+  after(() => sendToDatev(id).catch((error) => console.error("DATEV", id, error)));
+}
+
+/** Belegarten, die als Rechnungsausgang an DATEV gehen */
+export const DATEV_KINDS = ["rechnung", "gutschrift", "storno", "storno_gutschrift"];
+
+/** Festgeschriebene Ausgangsrechnung als PDF an die DATEV-Upload-Adresse für
+ * den Rechnungsausgang (Einstellungen → DATEV); je Beleg nur einmal. */
+export async function sendToDatev(id: string) {
+  const address = (await db().getSetting<{ outgoing_address?: string }>("datev"))?.outgoing_address;
+  if (!address) return false;
+  const row = check(await sb().from("billing_documents").select("kind,finalized_at,datev_sent_at").eq("id", id).maybeSingle()) as {
+    kind: string;
+    finalized_at: string | null;
+    datev_sent_at: string | null;
+  } | null;
+  if (!row || !row.finalized_at || row.datev_sent_at || !DATEV_KINDS.includes(row.kind)) return false;
+  const attachment = await pdfAttachment(id);
+  try {
+    await sendAppMail(FINANCE_MAILBOX, {
+      to: [address],
+      subject: attachment.name.replace(/\.pdf$/, ""),
+      body: "",
+      attachments: [{ name: attachment.name, contentType: attachment.contentType, contentBytes: attachment.contentBytes }],
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    check(await sb().from("billing_documents").update({ datev_error: message.slice(0, 500) }).eq("id", id));
+    throw error;
+  }
+  check(await sb().from("billing_documents").update({ datev_sent_at: new Date().toISOString(), datev_error: null }).eq("id", id));
+  return true;
 }
 
 /** PDF eines Belegs als Mail-Anhang (base64) */

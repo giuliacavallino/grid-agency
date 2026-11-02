@@ -5,12 +5,12 @@ import type { ContractTemplate } from "@/lib/contract";
 import { db } from "@/lib/server/db";
 
 const DEFAULT_CAPACITY = { team_hours_per_month: 480 };
-const DEFAULT_DATEV = { upload_address: "" };
+const DEFAULT_DATEV = { upload_address: "", outgoing_address: "" };
 
 export const GET = withUser(async () => {
   const store = db();
   const capacity = (await store.getSetting("capacity")) ?? DEFAULT_CAPACITY;
-  const datev = (await store.getSetting("datev")) ?? DEFAULT_DATEV;
+  const datev = { ...DEFAULT_DATEV, ...((await store.getSetting<Partial<typeof DEFAULT_DATEV>>("datev")) ?? {}) };
   return Response.json({
     capacity,
     datev,
@@ -53,11 +53,18 @@ export const PUT = withUser(async (_user, request) => {
   }
 
   if (body?.datev !== undefined) {
-    const address = String(body.datev?.upload_address ?? "").trim().toLowerCase();
-    if (address && !/^[^\s@]+@uploadmail\.datev\.de$/.test(address)) {
-      return Response.json({ error: "Bitte eine Adresse …@uploadmail.datev.de eintragen" }, { status: 400 });
+    // Je eine Upload-Adresse für Rechnungseingang und Rechnungsausgang
+    const current = { ...DEFAULT_DATEV, ...((await store.getSetting<Partial<typeof DEFAULT_DATEV>>("datev")) ?? {}) };
+    const next = { ...current };
+    for (const key of ["upload_address", "outgoing_address"] as const) {
+      if (body.datev?.[key] === undefined) continue;
+      const address = String(body.datev[key] ?? "").trim().toLowerCase();
+      if (address && !/^[^\s@]+@uploadmail\.datev\.de$/.test(address)) {
+        return Response.json({ error: "Bitte eine Adresse …@uploadmail.datev.de eintragen" }, { status: 400 });
+      }
+      next[key] = address;
     }
-    result.datev = { upload_address: address };
+    result.datev = next;
     await store.setSetting("datev", result.datev);
   }
 

@@ -4,7 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { DEMO, SHARED_MAILBOX } from "@/lib/config";
-import { isMonthlyUnit, OFFER_TEXTS, todayBerlin, type ItemInput } from "@/lib/billing";
+import { BILLING_DAY, firstBillingDate, isMonthlyUnit, OFFER_TEXTS, todayBerlin, type ItemInput } from "@/lib/billing";
 import { billingNote, onceBillingDate, type ContractTerms } from "@/lib/contract";
 import { check, getBilling } from "./billing";
 import { finalize, saveDraft } from "./billing-write";
@@ -472,9 +472,9 @@ export async function scheduleInvoices(documentId: string): Promise<string[]> {
       ...base,
       title: `${title} {Monat}`,
       items: monthly.map(item),
-      recurring: { frequency: "MONTHLY", interval: 1, next_date: start, end_date: null, status: "RUNNING" },
+      recurring: { frequency: "MONTHLY", interval: 1, next_date: firstBillingDate(start), end_date: null, status: "RUNNING" },
     });
-    done.push(`Serienrechnung monatlich ab ${dateDe(start)}`);
+    done.push(`Serienrechnung monatlich zum ${BILLING_DAY}., erstmals ${dateDe(firstBillingDate(start))}`);
   }
   if (once.length) {
     await saveDraft(null, {
@@ -486,7 +486,7 @@ export async function scheduleInvoices(documentId: string): Promise<string[]> {
     done.push(`Einmalkosten am ${dateDe(onceOn)}`);
   }
   // Heute fällig (z. B. Einmalkosten bei Unterschrift): gleich nach der Antwort abrechnen
-  if ((monthly.length && start <= today) || (once.length && onceOn <= today)) after(() => runSeries().catch(console.error));
+  if ((monthly.length && firstBillingDate(start) <= today) || (once.length && onceOn <= today)) after(() => runSeries().catch(console.error));
   return done;
 }
 

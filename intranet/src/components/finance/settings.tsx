@@ -20,7 +20,7 @@ export function FinanceSettings() {
       <div className="overflow-y-auto p-5">
         {data ? (
           <div className="flex flex-col gap-5">
-            <DatevForm key={data.datev.upload_address} initial={data.datev.upload_address} />
+            <DatevForm key={`${data.datev.upload_address}|${data.datev.outgoing_address}`} initial={data.datev} />
             <BillingForm initial={data.billing} />
             <ContractForm initial={data.contract} signature={data.grid_signature} />
           </div>
@@ -32,10 +32,12 @@ export function FinanceSettings() {
   );
 }
 
-function DatevForm({ initial }: { initial: string }) {
+function DatevForm({ initial }: { initial: Settings["datev"] }) {
   const toast = useToast();
-  const [address, setAddress] = useState(initial);
+  const [incoming, setIncoming] = useState(initial.upload_address);
+  const [outgoing, setOutgoing] = useState(initial.outgoing_address ?? "");
   const [busy, setBusy] = useState(false);
+  const changed = incoming.trim() !== initial.upload_address || outgoing.trim() !== (initial.outgoing_address ?? "");
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -43,7 +45,7 @@ function DatevForm({ initial }: { initial: string }) {
     try {
       const result = await api<Settings>("/api/sales/settings", {
         method: "PUT",
-        body: JSON.stringify({ datev: { upload_address: address } }),
+        body: JSON.stringify({ datev: { upload_address: incoming, outgoing_address: outgoing } }),
       });
       mutate<Settings>("/api/sales/settings", () => result);
       toast("Gespeichert");
@@ -57,21 +59,18 @@ function DatevForm({ initial }: { initial: string }) {
     <form onSubmit={save} className="max-w-lg rounded-3xl border border-snow/10 bg-surface p-6">
       <h2 className="mb-1 text-lg font-medium">DATEV Upload-Mail</h2>
       <p className="mb-5 text-sm text-snow/60">
-        Freigegebene Eingangsrechnungen gehen mit ihren Belegen von {FINANCE_MAILBOX} an diese Adresse. Sie steht in DATEV
-        Unternehmen online unter „Belegtransfer per E-Mail“.
+        Belege gehen von {FINANCE_MAILBOX} an diese Adressen. Sie stehen in DATEV Unternehmen online unter „Belegtransfer per E-Mail“, je eine für
+        Rechnungseingang und Rechnungsausgang.
       </p>
-      <Field label="Upload-Adresse">
-        {(id) => (
-          <Input
-            id={id}
-            type="email"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="…@uploadmail.datev.de"
-          />
-        )}
-      </Field>
-      <Button type="submit" variant="primary" className="mt-5" loading={busy} loadingText="Wird gespeichert …" disabled={address.trim() === initial}>
+      <div className="flex flex-col gap-4">
+        <Field label="Rechnungseingang" hint="Freigegebene Eingangsrechnungen">
+          {(id) => <Input id={id} type="email" value={incoming} onChange={(e) => setIncoming(e.target.value)} placeholder="…@uploadmail.datev.de" />}
+        </Field>
+        <Field label="Rechnungsausgang" hint="Jede verschickte Ausgangsrechnung, Gutschrift und Stornorechnung, direkt nach dem Versand">
+          {(id) => <Input id={id} type="email" value={outgoing} onChange={(e) => setOutgoing(e.target.value)} placeholder="…@uploadmail.datev.de" />}
+        </Field>
+      </div>
+      <Button type="submit" variant="primary" className="mt-5" loading={busy} loadingText="Wird gespeichert …" disabled={!changed}>
         Speichern
       </Button>
     </form>

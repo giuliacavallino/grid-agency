@@ -1,3 +1,5 @@
+import { BILLING_DAY, firstBillingDate } from "./billing";
+
 // Agenturvertrag der Unterschriftsmappe. Text aus den easybill-Aufträgen
 // (Stand 2026) übernommen; kundenbezogene Stellen sind Platzhalter, die beim
 // Versand ausgefüllt und mit der Mappe festgehalten werden.
@@ -107,7 +109,7 @@ export function onceBillingDate(terms: Pick<ContractTerms, "once_billing" | "sta
 export function billingNote(terms: Pick<ContractTerms, "once_billing" | "start_date">, has: { monthly: boolean; once: boolean }) {
   const lines: string[] = [];
   if (has.monthly) {
-    lines.push(`Die monatlichen Leistungen berechnen wir monatlich im Voraus für den jeweiligen Leistungsmonat, erstmals zum Vertragsbeginn am ${dateDe(terms.start_date)}.`);
+    lines.push(`Die monatlichen Leistungen berechnen wir jeweils zum ${BILLING_DAY}. eines Monats für den laufenden Leistungsmonat, erstmals am ${dateDe(firstBillingDate(terms.start_date))}.`);
   }
   if (has.once) {
     const mode = terms.once_billing;
