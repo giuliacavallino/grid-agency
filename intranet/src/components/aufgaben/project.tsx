@@ -7,6 +7,7 @@ import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus,
 import { createRow, deleteRow, updateRow, useRows } from "@/lib/data";
 import { isOverdue, PROJECT_COLORS, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
 import { Badge, Button, Dialog, Empty, Field, IconButton, Input, MenuItem, Popover, Select, Spinner, useToast } from "@/components/ui";
+import { AvatarEditor } from "./avatar";
 import { useTeamNames } from "@/components/access";
 import { PageBar } from "@/components/sales/shell";
 import { BriefingSheet } from "./briefing";
@@ -163,7 +164,7 @@ function ProjectMenu({ project, onEdit, onAddSection }: { project: TaskProject; 
             Thema hinzufügen
           </MenuItem>
           <MenuItem icon={<Pencil className="h-4 w-4" />} onClick={() => (close(), onEdit())}>
-            Name und Farbe
+            Name, Farbe und Bild
           </MenuItem>
           <MenuItem
             icon={busy ? <Spinner className="h-4 w-4" /> : project.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
@@ -330,6 +331,7 @@ function ProjectDialog({ open, project, onClose }: { open: boolean; project: Tas
           <p className="mb-2 text-xs font-medium text-snow/60">Farbe</p>
           <ColorPicker value={color} onChange={setColor} />
         </div>
+        <AvatarEditor project={project} />
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             Abbrechen

@@ -9,6 +9,7 @@ import { createRow, useRows } from "@/lib/data";
 import { byDue, dueLabel, isOverdue, PROJECT_COLORS, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
 import { Button, Dialog, Empty, Field, Input, Spinner, useToast } from "@/components/ui";
 import { PageBar } from "@/components/sales/shell";
+import { ProjectAvatar } from "./avatar";
 import { ColorPicker } from "./project";
 import { DoneToggle } from "./task";
 
@@ -89,7 +90,8 @@ function ProjectTile({ project, sections, tasks, archived }: { project: TaskProj
   return (
     <article className="relative flex flex-col overflow-hidden rounded-2xl border border-snow/[0.08] bg-surface p-4 shadow-[0_1px_2px_var(--shadow-color)] transition-[border-color,transform] focus-within:border-snow/30 hover:-translate-y-px hover:border-snow/20">
       <span className="absolute inset-x-0 top-0 h-1" style={{ background: project.color }} />
-      <div className="flex items-start gap-2">
+      <div className="flex items-center gap-3">
+        <ProjectAvatar project={project} size={40} />
         <h2 className="min-w-0 flex-1 truncate text-[17px] font-medium">
           {/* Die ganze Kachel ist klickbar, das Abhaken liegt darüber */}
           <Link href={`/aufgaben/${project.id}`} className="outline-none after:absolute after:inset-0">

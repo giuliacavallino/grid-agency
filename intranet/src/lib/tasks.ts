@@ -11,6 +11,11 @@ export type TaskProject = {
   archived: boolean;
   briefing: string | null;
   restricted?: boolean;
+  /** Profilbild: Instagram-Name und Kopie im Storage */
+  instagram?: string | null;
+  avatar_path?: string | null;
+  avatar_source?: "instagram" | "upload" | null;
+  avatar_updated_at?: string | null;
   /** Kundenchat des Absender-Kontos für automatische Updates */
   teams_chat_id?: string | null;
   teams_chat_title?: string | null;
@@ -88,3 +93,7 @@ export function dueLabel(due: string) {
 /** Offene To-dos zuerst nach Fälligkeit, dann nach Reihenfolge im Board */
 export const byDue = (a: Task, b: Task) =>
   (a.due_on ?? "9999") < (b.due_on ?? "9999") ? -1 : (a.due_on ?? "9999") > (b.due_on ?? "9999") ? 1 : b.position - a.position;
+
+/** Adresse des Profilbilds (öffentlicher, nicht erratbarer Medienpfad) */
+export const avatarUrl = (p: Pick<TaskProject, "avatar_path">) =>
+  p.avatar_path ? `/api/social/media/${p.avatar_path.split("/").map(encodeURIComponent).join("/")}` : null;
