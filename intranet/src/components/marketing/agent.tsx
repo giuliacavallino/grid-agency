@@ -29,6 +29,12 @@ const ENDPOINTS: [string, string, string][] = [
   ["POST", "/api/marketing/video/voiceover", "Voiceover (MP3) { text, voice_id?, workspace_id? }"],
   ["POST", "/api/marketing/video/music", "Musik (MP3) { prompt, seconds? }"],
   ["POST", "/api/marketing/posts/{id}/publish", "Sofort veröffentlichen / fehlgeschlagene Kanäle erneut"],
+  ["GET", "/api/marketing/comments?workspace=…&status=new", "LinkedIn-Kommentare unter Posts der Unternehmensseiten"],
+  ["POST", "/api/marketing/comments/sync", "Kommentare jetzt abrufen, Autopilot antwortet { workspace_id? }"],
+  ["POST", "/api/marketing/comments/{id}", "Antworten { text } · Vorschlag { draft: true } · { status: skipped|needs_human|new }"],
+  ["POST", "/api/marketing/linkedin/comment", "Beliebigen Post kommentieren, als Seite oder Person { account_id, post: URL|URN, text }"],
+  ["GET", "/api/marketing/outreach?workspace=…", "Nachrichten- und Kontaktanfrage-Entwürfe"],
+  ["POST", "/api/marketing/outreach", "Entwurf { workspace_id, kind: message|invitation, recipient, profile_url, text, context? }"],
 ];
 
 /** Marketing → Agent & API: womit der Agent eigenständig arbeitet */
@@ -46,7 +52,7 @@ export function AgentApi() {
     [status.data.vault, "VAULT_KEY (Zugänge verschlüsselt)"],
     [!!status.data.canva, "Canva verbunden"],
     [status.data.configured.meta, "Meta-App (META_APP_ID / META_APP_SECRET)"],
-    [status.data.configured.linkedin, "LinkedIn Community Management (LINKEDIN_CM_CLIENT_ID / _SECRET)"],
+    [status.data.configured.linkedin, "LinkedIn Community Management: Profil + Seiten, Kommentare (LINKEDIN_CM_CLIENT_ID / _SECRET)"],
     [status.data.configured.tiktok, "TikTok (TIKTOK_CLIENT_KEY / _SECRET)"],
     [true, "Bildbearbeitung im Intranet: Zuschnitt, Korrekturen, Logo (ohne Schlüssel)"],
     [status.data.tools.photoroom, "Photoroom: Hintergrund entfernen/ersetzen (PHOTOROOM_API_KEY)"],
