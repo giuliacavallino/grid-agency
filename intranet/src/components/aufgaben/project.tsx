@@ -20,7 +20,8 @@ export function ProjectView({ id }: { id: string }) {
   const taskRows = useRows<Task>("tasks");
   const [query, setQuery] = useState("");
   const [showDone, setShowDone] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  // ?task=<id> öffnet ein To-do direkt (z. B. aus dem Cockpit der Kundenakte)
+  const [openId, setOpenId] = useState<string | null>(() => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("task")));
   const [briefing, setBriefing] = useState(false);
   const [sectionDialog, setSectionDialog] = useState<TaskSection | "new" | null>(null);
   const [projectDialog, setProjectDialog] = useState(false);

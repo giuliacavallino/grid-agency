@@ -15,6 +15,8 @@ export type MarketingStatus = {
   canva: SocialAccount | null;
   tools: { creatomate: boolean; whisper: boolean; elevenlabs: boolean; photoroom: boolean; claid: boolean };
   tool_env: { creatomate: string; whisper: string; elevenlabs: string; photoroom: string; claid: string };
+  anthropic: boolean;
+  sharepoint: boolean;
 };
 
 export const useMarketingStatus = () => useResource<MarketingStatus>("/api/marketing/status");

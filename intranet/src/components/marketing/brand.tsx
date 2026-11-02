@@ -6,9 +6,9 @@ import { api } from "@/lib/api";
 import { mutate, revalidate, useResource } from "@/lib/data";
 import { COLOR_ROLES, type Brand, type BrandColor, type BrandFont } from "@/lib/marketing";
 import { Button, Dialog, Empty, Field, IconButton, Input, Select, Spinner, Textarea, useToast } from "@/components/ui";
-import { PageBar } from "@/components/sales/shell";
+import { AkteHeader } from "@/components/akte/header";
 import { useMarketingStatus } from "./common";
-import { URL_WORKSPACES, useCurrentWorkspace, WorkspaceSwitcher } from "./workspace";
+import { URL_WORKSPACES, useCurrentWorkspace } from "./workspace";
 
 type BrandResponse = { brand: Brand; brief: string };
 type Suggestion = Pick<Brand, "tone" | "audience" | "imagery" | "dos" | "donts" | "hashtags" | "colors" | "fonts">;
@@ -33,9 +33,7 @@ export function BrandWorld() {
   }
   return (
     <div className="flex h-full flex-col">
-      <PageBar title="CI & Vorgaben" meta={workspace.name}>
-        <WorkspaceSwitcher />
-      </PageBar>
+      <AkteHeader title="CI & Agent" meta="Farben, Logos, Typo, Tonalität, Dos & Don'ts – verbindliche Vorgabe für Team und Agent" />
       {data.error ? (
         <Empty title="CI konnte nicht geladen werden" text={data.error.message} />
       ) : !data.data ? (

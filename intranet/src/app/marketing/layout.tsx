@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
 import { RequireAuth } from "@/components/login";
-import { MarketingShell } from "@/components/marketing/shell";
 
 export const metadata: Metadata = { title: "Marketing" };
 
+/** Marketing ist jetzt die Kundenakte von GRID; alte Adressen leiten weiter */
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <RequireAuth area="marketing">
-      <MarketingShell>{children}</MarketingShell>
-    </RequireAuth>
-  );
+  return <RequireAuth area="marketing">{children}</RequireAuth>;
 }

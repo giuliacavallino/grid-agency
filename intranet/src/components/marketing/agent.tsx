@@ -2,7 +2,7 @@
 
 import { Check, X } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
-import { PageBar } from "@/components/sales/shell";
+import { AkteHeader } from "@/components/akte/header";
 import { Spinner } from "@/components/ui";
 import { useMarketingStatus } from "./common";
 
@@ -57,7 +57,7 @@ export function AgentApi() {
   ];
   return (
     <div className="flex h-full flex-col">
-      <PageBar title="Agent & API" meta="Schnittstelle für den Marketing-Agenten" />
+      <AkteHeader title="Agent & API" meta="Schnittstelle für den Marketing-Agenten" />
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-5 pb-10 md:px-6">
         <div className="max-w-3xl space-y-6">
           <p className="text-[13.5px] leading-relaxed text-snow/70">

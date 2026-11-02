@@ -17,11 +17,11 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { CalendarDays, ChevronDown, ChevronRight, GripVertical, MoreHorizontal, PanelRightOpen, Plus, Trash2 } from "lucide-react";
+import { Bot, CalendarDays, ChevronDown, ChevronRight, GripVertical, MoreHorizontal, PanelRightOpen, Plus, Trash2 } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
 import { createRow, deleteRow, updateRow } from "@/lib/data";
 import { topPosition } from "@/lib/sales/types";
-import { dueLabel, isOverdue, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
+import { AGENT_STATUS, dueLabel, isOverdue, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
 import { Button, Dialog, IconButton, Select, Spinner, useToast } from "@/components/ui";
 import { accentFill } from "@/lib/theme";
 import { PersonAvatar } from "@/components/person";
@@ -323,6 +323,16 @@ export function TaskRow({
         </div>
       </div>
 
+      {task.agent_status && (
+        <span
+          className="mt-2 flex h-6 shrink-0 items-center gap-1 rounded-full px-2 text-[11.5px] font-medium md:mt-0"
+          style={{ background: `color-mix(in srgb, ${AGENT_STATUS[task.agent_status].color} 16%, transparent)`, color: AGENT_STATUS[task.agent_status].color }}
+          title={AGENT_STATUS[task.agent_status].label}
+        >
+          <Bot className={clsx("h-3.5 w-3.5", task.agent_status === "running" && "animate-pulse")} />
+          <span className="hidden lg:inline">{AGENT_STATUS[task.agent_status].label.replace("Agent: ", "")}</span>
+        </span>
+      )}
       {project && (
         <span className="hidden w-36 shrink-0 md:block">
           <ProjectLabel project={project} />

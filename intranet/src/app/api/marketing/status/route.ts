@@ -5,6 +5,7 @@ import { configured, ENV_NAMES } from "@/lib/server/social/connect";
 import { publicAccount } from "@/lib/server/social/store";
 import { TOOL_ENV, toolsConfigured } from "@/lib/server/video/tools";
 import { IMAGE_TOOL_ENV, imageToolsConfigured } from "@/lib/server/image/tools";
+import { sharepointConfigured } from "@/lib/server/social/sharepoint";
 
 /** Was eingerichtet ist (nur ob, nie Werte) und ob Canva verbunden ist */
 export const GET = withMarketing(async () => {
@@ -16,6 +17,8 @@ export const GET = withMarketing(async () => {
     agent: (process.env.AGENT_API_KEY?.length ?? 0) >= 32,
     canva: canva ? publicAccount(canva) : null,
     tools: { ...toolsConfigured(), ...imageToolsConfigured() },
+    anthropic: !!process.env.ANTHROPIC_API_KEY,
+    sharepoint: sharepointConfigured(),
     tool_env: { ...TOOL_ENV, ...IMAGE_TOOL_ENV },
   });
 });

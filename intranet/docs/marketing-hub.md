@@ -1,13 +1,86 @@
-# Marketing Hub: Kundenwelten, Canva und Social Media
+# Marketing Hub: Kundenakten, Agent und Social Media
 
-Der Marketing Hub (`/marketing`) ist die Steuerzentrale, um GRID und alle Kunden zu bespielen. Jeder Kunde hat eine eigene **Kundenwelt** mit:
+Jeder Kunde (und GRID selbst) hat eine **Kundenakte** unter `/akte/<id>`. Geöffnet wird sie über das Auswahlfeld „GRID AGENCY ▾“ in der Übersicht. Gewechselt wird nur dort, nicht innerhalb der Akte. `/marketing` öffnet die Akte von GRID; die alten Adressen leiten weiter.
 
-- eigener CI (Logo, Hauptfarbe, Zweitfarbe),
-- eigenen Kanälen,
-- eigenen Posts,
-- einem eigenen SharePoint-Ordner.
+Die Akte trägt Logo und CI-Farben des Kunden. In der Seitenleiste:
 
-Oben in der Übersicht wechselt das Auswahlfeld „GRID AGENCY ▾“ in die Welt eines Kunden.
+| Bereich | Inhalt |
+|---|---|
+| Cockpit | Kennzahlen, Posts vorschlagen, neue Vorschläge, die nächsten 7 Tage, To-dos (auch beim Agenten), letzter Call, Autopilot, Kanäle |
+| Aufgaben | Aufgabenliste des Kunden mit Briefing; jedes To-do lässt sich „An Agent übergeben“ |
+| Calls & To-dos | Zusammenfassungen und To-dos aus Calls mit diesem Kunden: übernehmen oder direkt an den Agenten |
+| Vorschläge | Trend-Recherche und fertige Posts mit CI-Grafik |
+| Planung | Redaktionskalender mit Editor |
+| CI & Agent | CI-Welt als verbindliche Vorgabe |
+| Einstellungen (unten) | Diese Akte: Kanäle, Autopilot, Stammdaten (Name, Farben, Logo, Aufgabenliste, SharePoint). Marketing Hub: Anbindungen, Kundenakten, Agent & API |
+
+Neue Kundenakten bekommen automatisch eine eigene Aufgabenliste.
+
+## Posts vorschlagen
+
+„Vorschläge erstellen“ (Cockpit oder Vorschläge) läuft in zwei Schritten:
+
+1. Claude recherchiert mit der Websuche (`web_search`) aktuelle News, Trends und Anlässe für den Kunden. Grundlage sind CI, Briefing und die letzten Posts.
+2. Claude schreibt daraus fertige Posts je Plattform, mit Hashtags, Headline für die Grafik und Quellen.
+
+Das dauert 1–3 Minuten. Aus einem Vorschlag wird mit **Einplanen** ein Post mit CI-Grafik zum nächsten freien Termin. Der Termin folgt den Tagen und der Uhrzeit des Autopiloten. **Bearbeiten** legt einen Entwurf an und öffnet den Editor. Ohne verbundenen Kanal bleibt der Post ein Entwurf mit Termin.
+
+Die CI-Grafik (`src/lib/server/social/graphic.tsx`) wird mit `next/og` gerechnet:
+
+- Fläche in der Hauptfarbe, Akzent in der Zweitfarbe.
+- Headline in der Hausschrift von Google Fonts, sonst Inter.
+- Logo der Akte.
+
+Formate: LinkedIn, Instagram und Facebook 4:5, TikTok 9:16.
+
+API (auch für den Agenten):
+
+- `GET /api/marketing/ideas?workspace=<id>`
+- `POST /api/marketing/ideas` mit `{ workspace_id, providers, per_provider, focus? }`
+- `PATCH /api/marketing/ideas/<id>` mit `{ status: "dismissed" | "new" }`
+- `POST /api/marketing/ideas/<id>/post` mit `{ schedule: "next" | "none" | ISO, graphic?, mode? }`
+
+## Autopilot (vollautomatisch)
+
+Unter Einstellungen → Autopilot, je Akte:
+
+- Plattformen, Posts pro Woche, Tage, Uhrzeit, Themen-Fokus.
+- **Mit Freigabe:** Die Posts landen als Entwurf mit Termin im Kalender.
+- **Vollautomatisch:** Die Posts werden eingeplant und zum Termin veröffentlicht. Dafür muss der Kanal verbunden sein.
+- **To-dos aus Calls an den Agenten:** GRID-To-dos aus ausgewerteten Calls werden automatisch übernommen und an den Agenten gegeben.
+
+Der Cron `/api/cron/marketing` läuft stündlich von 5 bis 20 Uhr UTC und braucht `CRON_SECRET` und `ANTHROPIC_API_KEY`. Je Aufruf erledigt er:
+
+- höchstens eine fällige Akte im Autopiloten (einmal pro Woche),
+- die Übernahme der Call-To-dos,
+- die älteste Aufgabe, die beim Agenten wartet.
+
+„Jetzt ausführen“ plant sofort eine Woche voraus.
+
+## Agent bearbeitet Aufgaben
+
+Ein To-do „An Agent übergeben“ startet den Agenten sofort (`POST /api/aufgaben/agent/<taskId>`, `DELETE` nimmt die Übergabe zurück). Er arbeitet mit Claude im Tool-Loop (`src/lib/server/agent/runner.ts`) und nutzt diese Werkzeuge:
+
+- Websuche
+- Post anlegen, mit CI-Grafik oder Video
+- Vorschläge recherchieren und umsetzen
+- Posts und Vorschläge lesen
+- Creatomate-Vorlagen rendern
+- Voiceover mit der Stimme aus der CI
+
+Er hält sich an CI, Briefing, Notizen und Checkliste. Jeder Schritt landet im Protokoll an der Aufgabe, am Ende steht eine Zusammenfassung.
+
+- Status: wartet → arbeitet → bitte prüfen / erledigt / Fehler.
+- Im Modus „Mit Freigabe“ legt er Posts als Entwurf an und meldet „bitte prüfen“.
+- Im Modus „Vollautomatisch“ plant er Posts ein und hakt erledigte To-dos ab.
+
+Was er nicht selbst kann (z. B. Fotos vor Ort, Freigaben beim Kunden), nennt er als offene Punkte.
+
+Noch nicht enthalten (nächste Stufe):
+
+- Community-Management (Kommentare und DMs beantworten). Braucht zusätzliche Rechte in den Plattform-Apps.
+- Rohvideos schneiden.
+- Performance-Auswertung.
 
 ## CI-Welt je Kunde (Vorgabe für den Agenten)
 
