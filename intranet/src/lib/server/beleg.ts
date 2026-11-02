@@ -97,7 +97,15 @@ async function attachmentFiles(invoice: Row): Promise<BelegFile[]> {
  * Shop-Quittungen ohne Anhang), wird daraus ein PDF erzeugt – DATEV legt nur
  * Anhänge als Beleg an. */
 export async function belegFiles(invoice: Row): Promise<BelegFile[]> {
-  const files = await attachmentFiles(invoice);
+  let files: BelegFile[];
+  try {
+    files = await attachmentFiles(invoice);
+  } catch (error) {
+    // Mail gelöscht oder archiviert: dann den schon gespeicherten Beleg senden
+    const stored = await storedBeleg(invoice);
+    if (stored) return [stored];
+    throw error;
+  }
   if (!invoice.mailbox || !invoice.graph_id || files.some((f) => isPdf(f) || isImage(f) || isXml(f))) return files;
   return [...files, await mailPdf(invoice)];
 }
@@ -192,6 +200,15 @@ export type Beleg = { name: string; contentType: string; bytes: Buffer };
 
 /** Beleg für die Vorschau: PDF, sonst Bild, sonst der Mailtext (HTML). Wird
  * beim ersten Abruf in Storage abgelegt. */
+/** Schon abgelegter Beleg aus Storage (ohne Mailtext-HTML, das DATEV nicht annimmt) */
+async function storedBeleg(invoice: Row): Promise<Beleg | null> {
+  if (!invoice.beleg_path) return null;
+  const { data, error } = await sb().storage.from(BUCKET).download(invoice.beleg_path as string);
+  if (error || !data) return null;
+  const beleg = { name: (invoice.beleg_name as string) ?? "Beleg", contentType: (invoice.beleg_type as string) ?? data.type, bytes: Buffer.from(await data.arrayBuffer()) };
+  return /html/i.test(beleg.contentType) ? null : beleg;
+}
+
 export async function getBeleg(invoice: Row): Promise<Beleg | null> {
   if (invoice.beleg_path) {
     const { data, error } = await sb().storage.from(BUCKET).download(invoice.beleg_path as string);
