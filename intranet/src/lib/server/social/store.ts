@@ -131,6 +131,10 @@ export function cleanBrand(input: Partial<Brand>): Brand {
       .filter((l) => l && /^[0-9a-f-]{36}\/[a-z0-9-_]+\.(png|jpg|webp)$/i.test(l.path ?? ""))
       .slice(0, 12)
       .map((l) => ({ path: l.path, variant: text(l.variant, 60) || "Logo", notes: text(l.notes, 300) || undefined })),
+    assets: (Array.isArray(input.assets) ? input.assets : [])
+      .filter((a) => a && /^[0-9a-f-]{36}\/[a-z0-9-_]+\.(png|jpg|webp|gif)$/i.test(a.path ?? ""))
+      .slice(0, 60)
+      .map((a) => ({ path: a.path, kind: (["Foto", "Grafik", "Icon"].includes(a.kind) ? a.kind : "Foto") as Brand["assets"][number]["kind"], notes: text(a.notes, 300) || undefined })),
     tone: text(input.tone),
     audience: text(input.audience),
     imagery: text(input.imagery),
@@ -147,7 +151,7 @@ export async function getBrand(id: string): Promise<Brand> {
     ? (demo.workspaces.find((w) => w.id === id) as WorkspaceRow & { brand?: Brand })?.brand
     : ((check(await sb().from("workspaces").select("brand").eq("id", id).maybeSingle()) as { brand: Brand } | null)?.brand ?? undefined);
   const brand = { ...EMPTY_BRAND, ...(raw ?? {}) };
-  return { ...brand, logos: brand.logos.map((l) => ({ ...l, url: publicMediaUrl(l.path) })) };
+  return { ...brand, logos: brand.logos.map((l) => ({ ...l, url: publicMediaUrl(l.path) })), assets: (brand.assets ?? []).map((a) => ({ ...a, url: publicMediaUrl(a.path) })) };
 }
 
 /** CI-Welt speichern; Primär- und Sekundärfarbe färben auch die Kundenwelt im Hub */

@@ -388,7 +388,7 @@ function MasterForm({ workspace }: { workspace: WorkspaceSummary }) {
     try {
       const result = await api<{ design: string; updated: string[] }>(`${URL_WORKSPACES}/${workspace.id}/canva-ci`, { method: "POST" });
       revalidate(URL_WORKSPACES);
-      toast(`Aus „${result.design}“ übernommen: ${result.updated.join(", ") || "nichts Neues"}. Bitte unter CI & Agent prüfen.`);
+      toast(`Aus „${result.design}“ übernommen: ${result.updated.join(", ") || "nichts Neues"}. Bitte im Markenkit prüfen.`);
     } catch (error) {
       toast(error instanceof Error ? error.message : "Canva nicht erreichbar", "error");
     }
