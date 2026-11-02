@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, Building2, Check, CircleDashed, FolderOpen, KeyRound, Link2, Plug, Rocket, Save, Users } from "lucide-react";
+import { Bot, Building2, Check, CircleDashed, Download, FolderOpen, KeyRound, Link2, Plug, Rocket, Save, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { mutate, revalidate, useResource } from "@/lib/data";
 import { cn as clsx } from "@/lib/cn";
@@ -362,7 +362,7 @@ function MasterForm({ workspace }: { workspace: WorkspaceSummary }) {
   const [secondary, setSecondary] = useState(workspace.secondary_color ?? "");
   const [project, setProject] = useState(workspace.project_id ?? "");
   const [logo, setLogo] = useState<File | null>(null);
-  const [busy, setBusy] = useState<"save" | "folder" | null>(null);
+  const [busy, setBusy] = useState<"save" | "folder" | "canva" | null>(null);
   const preview = logo ? URL.createObjectURL(logo) : workspace.logo_url;
 
   async function save(event: React.FormEvent) {
@@ -379,6 +379,18 @@ function MasterForm({ workspace }: { workspace: WorkspaceSummary }) {
       toast("Gespeichert");
     } catch (error) {
       toast(error instanceof Error ? error.message : "Speichern fehlgeschlagen", "error");
+    }
+    setBusy(null);
+  }
+
+  async function fromCanva() {
+    setBusy("canva");
+    try {
+      const result = await api<{ design: string; updated: string[] }>(`${URL_WORKSPACES}/${workspace.id}/canva-ci`, { method: "POST" });
+      revalidate(URL_WORKSPACES);
+      toast(`Aus „${result.design}“ übernommen: ${result.updated.join(", ") || "nichts Neues"}. Bitte unter CI & Agent prüfen.`);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Canva nicht erreichbar", "error");
     }
     setBusy(null);
   }
@@ -407,6 +419,18 @@ function MasterForm({ workspace }: { workspace: WorkspaceSummary }) {
       </AkteHeader>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="grid max-w-3xl gap-5 p-4 pb-12 md:p-7">
+          <section className="flex flex-wrap items-center gap-4 rounded-2xl border border-snow/[0.08] bg-panel p-5">
+            <ProviderMark provider="canva" className="h-10 min-w-10 text-[12px]" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-semibold">Aus Canva übernehmen</p>
+              <p className="text-[12.5px] text-snow/55">
+                Holt Logo, Farben, Schriften und Vorgaben aus dem Canva-Design „CI – {workspace.name}“. Seite 1: nur das Logo, Seite 2: Farben, Schriften, gern Tonalität und Dos &amp; Don&apos;ts.
+              </p>
+            </div>
+            <Button size="sm" className="h-9" icon={<Download className="h-4 w-4" />} loading={busy === "canva"} loadingText="Holt aus Canva …" disabled={busy !== null} onClick={fromCanva}>
+              Übernehmen
+            </Button>
+          </section>
           <section className="grid gap-4 rounded-2xl border border-snow/[0.08] bg-panel p-5">
             <Field label="Name">{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} />}</Field>
             <div className="grid gap-4 sm:grid-cols-2">

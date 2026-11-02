@@ -190,9 +190,10 @@ export async function uploadAsset(bytes: Uint8Array, name: string) {
 export type ExportFormat = "png" | "jpg" | "mp4" | "pdf";
 
 /** Design exportieren und die Dateien im Intranet ablegen (für Posts) */
-export async function exportDesign(designId: string, format: ExportFormat = "png", options: { pages?: number[]; vertical?: boolean } = {}): Promise<MediaItem[]> {
+export async function exportDesign(designId: string, format: ExportFormat = "png", options: { pages?: number[]; vertical?: boolean; transparent?: boolean } = {}): Promise<MediaItem[]> {
   if (DEMO) return [];
   const formatBody: Record<string, unknown> = { type: format };
+  if (format === "png" && options.transparent) formatBody.transparent_background = true;
   if (format === "jpg") formatBody.quality = 95;
   if (format === "mp4") formatBody.quality = options.vertical === false ? "horizontal_1080p" : "vertical_1080p";
   if (options.pages?.length) formatBody.pages = options.pages;
