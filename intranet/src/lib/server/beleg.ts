@@ -1,6 +1,7 @@
 import "server-only";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { appGraph, mailboxPath } from "./graph-app";
+import { appGraph, mailboxPath, moveToDoneFolder } from "./graph-app";
+import { DEMO } from "@/lib/config";
 import { db, sb, type Row } from "./db";
 
 // Beleg einer Eingangsrechnung: per App-Zugriff aus der Rechnungsmail holen
@@ -102,6 +103,8 @@ export async function belegFiles(invoice: Row): Promise<BelegFile[]> {
     files = await attachmentFiles(invoice);
   } catch (error) {
     // Mail gelöscht oder archiviert: dann den schon gespeicherten Beleg senden
+    const archived = await archivedFiles(invoice);
+    if (archived.length) return archived;
     const stored = await storedBeleg(invoice);
     if (stored) return [stored];
     throw error;
@@ -228,4 +231,71 @@ export async function getBeleg(invoice: Row): Promise<Beleg | null> {
   if (error) console.error("Beleg nicht gespeichert:", error.message);
   else await db().update("invoices", invoice.id, { beleg_path: path, beleg_type: beleg.contentType, beleg_name: beleg.name });
   return beleg;
+}
+
+// ---------- Erledigte Rechnungen: Mail in Outlook ablegen ----------
+
+const archiveDir = (invoice: Row) => `${invoice.id}/alle`;
+
+/** Alle Belegdateien, die vor dem Löschen der Mail gesichert wurden */
+async function archivedFiles(invoice: Row): Promise<BelegFile[]> {
+  const { data } = await sb().storage.from(BUCKET).list(archiveDir(invoice));
+  const files = await Promise.all(
+    (data ?? [])
+      .filter((f) => f.name && !f.name.startsWith("."))
+      .map(async (f): Promise<BelegFile | null> => {
+        const { data: blob } = await sb().storage.from(BUCKET).download(`${archiveDir(invoice)}/${f.name}`);
+        return blob ? { name: f.name, contentType: blob.type || "application/octet-stream", bytes: Buffer.from(await blob.arrayBuffer()) } : null;
+      })
+  );
+  return files.filter((f): f is BelegFile => !!f);
+}
+
+/** Erledigte Rechnung (an DATEV oder abgelehnt): erst alle Belegdateien und
+ * die Vorschau in Storage sichern, dann die Mail in Outlook aus
+ * „Eingangsrechnungen“ nach „Buchhaltung → Rechnungseingang“ verschieben. */
+export async function removeInvoiceMail(invoice: Row) {
+  if (DEMO || invoice.mail_removed_at || !invoice.mailbox || !invoice.graph_id) return "übersprungen";
+  const mailbox = invoice.mailbox as string;
+  let id: string;
+  try {
+    id = await messageId(invoice);
+  } catch {
+    // Mail schon weg: nur vermerken
+    await db().update("invoices", invoice.id, { mail_removed_at: new Date().toISOString() });
+    return "schon weg";
+  }
+  const fresh = { ...invoice, graph_id: id };
+  const files = await belegFiles(fresh);
+  for (const file of files) {
+    const path = `${archiveDir(invoice)}/${file.name.replace(/[^\w.\-]+/g, "_")}`;
+    const { error } = await sb().storage.from(BUCKET).upload(path, file.bytes, { contentType: file.contentType, upsert: true });
+    if (error) throw new Error(`Beleg nicht gesichert: ${error.message}`);
+  }
+  if (!invoice.beleg_path) await getBeleg(fresh);
+  const moved = await moveToDoneFolder(mailbox, id);
+  await db().update("invoices", invoice.id, { graph_id: moved, mail_removed_at: new Date().toISOString() });
+  return "abgelegt";
+}
+
+/** Täglicher Abgleich: erledigte Rechnungen, deren Mail noch nicht abgelegt ist */
+export async function removeDoneInvoiceMails(limit = 40) {
+  if (DEMO) return { abgelegt: 0 };
+  const { data, error } = await sb()
+    .from("invoices")
+    .select("*")
+    .in("stage", ["datev", "abgelehnt"])
+    .is("mail_removed_at", null)
+    .not("graph_id", "is", null)
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  const counts: Record<string, number> = {};
+  for (const invoice of (data ?? []) as Row[]) {
+    const result = await removeInvoiceMail(invoice).catch((e) => {
+      console.error("Rechnungsmail", invoice.id, e);
+      return "fehler";
+    });
+    counts[result] = (counts[result] ?? 0) + 1;
+  }
+  return counts;
 }

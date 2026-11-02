@@ -1,6 +1,7 @@
 import { MAILBOXES } from "@/lib/config";
 import { listInboxSince } from "@/lib/server/graph-app";
 import { ingestMail } from "@/lib/server/mail-ingest";
+import { removeDoneInvoiceMails } from "@/lib/server/beleg";
 import { ensureSubscriptions } from "@/lib/server/mail-subscriptions";
 import { safeEqual } from "@/lib/server/signature";
 
@@ -38,5 +39,7 @@ export async function GET(request: Request) {
       mailboxes[address] = { error: (error as Error).message };
     }
   }
-  return Response.json({ subscriptions, mailboxes });
+  // Erledigte Rechnungen: Mails nach Buchhaltung → Rechnungseingang (auch Altbestand)
+  const invoiceMails = await removeDoneInvoiceMails().catch((error) => ({ error: (error as Error).message }));
+  return Response.json({ subscriptions, mailboxes, invoiceMails });
 }
