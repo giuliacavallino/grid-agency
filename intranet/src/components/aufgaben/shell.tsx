@@ -2,7 +2,7 @@
 
 import { Archive, LayoutGrid, UserRound, Video } from "lucide-react";
 import { useRows } from "@/lib/data";
-import type { TaskProject } from "@/lib/tasks";
+import { avatarUrl, type TaskProject } from "@/lib/tasks";
 import { AreaShell, type NavItem } from "@/components/sales/shell";
 
 const FIXED: NavItem[] = [
@@ -18,7 +18,7 @@ export function AufgabenShell({ children }: { children: React.ReactNode }) {
   const active = (projects ?? []).filter((p) => !p.archived).sort((a, b) => a.position - b.position);
   const nav: NavItem[] = [
     ...FIXED,
-    ...active.map((p, i) => ({ href: `/aufgaben/${p.id}`, label: p.name, color: p.color, group: i === 0 ? "Kunden" : undefined })),
+    ...active.map((p, i) => ({ href: `/aufgaben/${p.id}`, label: p.name, color: p.color, image: avatarUrl(p), group: i === 0 ? "Kunden" : undefined })),
     { href: "/aufgaben/archiv", label: "Archiv", icon: Archive, group: "Ehemalige" },
   ];
   return (

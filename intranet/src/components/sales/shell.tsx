@@ -33,9 +33,9 @@ import { useRows } from "@/lib/data";
 /** Zähler „neu“ an einem Menüpunkt (Leads, Bewerbungen, Rechnungen) */
 type Counter = "leads" | "applications" | "invoices" | "proposals";
 
-/** color: farbiger Punkt statt Icon (Kunden in Aufgaben); group: Zwischenüberschrift davor */
+/** color: farbiger Punkt statt Icon (Kunden in Aufgaben); image: Profilbild statt Punkt; group: Zwischenüberschrift davor */
 /** area: nur sichtbar, wer diesen Bereich darf (z. B. "admin" für Bank) */
-export type NavItem = { href: string; label: string; icon?: LucideIcon; color?: string; counter?: Counter; group?: string; area?: string };
+export type NavItem = { href: string; label: string; icon?: LucideIcon; color?: string; image?: string | null; counter?: Counter; group?: string; area?: string };
 
 export const SALES_NAV: NavItem[] = [
   { href: "/sales", label: "Pipeline", icon: Columns3, counter: "leads" },
@@ -104,7 +104,7 @@ function NavList({ nav, collapsed, onNavigate }: { nav: NavItem[]; collapsed: bo
 
   return (
     <ul className="flex flex-col gap-0.5">
-      {nav.filter((item) => !item.area || hasArea(me.data, item.area)).map(({ href, label, icon: Icon, color, counter, group }) => {
+      {nav.filter((item) => !item.area || hasArea(me.data, item.area)).map(({ href, label, icon: Icon, color, image, counter, group }) => {
         const active = isActive(pathname, href, root);
         return (
           <li key={href}>
@@ -124,6 +124,11 @@ function NavList({ nav, collapsed, onNavigate }: { nav: NavItem[]; collapsed: bo
             >
               {Icon ? (
                 <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
+              ) : image ? (
+                <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- Profilbild aus dem Storage */}
+                  <img src={image} alt="" className="h-[22px] w-[22px] max-w-none rounded-full object-cover" style={{ boxShadow: `0 0 0 1.5px ${color}` }} />
+                </span>
               ) : (
                 <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
