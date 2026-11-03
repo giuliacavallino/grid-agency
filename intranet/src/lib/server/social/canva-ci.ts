@@ -103,7 +103,13 @@ export async function importCiFromCanva(workspaceId: string): Promise<CanvaImpor
   if (DEMO) return { design: `CI – ${workspace.name}`, logo: false, updated: [] };
 
   const design = await findCiDesign(workspace.name);
-  if (!design) throw new Error(`In Canva gibt es kein Design „CI – ${workspace.name}“. Bitte anlegen: Seite 1 Logo, Seite 2 Farben und Schriften.`);
+  if (!design) {
+    // Kein CI-Design: Canva nach Logo und Unterlagen zum Kunden durchsuchen
+    const scan = await scanCanva(workspaceId);
+    if (scan.error) throw new Error(`Canva: ${scan.error}`);
+    if (!scan.logo) throw new Error(`In Canva nichts Passendes gefunden (${scan.designs.length} Designs, ${scan.images.length} Bilder zu „${workspace.name}“). Tipp: Design „CI – ${workspace.name}“ anlegen.`);
+    return { design: scan.logo, logo: true, updated: ["Logo"] };
+  }
 
   // Seite 1 → Logo (transparent, Ränder abgeschnitten)
   let [logoPage] = await exportDesign(design.id, "png", { pages: [1], transparent: true }).catch(() => exportDesign(design.id, "png", { pages: [1] }));
@@ -143,4 +149,89 @@ export async function importCiFromCanva(workspaceId: string): Promise<CanvaImpor
     if (Object.keys(patch).length) await updateBrand(workspaceId, patch);
   }
   return { design: design.title, logo: true, updated };
+}
+
+// ---------- Canva durchsuchen (je Kundenakte) ----------
+
+export type CanvaScan = {
+  at: string;
+  designs: { id: string; title: string; pages: number | null }[];
+  images: { id: string; name: string }[];
+  folders: { id: string; name: string }[];
+  logo: string | null;
+  error?: string;
+};
+
+/** Sucht in Canva alles zum Kunden (Designs, Uploads, Ordner), merkt sich die
+ * Funde in settings.canva_scan und setzt ein Logo, falls noch keins da ist:
+ * zuerst ein Design mit „Logo“ im Titel (Export als PNG), sonst ein Bild. */
+export async function scanCanva(workspaceId: string): Promise<CanvaScan> {
+  const { listFolderItems } = await import("./canva");
+  const { updateWorkspaceSettings } = await import("./store");
+  const workspace = await getWorkspace(workspaceId);
+  if (!workspace) throw new Error("Kundenwelt nicht gefunden");
+  const key = normalize(workspace.name);
+  const matches = (text: string) => normalize(text).includes(key);
+  const scan: CanvaScan = { at: new Date().toISOString(), designs: [], images: [], folders: [], logo: null };
+  try {
+    const designs = new Map<string, CanvaDesign>();
+    for (const query of [workspace.name, `${workspace.name} Logo`]) {
+      for (const d of (await listDesigns(query)).items) designs.set(d.id, d);
+    }
+    const root = await listFolderItems("root");
+    const folders = root.filter((i): i is Extract<typeof i, { type: "folder" }> => i.type === "folder" && matches(i.name));
+    const inFolders = (await Promise.all(folders.map((f) => listFolderItems(f.id, 2)))).flat();
+    const uploads = await listFolderItems("uploads").catch(() => []);
+    const images = [...inFolders, ...uploads].filter((i): i is Extract<typeof i, { type: "image" }> => i.type === "image" && (inFolders.includes(i) || matches(i.name)));
+    for (const d of inFolders) if (d.type === "design") designs.set(d.id, { id: d.id, title: d.title, thumbnail: d.thumbnail, edit_url: null, view_url: null, updated_at: null, page_count: d.page_count });
+
+    scan.designs = [...designs.values()].slice(0, 40).map((d) => ({ id: d.id, title: d.title, pages: d.page_count }));
+    scan.images = images.slice(0, 40).map((i) => ({ id: i.id, name: i.name }));
+    scan.folders = folders.map((f) => ({ id: f.id, name: f.name }));
+
+    const brand = await getBrand(workspaceId);
+    if (!brand.logos.some((l) => l.variant === "Hauptlogo")) {
+      let bytes: Buffer | null = null;
+      const design = [...designs.values()].find((d) => /logo/i.test(d.title));
+      if (design) {
+        const [page] = await exportDesign(design.id, "png", { pages: [1], transparent: true }).catch(() => exportDesign(design.id, "png", { pages: [1] }));
+        const file = page ? await readMedia(page.path) : null;
+        if (file) bytes = Buffer.from(file.bytes);
+        if (bytes) scan.logo = `Design „${design.title}“`;
+      }
+      const image = !bytes ? images.find((i) => /logo/i.test(i.name)) : undefined;
+      if (image?.thumbnail) {
+        const response = await fetch(image.thumbnail);
+        if (response.ok) {
+          bytes = Buffer.from(await response.arrayBuffer());
+          scan.logo = `Bild „${image.name}“`;
+        }
+      }
+      if (bytes) {
+        const trimmed = await sharp(bytes).trim().resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true }).png().toBuffer();
+        const logo = await storeMedia(new Uint8Array(trimmed), "image/png", "logo");
+        await updateBrand(workspaceId, { logos: [...brand.logos, { path: logo.path, variant: "Hauptlogo", notes: `aus Canva: ${scan.logo}` }] });
+        await updateWorkspace(workspaceId, { logo_path: logo.path });
+      }
+    }
+  } catch (error) {
+    scan.error = error instanceof Error ? error.message : "Fehler";
+  }
+  await updateWorkspaceSettings(workspaceId, { canva_scan: scan, canva_scan_requested: false });
+  return scan;
+}
+
+/** Angeforderte Canva-Suchen ausführen (settings.canva_scan_requested = true) */
+export async function runRequestedCanvaScans() {
+  if (DEMO) return 0;
+  const { listWorkspaces, workspaceSettings, updateWorkspaceSettings } = await import("./store");
+  let count = 0;
+  for (const workspace of await listWorkspaces()) {
+    const settings = await workspaceSettings(workspace.id);
+    if (settings.canva_scan_requested !== true) continue;
+    await updateWorkspaceSettings(workspace.id, { canva_scan_requested: false });
+    await scanCanva(workspace.id);
+    count++;
+  }
+  return count;
 }
