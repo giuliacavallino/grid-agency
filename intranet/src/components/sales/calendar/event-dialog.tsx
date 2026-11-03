@@ -26,25 +26,28 @@ const REMINDERS: [number | null, string][] = [
 /** Neuer Termin in einem der Kalender des Bereichs */
 export function EventDialog({
   start,
+  end,
   calendars,
   onClose,
   onCreated,
 }: {
   start: Date | null;
+  /** Ende, z. B. aus dem Aufziehen im Kalender */
+  end?: Date;
   calendars: Calendar[];
   onClose: () => void;
   onCreated: () => void;
 }) {
   return (
     <Dialog open={!!start} onClose={onClose} title="Neuer Termin" width="max-w-3xl">
-      {start && <EventChoice key={start.toISOString()} start={start} calendars={calendars} onClose={onClose} onCreated={onCreated} />}
+      {start && <EventChoice key={start.toISOString()} start={start} end={end} calendars={calendars} onClose={onClose} onCreated={onCreated} />}
     </Dialog>
   );
 }
 
 /** „Wiederholen“ macht aus dem Termin einen Jour fixe (Serie mit festem
  * Meet-Link, angelegt über den Server). Nur mit Zugriff auf Sales. */
-function EventChoice(props: { start: Date; calendars: Calendar[]; onClose: () => void; onCreated: () => void }) {
+function EventChoice(props: { start: Date; end?: Date; calendars: Calendar[]; onClose: () => void; onCreated: () => void }) {
   const canRepeat = useCan("sales");
   const [repeat, setRepeat] = useState(false);
   return (
@@ -66,11 +69,13 @@ function EventChoice(props: { start: Date; calendars: Calendar[]; onClose: () =>
 
 function EventForm({
   start,
+  end,
   calendars,
   onClose,
   onCreated,
 }: {
   start: Date;
+  end?: Date;
   calendars: Calendar[];
   onClose: () => void;
   onCreated: () => void;
@@ -85,7 +90,7 @@ function EventForm({
   const [optional, setOptional] = useState("");
   const [day, setDay] = useState(toInput(start, false));
   const [fromTime, setFromTime] = useState(toInput(start).slice(11, 16));
-  const [toTime, setToTime] = useState(toInput(new Date(start.getTime() + 30 * 60_000)).slice(11, 16));
+  const [toTime, setToTime] = useState(toInput(end && end > start ? end : new Date(start.getTime() + 30 * 60_000)).slice(11, 16));
   const [allDay, setAllDay] = useState(false);
   const [location, setLocation] = useState("");
   const [meet, setMeet] = useState(true);

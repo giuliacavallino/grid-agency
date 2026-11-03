@@ -49,14 +49,14 @@ export function CalendarApp({ mailboxes }: { mailboxes: string[] }) {
   const [hiddenCalendars, setHiddenCalendars] = useState<Set<string>>(new Set());
   const [hiddenCategories, setHiddenCategories] = useState<Set<Category>>(new Set());
   const [openEvent, setOpenEvent] = useState<CalEvent | null>(null);
-  const [createAt, setCreateAt] = useState<Date | null>(null);
+  const [createAt, setCreateAt] = useState<{ start: Date; end?: Date } | null>(null);
 
   useEffect(() => {
     // Auf dem Handy passt die Woche nicht: mit der Tagesansicht starten
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Bildschirmbreite gibt es erst im Browser
     if (window.matchMedia("(max-width: 767px)").matches) setView("day");
     // ?neu=1 (z. B. aus dem Posteingang) öffnet direkt einen neuen Termin
-    if (new URLSearchParams(window.location.search).get("neu")) setCreateAt(nextSlot(getToday()));
+    if (new URLSearchParams(window.location.search).get("neu")) setCreateAt({ start: nextSlot(getToday()) });
   }, []);
 
   // Kalender aller Postfächer; ein Postfach ohne Zugriff fällt einfach weg
@@ -236,7 +236,7 @@ export function CalendarApp({ mailboxes }: { mailboxes: string[] }) {
           </Popover>
           <button
             type="button"
-            onClick={() => setCreateAt(nextSlot(view === "day" ? anchor : getToday()))}
+            onClick={() => setCreateAt({ start: nextSlot(view === "day" ? anchor : getToday()) })}
             className="flex h-10 items-center gap-2 rounded-full bg-snow px-4 text-[14px] font-medium text-sky shadow-[0_6px_18px_var(--shadow-color)] hover:opacity-90"
           >
             <CalendarPlus className="h-4 w-4" /> Neuer Termin
@@ -269,7 +269,7 @@ export function CalendarApp({ mailboxes }: { mailboxes: string[] }) {
               colorOf={colorOf}
               onOpen={setOpenEvent}
               onDay={(d) => go(d, "day")}
-              onCreate={(d) => setCreateAt(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9))}
+              onCreate={(d) => setCreateAt({ start: new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9) })}
             />
           ) : (
             <TimeGrid
@@ -279,7 +279,7 @@ export function CalendarApp({ mailboxes }: { mailboxes: string[] }) {
               events={visible}
               colorOf={colorOf}
               onOpen={setOpenEvent}
-              onCreate={setCreateAt}
+              onCreate={(start, end) => setCreateAt({ start, end })}
               onDay={(d) => go(d, "day")}
             />
           )}
@@ -296,7 +296,8 @@ export function CalendarApp({ mailboxes }: { mailboxes: string[] }) {
         }}
       />
       <EventDialog
-        start={createAt}
+        start={createAt?.start ?? null}
+        end={createAt?.end}
         calendars={calendars ?? []}
         onClose={() => setCreateAt(null)}
         onCreated={() => {
