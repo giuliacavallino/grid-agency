@@ -13,7 +13,7 @@ import { useCan } from "@/components/access";
 import { Button, Field, Input, Select, Spinner, Textarea, useToast } from "@/components/ui";
 import { ProviderMark, useConnectFeedback, useMarketingStatus } from "@/components/marketing/common";
 import { CanvaCard } from "@/components/marketing/hub";
-import { URL_WORKSPACES, useCurrentWorkspace, type WorkspaceSummary } from "@/components/marketing/workspace";
+import { URL_WORKSPACES, useCurrentWorkspace, WorkspaceLogo, type WorkspaceSummary } from "@/components/marketing/workspace";
 import { AkteHeader } from "./header";
 
 // Einstellungen der Kundenakte (unten in der Seitenleiste): oben die Akte
@@ -362,8 +362,10 @@ function MasterForm({ workspace }: { workspace: WorkspaceSummary }) {
   const [secondary, setSecondary] = useState(workspace.secondary_color ?? "");
   const [project, setProject] = useState(workspace.project_id ?? "");
   const [logo, setLogo] = useState<File | null>(null);
+  const [avatar, setAvatar] = useState<File | null>(null);
   const [busy, setBusy] = useState<"save" | "folder" | "canva" | null>(null);
   const preview = logo ? URL.createObjectURL(logo) : workspace.logo_url;
+  const avatarPreview = avatar ? URL.createObjectURL(avatar) : workspace.avatar_url;
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -374,6 +376,12 @@ function MasterForm({ workspace }: { workspace: WorkspaceSummary }) {
         const form = new FormData();
         form.append("file", logo);
         await api(`${URL_WORKSPACES}/${workspace.id}/logo`, { method: "POST", body: form });
+      }
+      if (avatar) {
+        const form = new FormData();
+        form.append("file", avatar);
+        await api(`${URL_WORKSPACES}/${workspace.id}/avatar`, { method: "POST", body: form });
+        setAvatar(null);
       }
       revalidate(URL_WORKSPACES);
       toast("Gespeichert");
@@ -465,6 +473,14 @@ function MasterForm({ workspace }: { workspace: WorkspaceSummary }) {
                     <span className="h-12 w-12 rounded-lg" style={{ background: color }} />
                   )}
                   <input id={id} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setLogo(e.target.files?.[0] ?? null)} className="text-[13px] text-snow/60 file:mr-3 file:rounded-full file:border-0 file:bg-snow/10 file:px-3 file:py-1.5 file:text-[13px] file:text-snow" />
+                </div>
+              )}
+            </Field>
+            <Field label="Profilbild wie bei Instagram (rund im Hub)">
+              {(id) => (
+                <div className="flex items-center gap-3">
+                  <WorkspaceLogo workspace={{ ...workspace, avatar_url: avatarPreview }} size={52} box />
+                  <input id={id} type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => setAvatar(e.target.files?.[0] ?? null)} className="text-[13px] text-snow/60 file:mr-3 file:rounded-full file:border-0 file:bg-snow/10 file:px-3 file:py-1.5 file:text-[13px] file:text-snow" />
                 </div>
               )}
             </Field>

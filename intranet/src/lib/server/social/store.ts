@@ -51,7 +51,7 @@ export const publicAccount = (a: AccountRow): SocialAccount => ({
 
 // ---------- Kundenwelten ----------
 
-type WorkspaceRow = Omit<Workspace, "logo_url" | "sharepoint_url" | "secondary_color"> & {
+type WorkspaceRow = Omit<Workspace, "logo_url" | "avatar_url" | "sharepoint_url" | "secondary_color"> & {
   secondary_color?: string | null;
   logo_path?: string | null;
   settings: Record<string, unknown>;
@@ -61,6 +61,7 @@ const toWorkspace = ({ logo_path, settings, secondary_color, ...rest }: Workspac
   ...rest,
   secondary_color: secondary_color ?? null,
   logo_url: logo_path ? publicMediaUrl(logo_path) : null,
+  avatar_url: typeof settings?.avatar_path === "string" ? publicMediaUrl(settings.avatar_path) : null,
   sharepoint_url: typeof settings?.sharepoint_url === "string" ? settings.sharepoint_url : null,
 });
 
@@ -425,10 +426,11 @@ export async function workspaceLogoPath(id: string): Promise<string | null> {
 
 // ---------- Datei-Eingang (media_imports) ----------
 
-type ImportRow = { id: string; workspace_id: string; target: "logo" | "asset"; variant: string; filename: string; mime: string; data: string };
+type ImportRow = { id: string; workspace_id: string; target: "logo" | "asset" | "avatar"; variant: string; filename: string; mime: string; data: string };
 
 /** Dateien aus media_imports in den Storage übernehmen: Logos ins Markenkit
- * (Hauptlogo wird das Logo der Akte), Bildmaterial zu den Fotos & Grafiken. */
+ * (Hauptlogo wird das Logo der Akte), Bildmaterial zu den Fotos & Grafiken,
+ * Profilbilder (target „avatar“) werden das runde Bild der Akte im Hub. */
 export async function processMediaImports() {
   if (DEMO) return 0;
   const { data, error } = await sb().from("media_imports").select("*").order("created_at").limit(20);
@@ -439,7 +441,13 @@ export async function processMediaImports() {
     try {
       // bytea kommt als Hex ("\x89504e…")
       const bytes = new Uint8Array(Buffer.from(String(row.data).replace(/^\\x/, ""), "hex"));
-      const item = await storeMedia(bytes, row.mime, row.target === "logo" ? "logo" : row.variant.toLowerCase());
+      const item = await storeMedia(bytes, row.mime, row.target === "asset" ? row.variant.toLowerCase() : row.target);
+      if (row.target === "avatar") {
+        await updateWorkspaceSettings(row.workspace_id, { avatar_path: item.path });
+        await sb().from("media_imports").delete().eq("id", row.id);
+        done++;
+        continue;
+      }
       const brand = await getBrand(row.workspace_id);
       if (row.target === "logo") {
         await updateBrand(row.workspace_id, { logos: [...brand.logos.filter((l) => l.variant !== row.variant || row.variant !== "Hauptlogo"), { path: item.path, variant: row.variant, notes: row.filename }] });
