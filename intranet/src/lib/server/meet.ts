@@ -64,7 +64,7 @@ export async function linkRoom(code: string, link: RoomLink) {
 }
 
 /** Zusätze einer Jour-fixe-Serie im Feld recurrence (neben pattern/range) */
-export type SeriesRecurrence = Recurrence & { video?: boolean; location?: string | null };
+export type SeriesRecurrence = Recurrence & { video?: boolean; location?: string | null; attendees?: string[] };
 
 type Room = {
   id: string;

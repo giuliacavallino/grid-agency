@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Clock, ExternalLink, MapPin, Repeat, Trash2, Users, Video } from "lucide-react";
+import { CalendarDays, Clock, ExternalLink, MapPin, Pencil, Repeat, Trash2, Users, Video } from "lucide-react";
 import { graphFor, type CalEvent, type Calendar } from "@/lib/graph";
+import { useCan } from "@/components/access";
 import { Button, Dialog, Sheet, useToast } from "@/components/ui";
+import { JourFixEditDialog, useJourFixFor } from "../jourfix";
 import { addDays, sameDay, time } from "./dates";
 
 const RESPONSE: Record<string, string> = {
@@ -37,6 +39,9 @@ export function EventSheet({
   onDeleted: () => void;
 }) {
   const [confirm, setConfirm] = useState(false);
+  const [editing, setEditing] = useState(false);
+  // Jour fixe (Serie mit festem Meet-Link) lassen sich hier bearbeiten
+  const jourFix = useJourFixFor(event, useCan("sales"));
   const [busy, setBusy] = useState(false);
   const toast = useToast();
 
@@ -72,7 +77,22 @@ export function EventSheet({
       {event && (
         <div className="flex flex-col gap-5 p-5 text-sm">
           <Row icon={Clock}>{when(event)}</Row>
-          {event.recurring && <Row icon={Repeat}>Termin einer Serie</Row>}
+          {event.recurring && (
+            <Row icon={Repeat}>
+              <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                {jourFix ? `Jour fixe · ${jourFix.rhythm}` : "Termin einer Serie"}
+                {jourFix && (
+                  <button
+                    type="button"
+                    onClick={() => setEditing(true)}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-snow/15 px-3 text-[13px] font-medium hover:bg-snow/[0.06]"
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Serie bearbeiten
+                  </button>
+                )}
+              </span>
+            </Row>
+          )}
           {event.location && <Row icon={MapPin}>{event.location}</Row>}
           {event.joinUrl && (
             <a
@@ -119,6 +139,15 @@ export function EventSheet({
           </div>
         </div>
       )}
+      <JourFixEditDialog
+        jourFix={editing ? jourFix : null}
+        attendees={event?.attendees.map((a) => a.address.toLowerCase()).filter((a) => a && a !== calendar?.mailbox.toLowerCase())}
+        onClose={() => setEditing(false)}
+        onSaved={() => {
+          setEditing(false);
+          onDeleted();
+        }}
+      />
       <Dialog
         open={confirm}
         onClose={() => setConfirm(false)}
