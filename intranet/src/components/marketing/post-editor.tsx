@@ -420,7 +420,7 @@ function Preview({ provider, name, handle, workspace, caption, media }: { provid
   return (
     <div className="overflow-hidden rounded-2xl border border-snow/[0.08] bg-canvas text-[13px] shadow-sm">
       <div className="flex items-center gap-2 px-3 py-2.5">
-        <WorkspaceLogo workspace={workspace} size={28} />
+        <WorkspaceLogo workspace={workspace} size={30} box />
         <div className="min-w-0">
           <p className="truncate text-[13px] font-semibold">{handle?.replace(/^@/, "") ?? name}</p>
           {provider === "linkedin" && <p className="text-[11px] text-snow/50">Unternehmensseite · Jetzt</p>}

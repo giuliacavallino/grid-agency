@@ -77,7 +77,12 @@ export function WorkspaceLogo({ workspace, size = 20, wide = false, box = false 
         <span className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-white bg-white">
           {workspace.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element -- Logo aus dem Storage
-            <img src={workspace.logo_url} alt={workspace.name} className="h-full w-full object-contain p-[14%]" />
+            <img
+              src={workspace.logo_url}
+              alt={workspace.name}
+              // Fotos (z. B. Profilbild einer Person) füllen den Kreis, Logos bekommen Luft
+              className={clsx("h-full w-full", /\.(jpe?g|webp)(\?|$)/i.test(workspace.logo_url) ? "object-cover" : "object-contain p-[14%]")}
+            />
           ) : (
             <span className="text-[10px] font-semibold tracking-wide text-black/55" aria-hidden>
               {workspace.name.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 2).toUpperCase()}
