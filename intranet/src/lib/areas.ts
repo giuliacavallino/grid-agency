@@ -27,7 +27,7 @@ export const AREAS: Area[] = [
   { id: "personal", title: "Personal", text: "Bewerbungen von der ersten Mail bis zur Zusage", icon: Users, href: "/personal" },
   { id: "marketing", title: "Marketing", text: "Eigene Kanäle, Content und Kampagnen", icon: Megaphone, href: "/marketing" },
   { id: "mail", title: "Mail", text: "Alle Postfächer und Kalender an einem Ort", icon: Mail, href: "/mail" },
-  { id: "kalender", title: "Kalender", text: "Termine und Meetings in Outlook", icon: CalendarDays, href: "https://outlook.office.com/calendar/", external: true },
+  { id: "kalender", title: "Kalender", text: "Termine und Meetings aller Postfächer", icon: CalendarDays, href: "/kalender" },
   { id: "aufgaben", title: "Aufgaben", text: "To-dos und Zuständigkeiten", icon: ListChecks, href: "/aufgaben" },
   { id: "admin", title: "Admin", text: "Passwörter und Zugänge für Kunden und intern", icon: ShieldCheck, href: "/admin" },
 ];

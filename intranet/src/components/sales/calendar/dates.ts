@@ -1,6 +1,6 @@
 import type { CalEvent } from "@/lib/graph";
 
-export type View = "day" | "week" | "month" | "year";
+export type View = "day" | "week" | "month" | "year" | "list";
 
 export const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
@@ -48,6 +48,11 @@ export function rangeFor(view: View, anchor: Date): { start: Date; end: Date } {
     const days = monthDays(anchor);
     return { start: days[0], end: addDays(days[days.length - 1], 1) };
   }
+  // Liste: vier Wochen ab der Woche des Ankers
+  if (view === "list") {
+    const start = startOfWeek(anchor);
+    return { start, end: addDays(start, 28) };
+  }
   return { start: new Date(anchor.getFullYear(), 0, 1), end: new Date(anchor.getFullYear() + 1, 0, 1) };
 }
 
@@ -55,6 +60,7 @@ export function step(view: View, anchor: Date, direction: 1 | -1) {
   if (view === "day") return addDays(anchor, direction);
   if (view === "week") return addDays(anchor, 7 * direction);
   if (view === "month") return addMonths(anchor, direction);
+  if (view === "list") return addDays(anchor, 28 * direction);
   return new Date(anchor.getFullYear() + direction, anchor.getMonth(), 1);
 }
 
@@ -142,3 +148,23 @@ export function toInput(date: Date, withTime = true) {
 }
 
 export const fromInput = (value: string) => new Date(value.length === 10 ? `${value}T00:00` : value);
+
+/** Kalenderwoche nach ISO 8601 (Woche mit dem ersten Donnerstag ist KW 1) */
+export function isoWeek(date: Date) {
+  const day = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const weekday = day.getUTCDay() || 7;
+  day.setUTCDate(day.getUTCDate() + 4 - weekday);
+  const yearStart = new Date(Date.UTC(day.getUTCFullYear(), 0, 1));
+  return Math.ceil(((day.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+}
+
+/** Kurzer Titel zwischen den Pfeilen wie „KW 45“ oder „November 2026“ */
+export function shortTitle(view: View, anchor: Date) {
+  if (view === "day") return anchor.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "short" });
+  if (view === "month") return anchor.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+  if (view === "list") {
+    const { start, end } = rangeFor("list", anchor);
+    return `KW ${isoWeek(start)}–${isoWeek(addDays(end, -1))}`;
+  }
+  return `KW ${isoWeek(anchor)}`;
+}

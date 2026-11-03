@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Repeat } from "lucide-react";
+import { Repeat, Video } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { CalEvent } from "@/lib/graph";
 import { accentFill, accentText } from "@/lib/theme";
@@ -37,7 +37,7 @@ export function TimeGrid({
 
   // Beim Öffnen auf etwa 8 Uhr scrollen
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = 8 * HOUR - 8;
+    if (scrollRef.current) scrollRef.current.scrollTop = 7 * HOUR - 8;
   }, []);
 
   useEffect(() => {
@@ -72,9 +72,9 @@ export function TimeGrid({
                 key={day.toISOString()}
                 type="button"
                 onClick={() => openDay(day)}
-                className="flex items-center justify-center gap-1.5 py-2 text-[13px] text-snow/60 hover:text-snow"
+                className="flex items-center justify-center gap-2 py-3 text-[12.5px] font-medium tracking-wide text-snow/55 hover:text-snow"
               >
-                <span>{day.toLocaleDateString("de-DE", { weekday: "short" })}</span>
+                <span style={isToday ? { color: TODAY_RED } : undefined}>{day.toLocaleDateString("de-DE", { weekday: "short" }).replace(".", "").toUpperCase()}</span>
                 <span
                   className={cn("grid h-7 min-w-7 place-items-center rounded-full px-1 text-[15px] font-medium tabular-nums", isToday ? "text-white" : "text-snow")}
                   style={isToday ? { background: TODAY_RED } : undefined}
@@ -162,7 +162,12 @@ export function TimeGrid({
                         borderColor: color,
                       }}
                     >
-                      <span className="block truncate font-semibold" style={{ color: accentText(color) }}>
+                      {event.joinUrl && !short && (
+                        <span className="absolute top-1 right-1 grid h-5 w-5 place-items-center rounded-full text-white" style={{ background: color }} aria-label="Video-Call">
+                          <Video className="h-3 w-3" />
+                        </span>
+                      )}
+                      <span className={cn("block truncate font-semibold", event.joinUrl && !short && "pr-5")} style={{ color: accentText(color) }}>
                         {event.recurring && <Repeat className="mr-1 inline h-3 w-3 align-[-2px]" aria-label="Serientermin" />}
                         {event.subject}
                         {short && <span className="font-normal opacity-80"> · {time(event.start)}</span>}

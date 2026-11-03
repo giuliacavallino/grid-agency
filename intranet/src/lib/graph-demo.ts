@@ -364,17 +364,25 @@ export function demoGraphFor(mailbox: string): GraphApi {
       });
     },
 
-    async messages({ folder, focused, search, next }) {
+    async messages({ folder, focused, search, next, filter }) {
       await wait();
       const q = search?.toLowerCase().trim();
       const all = mine()
-        .filter((m) => m.folder === folder)
+        .filter((m) => (filter === "flagged" ? m.flag.flagStatus === "flagged" : m.folder === folder))
+        .filter((m) => filter !== "unread" || !m.isRead)
         .filter((m) => (focused === undefined || focused === null ? true : (m.inferenceClassification === "focused") === focused))
         .filter((m) => !q || [m.subject, m.bodyPreview, m.from?.emailAddress.name, m.from?.emailAddress.address].some((v) => v?.toLowerCase().includes(q)))
         .sort((a, b) => b.receivedDateTime.localeCompare(a.receivedDateTime));
       const offset = next ? Number(next.split(":")[1]) : 0;
       const page = all.slice(offset, offset + PAGE);
       return { items: page.map(strip), next: offset + PAGE < all.length ? `demo:${offset + PAGE}` : null };
+    },
+
+    async childFolders(parent) {
+      await wait(120);
+      // Vorschau: Kundenordner unter dem Posteingang
+      if (parent !== "inbox") return [];
+      return ["01_Kunden", "02_Lieferanten", "03_Team"].map((name, i) => ({ id: `demo-sub-${mailbox}-${i}`, name, unreadItemCount: 0, totalItemCount: 0, childFolderCount: 0 }));
     },
 
     async message(id) {
@@ -401,7 +409,7 @@ export function demoGraphFor(mailbox: string): GraphApi {
 
     async move(id, destination) {
       await wait();
-      findMessage(id).folder = destination;
+      findMessage(id).folder = destination as FolderKey;
     },
 
     async remove(id) {
@@ -417,16 +425,25 @@ export function demoGraphFor(mailbox: string): GraphApi {
 
     async send(draft) {
       await wait(700);
-      sent("sentitems", draft.subject || "(Kein Betreff)", `<p>${draft.body.replace(/\n/g, "<br>")}</p>`, {
+      sent("sentitems", draft.subject || "(Kein Betreff)", draft.html ? draft.body : `<p>${draft.body.replace(/\n/g, "<br>")}</p>`, {
         toRecipients: draft.to.map((address) => person(address, address)),
         ccRecipients: draft.cc.map((address) => person(address, address)),
+      });
+    },
+
+    async saveDraft(draft) {
+      await wait(400);
+      sent("drafts", draft.subject || "(Kein Betreff)", draft.html ? draft.body : `<p>${draft.body}</p>`, {
+        isDraft: true,
+        toRecipients: draft.to.map((address) => person(address, address)),
+        ccRecipients: [],
       });
     },
 
     async reply(id, { comment }) {
       await wait(700);
       const original = findMessage(id);
-      sent("sentitems", `AW: ${original.subject ?? ""}`, `<p>${comment.replace(/\n/g, "<br>")}</p>`, {
+      sent("sentitems", `AW: ${original.subject ?? ""}`, comment, {
         toRecipients: original.from ? [original.from] : [],
       });
     },
@@ -434,7 +451,7 @@ export function demoGraphFor(mailbox: string): GraphApi {
     async forward(id, { to, comment }) {
       await wait(700);
       const original = findMessage(id);
-      sent("sentitems", `WG: ${original.subject ?? ""}`, `<p>${comment.replace(/\n/g, "<br>")}</p>`, {
+      sent("sentitems", `WG: ${original.subject ?? ""}`, comment, {
         toRecipients: to.map((address) => person(address, address)),
       });
     },
@@ -460,9 +477,9 @@ export function demoGraphFor(mailbox: string): GraphApi {
         isAllDay: input.isAllDay,
         location: input.location || null,
         organizer: "GRID Agency",
-        attendees: [],
-        joinUrl: null,
-        bodyPreview: "",
+        attendees: [...(input.required ?? []), ...(input.optional ?? [])].map((address) => ({ name: address, address, response: "none" })),
+        joinUrl: input.location.startsWith("https://meet.") ? input.location : null,
+        bodyPreview: (input.body ?? "").replace(/<[^>]+>/g, " ").trim().slice(0, 200),
         webLink: null,
       });
     },

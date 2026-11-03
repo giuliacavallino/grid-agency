@@ -61,7 +61,7 @@ export const PERSONAL_NAV: NavItem[] = [
 ];
 
 export const MAIL_NAV: NavItem[] = [
-  { href: "/mail", label: "Posteingang", icon: Inbox },
+  { href: "/mail", label: "Alle Postfächer", icon: Inbox },
   { href: "/mail/kalender", label: "Kalender", icon: CalendarDays },
 ];
 
@@ -314,6 +314,16 @@ export function FinanceShell({ children }: { children: React.ReactNode }) {
 export function PersonalShell({ children }: { children: React.ReactNode }) {
   return (
     <AreaShell title="Personal" nav={PERSONAL_NAV}>
+      {children}
+    </AreaShell>
+  );
+}
+
+export const KALENDER_NAV: NavItem[] = [{ href: "/kalender", label: "Mein Kalender", icon: CalendarDays }];
+
+export function KalenderShell({ children }: { children: React.ReactNode }) {
+  return (
+    <AreaShell title="Kalender" nav={KALENDER_NAV}>
       {children}
     </AreaShell>
   );

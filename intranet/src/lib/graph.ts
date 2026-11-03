@@ -28,6 +28,15 @@ export type FolderKey = (typeof FOLDERS)[number]["key"];
 
 export type MailFolder = { key: FolderKey; id: string; unreadItemCount: number; totalItemCount: number };
 
+/** Eigener Ordner (z. B. Unterordner im Posteingang) */
+export type ChildFolder = { id: string; name: string; unreadItemCount: number; totalItemCount: number; childFolderCount: number };
+
+/** Ordner per Standardname („inbox“) oder Graph-ID eines eigenen Ordners */
+export type FolderRef = FolderKey | (string & {});
+
+/** Sammelansichten über alle Ordner eines Postfachs */
+export type MessageFilter = "unread" | "flagged";
+
 export type Message = {
   id: string;
   internetMessageId: string;
@@ -50,7 +59,18 @@ export type Attachment = { id: string; name: string; contentType: string; size: 
 
 export type Page<T> = { items: T[]; next: string | null };
 
-export type Draft = { to: string[]; cc: string[]; subject: string; body: string; /** body ist HTML */ html?: boolean };
+export type Draft = {
+  to: string[];
+  cc: string[];
+  bcc?: string[];
+  subject: string;
+  body: string;
+  /** body ist HTML */
+  html?: boolean;
+  /** „Wichtig“ (hohe Priorität) */
+  important?: boolean;
+  readReceipt?: boolean;
+};
 
 /** Dateianhang mit Inhalt (Base64), z. B. zum Weiterleiten an DATEV */
 export type FileAttachment = { name: string; contentType: string; contentBytes: string };
@@ -88,20 +108,32 @@ export type NewEvent = {
   end: Date;
   isAllDay: boolean;
   location: string;
+  /** Pflicht- und optionale Teilnehmer*innen (Adressen); Microsoft schickt die Einladung */
+  required?: string[];
+  optional?: string[];
+  /** Beschreibung als HTML */
+  body?: string;
+  /** Erinnerung in Minuten vorher, null = keine */
+  reminder?: number | null;
 };
 
 export interface GraphApi {
   folders(): Promise<MailFolder[]>;
-  messages(opts: { folder: FolderKey; focused?: boolean | null; search?: string; next?: string | null }): Promise<Page<Message>>;
+  messages(opts: { folder: FolderRef; focused?: boolean | null; search?: string; next?: string | null; filter?: MessageFilter }): Promise<Page<Message>>;
+  /** Unterordner eines Ordners (eine Ebene) */
+  childFolders(parent: FolderRef): Promise<ChildFolder[]>;
   message(id: string): Promise<Message>;
   attachments(id: string): Promise<Attachment[]>;
   download(messageId: string, attachmentId: string): Promise<Blob>;
   update(id: string, patch: { isRead?: boolean; flag?: Message["flag"] }): Promise<void>;
-  move(id: string, destination: FolderKey): Promise<void>;
+  move(id: string, destination: FolderRef): Promise<void>;
   remove(id: string): Promise<void>;
   send(draft: Draft, attachments?: FileAttachment[]): Promise<void>;
+  /** Als Entwurf speichern (Ordner „Entwürfe“) */
+  saveDraft(draft: Draft, attachments?: FileAttachment[]): Promise<void>;
   /** Dateianhänge einer Mail mit Inhalt (ohne eingebettete Bilder) */
   files(id: string): Promise<FileAttachment[]>;
+  /** comment ist HTML */
   reply(id: string, opts: { comment: string; all: boolean }): Promise<void>;
   forward(id: string, opts: { to: string[]; comment: string }): Promise<void>;
   calendars(): Promise<Calendar[]>;
@@ -160,6 +192,18 @@ const MESSAGE_FIELDS = [
 const recipients = (addresses: string[]): Recipient[] =>
   addresses.map((address) => ({ emailAddress: { address } }));
 
+/** Nachricht im Format von Graph (sendMail und Entwürfe) */
+const graphMessage = (draft: Draft, attachments: FileAttachment[]) => ({
+  subject: draft.subject,
+  body: { contentType: draft.html ? "HTML" : "Text", content: draft.body },
+  toRecipients: recipients(draft.to),
+  ccRecipients: recipients(draft.cc),
+  bccRecipients: recipients(draft.bcc ?? []),
+  importance: draft.important ? "high" : "normal",
+  isReadReceiptRequested: !!draft.readReceipt,
+  attachments: attachments.map((a) => ({ "@odata.type": "#microsoft.graph.fileAttachment", ...a })),
+});
+
 /** Graph liefert mit outlook.timezone lokale Zeit ohne Zone: als lokale Zeit lesen. */
 const localDate = (value: string) => new Date(value.replace(/\.\d+$/, ""));
 
@@ -192,21 +236,34 @@ function realGraph(mailbox: string): GraphApi {
       return results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
     },
 
-    async messages({ folder, focused, search, next }) {
+    async messages({ folder, focused, search, next, filter }) {
       let url: string;
+      // Gekennzeichnet gilt über alle Ordner, Ungelesen im gewählten Ordner
+      const base = filter === "flagged" ? "/messages" : `/mailFolders/${folder}/messages`;
       if (next) url = next;
       else if (search) {
-        url = `/mailFolders/${folder}/messages?$search=${encodeURIComponent(`"${search.replace(/"/g, "")}"`)}&$select=${MESSAGE_FIELDS}&$top=40`;
+        url = `${base}?$search=${encodeURIComponent(`"${search.replace(/"/g, "")}"`)}&$select=${MESSAGE_FIELDS}&$top=40`;
       } else {
         // $orderby verlangt dieselbe Eigenschaft zuerst im $filter
         const filters = ["receivedDateTime ge 1900-01-01T00:00:00Z"];
         if (focused !== undefined && focused !== null) {
           filters.push(`inferenceClassification eq '${focused ? "focused" : "other"}'`);
         }
-        url = `/mailFolders/${folder}/messages?$select=${MESSAGE_FIELDS}&$top=40&$orderby=receivedDateTime desc&$filter=${encodeURIComponent(filters.join(" and "))}`;
+        if (filter === "unread") filters.push("isRead eq false");
+        if (filter === "flagged") filters.push("flag/flagStatus eq 'flagged'");
+        url = `${base}?$select=${MESSAGE_FIELDS}&$top=40&$orderby=receivedDateTime desc&$filter=${encodeURIComponent(filters.join(" and "))}`;
       }
       const data = await (await mail(url)).json();
       return { items: data.value, next: data["@odata.nextLink"] ?? null };
+    },
+
+    async childFolders(parent) {
+      const data = await (
+        await mail(`/mailFolders/${parent}/childFolders?$select=id,displayName,unreadItemCount,totalItemCount,childFolderCount&$top=200`)
+      ).json();
+      return (data.value as { id: string; displayName: string; unreadItemCount: number; totalItemCount: number; childFolderCount: number }[])
+        .map((f) => ({ id: f.id, name: f.displayName, unreadItemCount: f.unreadItemCount, totalItemCount: f.totalItemCount, childFolderCount: f.childFolderCount }))
+        .sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true }));
     },
 
     async message(id) {
@@ -238,19 +295,11 @@ function realGraph(mailbox: string): GraphApi {
     },
 
     async send(draft, attachments = []) {
-      await mail(`/sendMail`, {
-        method: "POST",
-        body: JSON.stringify({
-          message: {
-            subject: draft.subject,
-            body: { contentType: draft.html ? "HTML" : "Text", content: draft.body },
-            toRecipients: recipients(draft.to),
-            ccRecipients: recipients(draft.cc),
-            attachments: attachments.map((a) => ({ "@odata.type": "#microsoft.graph.fileAttachment", ...a })),
-          },
-          saveToSentItems: true,
-        }),
-      });
+      await mail(`/sendMail`, { method: "POST", body: JSON.stringify({ message: graphMessage(draft, attachments), saveToSentItems: true }) });
+    },
+
+    async saveDraft(draft, attachments = []) {
+      await mail(`/messages`, { method: "POST", body: JSON.stringify(graphMessage(draft, attachments)) });
     },
 
     async files(id) {
@@ -329,6 +378,13 @@ function realGraph(mailbox: string): GraphApi {
           start: { dateTime: localString(input.start), timeZone: "Europe/Berlin" },
           end: { dateTime: localString(input.end), timeZone: "Europe/Berlin" },
           location: input.location ? { displayName: input.location } : undefined,
+          attendees: [
+            ...(input.required ?? []).map((address) => ({ emailAddress: { address }, type: "required" })),
+            ...(input.optional ?? []).map((address) => ({ emailAddress: { address }, type: "optional" })),
+          ],
+          body: input.body ? { contentType: "HTML", content: input.body } : undefined,
+          isReminderOn: input.reminder !== null && input.reminder !== undefined,
+          reminderMinutesBeforeStart: input.reminder ?? undefined,
         }),
       });
     },
