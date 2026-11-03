@@ -50,11 +50,14 @@ export const SALES_NAV: NavItem[] = [
   { href: "/sales/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
+// /finance muss vorne stehen: der erste Eintrag ist die Wurzel (nur exakt aktiv)
 export const FINANCE_NAV: NavItem[] = [
-  { href: "/finance", label: "Eingangsrechnungen", icon: Columns3, counter: "invoices" },
-  { href: "/finance/ausgangsrechnungen", label: "Ausgangsrechnungen", icon: ReceiptText },
+  { href: "/finance", label: "Eingangsrechnungen", icon: BookOpenCheck, counter: "invoices", group: "Arbeiten" },
+  { href: "/finance/kunden", label: "Kunden", icon: Building2, area: "sales" },
+  { href: "/finance/ausgangsrechnungen", label: "Rechnungen", icon: ReceiptText },
+  { href: "/finance/serien", label: "Serien", icon: CalendarDays },
   { href: "/finance/bank", label: "Bank", icon: Landmark, area: "admin" },
-  { href: "/finance/posteingang", label: "Posteingang", icon: Inbox },
+  { href: "/finance/posteingang", label: "Postfach", icon: Inbox },
   { href: "/finance/einstellungen", label: "Einstellungen", icon: Settings, bottom: true },
 ];
 
