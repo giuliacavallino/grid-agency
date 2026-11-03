@@ -186,7 +186,24 @@ export function Bank() {
         ) : visible.length === 0 ? (
           <Empty icon={<Check className="h-8 w-8" />} title={filter === "offen" && !query ? "Alles zugeordnet" : "Keine Treffer"} />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <ul className="divide-y divide-snow/[0.06] md:hidden">
+              {visible.map((t) => (
+                <li key={t.id}>
+                  <button type="button" onClick={() => setOpenId(t.id)} className={clsx("flex w-full items-center gap-3 px-4 py-3.5 text-left", !accountIds.has(t.account_id) && "opacity-60")}>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-semibold">{t.counterparty ?? "Unbekannt"}</span>
+                      <span className="block truncate text-[12px] text-snow/50">{t.purpose ?? "–"}</span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className={clsx("block text-[13.5px] font-semibold tabular-nums", t.amount < 0 && "text-error")}>{money(t.amount, t.currency)}</span>
+                      <span className="block text-[12px] text-snow/45 tabular-nums">{formatDate(t.booking_date)}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[720px] table-fixed text-[13.5px]">
               <colgroup>
                 <col className="w-32" />
@@ -215,7 +232,8 @@ export function Bank() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </Card>
 

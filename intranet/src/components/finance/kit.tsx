@@ -20,7 +20,7 @@ export function Page({ children, className, wide }: { children: React.ReactNode;
 export function PageHead({ title, meta, children }: { title: string; meta?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-72">
         <h1 className="text-[26px] leading-tight font-semibold tracking-tight">{title}</h1>
         {meta && <div className="mt-1 text-[13.5px] text-snow/55">{meta}</div>}
       </div>
