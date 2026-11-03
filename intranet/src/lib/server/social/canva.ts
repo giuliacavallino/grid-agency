@@ -208,3 +208,35 @@ export async function exportDesign(designId: string, format: ExportFormat = "png
   }
   return media;
 }
+
+export type FolderItem =
+  | { type: "folder"; id: string; name: string }
+  | { type: "design"; id: string; title: string; page_count: number | null; thumbnail: string | null }
+  | { type: "image"; id: string; name: string; thumbnail: string | null };
+
+type RawItem = {
+  type: string;
+  folder?: { id: string; name: string };
+  design?: RawDesign;
+  image?: { id: string; name: string; thumbnail?: { url: string } };
+};
+
+/** Inhalt eines Canva-Ordners („root“ = Projekte, „uploads“ = Uploads) */
+export async function listFolderItems(folderId: string, pages = 3): Promise<FolderItem[]> {
+  if (DEMO) return [];
+  const items: FolderItem[] = [];
+  let continuation: string | undefined;
+  for (let page = 0; page < pages; page++) {
+    const params = new URLSearchParams({ item_types: "design,folder,image" });
+    if (continuation) params.set("continuation", continuation);
+    const data = await canva<{ items: RawItem[]; continuation?: string }>(`/folders/${encodeURIComponent(folderId)}/items?${params}`);
+    for (const item of data.items) {
+      if (item.type === "folder" && item.folder) items.push({ type: "folder", id: item.folder.id, name: item.folder.name });
+      if (item.type === "design" && item.design) items.push({ type: "design", id: item.design.id, title: item.design.title || "Ohne Titel", page_count: item.design.page_count ?? null, thumbnail: item.design.thumbnail?.url ?? null });
+      if (item.type === "image" && item.image) items.push({ type: "image", id: item.image.id, name: item.image.name, thumbnail: item.image.thumbnail?.url ?? null });
+    }
+    continuation = data.continuation;
+    if (!continuation) break;
+  }
+  return items;
+}
