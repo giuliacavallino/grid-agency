@@ -156,8 +156,13 @@ function SearchPalette({ onClose }: { onClose: () => void }) {
             }}
             onKeyDown={(e) => {
               if (e.key === "Escape") onClose();
-              else if (e.key === "ArrowDown") (e.preventDefault(), setActive((i) => Math.min(i + 1, hits.length - 1)));
-              else if (e.key === "ArrowUp") (e.preventDefault(), setActive((i) => Math.max(i - 1, 0)));
+              else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setActive((i) => Math.min(i + 1, hits.length - 1));
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setActive((i) => Math.max(i - 1, 0));
+              }
               else if (e.key === "Enter") go(hits[active]);
             }}
             placeholder="Kunde, Lead, Aufgabe, Bewerbung oder Bereich …"
