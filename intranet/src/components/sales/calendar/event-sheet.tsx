@@ -141,7 +141,9 @@ export function EventSheet({
       )}
       <JourFixEditDialog
         jourFix={editing ? jourFix : null}
-        attendees={event?.attendees.map((a) => a.address.toLowerCase()).filter((a) => a && a !== calendar?.mailbox.toLowerCase())}
+        attendees={event?.attendees
+          .map((a) => a.address.toLowerCase())
+          .filter((a) => a && a !== calendar?.mailbox.toLowerCase() && a !== jourFix?.mailbox?.toLowerCase())}
         onClose={() => setEditing(false)}
         onSaved={() => {
           setEditing(false);
