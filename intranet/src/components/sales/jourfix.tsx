@@ -16,6 +16,7 @@ import {
   monthlyHint,
   parseLocal,
   RHYTHMS,
+  rhythmOf,
   TZ,
   type JourFix,
   type JourFixInput,
@@ -135,11 +136,17 @@ function Attendees({ value, onChange, suggestions }: { value: string[]; onChange
 export function JourFixForm({
   start,
   customerId: initialCustomer = null,
+  initial,
+  initialAttendees,
   onCancel,
   onCreated,
 }: {
   start: Date;
   customerId?: string | null;
+  /** Bestehende Serie bearbeiten */
+  initial?: JourFix;
+  /** Teilnehmer aus Outlook, falls die Serie sie noch nicht gespeichert hat */
+  initialAttendees?: string[];
   onCancel: () => void;
   onCreated: (jourFix: JourFix) => void;
 }) {
@@ -149,19 +156,21 @@ export function JourFixForm({
   const { data: customers } = useRows<Customer>("customers");
   const own = auth.account?.email.toLowerCase() ?? "";
 
-  const [customerId, setCustomerId] = useState(initialCustomer ?? "");
+  const range = initial?.recurrence.range;
+  const [customerId, setCustomerId] = useState(initial?.customer_id ?? initialCustomer ?? "");
   const customer = customers?.find((c) => c.id === customerId);
-  const [title, setTitle] = useState<string | null>(null);
-  const [attendees, setAttendees] = useState<string[] | null>(null);
-  const [from, setFrom] = useState(() => toBerlinInput(start));
-  const [minutes, setMinutes] = useState(60);
-  const [rhythm, setRhythm] = useState<Rhythm>("weekly");
-  const [endType, setEndType] = useState<"noEnd" | "endDate" | "numbered">("noEnd");
-  const [endDate, setEndDate] = useState("");
-  const [count, setCount] = useState("10");
-  const [video, setVideo] = useState(true);
-  const [location, setLocation] = useState("");
-  const [mailbox, setMailbox] = useState(own || SHARED_MAILBOX);
+  const [title, setTitle] = useState<string | null>(initial?.title ?? null);
+  const [attendees, setAttendees] = useState<string[] | null>(initial ? (initial.attendees ?? initialAttendees ?? []) : null);
+  // Bearbeiten: ab dem nächsten Termin der Serie
+  const [from, setFrom] = useState(() => toBerlinInput(initial ? new Date(initial.next ?? initial.starts_at) : start));
+  const [minutes, setMinutes] = useState(initial?.minutes ?? 60);
+  const [rhythm, setRhythm] = useState<Rhythm>(initial ? rhythmOf(initial.recurrence) : "weekly");
+  const [endType, setEndType] = useState<"noEnd" | "endDate" | "numbered">(range?.type ?? "noEnd");
+  const [endDate, setEndDate] = useState(range?.type === "endDate" ? (range.endDate ?? "") : "");
+  const [count, setCount] = useState(range?.type === "numbered" ? String(range.numberOfOccurrences ?? 10) : "10");
+  const [video, setVideo] = useState(initial?.video ?? true);
+  const [location, setLocation] = useState(initial?.location ?? "");
+  const [mailbox, setMailbox] = useState(initial?.mailbox ?? (own || SHARED_MAILBOX));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -211,13 +220,18 @@ export function JourFixForm({
     };
     setBusy(true);
     try {
-      const created = await api<JourFix>(LIST, { method: "POST", body: JSON.stringify(input) });
-      if (DEMO) addDemoSeries(mailbox, created);
+      const created = initial
+        ? await api<JourFix>(`${LIST}/${initial.id}`, { method: "PATCH", body: JSON.stringify(input) })
+        : await api<JourFix>(LIST, { method: "POST", body: JSON.stringify(input) });
+      if (DEMO) {
+        if (initial) endDemoSeries(initial.title, true);
+        addDemoSeries(mailbox, created);
+      }
       revalidate(LIST);
-      toast(video ? "Jour fixe angelegt, Einladung ist raus" : "Jour fixe angelegt");
+      toast(initial ? "Serie geändert, Outlook schickt die Änderung an alle" : video ? "Jour fixe angelegt, Einladung ist raus" : "Jour fixe angelegt");
       onCreated(created);
     } catch (e) {
-      setError(e instanceof ApiError && e.status < 500 ? e.message : "Anlegen fehlgeschlagen. Bitte nochmal versuchen.");
+      setError(e instanceof ApiError && e.status < 500 ? e.message : initial ? "Ändern fehlgeschlagen. Bitte nochmal versuchen." : "Anlegen fehlgeschlagen. Bitte nochmal versuchen.");
       setBusy(false);
     }
   }
@@ -232,7 +246,8 @@ export function JourFixForm({
       </Field>
       <Field label="Organisator-Postfach" className="col-span-2 sm:col-span-1">
         {(id) => (
-          <Select id={id} value={mailbox} onChange={(e) => setMailbox(e.target.value)}>
+          <Select id={id} value={mailbox} onChange={(e) => setMailbox(e.target.value)} disabled={!!initial}>
+            {initial?.mailbox && initial.mailbox !== own && initial.mailbox !== SHARED_MAILBOX && <option value={initial.mailbox}>{initial.mailbox}</option>}
             {own && own !== SHARED_MAILBOX && <option value={own}>{own}</option>}
             <option value={SHARED_MAILBOX}>{SHARED_MAILBOX}</option>
           </Select>
@@ -241,7 +256,7 @@ export function JourFixForm({
       <div className="col-span-2">
         <Attendees value={shownAttendees} onChange={setAttendees} suggestions={suggestions} />
       </div>
-      <Field label="Beginn">
+      <Field label={initial ? "Ab Termin" : "Beginn"}>
         {(id) => <Input id={id} type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />}
       </Field>
       <Field label="Dauer">
@@ -303,8 +318,8 @@ export function JourFixForm({
         <Button variant="ghost" onClick={onCancel}>
           Abbrechen
         </Button>
-        <Button type="submit" variant="primary" loading={busy} loadingText="Wird angelegt …" icon={<Repeat className="h-4 w-4" />}>
-          Jour fixe anlegen
+        <Button type="submit" variant="primary" loading={busy} loadingText={initial ? "Wird gespeichert …" : "Wird angelegt …"} icon={<Repeat className="h-4 w-4" />}>
+          {initial ? "Änderungen speichern" : "Jour fixe anlegen"}
         </Button>
       </div>
     </form>
@@ -442,5 +457,30 @@ export function JourFixSection({ customer }: { customer: Customer }) {
         </p>
       </Dialog>
     </section>
+  );
+}
+
+/** Serie aus einem Kalendertermin bearbeiten (Kalender → Termin → „Serie bearbeiten“) */
+export function JourFixEditDialog({ jourFix, attendees, onClose, onSaved }: { jourFix: JourFix | null; attendees?: string[]; onClose: () => void; onSaved: () => void }) {
+  return (
+    <Dialog open={!!jourFix} onClose={onClose} title="Serie bearbeiten" width="max-w-xl">
+      {jourFix && (
+        <div className="flex flex-col gap-3">
+          <p className="-mt-1 text-[13px] text-snow/55">Änderungen gelten für die ganze Serie. Outlook schickt sie an alle Eingeladenen, der Meet-Link bleibt gleich.</p>
+          <JourFixForm key={jourFix.id} start={new Date(jourFix.next ?? jourFix.starts_at)} initial={jourFix} initialAttendees={attendees} onCancel={onClose} onCreated={onSaved} />
+        </div>
+      )}
+    </Dialog>
+  );
+}
+
+/** Jour fixe zu einem Termin finden (über den Meet-Link, sonst den Titel) */
+export function useJourFixFor(event: { recurring?: boolean; joinUrl: string | null; location: string | null; subject: string } | null, enabled: boolean) {
+  const { data } = useResource<JourFix[]>(enabled && event?.recurring ? LIST : null);
+  if (!event?.recurring || !data) return null;
+  return (
+    data.find((j) => j.url && (j.url === event.joinUrl || j.url === event.location)) ??
+    data.find((j) => j.title === event.subject) ??
+    null
   );
 }

@@ -130,6 +130,8 @@ function toJourFix(row: Row): JourFix {
     mailbox: (row.mailbox as string | null) ?? null,
     location: recurrence.location ?? null,
     cancelled_at: (row.cancelled_at as string | null) ?? null,
+    attendees: recurrence.attendees ?? null,
+    video: recurrence.video !== false,
   };
 }
 
@@ -161,7 +163,7 @@ export async function createJourFix(input: JourFixInput, user: { email: string; 
     host_name: user.name,
     customer_id: input.customer_id,
     participants: [],
-    recurrence: { ...recurrence, video: input.video, location: input.video ? null : input.location },
+    recurrence: { ...recurrence, video: input.video, location: input.video ? null : input.location, attendees: input.attendees },
     // Serie mit Ende: Raum bis zum letzten Termin (+ 7 Tage); ohne Ende offen
     valid_until: last ? new Date(last + input.minutes * 60_000).toISOString() : null,
     mailbox: input.mailbox,
@@ -194,6 +196,59 @@ export async function createJourFix(input: JourFixInput, user: { email: string; 
     await db().remove("meetings", row.id).catch((e) => console.error(e));
     throw error;
   }
+}
+
+/** Serie ändern: Titel, Kunde, Teilnehmer, Uhrzeit, Dauer, Rhythmus, Ende,
+ * Ort. Bleibt der Rhythmus (Wochentag) gleich, behält die Serie ihren ersten
+ * Termin und nur die Uhrzeit ändert sich; sonst gilt sie ab dem neuen Beginn.
+ * Outlook schickt die Änderung an alle, der Meet-Link bleibt derselbe. */
+export async function updateJourFix(id: string, input: JourFixInput) {
+  const row = await db().get("meetings", id);
+  if (!row || !row.recurrence) throw new JourFixError("Diesen Jour fixe gibt es nicht.", 404);
+  if (row.cancelled_at) throw new JourFixError("Dieser Jour fixe ist schon beendet.", 409);
+  if (input.video && !meetEnabled() && !DEMO) throw new JourFixError("Video-Calls sind gerade nicht verfügbar.", 503);
+  const old = row.recurrence as SeriesRecurrence;
+  const start = parseLocal(input.start)!;
+  const recurrence = buildRecurrence(start, input.rhythm, input.end);
+  let first = start;
+  if (JSON.stringify(old.pattern) === JSON.stringify(recurrence.pattern) && old.range.startDate < recurrence.range.startDate) {
+    // Gleicher Rhythmus: vergangene Termine bleiben, nur die Uhrzeit wandert mit
+    const kept = parseLocal(`${old.range.startDate}T${localString(start).slice(11, 16)}`);
+    if (kept !== null) {
+      first = kept;
+      recurrence.range = { ...recurrence.range, startDate: old.range.startDate };
+    }
+  }
+  const last = lastOccurrence(recurrence, first);
+  const code = String(row.code);
+  const url = input.video ? meetUrl(code) : null;
+
+  if (!DEMO && row.event_id && row.mailbox) {
+    const path = `${mailboxPath(String(row.mailbox))}/events/${encodeURIComponent(String(row.event_id))}`;
+    await appGraph(path, {
+      method: "PATCH",
+      body: JSON.stringify({
+        subject: input.title,
+        body: { contentType: "HTML", content: bodyHtml(input, rhythmLabel(recurrence, first), url) },
+        start: { dateTime: localString(first), timeZone: "Europe/Berlin" },
+        end: { dateTime: localString(first + input.minutes * 60_000), timeZone: "Europe/Berlin" },
+        location: url ? { displayName: url, locationUri: url } : { displayName: input.location },
+        attendees: input.attendees.map((address) => ({ emailAddress: { address }, type: "required" })),
+        recurrence,
+      }),
+    });
+  }
+
+  return toJourFix(
+    await db().update("meetings", id, {
+      title: input.title,
+      customer_id: input.customer_id,
+      starts_at: new Date(first).toISOString(),
+      ends_at: new Date(first + input.minutes * 60_000).toISOString(),
+      recurrence: { ...recurrence, video: input.video, location: input.video ? null : input.location, attendees: input.attendees },
+      valid_until: last ? new Date(last + input.minutes * 60_000).toISOString() : null,
+    })
+  );
 }
 
 /** Serie beenden: in Outlook endet sie heute (vergangene Termine bleiben,

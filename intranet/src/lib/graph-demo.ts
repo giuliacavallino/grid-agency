@@ -340,12 +340,13 @@ export function addDemoSeries(mailbox: string, jourFix: JourFix) {
 }
 
 /** Vorschau: beendete Serie ab morgen aus dem Kalender nehmen */
-export function endDemoSeries(title: string) {
+export function endDemoSeries(title: string, all = false) {
   const tomorrow = new Date();
   tomorrow.setHours(24, 0, 0, 0);
   for (let i = calendarEvents.length - 1; i >= 0; i--) {
     const e = calendarEvents[i];
-    if (e.recurring && e.subject === title && e.start >= tomorrow) calendarEvents.splice(i, 1);
+    // all: beim Bearbeiten die ganze Serie ersetzen
+    if (e.recurring && e.subject === title && (all || e.start >= tomorrow)) calendarEvents.splice(i, 1);
   }
 }
 

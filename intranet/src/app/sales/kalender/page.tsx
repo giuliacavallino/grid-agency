@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CalendarApp } from "@/components/sales/calendar/calendar";
 import { mailboxesFor } from "@/lib/config";
 
-export const metadata: Metadata = { title: "Kalender" };
+export const metadata: Metadata = { title: "Termine" };
 
 export default function KalenderPage() {
   return <CalendarApp mailboxes={mailboxesFor("sales")} />;

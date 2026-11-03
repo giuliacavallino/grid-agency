@@ -43,24 +43,27 @@ export type NavItem = { href: string; label: string; icon?: LucideIcon; color?: 
 export const SALES_NAV: NavItem[] = [
   { href: "/sales", label: "Pipeline", icon: Columns3, counter: "leads" },
   { href: "/sales/posteingang", label: "Posteingang", icon: Inbox },
-  { href: "/sales/kalender", label: "Kalender", icon: CalendarDays },
+  { href: "/sales/kalender", label: "Termine", icon: CalendarDays },
   { href: "/sales/kunden", label: "Kunden", icon: Building2 },
   { href: "/sales/auftragsbuch", label: "Auftragsbuch", icon: BookOpenCheck },
   { href: "/sales/artikel", label: "Artikel", icon: Package },
-  { href: "/sales/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/sales/analytics", label: "Auswertung", icon: BarChart3 },
 ];
 
+// /finance muss vorne stehen: der erste Eintrag ist die Wurzel (nur exakt aktiv)
 export const FINANCE_NAV: NavItem[] = [
-  { href: "/finance", label: "Eingangsrechnungen", icon: Columns3, counter: "invoices" },
-  { href: "/finance/ausgangsrechnungen", label: "Ausgangsrechnungen", icon: ReceiptText },
+  { href: "/finance", label: "Eingangsrechnungen", icon: BookOpenCheck, counter: "invoices", group: "Arbeiten" },
+  { href: "/finance/kunden", label: "Kunden", icon: Building2, area: "sales" },
+  { href: "/finance/ausgangsrechnungen", label: "Rechnungen", icon: ReceiptText },
+  { href: "/finance/serien", label: "Serien", icon: CalendarDays },
   { href: "/finance/bank", label: "Bank", icon: Landmark, area: "admin" },
-  { href: "/finance/posteingang", label: "Posteingang", icon: Inbox },
+  { href: "/finance/posteingang", label: "Postfach", icon: Inbox },
   { href: "/finance/einstellungen", label: "Einstellungen", icon: Settings, bottom: true },
 ];
 
 export const PERSONAL_NAV: NavItem[] = [
-  { href: "/personal", label: "Bewerbungen", icon: Columns3, counter: "applications" },
-  { href: "/personal/stellen", label: "Stellen", icon: Briefcase },
+  { href: "/personal", label: "Bewerber-Pipeline", icon: Columns3, counter: "applications", group: "Recruiting" },
+  { href: "/personal/stellen", label: "Stellenanzeigen", icon: Briefcase },
 ];
 
 export const MAIL_NAV: NavItem[] = [
