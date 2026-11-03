@@ -240,11 +240,12 @@ export function Hub() {
 
   return (
     <HubFrame fit>
-      <div className="shrink-0">
+      {/* Bündig mit dem Inhalt der Kacheln (gleicher Innenabstand) */}
+      <div className="shrink-0 px-3.5 lg:px-[22px]">
         <p className="mb-1.5 h-4 text-[11px] font-medium uppercase tracking-[0.3em] text-snow/50">
           {now?.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}
         </p>
-          <h1 className="text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
+        <h1 className="text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
           {now ? greeting(now.getHours()) : "Hallo"}, {firstName}
         </h1>
       </div>
