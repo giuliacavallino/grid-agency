@@ -13,6 +13,7 @@ import { accentText } from "@/lib/theme";
 import { useMe } from "@/components/access";
 import { AccountMenu } from "@/components/hub";
 import { TeamsButton } from "@/components/teams";
+import { TopBar } from "@/components/topbar";
 import { Empty, Spinner } from "@/components/ui";
 import { AkteWorkspace, useWorkspaces, WorkspaceLogo, type WorkspaceSummary } from "@/components/marketing/workspace";
 
@@ -99,8 +100,8 @@ function Sidebar({ workspace, onNavigate }: { workspace: WorkspaceSummary; onNav
 
   return (
     <div className="flex h-full flex-col">
-      <Link href="/" onClick={onNavigate} className="mb-4 flex h-8 items-center gap-2 px-3 text-[12.5px] text-snow/55 hover:text-snow">
-        <ArrowLeft className="h-3.5 w-3.5" /> Übersicht
+      <Link href="/" onClick={onNavigate} className="mb-4 inline-flex h-8 items-center gap-1 self-start rounded-full border border-snow/[0.1] bg-surface px-3 text-[13px] font-medium text-snow/75 shadow-[0_2px_8px_var(--shadow-color)] hover:text-snow">
+        <ArrowLeft className="h-3.5 w-3.5" /> Hub
       </Link>
 
       {/* Kunde: rundes Profilbild wie bei Instagram, Ring im GRID-Verlauf */}
@@ -175,6 +176,7 @@ export function AkteShell({ id, children }: { id: string; children: React.ReactN
             <TeamsButton className="h-9 w-9" />
             <AccountMenu />
           </div>
+          <TopBar className="hidden border-b border-snow/[0.06] md:flex" />
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
         </div>
 

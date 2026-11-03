@@ -28,12 +28,15 @@ export function TimeGrid({
   events: CalEvent[];
   colorOf: (event: CalEvent) => string;
   onOpen: (event: CalEvent) => void;
-  onCreate: (start: Date) => void;
+  /** Neuer Termin: Klick (30 Min.) oder Ziehen im 15-Minuten-Raster */
+  onCreate: (start: Date, end?: Date) => void;
   onDay: (day: Date) => void;
 }) {
   const days = Array.from({ length: count }, (_, i) => addDays(start, i));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [now, setNow] = useState(() => new Date());
+  // Aufziehen eines neuen Termins: Tag, Ankerminute, aktuelle Minute
+  const [drag, setDrag] = useState<{ day: Date; anchor: number; current: number; moved: boolean } | null>(null);
 
   // Beim Öffnen auf etwa 8 Uhr scrollen
   useEffect(() => {
@@ -51,12 +54,25 @@ export function TimeGrid({
   const nowTop = (now.getHours() * 60 + now.getMinutes()) * (HOUR / 60);
   const columns = `56px repeat(${count}, minmax(0, 1fr))`;
 
-  function createAt(day: Date, event: React.MouseEvent<HTMLDivElement>) {
+  /** Minute im 15-Minuten-Raster unter dem Zeiger */
+  function minuteAt(event: React.PointerEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect();
-    const minutes = Math.floor(((event.clientY - rect.top) / HOUR) * 2) * 30;
-    const at = new Date(day);
-    at.setHours(0, Math.max(0, Math.min(minutes, 23 * 60 + 30)), 0, 0);
-    onCreate(at);
+    return Math.max(0, Math.min(24 * 60 - 15, Math.floor(((event.clientY - rect.top) / HOUR) * 4) * 15));
+  }
+
+  const at = (day: Date, minutes: number) => {
+    const date = new Date(day);
+    date.setHours(0, minutes, 0, 0);
+    return date;
+  };
+
+  function finishDrag() {
+    if (!drag) return;
+    const from = Math.min(drag.anchor, drag.current);
+    const to = Math.max(drag.anchor, drag.current) + 15;
+    setDrag(null);
+    // Nur geklickt: 30 Minuten ab der Viertelstunde
+    onCreate(at(drag.day, from), at(drag.day, drag.moved ? to : from + 30));
   }
 
   return (
@@ -137,9 +153,32 @@ export function TimeGrid({
             return (
               <div
                 key={day.toISOString()}
-                className="relative border-l border-snow/[0.08]"
-                onDoubleClick={(event) => createAt(day, event)}
+                className="relative border-l border-snow/[0.08] select-none"
+                onPointerDown={(event) => {
+                  if (event.button !== 0) return;
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  const minute = minuteAt(event);
+                  setDrag({ day, anchor: minute, current: minute, moved: false });
+                }}
+                onPointerMove={(event) => {
+                  if (!drag || !sameDay(drag.day, day)) return;
+                  const minute = minuteAt(event);
+                  if (minute !== drag.current) setDrag({ ...drag, current: minute, moved: true });
+                }}
+                onPointerUp={finishDrag}
+                onPointerCancel={() => setDrag(null)}
               >
+                {drag && sameDay(drag.day, day) && (
+                  <span
+                    className="pointer-events-none absolute inset-x-0.5 z-[2] rounded-[6px] border-2 border-dashed border-snow/40 bg-snow/[0.08] px-1.5 py-0.5 text-[11px] font-semibold text-snow/70"
+                    style={{
+                      top: (Math.min(drag.anchor, drag.current) * HOUR) / 60,
+                      height: ((Math.abs(drag.current - drag.anchor) + 15) * HOUR) / 60,
+                    }}
+                  >
+                    {time(at(day, Math.min(drag.anchor, drag.current)))}–{time(at(day, Math.max(drag.anchor, drag.current) + 15))}
+                  </span>
+                )}
                 {HOURS.slice(1).map((h) => (
                   <span key={h} className="pointer-events-none absolute inset-x-0 border-t border-snow/[0.07]" style={{ top: h * HOUR }} />
                 ))}
@@ -151,7 +190,8 @@ export function TimeGrid({
                       key={event.id}
                       type="button"
                       onClick={() => onOpen(event)}
-                      onDoubleClick={(e) => e.stopPropagation()}
+                      // Klick auf einen Termin legt keinen neuen an
+                      onPointerDown={(e) => e.stopPropagation()}
                       className="absolute z-[1] flex flex-col items-stretch justify-start overflow-hidden rounded-[6px] border-l-[3px] px-1.5 py-0.5 text-left text-[12px] leading-tight hover:z-[2] hover:shadow-[0_4px_14px_var(--shadow-color)]"
                       style={{
                         top: (top * HOUR) / 60 + 1,

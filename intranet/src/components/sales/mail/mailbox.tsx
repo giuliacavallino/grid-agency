@@ -339,7 +339,7 @@ export function Mailbox({ mailboxes }: { mailboxes: string[] }) {
                         })
                       }
                       aria-expanded={!closed}
-                      className="flex h-9 w-full items-center gap-2 rounded-xl px-2 text-left text-[13px] font-semibold text-snow/80 hover:bg-snow/[0.05]"
+                      className="mb-1 flex h-10 w-full items-center gap-2 rounded-xl bg-snow/[0.08] px-2.5 text-left text-[13px] font-semibold text-snow/85 hover:bg-snow/[0.12]"
                     >
                       <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform", closed && "-rotate-90")} />
                       <User className="h-4 w-4 shrink-0" />
