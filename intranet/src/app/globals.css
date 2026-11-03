@@ -159,6 +159,27 @@ body {
   box-shadow: 0 10px 34px rgb(250 126 30 / 0.3);
 }
 
+/* Runder Avatar mit Ring im GRID-Verlauf (wie eine Instagram-Story); läuft beim Hover */
+.avatar-ring {
+  display: inline-block;
+  background-image: var(--aurora);
+  background-size: 200% 100%;
+}
+.group:hover .avatar-ring,
+.avatar-ring:hover {
+  animation: rainbow-slide 1.4s linear infinite;
+}
+
+/* Kachel-Symbol in der Übersicht: beim Hover im GRID-Verlauf statt schwarz */
+.group:hover .tile-glow {
+  background-image: var(--aurora);
+  background-size: 200% 100%;
+  border-color: transparent;
+  color: #fff;
+  animation: rainbow-slide 1.6s linear infinite;
+  box-shadow: 0 8px 26px rgb(250 126 30 / 0.3);
+}
+
 /* GRID-Wortmarke: Aurora läuft beim Hover durch die Buchstaben */
 .logo-rainbow {
   position: relative;

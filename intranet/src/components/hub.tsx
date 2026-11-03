@@ -280,7 +280,7 @@ export function Hub() {
                 area={area}
                 className="glass group relative flex h-full flex-col overflow-hidden rounded-3xl p-3.5 transition-[transform,border-color,box-shadow] duration-250 hover:-translate-y-[3px] hover:border-snow/30 hover:shadow-[inset_0_1px_0_var(--glass-shine),0_14px_40px_var(--shadow-strong)] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-snow lg:p-[22px]"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] border border-snow/12 bg-snow/10 transition-colors group-hover:bg-snow group-hover:text-sky lg:h-11 lg:w-11 lg:rounded-[14px]">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] border border-snow/12 bg-snow/10 transition-colors tile-glow lg:h-11 lg:w-11 lg:rounded-[14px]">
                   <Icon className="h-[19px] w-[19px] lg:h-[22px] lg:w-[22px]" strokeWidth={1.8} />
                 </span>
                 <ArrowUpRight className="absolute top-3.5 right-3.5 h-[18px] w-[18px] opacity-40 transition-[opacity,transform] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100 lg:top-[22px] lg:right-[22px]" />

@@ -70,18 +70,20 @@ export function WorkspaceDot({ color, className }: { color: string; className?: 
 
 /** Logo der Kundenwelt (CI), sonst ein Punkt in ihrer Farbe */
 export function WorkspaceLogo({ workspace, size = 20, wide = false, box = false }: { workspace: Pick<Workspace, "logo_url" | "color" | "name">; size?: number; wide?: boolean; box?: boolean }) {
-  // box: feste Fläche (doppelt so breit wie hoch), damit Quer- und Hochformat-Logos in Listen gleich wirken
+  // box: runder Avatar wie bei Instagram, mit Ring im GRID-Verlauf (Aurora) statt CI-Farben
   if (box) {
     return (
-      <span className="grid shrink-0 place-items-center overflow-hidden rounded-md bg-white" style={{ width: size * 2, height: size, boxShadow: "0 0 0 1px color-mix(in srgb, var(--color-snow) 12%, transparent)" }}>
-        {workspace.logo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- Logo aus dem Storage
-          <img src={workspace.logo_url} alt={workspace.name} className="max-h-full max-w-full object-contain p-[3px]" />
-        ) : (
-          <span className="grid h-full w-full place-items-center text-[10px] font-semibold text-white" style={{ background: workspace.color }} aria-hidden>
-            {workspace.name.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 2).toUpperCase()}
-          </span>
-        )}
+      <span className="avatar-ring shrink-0 rounded-full p-[2px]" style={{ width: size, height: size }}>
+        <span className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-white bg-white">
+          {workspace.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Logo aus dem Storage
+            <img src={workspace.logo_url} alt={workspace.name} className="h-full w-full object-contain p-[14%]" />
+          ) : (
+            <span className="text-[10px] font-semibold tracking-wide text-black/55" aria-hidden>
+              {workspace.name.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 2).toUpperCase()}
+            </span>
+          )}
+        </span>
       </span>
     );
   }
@@ -144,12 +146,11 @@ export function WorkspaceSwitcher({ className, compact = false, onPick }: { clas
           aria-expanded={open}
           aria-label="Kundenwelt wechseln"
           className={clsx(
-            "flex h-9 max-w-[220px] items-center gap-2 rounded-full border bg-snow/[0.06] pr-2.5 pl-2.5 text-[13.5px] font-medium transition-colors hover:bg-snow/[0.12]",
+            "group flex h-9 max-w-[220px] items-center gap-2 rounded-full border border-snow/12 bg-snow/[0.06] pr-2.5 pl-1 text-[13.5px] font-medium transition-colors hover:bg-snow/[0.12]",
             className
           )}
-          style={{ borderColor: workspace.kind === "customer" ? workspace.color : "color-mix(in srgb, var(--color-snow) 12%, transparent)" }}
         >
-          <WorkspaceLogo workspace={workspace} size={22} box />
+          <WorkspaceLogo workspace={workspace} size={26} box />
           {!compact && <span className="truncate">{workspace.name}</span>}
           <ChevronDown className="h-4 w-4 shrink-0 text-snow/60" />
         </button>
@@ -169,9 +170,9 @@ export function WorkspaceSwitcher({ className, compact = false, onPick }: { clas
                   else select(w.id);
                   close();
                 }}
-                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[14px] hover:bg-snow/[0.08]"
+                className="group flex w-full items-center gap-3 rounded-xl px-2.5 py-1.5 text-left text-[14px] hover:bg-snow/[0.08]"
               >
-                <WorkspaceLogo workspace={w} size={28} box />
+                <WorkspaceLogo workspace={w} size={34} box />
                 <span className="flex-1 truncate">{w.name}</span>
                 {w.id === workspace.id && <Check className="h-4 w-4 text-snow/70" />}
               </button>
