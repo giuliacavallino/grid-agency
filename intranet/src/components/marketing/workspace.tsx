@@ -69,13 +69,27 @@ export function WorkspaceDot({ color, className }: { color: string; className?: 
 }
 
 /** Logo der Kundenwelt (CI), sonst ein Punkt in ihrer Farbe */
-export function WorkspaceLogo({ workspace, size = 20, wide = false, box = false }: { workspace: Pick<Workspace, "logo_url" | "color" | "name">; size?: number; wide?: boolean; box?: boolean }) {
-  // box: runder Avatar wie bei Instagram, mit Ring im GRID-Verlauf (Aurora) statt CI-Farben
+export function WorkspaceLogo({
+  workspace,
+  size = 20,
+  wide = false,
+  box = false,
+}: {
+  workspace: Pick<Workspace, "logo_url" | "color" | "name"> & { avatar_url?: string | null };
+  size?: number;
+  wide?: boolean;
+  box?: boolean;
+}) {
+  // box: runder Avatar wie bei Instagram, mit Ring im GRID-Verlauf (Aurora) statt CI-Farben.
+  // Mit Profilbild füllt es den Kreis, sonst steht das Logo mit Luft darin.
   if (box) {
     return (
       <span className="avatar-ring shrink-0 rounded-full p-[2px]" style={{ width: size, height: size }}>
         <span className="grid h-full w-full place-items-center overflow-hidden rounded-full border-2 border-white bg-white">
-          {workspace.logo_url ? (
+          {workspace.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Profilbild aus dem Storage
+            <img src={workspace.avatar_url} alt={workspace.name} className="h-full w-full object-cover" />
+          ) : workspace.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element -- Logo aus dem Storage
             <img
               src={workspace.logo_url}

@@ -13,6 +13,8 @@ export type Workspace = {
   color: string;
   secondary_color: string | null;
   logo_url: string | null;
+  /** Profilbild wie bei Instagram (rund im Hub), getrennt vom Logo für Grafiken */
+  avatar_url: string | null;
   project_id: string | null;
   customer_id: string | null;
   archived: boolean;
