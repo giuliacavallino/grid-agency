@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { Clock, LoaderCircle, Play, Square, Trash2 } from "lucide-react";
 import { useCan } from "@/components/access";
-import { Button, IconButton, Input, Popover, Select, Spinner, useToast } from "@/components/ui";
+import { CustomerPicker } from "@/components/customer-picker";
+import { Button, IconButton, Input, Popover, Spinner, useToast } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/cn";
@@ -215,14 +216,7 @@ function StartForm() {
   return (
     <form onSubmit={start} className="flex flex-col gap-2">
       {canSales && (
-        <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)} aria-label="Kunde">
-          <option value="">Ohne Kunde</option>
-          {active.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
+        <CustomerPicker value={customerId} onChange={setCustomerId} customers={active} text={note} />
       )}
       <Input
         value={note}

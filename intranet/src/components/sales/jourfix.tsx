@@ -22,6 +22,7 @@ import {
   type Rhythm,
 } from "@/lib/jourfix";
 import type { Customer } from "@/lib/sales/types";
+import { CustomerPicker } from "@/components/customer-picker";
 import { Button, Dialog, Field, Input, Select, Spinner, useToast } from "@/components/ui";
 import { useTeam } from "@/components/access";
 
@@ -227,18 +228,7 @@ export function JourFixForm({
         {(id) => <Input id={id} value={shownTitle} onChange={(e) => setTitle(e.target.value)} />}
       </Field>
       <Field label="Kunde" className="col-span-2 sm:col-span-1">
-        {(id) => (
-          <Select id={id} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-            <option value="">Ohne Kunde</option>
-            {(customers ?? [])
-              .filter((c) => c.status !== "ehemalig" || c.id === customerId)
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-          </Select>
-        )}
+        {(id) => <CustomerPicker id={id} value={customerId} onChange={setCustomerId} customers={customers ?? []} emails={shownAttendees} text={title ?? ""} />}
       </Field>
       <Field label="Organisator-Postfach" className="col-span-2 sm:col-span-1">
         {(id) => (
