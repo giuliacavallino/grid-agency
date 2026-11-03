@@ -160,6 +160,7 @@ function DocumentList({ docs, loading, error, customers, show, create }: ListPro
   const [sort, setSort] = useState<{ key: DocSort; dir: SortDir }>({ key: "date", dir: -1 });
   const toggleSort = (key: DocSort) => setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "customer" ? 1 : -1 }));
   const canSales = useCan("sales");
+  const [now] = useState(() => Date.now());
 
   const all = useMemo(() => (docs ?? []).filter((d) => d.kind !== "serie"), [docs]);
   const byId = useMemo(() => new Map(all.map((d) => [d.id, d])), [all]);
@@ -178,11 +179,12 @@ function DocumentList({ docs, loading, error, customers, show, create }: ListPro
   }, [all, group, year]);
 
   const invoiceLike = group === "rechnungen" || group === "alle";
-  const filters = invoiceLike ? INVOICE_FILTERS : statusFilters(inGroup);
+  const filters = useMemo(() => (invoiceLike ? INVOICE_FILTERS : statusFilters(inGroup)), [invoiceLike, inGroup]);
   const active = filters.find((f) => f.id === filter) ?? filters[0];
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const test = (filters.find((f) => f.id === filter) ?? filters[0]).test;
     const value = (d: BillingDocument) =>
       ({
         number: d.number ?? "",
@@ -192,16 +194,16 @@ function DocumentList({ docs, loading, error, customers, show, create }: ListPro
         due: d.due_date,
       })[sort.key];
     return inGroup
-      .filter(active.test)
+      .filter(test)
       .filter((d) => !q || [d.number, d.title, d.customer_name, d.customer_id && customers?.get(d.customer_id)?.customer_number].some((v) => v?.toLowerCase().includes(q)))
       .sort((a, b) => compare(value(a), value(b), sort.dir) || compare(a.number, b.number, -1));
-  }, [inGroup, active, query, sort, customers]);
+  }, [inGroup, filters, filter, query, sort, customers]);
 
   const stats = useMemo(() => {
     const invoices = all.filter((d) => d.kind === "rechnung");
     const openInvoices = invoices.filter((d) => d.status === "offen" || d.status === "teilbezahlt");
     const late = openInvoices.filter(isOverdue);
-    const since = new Date(Date.now() - 30 * DAY).toISOString().slice(0, 10);
+    const since = new Date(now - 30 * DAY).toISOString().slice(0, 10);
     const paid = invoices.filter((d) => d.paid_at && d.paid_at.slice(0, 10) >= since);
     const thisYear = String(new Date().getFullYear());
     return {
@@ -217,7 +219,7 @@ function DocumentList({ docs, loading, error, customers, show, create }: ListPro
         .filter((d) => REVENUE_KINDS.includes(d.kind) && d.status !== "entwurf" && d.document_date?.startsWith(thisYear))
         .reduce((sum, d) => sum + d.amount_net, 0),
     };
-  }, [all]);
+  }, [all, now]);
 
   const pick = (g: ListGroup, f = "alle") => {
     setGroup(g);
@@ -340,7 +342,7 @@ function DocumentList({ docs, loading, error, customers, show, create }: ListPro
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((d) => {
+                  {rows.map((d, index) => {
                     const customer = d.customer_id ? customers?.get(d.customer_id) : undefined;
                     const linked = refs.get(d.id) ?? [];
                     const corrections = linked.filter((r) => ["storno", "storno_gutschrift", "gutschrift"].includes(r.kind));
@@ -351,11 +353,11 @@ function DocumentList({ docs, loading, error, customers, show, create }: ListPro
                     return (
                       <tr key={d.id} onClick={() => show(d.id)} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && show(d.id)} className={rowClass}>
                         <td className={cn(tdClass, "w-10 pr-0")} onClick={(e) => e.stopPropagation()}>
-                          <RowMenu doc={d} onOpen={() => show(d.id)} canSales={canSales} />
+                          <RowMenu doc={d} onOpen={() => show(d.id)} canSales={canSales} up={rows.length > 3 && index >= rows.length - 2} />
                         </td>
                         <td className={cn(tdClass, "pl-2 whitespace-nowrap")}>
                           <span className="font-medium tabular-nums underline decoration-snow/30 underline-offset-[3px]">{docLabel(d)}</span>
-                          {showKind && <span className="block text-[12px] text-snow/45">{KIND_LABEL[d.kind]}</span>}
+                          {showKind && d.kind !== "rechnung" && <span className="block text-[12px] text-snow/45">{KIND_LABEL[d.kind]}</span>}
                         </td>
                         {invoiceLike && (
                           <td className={cn(tdClass, "whitespace-nowrap text-snow/60 tabular-nums")}>
@@ -447,12 +449,13 @@ function DocumentList({ docs, loading, error, customers, show, create }: ListPro
 }
 
 /** ⋮-Menü einer Zeile: öffnen, PDF, Kunde */
-function RowMenu({ doc, onOpen, canSales }: { doc: BillingDocument; onOpen: () => void; canSales: boolean }) {
+function RowMenu({ doc, onOpen, canSales, up }: { doc: BillingDocument; onOpen: () => void; canSales: boolean; up?: boolean }) {
   const toast = useToast();
   const [opening, setOpening] = useState(false);
   return (
     <Popover
       align="left"
+      side={up ? "top" : "bottom"}
       trigger={({ toggle, open }) => (
         <IconButton label="Aktionen" onClick={toggle} active={open} className="rounded-full text-snow/45">
           <MoreVertical className="h-4 w-4" />

@@ -7,7 +7,7 @@ import { updateRow, useRows } from "@/lib/data";
 import { DOMAIN } from "@/lib/config";
 import type { Application, JobPosting } from "@/lib/sales/types";
 import { Empty, Spinner, useToast } from "@/components/ui";
-import { PageBar } from "@/components/sales/shell";
+import { PILL } from "@/components/sales/pipeline";
 
 const JOBS_URL = `https://${DOMAIN}/jobs`;
 
@@ -20,17 +20,22 @@ export function JobPostings() {
   const active = jobs?.filter((j) => j.active).length ?? 0;
 
   return (
-    <div className="flex h-full flex-col">
-      <PageBar title="Stellen" meta={jobs && `${active} von ${jobs.length} gesucht`}>
+    <div className="flex h-full flex-col bg-sky">
+      <h1 className="sr-only">Stellenanzeigen</h1>
+      <div className="flex shrink-0 flex-wrap items-center gap-3 px-4 pt-1 pb-4 md:px-6">
+        <p className="text-[15px] text-snow/55">
+          <strong className="mr-1 text-[22px] font-semibold text-snow tabular-nums">{jobs ? active : "–"}</strong>
+          {jobs ? `von ${jobs.length} gesucht` : "gesucht"}
+        </p>
         <a
           href={JOBS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-snow/15 bg-snow/[0.06] px-4 text-sm font-medium hover:bg-snow/12"
+          className={clsx(PILL, "ml-auto inline-flex h-10 items-center gap-2 px-4 text-[13.5px] font-medium text-snow/80 hover:text-snow")}
         >
           <ExternalLink className="h-4 w-4" /> Jobseite ansehen
         </a>
-      </PageBar>
+      </div>
 
       {error ? (
         <Empty title="Stellen konnten nicht geladen werden" text={error.message} />
@@ -39,12 +44,12 @@ export function JobPostings() {
           <Spinner />
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-4 md:p-5">
+        <div className="flex-1 overflow-y-auto px-4 pb-6 md:px-6">
           <p className="mb-4 max-w-2xl text-[13px] text-snow/55">
             Alle Stellen stehen immer auf der Jobseite und im Bewerbungsformular. Was wir gerade suchen, bekommt dort den grünen
-            Chip „Wird gesucht“. Neue Bewerbungen landen als Karte unter Bewerbungen.
+            Chip „Wird gesucht“. Neue Bewerbungen landen als Karte in der Bewerber-Pipeline.
           </p>
-          <ul className="grid max-w-2xl gap-2">
+          <ul className="grid max-w-3xl gap-2.5">
             {jobs?.map((job) => (
               <JobRow key={job.id} job={job} count={applications?.filter((a) => a.job_slug === job.slug).length ?? 0} />
             ))}
@@ -71,7 +76,7 @@ function JobRow({ job, count }: { job: JobPosting; count: number }) {
   }
 
   return (
-    <li className="flex items-center gap-4 rounded-2xl border border-snow/[0.06] bg-surface px-4 py-3.5">
+    <li className="flex items-center gap-4 rounded-3xl border border-snow/[0.07] bg-surface px-5 py-4 shadow-[0_4px_18px_var(--shadow-color)]">
       <div className="min-w-0 flex-1">
         <p className={clsx("truncate text-[15px] font-medium", !job.active && "text-snow/60")}>{job.title}</p>
         <p className="text-[12px] text-snow/45">

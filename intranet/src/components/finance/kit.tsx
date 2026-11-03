@@ -151,8 +151,8 @@ export function Missing({ children = "fehlt" }: { children?: React.ReactNode }) 
 }
 
 /** Kopfzelle: klein, versal, gesperrt, grau */
-export const thClass = "px-3 py-3.5 text-left text-[11px] font-semibold tracking-[0.1em] whitespace-nowrap text-snow/45 uppercase first:pl-6 last:pr-6";
-export const tdClass = "px-3 py-3.5 first:pl-6 last:pr-6";
+export const thClass = "px-2.5 py-3.5 text-left text-[11px] font-semibold tracking-[0.1em] whitespace-nowrap text-snow/45 uppercase first:pl-6 last:pr-6";
+export const tdClass = "px-2.5 py-3.5 first:pl-6 last:pr-6";
 export const rowClass = "cursor-pointer border-t border-snow/[0.06] outline-none transition-colors hover:bg-snow/[0.025] focus-visible:bg-snow/[0.04]";
 
 export type SortDir = 1 | -1;

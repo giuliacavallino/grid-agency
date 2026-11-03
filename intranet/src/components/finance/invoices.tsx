@@ -15,7 +15,6 @@ import {
   Landmark,
   Maximize2,
   Plus,
-  Search,
   Send,
   Undo2,
   X,

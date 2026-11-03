@@ -246,7 +246,7 @@ export function FilterOption({ selected, onClick, color, children }: { selected:
 
 /** Spalte als hohe weiße Karte (Pipeline und Bewerber-Pipeline) */
 export const COLUMN_CLASS =
-  "flex w-[82vw] max-w-[340px] shrink-0 snap-start flex-col rounded-3xl border border-snow/[0.07] bg-surface shadow-[0_4px_18px_var(--shadow-color)] transition-[box-shadow,border-color] md:w-auto md:max-w-none md:min-w-[250px] md:flex-1";
+  "flex w-[82vw] max-w-[340px] shrink-0 snap-start flex-col rounded-3xl border border-snow/[0.07] bg-surface shadow-[0_4px_18px_var(--shadow-color)] transition-[box-shadow,border-color] md:w-auto md:max-w-none md:min-w-[228px] md:flex-1";
 export const COLUMN_OVER_CLASS = "border-snow/25 shadow-[0_8px_28px_var(--shadow-strong)]";
 
 export function ColumnHeader({
