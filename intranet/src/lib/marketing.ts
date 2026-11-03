@@ -20,7 +20,126 @@ export type Workspace = {
   archived: boolean;
   /** Ordner in SharePoint für Bilder, Videos usw. */
   sharepoint_url: string | null;
+  /** Hinterlegte Profil-Links je Plattform (auch ohne Verbindung) */
+  profiles: ProfileLinks;
 };
+
+// ---------- Profile der Kanäle (Kachel im Cockpit) ----------
+
+export type ProfileLinks = Partial<Record<PostProvider, string>>;
+
+export const PROFILE_PROVIDERS: PostProvider[] = ["instagram", "tiktok", "facebook", "linkedin"];
+
+export type ChannelProfile = {
+  name: string;
+  handle: string | null;
+  avatar: string | null;
+  followers?: number;
+  following?: number;
+  posts?: number;
+  bio?: string;
+  url: string | null;
+};
+
+export type ProfilePost = {
+  id: string;
+  image: string | null;
+  caption: string;
+  url: string | null;
+  date: string | null;
+  type: "image" | "video" | "carousel" | "text";
+  likes?: number;
+  comments?: number;
+};
+
+export type ProfileResponse = {
+  connected: boolean;
+  url: string | null;
+  profile?: ChannelProfile;
+  posts?: ProfilePost[];
+  /** Was nicht geladen werden konnte (z. B. fehlende Rechte) */
+  error?: string;
+};
+
+const HANDLE: Record<PostProvider, RegExp> = {
+  instagram: /^[a-z0-9._]{1,30}$/i,
+  tiktok: /^[a-z0-9._]{2,24}$/i,
+  facebook: /^[a-z0-9.\-]{2,80}$/i,
+  linkedin: /^[a-z0-9\-_.]{2,100}$/i,
+};
+
+const HOSTS: Record<PostProvider, string[]> = {
+  instagram: ["instagram.com"],
+  tiktok: ["tiktok.com"],
+  facebook: ["facebook.com", "fb.com"],
+  linkedin: ["linkedin.com"],
+};
+
+/** Pfade, die kein Profil sind (z. B. instagram.com/p/…) */
+const RESERVED: Record<PostProvider, string[]> = {
+  instagram: ["p", "reel", "reels", "explore", "stories", "accounts", "direct", "tv"],
+  tiktok: [],
+  facebook: ["share", "groups", "events", "watch", "marketplace", "login", "pages", "photo", "story.php", "permalink.php"],
+  linkedin: [],
+};
+
+const canonical = (provider: PostProvider, handle: string, kind = "company") =>
+  provider === "instagram"
+    ? `https://www.instagram.com/${handle}/`
+    : provider === "tiktok"
+      ? `https://www.tiktok.com/@${handle}`
+      : provider === "facebook"
+        ? `https://www.facebook.com/${handle}`
+        : `https://www.linkedin.com/${kind}/${handle}/`;
+
+/** Profil-Link oder Name („@name“, „name“) in eine feste https-Adresse der
+ * Plattform umwandeln; null, wenn es kein gültiges Profil ist. */
+export function profileUrl(provider: PostProvider, input: string): string | null {
+  const value = input.trim();
+  if (!value || value.length > 300) return null;
+  const looksLikeUrl = /^[a-z]+:\/\//i.test(value) || /^([a-z0-9-]+\.)*[a-z0-9-]+\.[a-z]{2,}\//i.test(value);
+  if (!looksLikeUrl) {
+    const handle = value.replace(/^@/, "");
+    return HANDLE[provider].test(handle) && !RESERVED[provider].includes(handle.toLowerCase()) ? canonical(provider, handle) : null;
+  }
+  let url: URL;
+  try {
+    url = new URL(/^[a-z]+:\/\//i.test(value) ? value : `https://${value}`);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  const host = url.hostname.toLowerCase();
+  if (!HOSTS[provider].some((h) => host === h || host.endsWith(`.${h}`))) return null;
+  const parts = url.pathname.split("/").filter(Boolean);
+  if (provider === "facebook" && parts[0] === "profile.php") {
+    const id = url.searchParams.get("id");
+    return id && /^\d{3,25}$/.test(id) ? `https://www.facebook.com/profile.php?id=${id}` : null;
+  }
+  if (provider === "linkedin") {
+    const [kind, slug] = parts;
+    if (!["company", "school", "showcase", "in"].includes(kind ?? "") || !slug || !HANDLE.linkedin.test(slug)) return null;
+    return canonical(provider, slug, kind);
+  }
+  const first = parts[0] ?? "";
+  const handle = provider === "tiktok" ? (first.startsWith("@") ? first.slice(1) : "") : first;
+  if (!HANDLE[provider].test(handle) || RESERVED[provider].includes(handle.toLowerCase())) return null;
+  return canonical(provider, handle);
+}
+
+/** Kurzer Name aus einem Profil-Link, z. B. „@baeckerei“ */
+export function profileHandle(provider: PostProvider, url: string) {
+  try {
+    const { pathname, searchParams } = new URL(url);
+    const parts = pathname.split("/").filter(Boolean);
+    if (provider === "linkedin") return parts[1] ?? null;
+    if (provider === "facebook" && parts[0] === "profile.php") return searchParams.get("id");
+    const first = parts[0]?.replace(/^@/, "");
+    return first ? `@${first}` : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Verbundenes Konto, so wie der Browser es sieht (ohne Tokens) */
 export type SocialAccount = {

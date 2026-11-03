@@ -1,6 +1,7 @@
 import "server-only";
 import { callbackUrl, expiresSoon, inSeconds, readJson } from "./oauth";
-import type { PublishInput, PublishOutput } from "./meta";
+import type { ChannelProfile, ProfilePost } from "@/lib/marketing";
+import type { ProfileRead, PublishInput, PublishOutput } from "./meta";
 import { accountRefreshToken, accountToken, markAccountError, saveAccount, updateTokens, type AccountRow } from "./store";
 
 // LinkedIn Community Management API: Posts auf Unternehmensseiten. Braucht
@@ -147,4 +148,92 @@ export async function publishLinkedin(account: AccountRow, input: PublishInput):
   if (!response.ok) await readJson(response, "LinkedIn");
   const id = response.headers.get("x-restli-id") ?? response.headers.get("x-linkedin-id") ?? "";
   return { remote_id: id, url: id ? `https://www.linkedin.com/feed/update/${id}` : undefined };
+}
+
+// ---------- Profil lesen (Cockpit-Kachel) ----------
+
+const getJson = async <T>(token: string, path: string, extra: Record<string, string> = {}) =>
+  readJson<T>(await fetch(`${REST}${path}`, { headers: { ...headers(token), ...extra } }), "LinkedIn");
+
+/** Download-Adresse zu einer Bild- oder Video-URN (Vorschaubild); sonst null */
+async function mediaUrl(token: string, urn: string | undefined): Promise<string | null> {
+  if (!urn) return null;
+  try {
+    if (urn.startsWith("urn:li:video:")) return (await getJson<{ thumbnail?: string }>(token, `/videos/${encodeURIComponent(urn)}`)).thumbnail ?? null;
+    const image = urn.replace("urn:li:digitalmediaAsset:", "urn:li:image:");
+    if (!image.startsWith("urn:li:image:")) return null;
+    return (await getJson<{ downloadUrl?: string }>(token, `/images/${encodeURIComponent(image)}`)).downloadUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** LinkedIn-Formatierung in lesbaren Text: Hashtags, Erwähnungen, Escapes */
+const plainCommentary = (text: string) =>
+  text
+    .replace(/\{hashtag\|\\?#\|([^}]+)\}/g, "#$1")
+    .replace(/@\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/\\([()[\]{}<>@|~_*\\#])/g, "$1");
+
+type LinkedinPost = {
+  id: string;
+  commentary?: string;
+  publishedAt?: number;
+  createdAt?: number;
+  content?: {
+    media?: { id?: string };
+    multiImage?: { images?: { id?: string }[] };
+    article?: { thumbnail?: string; title?: string };
+  };
+};
+
+/** Unternehmensseite: Name, Logo, Follower und die letzten 12 Posts
+ * (r_organization_social, rw_organization_admin) */
+export async function readLinkedin(account: AccountRow): Promise<ProfileRead> {
+  const token = await accessToken(account);
+  const orgUrn = account.external_id;
+  const orgId = orgUrn.split(":").pop()!;
+  const vanity = account.handle?.split("/").pop() ?? null;
+  const profile: ChannelProfile = { name: account.name, handle: vanity, avatar: account.avatar_url, url: vanity ? `https://www.linkedin.com/company/${vanity}/` : null };
+  const errors: string[] = [];
+  try {
+    const org = await getJson<{ localizedName?: string; vanityName?: string; localizedDescription?: string; logoV2?: { original?: string; cropped?: string } }>(token, `/organizations/${orgId}`);
+    Object.assign(profile, {
+      name: org.localizedName ?? profile.name,
+      handle: org.vanityName ?? profile.handle,
+      avatar: (await mediaUrl(token, org.logoV2?.cropped ?? org.logoV2?.original)) ?? profile.avatar,
+      bio: org.localizedDescription || undefined,
+      url: org.vanityName ? `https://www.linkedin.com/company/${org.vanityName}/` : profile.url,
+    });
+  } catch (error) {
+    errors.push(`Seite: ${error instanceof Error ? error.message : "Fehler"}`);
+  }
+  try {
+    const size = await getJson<{ firstDegreeSize?: number }>(token, `/networkSizes/${encodeURIComponent(orgUrn)}?edgeType=COMPANY_FOLLOWED_BY_MEMBER`);
+    profile.followers = size.firstDegreeSize;
+  } catch {
+    // Follower sind optional
+  }
+  let posts: ProfilePost[] = [];
+  try {
+    const feed = await getJson<{ elements?: LinkedinPost[] }>(token, `/posts?author=${encodeURIComponent(orgUrn)}&q=author&count=12&sortBy=LAST_MODIFIED`, { "X-RestLi-Method": "FINDER" });
+    posts = await Promise.all(
+      (feed.elements ?? []).map(async (p) => {
+        const content = p.content ?? {};
+        const urn = content.media?.id ?? content.multiImage?.images?.[0]?.id ?? content.article?.thumbnail;
+        const time = p.publishedAt ?? p.createdAt;
+        return {
+          id: p.id,
+          image: await mediaUrl(token, urn),
+          caption: plainCommentary(p.commentary ?? content.article?.title ?? ""),
+          url: `https://www.linkedin.com/feed/update/${p.id}`,
+          date: time ? new Date(time).toISOString() : null,
+          type: content.media?.id?.startsWith("urn:li:video:") ? "video" : content.multiImage ? "carousel" : urn ? "image" : "text",
+        } satisfies ProfilePost;
+      })
+    );
+  } catch (error) {
+    errors.push(`Posts: ${error instanceof Error ? error.message : "Fehler"}`);
+  }
+  return { profile, posts, error: errors.length ? errors.join(" · ") : undefined };
 }

@@ -1,7 +1,8 @@
 import "server-only";
 import { readMedia } from "./media";
 import { callbackUrl, expiresSoon, inSeconds, readJson } from "./oauth";
-import type { PublishInput, PublishOutput } from "./meta";
+import type { ChannelProfile, ProfilePost } from "@/lib/marketing";
+import type { ProfileRead, PublishInput, PublishOutput } from "./meta";
 import { accountRefreshToken, accountToken, markAccountError, saveAccount, updateTokens, type AccountRow } from "./store";
 
 // TikTok Content Posting API: Videos und Foto-Posts direkt aufs Konto.
@@ -12,7 +13,9 @@ import { accountRefreshToken, accountToken, markAccountError, saveAccount, updat
 // https://developers.tiktok.com/doc/content-posting-api-get-started
 
 const API = "https://open.tiktokapis.com/v2";
-const SCOPES = "user.info.basic,video.publish,video.upload";
+// user.info.profile/stats und video.list fürs Profil im Cockpit; gelten erst
+// für neue Verbindungen und müssen in der TikTok-App freigeschaltet sein.
+const SCOPES = "user.info.basic,user.info.profile,user.info.stats,video.list,video.publish,video.upload";
 
 export const tiktokConfigured = () => !!process.env.TIKTOK_CLIENT_KEY && !!process.env.TIKTOK_CLIENT_SECRET;
 
@@ -136,4 +139,81 @@ export async function publishTiktok(account: AccountRow, input: PublishInput): P
       });
   // TikTok verarbeitet asynchron; publish_id dient zum Nachverfolgen
   return { remote_id: result.publish_id };
+}
+
+// ---------- Profil lesen (Cockpit-Kachel) ----------
+
+type TiktokUser = {
+  open_id?: string;
+  display_name?: string;
+  avatar_url?: string;
+  username?: string;
+  bio_description?: string;
+  profile_deep_link?: string;
+  follower_count?: number;
+  following_count?: number;
+  video_count?: number;
+};
+
+/** Profil und die letzten 12 Videos. Ältere Verbindungen haben nur
+ * user.info.basic: dann gibt es Name und Bild, der Rest fehlt mit Hinweis. */
+export async function readTiktok(account: AccountRow): Promise<ProfileRead> {
+  const token = await accessToken(account);
+  const handle = account.handle?.replace(/^@/, "") ?? null;
+  const profile: ChannelProfile = { name: account.name, handle: account.handle, avatar: account.avatar_url, url: handle ? `https://www.tiktok.com/@${handle}` : null };
+  const missing: string[] = [];
+  // Je Recht einzeln fragen, damit ein fehlendes Recht nicht alles verhindert
+  const groups: [string, string][] = [
+    ["user.info.basic", "open_id,avatar_url,display_name"],
+    ["user.info.profile", "username,bio_description,profile_deep_link"],
+    ["user.info.stats", "follower_count,following_count,video_count"],
+  ];
+  const user: TiktokUser = {};
+  let failed: string | null = null;
+  for (const [scope, fields] of groups) {
+    try {
+      Object.assign(user, (await api<{ user: TiktokUser }>(`/user/info/?fields=${fields}`, token)).user);
+    } catch (error) {
+      // Ohne Basisdaten liegt es nicht an einem Recht, sondern am Zugang
+      if (scope !== "user.info.basic") missing.push(scope);
+      else {
+        failed = error instanceof Error ? error.message : "TikTok antwortet nicht";
+        break;
+      }
+    }
+  }
+  if (failed) return { profile, posts: [], error: failed };
+  Object.assign(profile, {
+    name: user.display_name || profile.name,
+    handle: user.username ? `@${user.username}` : profile.handle,
+    avatar: user.avatar_url ?? profile.avatar,
+    followers: user.follower_count,
+    following: user.following_count,
+    posts: user.video_count,
+    bio: user.bio_description || undefined,
+    url: user.username ? `https://www.tiktok.com/@${user.username}` : (user.profile_deep_link ?? profile.url),
+  });
+
+  let posts: ProfilePost[] = [];
+  try {
+    const list = await api<{ videos?: { id: string; cover_image_url?: string; title?: string; video_description?: string; share_url?: string; create_time?: number; like_count?: number; comment_count?: number }[] }>(
+      "/video/list/?fields=id,cover_image_url,title,video_description,share_url,create_time,like_count,comment_count",
+      token,
+      { max_count: 12 }
+    );
+    posts = (list.videos ?? []).map((v) => ({
+      id: v.id,
+      image: v.cover_image_url ?? null,
+      caption: v.title || v.video_description || "",
+      url: v.share_url ?? null,
+      date: v.create_time ? new Date(v.create_time * 1000).toISOString() : null,
+      type: "video",
+      likes: v.like_count,
+      comments: v.comment_count,
+    }));
+  } catch {
+    missing.push("video.list");
+  }
+  const hint = missing.length ? `Für alle Daten TikTok neu verbinden (es fehlt: ${missing.join(", ")})` : null;
+  return { profile, posts, error: hint ?? undefined };
 }
