@@ -38,7 +38,7 @@ export function newCode() {
 export type RoomLink = { lead_id?: string | null; customer_id?: string | null; application_id?: string | null };
 
 /** Legt einen Raum für einen Termin an und liefert dessen Link */
-export async function createRoom(input: { title: string; start: number; minutes: number; host?: string; hostName?: string; link?: RoomLink }) {
+export async function createRoom(input: { title: string; start: number; minutes: number; host?: string; hostName?: string; link?: RoomLink; record?: boolean }) {
   const code = newCode();
   const { error } = await sb()
     .from("meetings")
@@ -49,6 +49,8 @@ export async function createRoom(input: { title: string; start: number; minutes:
       ends_at: new Date(input.start + input.minutes * 60_000).toISOString(),
       host: input.host ?? null,
       host_name: input.hostName ?? null,
+      // Nur bei „nicht aufzeichnen“ setzen; sonst gilt der Standard der Tabelle
+      ...(input.record === false ? { record: false } : {}),
       ...input.link,
     });
   if (error) throw new Error(error.message);
@@ -75,6 +77,8 @@ type Room = {
   participants: { name: string; at: string }[] | null;
   recurrence: SeriesRecurrence | null;
   valid_until: string | null;
+  /** false: Call wird nicht aufgezeichnet */
+  record?: boolean | null;
   cancelled_at: string | null;
 };
 
@@ -101,7 +105,7 @@ async function room(code: string) {
 
 /** series: Rhythmus einer Jour-fixe-Serie, z. B. „Jeden Dienstag, 10:00“;
  * starts_at/ends_at sind dann der nächste (oder zuletzt der letzte) Termin. */
-export type RoomView = { title: string; starts_at: string; ends_at: string; host_name: string | null; series?: string | null };
+export type RoomView = { title: string; starts_at: string; ends_at: string; host_name: string | null; series?: string | null; record: boolean };
 
 /** Nächster Termin einer Serie (bzw. der letzte, wenn keiner mehr kommt) */
 export function seriesSlot(room: Pick<Room, "starts_at" | "ends_at" | "recurrence">, now = Date.now()) {
@@ -115,7 +119,8 @@ export function seriesSlot(room: Pick<Room, "starts_at" | "ends_at" | "recurrenc
 export async function roomView(code: string): Promise<RoomView> {
   const data = await room(code);
   const { title, host_name } = data;
-  if (!data.recurrence) return { title, starts_at: data.starts_at, ends_at: data.ends_at, host_name };
+  const record = data.record !== false;
+  if (!data.recurrence) return { title, starts_at: data.starts_at, ends_at: data.ends_at, host_name, record };
   const { start, minutes } = seriesSlot(data);
   return {
     title,
@@ -123,12 +128,19 @@ export async function roomView(code: string): Promise<RoomView> {
     ends_at: new Date(start + minutes * 60_000).toISOString(),
     host_name,
     series: rhythmLabel(data.recurrence, data.starts_at),
+    record,
   };
 }
 
 /** ID des Raums für die Aufnahme (wirft, wenn es ihn nicht gibt) */
 export async function roomId(code: string) {
   return (await room(code)).id;
+}
+
+/** Raum für die Aufnahme: ID und ob aufgezeichnet werden darf */
+export async function recordingRoom(code: string) {
+  const data = await room(code);
+  return { id: data.id, record: data.record !== false };
 }
 
 /** Zugang zum Anruf: neue ACS-Identität mit VoIP-Token (4 Stunden). Der

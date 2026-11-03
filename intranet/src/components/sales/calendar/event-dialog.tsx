@@ -89,6 +89,7 @@ function EventForm({
   const [allDay, setAllDay] = useState(false);
   const [location, setLocation] = useState("");
   const [meet, setMeet] = useState(true);
+  const [record, setRecord] = useState(true);
   const [reminder, setReminder] = useState<number | null>(15);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +116,7 @@ function EventForm({
       if (meet && !allDay) {
         const room = await api<{ url: string }>("/api/kalender/meet", {
           method: "POST",
-          body: JSON.stringify({ title: subject.trim(), start: startDate.toISOString(), minutes: Math.round((endDate.getTime() - startDate.getTime()) / 60_000) }),
+          body: JSON.stringify({ title: subject.trim(), start: startDate.toISOString(), minutes: Math.round((endDate.getTime() - startDate.getTime()) / 60_000), record }),
         });
         place = room.url;
         body = `<p>Zum Video-Call über GRID Meet: <a href="${room.url}">${room.url}</a></p>${body}`;
@@ -219,6 +220,19 @@ function EventForm({
           )}
         >
           <Video className="h-4 w-4" /> GRID Meet
+        </button>
+        <button
+          type="button"
+          aria-pressed={record && meet && !allDay}
+          disabled={!meet || allDay}
+          onClick={() => setRecord((v) => !v)}
+          title="Ton aufzeichnen und danach Zusammenfassung und Aufgaben erstellen"
+          className={cn(
+            "inline-flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-medium transition-colors disabled:opacity-40",
+            record && meet && !allDay ? "bg-snow text-sky" : "border border-snow/15 text-snow/80 hover:border-snow/30"
+          )}
+        >
+          <span className={cn("h-3 w-3 rounded-full", record && meet && !allDay ? "bg-[#ec5b54]" : "border-2 border-current")} aria-hidden /> Aufzeichnen
         </button>
       </div>
 

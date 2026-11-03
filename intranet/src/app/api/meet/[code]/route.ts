@@ -18,7 +18,8 @@ export async function GET(_request: Request, { params }: Context) {
   const { code } = await params;
   try {
     // recording: Hinweis zur Aufzeichnung unter „Jetzt beitreten“
-    return Response.json({ ...(await roomView(code)), recording: recordingEnabled() }, { headers });
+    const view = await roomView(code);
+    return Response.json({ ...view, recording: recordingEnabled() && view.record }, { headers });
   } catch (error) {
     return fail(error);
   }
