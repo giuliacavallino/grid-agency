@@ -1,7 +1,21 @@
 import "server-only";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { DEMO } from "@/lib/config";
-import { EMPTY_BRAND, type Brand, type MediaItem, type PostResult, type Provider, type SocialAccount, type SocialPost, type Workspace } from "@/lib/marketing";
+import {
+  EMPTY_BRAND,
+  PROFILE_PROVIDERS,
+  PROVIDERS,
+  profileUrl,
+  type Brand,
+  type MediaItem,
+  type PostProvider,
+  type PostResult,
+  type ProfileLinks,
+  type Provider,
+  type SocialAccount,
+  type SocialPost,
+  type Workspace,
+} from "@/lib/marketing";
 import { sb } from "../db";
 import { decrypt, encrypt } from "../vault";
 import { publicMediaUrl } from "./media";
@@ -51,7 +65,7 @@ export const publicAccount = (a: AccountRow): SocialAccount => ({
 
 // ---------- Kundenwelten ----------
 
-type WorkspaceRow = Omit<Workspace, "logo_url" | "avatar_url" | "sharepoint_url" | "secondary_color"> & {
+type WorkspaceRow = Omit<Workspace, "logo_url" | "avatar_url" | "sharepoint_url" | "secondary_color" | "profiles"> & {
   secondary_color?: string | null;
   logo_path?: string | null;
   settings: Record<string, unknown>;
@@ -63,7 +77,39 @@ const toWorkspace = ({ logo_path, settings, secondary_color, ...rest }: Workspac
   logo_url: logo_path ? publicMediaUrl(logo_path) : null,
   avatar_url: typeof settings?.avatar_path === "string" ? publicMediaUrl(settings.avatar_path) : null,
   sharepoint_url: typeof settings?.sharepoint_url === "string" ? settings.sharepoint_url : null,
+  profiles: readProfiles(settings?.profiles),
 });
+
+/** Hinterlegte Profil-Links (settings.profiles); nur gültige Adressen */
+function readProfiles(value: unknown): ProfileLinks {
+  if (!value || typeof value !== "object") return {};
+  const out: ProfileLinks = {};
+  for (const provider of PROFILE_PROVIDERS) {
+    const raw = (value as Record<string, unknown>)[provider];
+    const url = typeof raw === "string" ? profileUrl(provider, raw) : null;
+    if (url) out[provider] = url;
+  }
+  return out;
+}
+
+/** Profil-Links ändern: Wert setzen (Link oder Name), leer/null entfernt ihn.
+ * Ungültige Eingaben werfen einen Fehler mit Hinweis. */
+export async function updateProfiles(id: string, input: Partial<Record<PostProvider, string | null>>): Promise<ProfileLinks> {
+  const next = readProfiles((await workspaceSettings(id)).profiles);
+  for (const provider of PROFILE_PROVIDERS) {
+    if (!(provider in input)) continue;
+    const raw = input[provider];
+    if (raw === null || raw === undefined || !String(raw).trim()) {
+      delete next[provider];
+      continue;
+    }
+    const url = profileUrl(provider, String(raw));
+    if (!url) throw new Error(`Kein gültiger ${PROVIDERS[provider].label}-Link oder Name`);
+    next[provider] = url;
+  }
+  await updateWorkspaceSettings(id, { profiles: next });
+  return next;
+}
 
 const COLUMNS = "id, name, kind, color, secondary_color, logo_path, project_id, customer_id, archived, settings";
 
