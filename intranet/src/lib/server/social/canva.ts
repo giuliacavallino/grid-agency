@@ -139,6 +139,17 @@ export async function listDesigns(query?: string, continuation?: string) {
   return { items: data.items.map(toDesign), continuation: data.continuation ?? null };
 }
 
+/** Demo: Bearbeiten-Adresse, damit die Oberfläche bedienbar ist */
+export const demoEditUrl = (id: string) => `https://www.canva.com/design/${encodeURIComponent(id)}/edit`;
+
+/** Ein Design mit frischen Adressen (edit_url gilt nur ca. 30 Tage und nur
+ * für das verbundene Canva-Konto) */
+export async function getDesign(id: string): Promise<CanvaDesign> {
+  if (DEMO) return { id, title: "Demo-Design", thumbnail: null, edit_url: demoEditUrl(id), view_url: null, updated_at: Date.now() / 1000, page_count: 1 };
+  const { design } = await canva<{ design: RawDesign }>(`/designs/${encodeURIComponent(id)}`);
+  return toDesign(design);
+}
+
 /** Ordner der Kundenwelt in Canva (wird beim ersten Mal angelegt) */
 async function workspaceFolder(workspaceId: string) {
   const settings = await workspaceSettings(workspaceId);
