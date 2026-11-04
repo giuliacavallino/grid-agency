@@ -1,7 +1,7 @@
 import "server-only";
 import type { ChannelProfile, MediaItem, ProfilePost } from "@/lib/marketing";
 import { callbackUrl, inSeconds, readJson } from "./oauth";
-import { accountToken, saveAccount, type AccountRow } from "./store";
+import { accountToken, listAccounts, saveAccount, type AccountRow } from "./store";
 
 // Meta Graph API: Facebook-Seiten und die damit verknüpften Instagram-
 // Business-Konten. Ein Login verbindet alle Seiten, auf die das Konto Zugriff
@@ -58,11 +58,20 @@ export async function finishMeta(code: string, origin: string, workspaceId: stri
   });
   if (!pages.data.length) throw new Error("Keine Facebook-Seite freigegeben. Beim Login die Seiten des Kunden auswählen.");
 
+  // Ein Login gibt alle freigegebenen Seiten zurück, auch die anderer Kunden.
+  // Seiten, die schon einer anderen Kundenwelt gehören, bleiben dort und
+  // bekommen nur ein frisches Token; neue Seiten landen in dieser Kundenwelt.
+  const owner = new Map<string, string>();
+  for (const account of await listAccounts()) {
+    if (account.provider === "facebook" && account.workspace_id !== workspaceId) owner.set(account.external_id, account.workspace_id);
+  }
+
   const saved: AccountRow[] = [];
   for (const page of pages.data) {
+    const target = owner.get(page.id) ?? workspaceId;
     saved.push(
       await saveAccount({
-        workspace_id: workspaceId,
+        workspace_id: target,
         provider: "facebook",
         external_id: page.id,
         name: page.name,
@@ -77,7 +86,7 @@ export async function finishMeta(code: string, origin: string, workspaceId: stri
     if (ig) {
       saved.push(
         await saveAccount({
-          workspace_id: workspaceId,
+          workspace_id: target,
           provider: "instagram",
           external_id: ig.id,
           name: ig.name || ig.username || page.name,
@@ -92,7 +101,7 @@ export async function finishMeta(code: string, origin: string, workspaceId: stri
       );
     }
   }
-  return saved;
+  return saved.filter((account) => account.workspace_id === workspaceId);
 }
 
 export type PublishInput = { caption: string; media: Required<Pick<MediaItem, "url" | "kind" | "mime" | "path">>[]; format?: "feed" | "story" | "carousel" };
