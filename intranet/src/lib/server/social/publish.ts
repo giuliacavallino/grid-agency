@@ -35,12 +35,16 @@ export async function publishPost(id: string, origin?: string): Promise<SocialPo
       continue;
     }
     const publish = DEMO ? demoPublish : PUBLISHERS[account.provider];
+    if (post.format === "story" && !["instagram", "facebook"].includes(account.provider)) {
+      results[accountId] = resultEntry({ status: "failed", error: "Storys gehen nur bei Instagram und Facebook" });
+      continue;
+    }
     if (!publish) {
       results[accountId] = resultEntry({ status: "failed", error: `${account.provider} kann nicht posten` });
       continue;
     }
     try {
-      const out = await publish(account, { caption: post.caption, media });
+      const out = await publish(account, { caption: post.caption, media, format: post.format ?? "feed" });
       results[accountId] = resultEntry({ status: "published", remote_id: out.remote_id, url: out.url });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Veröffentlichen fehlgeschlagen";

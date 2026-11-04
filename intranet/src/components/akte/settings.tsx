@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, Building2, Check, CircleDashed, Download, FolderOpen, KeyRound, Link2, Plug, Rocket, Save, Users } from "lucide-react";
+import { Bot, Building2, CalendarHeart, Check, CircleDashed, Download, FolderOpen, KeyRound, Link2, Plug, Rocket, Save, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { mutate, revalidate, useResource } from "@/lib/data";
 import { cn as clsx } from "@/lib/cn";
@@ -340,9 +340,83 @@ function AutopilotForm({ workspace, initial, url }: { workspace: WorkspaceSummar
             </div>
             <Toggle checked={form.agent_calls} onChange={(v) => set("agent_calls", v)} label="To-dos aus Calls automatisch an den Agenten" />
           </section>
+
+          <DayAutopilotCard workspaceId={workspace.id} />
         </div>
       </div>
     </div>
+  );
+}
+
+type DayAutopilot = { enabled: boolean; lead_days: number; post: boolean; carousel: boolean; story: boolean; done_count: number };
+
+/** Tage-Autopilot: Entwürfe zu Social-Media-Tagen (speichert sofort) */
+function DayAutopilotCard({ workspaceId }: { workspaceId: string }) {
+  const toast = useToast();
+  const url = `/api/marketing/workspaces/${workspaceId}/day-autopilot`;
+  const { data } = useResource<DayAutopilot>(url);
+  if (!data) return null;
+
+  async function change(patch: Partial<DayAutopilot>) {
+    const optimistic = { ...data!, ...patch };
+    mutate<DayAutopilot>(url, () => optimistic);
+    try {
+      const saved = await api<DayAutopilot>(url, { method: "PUT", body: JSON.stringify(patch) });
+      mutate<DayAutopilot>(url, () => saved);
+    } catch (error) {
+      revalidate(url);
+      toast(error instanceof Error ? error.message : "Speichern fehlgeschlagen", "error");
+    }
+  }
+
+  const options = [
+    ["post", "Post", "Feed-Post 4:5 zum Tag"],
+    ["carousel", "Karussell erlaubt", "Bei passendem Thema 3–5 Slides statt Einzelbild"],
+    ["story", "Story", "Story 9:16 am Morgen (Instagram, Facebook)"],
+  ] as const;
+
+  return (
+    <section className="grid gap-4 rounded-2xl border border-snow/[0.08] bg-panel p-4">
+      <div className="flex items-start gap-4">
+        <CalendarHeart className="mt-0.5 h-5 w-5 text-snow/60" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold">Tage-Autopilot {data.enabled ? "an" : "aus"}</p>
+          <p className="text-[12.5px] text-snow/55">
+            Vor passenden Tagen (Muttertag, Tag des Croissants, Kundentage …) entstehen Entwürfe mit Caption und Canva-Design in der CI, im Kundenordner in Canva und mit Termin im Planer. Das Team gibt frei oder wünscht Änderungen.
+            {data.done_count > 0 && ` Bisher ${data.done_count} Anlässe bearbeitet.`}
+          </p>
+        </div>
+        <Toggle checked={data.enabled} onChange={(v) => change({ enabled: v })} label="Tage-Autopilot an oder aus" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
+        <Field label="Vorlauf">
+          {(id) => (
+            <Select id={id} value={String(data.lead_days)} onChange={(e) => change({ lead_days: Number(e.target.value) })} className="h-10 w-40">
+              {[7, 10, 14, 21, 28].map((n) => (
+                <option key={n} value={n}>
+                  {n} Tage vorher
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <div className="flex flex-wrap gap-2">
+          {options.map(([key, title, text]) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={data[key]}
+              title={text}
+              onClick={() => change({ [key]: !data[key] })}
+              className={clsx("flex h-10 items-center gap-2 rounded-full border px-3.5 text-[13px]", data[key] ? "border-snow/40 bg-snow/[0.08]" : "border-snow/12 text-snow/55")}
+            >
+              {data[key] && <Check className="h-3.5 w-3.5" />}
+              {title}
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

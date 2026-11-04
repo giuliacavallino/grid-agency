@@ -135,13 +135,26 @@ function DayDetails({
   close: () => void;
 }) {
   const toast = useToast();
-  const [busy, setBusy] = useState<"post" | DayStatus | null>(null);
+  const [busy, setBusy] = useState<"post" | "ki" | DayStatus | null>(null);
   const past = parseDay(day.date).getTime() < startOfDay(new Date()).getTime();
   const kind = DAY_KINDS[day.kind];
 
-  async function run(action: "post" | DayStatus) {
+  async function run(action: "post" | "ki" | DayStatus) {
     setBusy(action);
     try {
+      if (action === "ki") {
+        // Tage-Autopilot sofort: Post bzw. Karussell und Story mit Canva-Designs
+        const results = await api<{ status: string; slot: string; note?: string; post_id?: string }[]>(`/api/marketing/days/${day.id}/drafts`, {
+          method: "POST",
+          body: JSON.stringify({ workspace_id: workspaceId }),
+        });
+        revalidate(postsUrl(workspaceId));
+        const made = results.filter((r) => r.status === "erstellt" || r.status === "vorhanden").length;
+        const skipped = results.find((r) => r.status === "übersprungen");
+        toast(made ? `${made} Entwurf${made > 1 ? "e" : ""} zur Freigabe im Planer` : `Übersprungen: ${skipped?.note || "passt nicht zum Kunden"}`);
+        close();
+        return;
+      }
       if (action === "post") {
         const post = await createPost(workspaceId, day, accounts);
         close();
@@ -183,6 +196,19 @@ function DayDetails({
         >
           Post dazu erstellen
         </Button>
+        {!past && (
+          <Button
+            size="sm"
+            icon={<Sparkles className="h-4 w-4" />}
+            loading={busy === "ki"}
+            loadingText="Claude und Canva gestalten … (1–3 Min.)"
+            disabled={!!busy && busy !== "ki"}
+            onClick={() => run("ki")}
+            title="Post (oder Karussell) und Story mit KI-Text und Canva-Design in der CI anlegen, zur Freigabe"
+          >
+            Mit KI: Post + Story
+          </Button>
+        )}
         <div className="flex gap-1.5">
           {day.status === "vorschlag" && (
             <Button size="sm" className="flex-1" icon={<Check className="h-4 w-4" />} loading={busy === "aktiv"} loadingText="Übernimmt …" disabled={!!busy && busy !== "aktiv"} onClick={() => run("aktiv")}>

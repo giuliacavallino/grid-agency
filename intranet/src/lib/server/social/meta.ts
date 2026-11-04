@@ -95,7 +95,7 @@ export async function finishMeta(code: string, origin: string, workspaceId: stri
   return saved;
 }
 
-export type PublishInput = { caption: string; media: Required<Pick<MediaItem, "url" | "kind" | "mime" | "path">>[] };
+export type PublishInput = { caption: string; media: Required<Pick<MediaItem, "url" | "kind" | "mime" | "path">>[]; format?: "feed" | "story" | "carousel" };
 export type PublishOutput = { remote_id: string; url?: string };
 
 /** Facebook-Seite: Text, ein Bild, mehrere Bilder oder ein Video */
@@ -103,6 +103,20 @@ export async function publishFacebook(account: AccountRow, input: PublishInput):
   const token = accountToken(account)!;
   const pageId = account.external_id;
   const [first] = input.media;
+  if (input.format === "story") {
+    // Seiten-Story: Foto unveröffentlicht hochladen, dann als Story; Video über video_stories
+    if (!first) throw new Error("Eine Story braucht ein Bild oder Video");
+    if (first.kind === "video") {
+      const start = await post<{ video_id: string; upload_url: string }>(`/${pageId}/video_stories`, { upload_phase: "start", access_token: token });
+      const upload = await fetch(start.upload_url, { method: "POST", headers: { Authorization: `OAuth ${token}`, file_url: first.url } });
+      if (!upload.ok) throw new Error("Facebook: Story-Video konnte nicht hochgeladen werden");
+      const done = await post<{ post_id?: string }>(`/${pageId}/video_stories`, { upload_phase: "finish", video_id: start.video_id, access_token: token });
+      return { remote_id: done.post_id ?? start.video_id };
+    }
+    const photo = await post<{ id: string }>(`/${pageId}/photos`, { url: first.url, published: "false", access_token: token });
+    const story = await post<{ post_id?: string; id?: string }>(`/${pageId}/photo_stories`, { photo_id: photo.id, access_token: token });
+    return { remote_id: story.post_id ?? story.id ?? photo.id };
+  }
   if (!first) {
     const result = await post<{ id: string }>(`/${pageId}/feed`, { message: input.caption, access_token: token });
     return { remote_id: result.id, url: `https://www.facebook.com/${result.id}` };
@@ -147,6 +161,14 @@ export async function publishInstagram(account: AccountRow, input: PublishInput)
     m.kind === "video" ? { media_type: "REELS", video_url: m.url, ...extra } : { image_url: m.url, ...extra };
 
   let creation: string;
+  if (input.format === "story") {
+    // Story: ein Bild oder Video im Hochformat, ohne Caption
+    const [only] = input.media;
+    creation = (await post<{ id: string }>(`/${igId}/media`, { media_type: "STORIES", ...(only.kind === "video" ? { video_url: only.url } : { image_url: only.url }), access_token: token })).id;
+    if (only.kind === "video") await waitForContainer(creation, token);
+    const story = await post<{ id: string }>(`/${igId}/media_publish`, { creation_id: creation, access_token: token });
+    return { remote_id: story.id };
+  }
   if (input.media.length === 1) {
     const [only] = input.media;
     creation = (await post<{ id: string }>(`/${igId}/media`, { ...item(only, { caption: input.caption }), access_token: token })).id;
