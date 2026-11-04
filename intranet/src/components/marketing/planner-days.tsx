@@ -90,31 +90,34 @@ export function DayChip({
 }) {
   const suggestion = day.status === "vorschlag";
   return (
-    <Popover
-      align={align}
-      className="w-72 p-3"
-      trigger={({ open, toggle }) => (
-        <button
-          type="button"
-          onClick={toggle}
-          aria-expanded={open}
-          aria-haspopup="dialog"
-          title={`${day.title}${suggestion ? " (Vorschlag)" : ""} · ${DAY_KINDS[day.kind].label}`}
-          className={clsx(
-            "flex max-w-full min-w-0 items-center gap-0.5 rounded-full border font-medium transition-[filter,box-shadow] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-snow",
-            compact ? "h-[18px] px-1.5 text-[10.5px] leading-none" : "h-[22px] px-2 text-[11.5px] leading-none",
-            suggestion && "border-dashed",
-            open && "ring-2 ring-snow/20"
-          )}
-          style={chipStyle(day)}
-        >
-          <span className="truncate">{day.title}</span>
-          {suggestion && <span aria-label="Vorschlag" className="shrink-0 font-semibold">?</span>}
-        </button>
-      )}
-    >
-      {(close) => <DayDetails day={day} workspaceId={workspaceId} accounts={accounts} onOpenPost={onOpenPost} close={close} />}
-    </Popover>
+    // Hülle begrenzt die Breite, damit lange Titel in der Spalte abgeschnitten werden
+    <div className="max-w-full min-w-0">
+      <Popover
+        align={align}
+        className="w-72 p-3"
+        trigger={({ open, toggle }) => (
+          <button
+            type="button"
+            onClick={toggle}
+            aria-expanded={open}
+            aria-haspopup="dialog"
+            title={`${day.title}${suggestion ? " (Vorschlag)" : ""} · ${DAY_KINDS[day.kind].label}`}
+            className={clsx(
+              "flex max-w-full min-w-0 items-center gap-0.5 rounded-full border font-medium transition-[filter,box-shadow] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-snow",
+              compact ? "h-[18px] px-1.5 text-[10.5px] leading-4" : "h-[22px] px-2 text-[11.5px] leading-5",
+              suggestion && "border-dashed",
+              open && "ring-2 ring-snow/20"
+            )}
+            style={chipStyle(day)}
+          >
+            <span className="truncate">{day.title}</span>
+            {suggestion && <span aria-label="Vorschlag" className="shrink-0 font-semibold">?</span>}
+          </button>
+        )}
+      >
+        {(close) => <DayDetails day={day} workspaceId={workspaceId} accounts={accounts} onOpenPost={onOpenPost} close={close} />}
+      </Popover>
+    </div>
   );
 }
 
