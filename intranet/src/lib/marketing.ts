@@ -188,7 +188,23 @@ export type SocialPost = {
   published_at: string | null;
   results: Record<string, PostResult>;
   created_by: string | null;
+  /** Feed-Post (Standard), Story oder Karussell */
+  format?: PostFormat;
+  /** Social-Media-Tag, zu dem der Tage-Autopilot den Entwurf angelegt hat */
+  day_id?: string | null;
+  /** Änderungswünsche und Antworten des Agenten */
+  review?: ReviewNote[];
 };
+
+export type PostFormat = "feed" | "story" | "carousel";
+export const POST_FORMATS: Record<PostFormat, { label: string; ratio: string }> = {
+  feed: { label: "Post", ratio: "4:5" },
+  story: { label: "Story", ratio: "9:16" },
+  carousel: { label: "Karussell", ratio: "4:5" },
+};
+export type ReviewNote = { at: string; by: string; text: string; kind: "wunsch" | "agent"; /** Grafiktexte des Agenten (für spätere Änderungen) */ slides?: { headline: string; subline: string }[] };
+/** Kanäle, die Storys posten können */
+export const STORY_PROVIDERS: PostProvider[] = ["instagram", "facebook"];
 
 export const PROVIDERS: Record<Provider, { label: string; color: string }> = {
   canva: { label: "Canva", color: "#00c4cc" },

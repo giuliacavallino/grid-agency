@@ -6,7 +6,7 @@ import { Bot, Check, Search, Sparkles, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { mutate, revalidate } from "@/lib/data";
 import { cn as clsx } from "@/lib/cn";
-import { PROVIDERS, type Autopilot, type PostIdea, type PostProvider, type Provider, type SocialAccount, type SocialPost } from "@/lib/marketing";
+import { POST_FORMATS, PROVIDERS, type Autopilot, type PostIdea, type PostProvider, type Provider, type SocialAccount, type SocialPost } from "@/lib/marketing";
 import { accentFill, accentText } from "@/lib/theme";
 import { Button, useToast } from "@/components/ui";
 import { akteUrl } from "@/components/akte/shell";
@@ -114,7 +114,7 @@ type Chip = { label: string; color?: string; muted?: boolean };
 /** Vorschlag = Entwurf aus der Trend-Recherche oder vom Agenten */
 export function suggestionBy(post: SocialPost, fromIdeas: Set<string>) {
   if (post.status !== "draft") return null;
-  if (post.created_by === "autopilot" || post.created_by === "agent") return "Vorschlag · Agent";
+  if (post.created_by === "autopilot" || post.created_by === "agent" || post.created_by === "tage-agent") return "Vorschlag · Agent";
   if (fromIdeas.has(post.id)) return "Vorschlag";
   return null;
 }
@@ -227,6 +227,7 @@ export function PostCard({
           {CHANNELS[main].label}
           {channels.length > 1 && ` +${channels.length - 1}`}
           {video && " · Video"}
+          {post.format && post.format !== "feed" && ` · ${POST_FORMATS[post.format].label}${post.format === "carousel" ? ` (${post.media.length})` : ""}`}
         </span>
       </span>
       {image && (

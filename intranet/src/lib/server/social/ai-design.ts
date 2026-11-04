@@ -63,12 +63,12 @@ function fallbackVisual(text: string) {
   return { headline: short(first.replace(/[.!]$/, ""), 60), subline: short(second, 90), title: short(first, 50) };
 }
 
-type Colors = { background?: string; ink?: string; accent?: string };
+export type Colors = { background?: string; ink?: string; accent?: string };
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
 /** CI-Palette: Markenkit, sonst aus den Canva-Designs gelernt */
-function palette(brand: Awaited<ReturnType<typeof getBrand>>, style: Awaited<ReturnType<typeof canvaStyle>>) {
+export function palette(brand: Awaited<ReturnType<typeof getBrand>>, style: Awaited<ReturnType<typeof canvaStyle>>) {
   const colors = brand.colors.length ? brand.colors.map((c) => ({ hex: c.hex, role: c.role })) : (style?.palette ?? []);
   return colors.filter((c) => HEX.test(c.hex));
 }
@@ -139,16 +139,25 @@ export async function aiCanvaDesign(workspaceId: string, input: { caption: strin
   const text = await visualFor(workspaceId, caption, brief);
   const format = FORMATS[input.format] ?? "4:5";
   const visual: IdeaVisual = { headline: text.headline, subline: text.subline || undefined, format };
-  const image = await ideaGraphic(workspaceId, visual, text.colors);
+  const { item, edit_url } = await designFromVisual(workspaceId, visual, text.colors, `KI · ${text.title || text.headline}`);
+  return { item, edit_url, headline: text.headline, subline: text.subline };
+}
+
+/** CI-Grafik rechnen, als bearbeitbares Design in den Kundenordner in Canva
+ * legen und den Export als Medium liefern (auch für den Tage-Autopilot) */
+export async function designFromVisual(workspaceId: string, visual: IdeaVisual, colors: Colors, name: string): Promise<{ item: MediaItem; edit_url: string | null }> {
+  const image = await ideaGraphic(workspaceId, visual, colors);
   const size = { width: image.width, height: image.height };
-  const title = `KI · ${text.title || text.headline}`.slice(0, 120);
+  const title = name.slice(0, 120);
 
   if (DEMO) {
     const id = `demo-ai-${randomUUID().slice(0, 8)}`;
     const item = await storeMedia(image.bytes, "image/png", `canva-${id}`, { ...size, canva_design_id: id });
     demoDesigns.set(id, { path: item.path, ...size });
-    return { item, edit_url: demoEditUrl(id), headline: text.headline, subline: text.subline };
+    return { item, edit_url: demoEditUrl(id) };
   }
+  // Ohne Canva-Verbindung bleibt es bei der Grafik in der CI
+  if (!(await canvaAccount())) return { item: await storeMedia(image.bytes, "image/png", "grafik", size), edit_url: null };
 
   const asset = await uploadAsset(image.bytes, title);
   const design = await createDesign({ title, ...size, asset_id: asset.id, workspace_id: workspaceId });
@@ -162,7 +171,7 @@ export async function aiCanvaDesign(workspaceId: string, input: { caption: strin
     console.error("Canva-Export nach KI-Design", error);
     item = await storeMedia(image.bytes, "image/png", `canva-${design.id}`, { ...size, canva_design_id: design.id });
   }
-  return { item, edit_url: design.edit_url, headline: text.headline, subline: text.subline };
+  return { item, edit_url: design.edit_url };
 }
 
 /** Design erneut exportieren (nach Änderungen in Canva); erste Seite als PNG */

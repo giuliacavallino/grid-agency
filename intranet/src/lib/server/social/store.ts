@@ -13,6 +13,8 @@ import {
   type ProfileLinks,
   type Provider,
   type SocialAccount,
+  type PostFormat,
+  type ReviewNote,
   type SocialPost,
   type Workspace,
 } from "@/lib/marketing";
@@ -395,6 +397,8 @@ export type PostInput = {
   scheduled_at?: string | null;
   status?: "draft" | "scheduled";
   created_by: string;
+  format?: PostFormat;
+  day_id?: string | null;
 };
 
 export async function insertPost(input: PostInput): Promise<SocialPost> {
@@ -406,6 +410,9 @@ export async function insertPost(input: PostInput): Promise<SocialPost> {
     scheduled_at: input.scheduled_at ?? null,
     status: input.status ?? "draft",
     created_by: input.created_by,
+    format: input.format ?? "feed",
+    day_id: input.day_id ?? null,
+    review: [] as ReviewNote[],
   };
   if (DEMO) {
     const now = new Date().toISOString();

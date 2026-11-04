@@ -6,13 +6,14 @@ import { api } from "@/lib/api";
 import { mutate, revalidate } from "@/lib/data";
 import { cn as clsx } from "@/lib/cn";
 import { DEMO } from "@/lib/config";
-import { POST_STATUS, PROVIDERS, type MediaItem, type PostProvider, type Provider, type SocialAccount, type SocialPost } from "@/lib/marketing";
+import { POST_FORMATS, POST_STATUS, PROVIDERS, type MediaItem, type PostProvider, type Provider, type SocialAccount, type SocialPost } from "@/lib/marketing";
 import { Badge, Button, IconButton, Input, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 import { CanvaAiDialog, CanvaMediaActions } from "./canva-ai";
 import { CanvaPicker } from "./canva-picker";
 import { CaptionAssist } from "./caption-assist";
 import { ProviderMark, useMarketingStatus } from "./common";
 import { ImageEditor } from "./image-editor";
+import { ReviewPanel } from "./review-panel";
 import { URL_WORKSPACES, WorkspaceLogo, type WorkspaceSummary } from "./workspace";
 
 // Editor rechts: links Text, Medien, Kanäle und Termin, rechts die Vorschau
@@ -210,6 +211,7 @@ export function PostEditor({
       subtitle={
         <span className="flex items-center gap-2">
           {statusInfo && <Badge color={statusInfo.color}>{statusInfo.label}</Badge>}
+          {post?.format && post.format !== "feed" && <Badge>{POST_FORMATS[post.format].label}</Badge>}
           <span aria-live="polite" className="text-[12px]">
             {saving === "saving" ? "Wird gespeichert …" : saving === "saved" ? "Gespeichert" : saving === "error" ? "Nicht gespeichert" : locked ? "" : "Speichert automatisch"}
           </span>
@@ -218,6 +220,18 @@ export function PostEditor({
     >
       <div className="grid min-h-full lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex flex-col gap-5 p-5">
+          {post && !locked && (post.created_by === "tage-agent" || (post.review?.length ?? 0) > 0) && (
+            <ReviewPanel
+              post={post}
+              approving={busy === "schedule"}
+              onApprove={() => act("schedule")}
+              onRevised={(saved) => {
+                remember(saved);
+                setCaption(saved.caption);
+                setMedia(saved.media);
+              }}
+            />
+          )}
           <div>
             <Textarea
               value={caption}
