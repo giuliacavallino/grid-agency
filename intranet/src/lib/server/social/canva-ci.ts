@@ -3,7 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import sharp from "sharp";
 import { DEMO } from "@/lib/config";
 import type { Brand } from "@/lib/marketing";
-import { exportDesign, listDesigns, type CanvaDesign } from "./canva";
+import { learnCanvaStyle } from "./brand-style";
+import { exportDesign, findCustomerFolder, listDesigns, type CanvaDesign } from "./canva";
 import { readMedia, storeMedia } from "./media";
 import { getBrand, getWorkspace, updateBrand, updateWorkspace } from "./store";
 
@@ -104,11 +105,13 @@ export async function importCiFromCanva(workspaceId: string): Promise<CanvaImpor
 
   const design = await findCiDesign(workspace.name);
   if (!design) {
-    // Kein CI-Design: Canva nach Logo und Unterlagen zum Kunden durchsuchen
+    // Kein CI-Design: Logo suchen und die CI aus den bestehenden Posts lernen
     const scan = await scanCanva(workspaceId);
     if (scan.error) throw new Error(`Canva: ${scan.error}`);
-    if (!scan.logo) throw new Error(`In Canva nichts Passendes gefunden (${scan.designs.length} Designs, ${scan.images.length} Bilder zu „${workspace.name}“). Tipp: Design „CI – ${workspace.name}“ anlegen.`);
-    return { design: scan.logo, logo: true, updated: ["Logo"] };
+    const style = await learnCanvaStyle(workspaceId);
+    if (!scan.logo && !style.designs.length) throw new Error(`In Canva nichts Passendes gefunden (${scan.designs.length} Designs, ${scan.images.length} Bilder zu „${workspace.name}“). Tipp: Design „CI – ${workspace.name}“ anlegen.`);
+    const updated = [scan.logo && "Logo", style.palette.length && "Farben", style.fonts.length && "Schriften", style.layout && "Stil der Posts"].filter((v): v is string => !!v);
+    return { design: style.folder ? `Ordner ${style.folder} (${style.designs.length} Designs)` : `${style.designs.length} Designs`, logo: !!scan.logo, updated };
   }
 
   // Seite 1 → Logo (transparent, Ränder abgeschnitten)
@@ -148,6 +151,9 @@ export async function importCiFromCanva(workspaceId: string): Promise<CanvaImpor
     take("hashtags", union(current.hashtags, ci.hashtags), "Hashtags", ci.hashtags.length > 0);
     if (Object.keys(patch).length) await updateBrand(workspaceId, patch);
   }
+  // Zusätzlich Layout und Textstil aus den bestehenden Posts lernen
+  const style = await learnCanvaStyle(workspaceId).catch(() => null);
+  if (style?.layout) updated.push("Stil der Posts");
   return { design: design.title, logo: true, updated };
 }
 
@@ -167,7 +173,7 @@ export type CanvaScan = {
  * zuerst ein Design mit „Logo“ im Titel (Export als PNG), sonst ein Bild. */
 export async function scanCanva(workspaceId: string): Promise<CanvaScan> {
   const { listFolderItems } = await import("./canva");
-  const { updateWorkspaceSettings } = await import("./store");
+  const { updateWorkspaceSettings, workspaceSettings } = await import("./store");
   const workspace = await getWorkspace(workspaceId);
   if (!workspace) throw new Error("Kundenwelt nicht gefunden");
   const key = normalize(workspace.name);
@@ -178,8 +184,12 @@ export async function scanCanva(workspaceId: string): Promise<CanvaScan> {
     for (const query of [workspace.name, `${workspace.name} Logo`]) {
       for (const d of (await listDesigns(query)).items) designs.set(d.id, d);
     }
-    const root = await listFolderItems("root");
-    const folders = root.filter((i): i is Extract<typeof i, { type: "folder" }> => i.type === "folder" && matches(i.name));
+    // Kundenordner auch in Unterordnern (z. B. „Grid Agency › Kunden › Huck“)
+    const found = await findCustomerFolder(workspace.name);
+    const folders = found ? [{ type: "folder" as const, id: found.id, name: found.path }] : [];
+    if (found && typeof (await workspaceSettings(workspaceId)).canva_folder_id !== "string") {
+      await updateWorkspaceSettings(workspaceId, { canva_folder_id: found.id, canva_folder_path: found.path });
+    }
     const inFolders = (await Promise.all(folders.map((f) => listFolderItems(f.id, 2)))).flat();
     const uploads = await listFolderItems("uploads").catch(() => []);
     const images = [...inFolders, ...uploads].filter((i): i is Extract<typeof i, { type: "image" }> => i.type === "image" && (inFolders.includes(i) || matches(i.name)));

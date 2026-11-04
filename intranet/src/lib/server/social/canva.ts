@@ -150,16 +150,66 @@ export async function getDesign(id: string): Promise<CanvaDesign> {
   return toDesign(design);
 }
 
-/** Ordner der Kundenwelt in Canva (wird beim ersten Mal angelegt) */
-async function workspaceFolder(workspaceId: string) {
+const normalizeName = (value: string) => value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+
+/** Wie gut passt ein Ordnername zum Kunden (0 = gar nicht) */
+function folderScore(folder: string, customer: string) {
+  const f = normalizeName(folder);
+  const c = normalizeName(customer);
+  if (!f || !c) return 0;
+  if (f === c) return 4;
+  if (f.includes(c)) return 3;
+  // „ASIA“ für „Asia De Saleh“, „Huck Bäckerei“ für „Huck“
+  const first = normalizeName(customer.split(/\s+/)[0] ?? "");
+  if (first.length >= 4 && (f === first || f.startsWith(first))) return 2;
+  return 0;
+}
+
+/** Vorhandenen Kundenordner in Canva suchen: Projekte und zwei Ebenen darunter
+ * (z. B. „Grid Agency › Kunden › Huck“). Liefert den bestpassenden Ordner. */
+export async function findCustomerFolder(customer: string): Promise<{ id: string; name: string; path: string } | null> {
+  if (DEMO) return null;
+  type Found = { id: string; name: string; path: string; score: number };
+  let best: Found | null = null;
+  let level: { id: string; path: string }[] = [{ id: "root", path: "" }];
+  let requests = 0;
+  for (let depth = 0; depth < 3 && level.length; depth++) {
+    const next: { id: string; path: string }[] = [];
+    for (const parent of level) {
+      if (requests++ > 30) break;
+      const items = await listFolderItems(parent.id, depth === 0 ? 5 : 2).catch(() => []);
+      for (const item of items) {
+        if (item.type !== "folder") continue;
+        const path = parent.path ? `${parent.path} › ${item.name}` : item.name;
+        const score = folderScore(item.name, customer);
+        if (score && (!best || score > best.score)) best = { id: item.id, name: item.name, path, score };
+        next.push({ id: item.id, path });
+      }
+    }
+    // Ein exakter Treffer reicht; sonst eine Ebene tiefer weitersuchen
+    if (best && best.score >= 4) break;
+    level = next.slice(0, 25);
+  }
+  return best ? { id: best.id, name: best.name, path: best.path } : null;
+}
+
+/** Ordner der Kundenwelt in Canva: vorhandenen Kundenordner nehmen, nur wenn
+ * es keinen gibt, einen neuen anlegen */
+export async function workspaceFolder(workspaceId: string) {
   const settings = await workspaceSettings(workspaceId);
   if (typeof settings.canva_folder_id === "string") return settings.canva_folder_id;
   const ws = await getWorkspace(workspaceId);
+  const name = ws?.name ?? "Kunde";
+  const found = await findCustomerFolder(name);
+  if (found) {
+    await updateWorkspaceSettings(workspaceId, { canva_folder_id: found.id, canva_folder_path: found.path });
+    return found.id;
+  }
   const { folder } = await canva<{ folder: { id: string } }>("/folders", {
     method: "POST",
-    body: JSON.stringify({ name: `GRID · ${ws?.name ?? "Kunde"}`.slice(0, 255), parent_folder_id: "root" }),
+    body: JSON.stringify({ name: name.slice(0, 255), parent_folder_id: "root" }),
   });
-  await updateWorkspaceSettings(workspaceId, { canva_folder_id: folder.id });
+  await updateWorkspaceSettings(workspaceId, { canva_folder_id: folder.id, canva_folder_path: name });
   return folder.id;
 }
 

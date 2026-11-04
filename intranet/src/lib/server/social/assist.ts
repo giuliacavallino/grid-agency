@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { DEMO } from "@/lib/config";
 import { agentBrief, PROVIDERS, type PostProvider } from "@/lib/marketing";
+import { recentCaptions } from "./brand-style";
 import { readMedia } from "./media";
 import { getBrand, getWorkspace } from "./store";
 
@@ -82,8 +83,10 @@ export async function assistCaption(workspaceId: string, input: AssistInput): Pr
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("Claude ist nicht eingerichtet (ANTHROPIC_API_KEY fehlt)");
 
   const platforms = input.action === "adapt" && input.platform ? [input.platform] : input.platforms;
+  const history = await recentCaptions(workspaceId);
   const ask = [
     agentBrief(workspace.name, brand),
+    history,
     "## Plattformen",
     platforms.length ? platforms.map((p) => STYLE[p]).join("\n") : "(keine gewählt – allgemein für Social Media)",
     input.action === "adapt" && input.platform ? `## Zielplattform\n${PROVIDERS[input.platform].label}` : "",
