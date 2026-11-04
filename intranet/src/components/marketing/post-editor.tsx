@@ -251,7 +251,8 @@ export function PostEditor({
                 workspaceId={workspace.id}
                 workspaceName={workspace.name}
                 caption={caption}
-                platforms={platforms}
+                // Ohne gewählten Kanal: für alle Plattformen anbieten
+                platforms={platforms.length ? platforms : ["instagram", "facebook", "tiktok", "linkedin"]}
                 image={media.find((m) => m.kind === "image")?.path}
                 onCaption={setCaption}
                 onClose={() => setAssist(false)}

@@ -47,8 +47,12 @@ const clip = (value: unknown, max: number) => (typeof value === "string" ? value
 
 /** Headline und Subline ohne Claude aus dem Text ableiten (Vorschau) */
 function fallbackVisual(text: string) {
-  const plain = text.replace(/#[\p{L}\p{N}_]+/gu, "").replace(/[\p{Extended_Pictographic}️]/gu, "").replace(/\s+/g, " ").trim();
-  const [first = "Neuer Post", second = ""] = plain.split(/(?<=[.!?])\s+/);
+  const plain = text.replace(/#[\p{L}\p{N}_]+/gu, "").replace(/[\p{Extended_Pictographic}\u{FE0F}]/gu, "");
+  // Erst nach Zeilen, dann nach Sätzen trennen
+  const [first = "Neuer Post", second = ""] = plain
+    .split(/\n+|(?<=[.!?])\s+/)
+    .map((part) => part.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
   const short = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1).replace(/\s+\S*$/, "")} …` : s);
   return { headline: short(first.replace(/[.!]$/, ""), 60), subline: short(second, 90), title: short(first, 50) };
 }
