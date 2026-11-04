@@ -200,7 +200,7 @@ function BrandEditor({ workspaceId, initial }: { workspaceId: string; initial: B
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" className="h-9" icon={<Download className="h-4 w-4" />} loading={busy === "canva"} loadingText="Holt aus Canva …" disabled={busy !== null} onClick={fromCanva} title={`Aus dem Canva-Design „CI – ${workspace?.name}“`}>
+            <Button size="sm" className="h-9" icon={<Download className="h-4 w-4" />} loading={busy === "canva"} loadingText="Holt aus Canva …" disabled={busy !== null} onClick={fromCanva} title={`Logo, Farben, Schriften und Stil aus Canva: Design „CI – ${workspace?.name}“ bzw. die Posts im Kundenordner`}>
               Aus Canva
             </Button>
             <Button size="sm" className="h-9" icon={<Sparkles className="h-4 w-4" />} loading={busy === "suggest"} loadingText="Claude liest …" disabled={busy !== null} onClick={suggest}>

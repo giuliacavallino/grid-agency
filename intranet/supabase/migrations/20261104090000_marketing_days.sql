@@ -1,0 +1,172 @@
+-- Social-Media-Tage im Redaktionskalender (Planung): Feiertage, Aktionstage
+-- („Tag des Croissants“) und Termine je Kunde. Erscheinen als Chips über den
+-- Tagesspalten.
+--   workspace_id null = gilt für alle Kunden (Seed unten, source 'system').
+--   industries: Branchen-Schlagworte (baeckerei, cafe, pizza, restaurant) für
+--     allgemeine Branchentage; leer = für alle Kunden. Der Server zeigt
+--     Branchentage nur bei Kunden mit passender Branche.
+--   status 'vorschlag' = von der KI vorgeschlagen, noch nicht übernommen;
+--     'ausgeblendet' = für diesen Kunden versteckt. Ein allgemeiner Tag wird je
+--     Kunde ausgeblendet, indem eine Kundenzeile mit gleichem Datum und Titel
+--     und status 'ausgeblendet' sie überdeckt.
+-- Zugriff nur über den Server (Service-Key), daher RLS ohne Policies.
+create table if not exists public.marketing_days (
+  id uuid primary key default gen_random_uuid(),
+  workspace_id uuid references public.workspaces (id) on delete cascade,
+  date date not null,
+  title text not null,
+  kind text not null check (kind in ('feiertag', 'aktionstag', 'branche', 'kunde')),
+  region text,
+  note text not null default '',
+  status text not null default 'aktiv' check (status in ('aktiv', 'vorschlag', 'ausgeblendet')),
+  source text not null default 'manuell',
+  industries text[] not null default '{}',
+  created_at timestamptz default now(),
+  constraint marketing_days_title_length check (char_length(title) between 1 and 160),
+  constraint marketing_days_note_length check (char_length(note) <= 2000)
+);
+
+create unique index if not exists marketing_days_unique
+  on public.marketing_days (coalesce(workspace_id, '00000000-0000-0000-0000-000000000000'::uuid), date, title);
+
+create index if not exists marketing_days_date on public.marketing_days (date);
+create index if not exists marketing_days_workspace on public.marketing_days (workspace_id, date) where workspace_id is not null;
+
+alter table public.marketing_days enable row level security;
+
+-- Allgemeine Tage 2026 und 2027 (Deutschland, Feiertage bundesweit + Hessen).
+-- Erzeugt aus src/lib/server/social/days-seed.ts (bewegliche Termine gerechnet:
+-- Ostern 5.4.2026 / 28.3.2027).
+insert into public.marketing_days (date, title, kind, region, note, industries, workspace_id, status, source)
+select v.date::date, v.title, v.kind, v.region, v.note, v.industries, null, 'aktiv', 'system'
+from (values
+  ('2026-01-01', 'Neujahr', 'feiertag', 'DE', 'Gesetzlicher Feiertag. Guter Moment für Rückblick, Dank und Vorsätze.', '{}'::text[]),
+  ('2026-01-24', 'Tag der Bildung', 'aktionstag', null, 'Internationaler Tag der Bildung (UN). Wissen teilen, Ausbildung zeigen.', '{}'::text[]),
+  ('2026-01-30', 'Internationaler Tag des Croissants', 'branche', null, 'National Croissant Day. Croissant-Varianten, Backstube, Blätterteig-Handwerk.', array['baeckerei', 'cafe']::text[]),
+  ('2026-02-09', 'Tag der Pizza', 'branche', null, 'World Pizza Day. Lieblingspizza, Teig-Handwerk, Abstimmung.', array['pizza', 'restaurant']::text[]),
+  ('2026-02-12', 'Weiberfastnacht', 'aktionstag', 'DE', 'Start des Straßenkarnevals. Kostüme im Team, Krawatten ab.', '{}'::text[]),
+  ('2026-02-14', 'Valentinstag', 'aktionstag', null, 'Liebe, Wertschätzung, Geschenkideen. Auch: Liebe zum eigenen Handwerk oder zu Kund:innen.', '{}'::text[]),
+  ('2026-02-16', 'Rosenmontag', 'aktionstag', 'DE', 'Höhepunkt des Karnevals. Öffnungszeiten, Kostüme, Helau/Alaaf.', '{}'::text[]),
+  ('2026-03-08', 'Internationaler Frauentag', 'aktionstag', null, 'Frauen im Team oder in der Branche sichtbar machen.', '{}'::text[]),
+  ('2026-03-20', 'Frühlingsanfang', 'aktionstag', null, 'Astronomischer Frühlingsbeginn. Saisonwechsel, neue Produkte, frische Farben.', '{}'::text[]),
+  ('2026-03-20', 'Weltglückstag', 'aktionstag', null, 'Internationaler Tag des Glücks (UN). Was macht euer Team oder eure Kund:innen glücklich?', '{}'::text[]),
+  ('2026-03-28', 'Earth Hour', 'aktionstag', null, 'Eine Stunde Licht aus für Klimaschutz (WWF). Nachhaltigkeit zeigen.', '{}'::text[]),
+  ('2026-03-29', 'Beginn der Sommerzeit', 'aktionstag', 'DE', 'Uhren eine Stunde vor. Humorvoller Reminder, längere Abende.', '{}'::text[]),
+  ('2026-04-01', 'Aprilscherz', 'aktionstag', null, 'Augenzwinkernder Fake-Post, danach Auflösung.', '{}'::text[]),
+  ('2026-04-03', 'Karfreitag', 'feiertag', 'DE', 'Gesetzlicher Feiertag, stiller Tag. Öffnungszeiten über Ostern kommunizieren.', '{}'::text[]),
+  ('2026-04-05', 'Ostersonntag', 'feiertag', 'DE', 'In Hessen gesetzlicher Feiertag. Ostergrüße und Saisonangebote.', '{}'::text[]),
+  ('2026-04-06', 'Ostermontag', 'feiertag', 'DE', 'Gesetzlicher Feiertag.', '{}'::text[]),
+  ('2026-04-07', 'Weltgesundheitstag', 'aktionstag', null, 'WHO-Aktionstag. Gesundheit im Team, gesunde Produkte.', '{}'::text[]),
+  ('2026-04-22', 'Tag der Erde', 'aktionstag', null, 'Earth Day. Nachhaltigkeit und Umweltschutz im eigenen Betrieb.', '{}'::text[]),
+  ('2026-04-23', 'Welttag des Buches', 'aktionstag', null, 'Lieblingsbücher des Teams, Lesetipps.', '{}'::text[]),
+  ('2026-04-26', 'Tag der Brezel', 'branche', null, 'National Pretzel Day. Brezel schlingen im Video, Brezel-Varianten.', array['baeckerei']::text[]),
+  ('2026-05-01', 'Tag der Arbeit', 'feiertag', 'DE', 'Gesetzlicher Feiertag. Team und Mitarbeitende zeigen.', '{}'::text[]),
+  ('2026-05-03', 'Weltlachtag', 'aktionstag', null, 'Am ersten Sonntag im Mai. Lustige Momente aus dem Alltag.', '{}'::text[]),
+  ('2026-05-04', 'Star Wars Day', 'aktionstag', null, '„May the 4th be with you“. Popkultur-Wortspiel für lockere Marken.', '{}'::text[]),
+  ('2026-05-05', 'Tag des Deutschen Brotes', 'branche', 'DE', 'Aktionstag des Deutschen Brotinstituts. Brotkultur, Sorten, Handwerk.', array['baeckerei']::text[]),
+  ('2026-05-10', 'Muttertag', 'aktionstag', 'DE', 'Zweiter Sonntag im Mai. Danke sagen, Geschenkideen, Aktionen.', '{}'::text[]),
+  ('2026-05-14', 'Christi Himmelfahrt', 'feiertag', 'DE', 'Gesetzlicher Feiertag, zugleich Vatertag.', '{}'::text[]),
+  ('2026-05-14', 'Vatertag / Männertag', 'aktionstag', 'DE', 'Fällt auf Christi Himmelfahrt. Ausflüge, Bollerwagen, Geschenkideen.', '{}'::text[]),
+  ('2026-05-15', 'Internationaler Tag der Familie', 'aktionstag', null, 'UN-Aktionstag. Familienbetrieb, Familien als Kund:innen.', '{}'::text[]),
+  ('2026-05-24', 'Pfingstsonntag', 'feiertag', 'DE', 'In Hessen gesetzlicher Feiertag.', '{}'::text[]),
+  ('2026-05-25', 'Pfingstmontag', 'feiertag', 'DE', 'Gesetzlicher Feiertag. Langes Wochenende, Ausflugswetter.', '{}'::text[]),
+  ('2026-06-04', 'Fronleichnam', 'feiertag', 'HE', 'Feiertag in Hessen (und weiteren Ländern), oft Brückentag am Freitag.', '{}'::text[]),
+  ('2026-06-05', 'Weltumwelttag', 'aktionstag', null, 'UN-Umwelttag. Nachhaltige Schritte im Betrieb zeigen.', '{}'::text[]),
+  ('2026-06-21', 'Sommeranfang', 'aktionstag', null, 'Längster Tag des Jahres. Sommerangebote, Draußen-Momente.', '{}'::text[]),
+  ('2026-06-30', 'Social Media Day', 'aktionstag', null, 'Welttag der sozialen Medien. Blick hinter die Kulissen eures Kanals, Dank an die Community.', '{}'::text[]),
+  ('2026-07-17', 'Welt-Emoji-Tag', 'aktionstag', null, 'World Emoji Day. Post nur aus Emojis, Community rät mit.', '{}'::text[]),
+  ('2026-07-30', 'Tag der Freundschaft', 'aktionstag', null, 'Internationaler Tag der Freundschaft (UN). Freund:innen markieren lassen.', '{}'::text[]),
+  ('2026-09-19', 'Oktoberfest-Anstich', 'aktionstag', 'BY', '„O’zapft is!“ in München. Wiesn-Stimmung, Tracht, Brezn.', '{}'::text[]),
+  ('2026-09-20', 'Weltkindertag', 'aktionstag', 'DE', 'Kinderrechte, Familienangebote, Aktionen für Kinder.', '{}'::text[]),
+  ('2026-09-23', 'Herbstanfang', 'aktionstag', null, 'Astronomischer Herbstbeginn. Saisonwechsel, Herbstprodukte, gemütliche Stimmung.', '{}'::text[]),
+  ('2026-10-01', 'Tag des Kaffees', 'branche', null, 'Internationaler Tag des Kaffees (International Coffee Day). Kaffeespezialitäten, Röstung, Kaffee-Aktion.', array['baeckerei', 'cafe']::text[]),
+  ('2026-10-02', 'Welttag des Lächelns', 'aktionstag', null, 'Am ersten Freitag im Oktober. Lächelnde Gesichter aus Team und Kundschaft.', '{}'::text[]),
+  ('2026-10-03', 'Tag der Deutschen Einheit', 'feiertag', 'DE', 'Gesetzlicher Feiertag.', '{}'::text[]),
+  ('2026-10-04', 'Erntedankfest', 'aktionstag', 'DE', 'Am ersten Sonntag im Oktober. Regionale Produkte, Erzeuger:innen vorstellen.', '{}'::text[]),
+  ('2026-10-05', 'Weltlehrertag', 'aktionstag', null, 'UN-Aktionstag. Danke an Lehrkräfte, Ausbilder:innen im Betrieb.', '{}'::text[]),
+  ('2026-10-16', 'Welternährungstag', 'aktionstag', null, 'UN-Aktionstag gegen Hunger. Lebensmittel retten, Spendenaktionen.', '{}'::text[]),
+  ('2026-10-16', 'Welttag des Brotes', 'branche', null, 'Weltbrottag. Brot als Grundnahrungsmittel, Sauerteig, Brot retten.', array['baeckerei', 'restaurant']::text[]),
+  ('2026-10-25', 'Ende der Sommerzeit', 'aktionstag', 'DE', 'Uhren eine Stunde zurück. Eine Stunde mehr Schlaf.', '{}'::text[]),
+  ('2026-10-31', 'Halloween', 'aktionstag', null, 'Gruselige Deko, Kostüme, Kürbis-Specials.', '{}'::text[]),
+  ('2026-11-01', 'Weltvegantag', 'aktionstag', null, 'World Vegan Day. Vegane Produkte und Rezepte zeigen.', '{}'::text[]),
+  ('2026-11-11', 'Sankt Martin', 'aktionstag', 'DE', 'Martinsumzüge, Laternen, Teilen. Weckmann/Martinsgans.', '{}'::text[]),
+  ('2026-11-11', 'Start der Karnevalssession', 'aktionstag', 'DE', '11.11. um 11:11 Uhr. Helau/Alaaf für Marken im Rheinland und in Hessen.', '{}'::text[]),
+  ('2026-11-27', 'Black Friday', 'aktionstag', null, 'Rabatt-Tag nach Thanksgiving. Angebote oder bewusst Gegenposition (Green Friday).', '{}'::text[]),
+  ('2026-11-28', 'Small Business Saturday', 'aktionstag', null, 'Tag für lokale, kleine Geschäfte. „Kauft lokal“-Botschaft.', '{}'::text[]),
+  ('2026-11-29', '1. Advent', 'aktionstag', 'DE', 'Start der Adventszeit. Adventskalender-Aktionen, Weihnachtsangebote.', '{}'::text[]),
+  ('2026-11-30', 'Cyber Monday', 'aktionstag', null, 'Online-Angebotstag nach Black Friday.', '{}'::text[]),
+  ('2026-12-06', '2. Advent', 'aktionstag', 'DE', 'Zweite Kerze. Adventsstimmung, Geschenktipps.', '{}'::text[]),
+  ('2026-12-06', 'Nikolaus', 'aktionstag', 'DE', 'Stiefel, kleine Überraschungen, Nikolaus-Aktion.', '{}'::text[]),
+  ('2026-12-13', '3. Advent', 'aktionstag', 'DE', 'Dritte Kerze. Last-Minute-Geschenkideen ankündigen.', '{}'::text[]),
+  ('2026-12-20', '4. Advent', 'aktionstag', 'DE', 'Letzter Advent. Öffnungszeiten über die Feiertage.', '{}'::text[]),
+  ('2026-12-21', 'Winteranfang', 'aktionstag', null, 'Kürzester Tag des Jahres. Gemütlichkeit, Lichter.', '{}'::text[]),
+  ('2026-12-24', 'Heiligabend', 'aktionstag', 'DE', 'Weihnachtsgrüße, Öffnungszeiten, Dank an die Kundschaft.', '{}'::text[]),
+  ('2026-12-25', '1. Weihnachtstag', 'feiertag', 'DE', 'Gesetzlicher Feiertag. Weihnachtsgrüße.', '{}'::text[]),
+  ('2026-12-26', '2. Weihnachtstag', 'feiertag', 'DE', 'Gesetzlicher Feiertag.', '{}'::text[]),
+  ('2026-12-31', 'Silvester', 'aktionstag', 'DE', 'Jahresrückblick, Dank, Ausblick aufs neue Jahr.', '{}'::text[]),
+  ('2027-01-01', 'Neujahr', 'feiertag', 'DE', 'Gesetzlicher Feiertag. Guter Moment für Rückblick, Dank und Vorsätze.', '{}'::text[]),
+  ('2027-01-24', 'Tag der Bildung', 'aktionstag', null, 'Internationaler Tag der Bildung (UN). Wissen teilen, Ausbildung zeigen.', '{}'::text[]),
+  ('2027-01-30', 'Internationaler Tag des Croissants', 'branche', null, 'National Croissant Day. Croissant-Varianten, Backstube, Blätterteig-Handwerk.', array['baeckerei', 'cafe']::text[]),
+  ('2027-02-04', 'Weiberfastnacht', 'aktionstag', 'DE', 'Start des Straßenkarnevals. Kostüme im Team, Krawatten ab.', '{}'::text[]),
+  ('2027-02-08', 'Rosenmontag', 'aktionstag', 'DE', 'Höhepunkt des Karnevals. Öffnungszeiten, Kostüme, Helau/Alaaf.', '{}'::text[]),
+  ('2027-02-09', 'Tag der Pizza', 'branche', null, 'World Pizza Day. Lieblingspizza, Teig-Handwerk, Abstimmung.', array['pizza', 'restaurant']::text[]),
+  ('2027-02-14', 'Valentinstag', 'aktionstag', null, 'Liebe, Wertschätzung, Geschenkideen. Auch: Liebe zum eigenen Handwerk oder zu Kund:innen.', '{}'::text[]),
+  ('2027-03-08', 'Internationaler Frauentag', 'aktionstag', null, 'Frauen im Team oder in der Branche sichtbar machen.', '{}'::text[]),
+  ('2027-03-20', 'Frühlingsanfang', 'aktionstag', null, 'Astronomischer Frühlingsbeginn. Saisonwechsel, neue Produkte, frische Farben.', '{}'::text[]),
+  ('2027-03-20', 'Weltglückstag', 'aktionstag', null, 'Internationaler Tag des Glücks (UN). Was macht euer Team oder eure Kund:innen glücklich?', '{}'::text[]),
+  ('2027-03-26', 'Karfreitag', 'feiertag', 'DE', 'Gesetzlicher Feiertag, stiller Tag. Öffnungszeiten über Ostern kommunizieren.', '{}'::text[]),
+  ('2027-03-27', 'Earth Hour', 'aktionstag', null, 'Eine Stunde Licht aus für Klimaschutz (WWF). Nachhaltigkeit zeigen.', '{}'::text[]),
+  ('2027-03-28', 'Beginn der Sommerzeit', 'aktionstag', 'DE', 'Uhren eine Stunde vor. Humorvoller Reminder, längere Abende.', '{}'::text[]),
+  ('2027-03-28', 'Ostersonntag', 'feiertag', 'DE', 'In Hessen gesetzlicher Feiertag. Ostergrüße und Saisonangebote.', '{}'::text[]),
+  ('2027-03-29', 'Ostermontag', 'feiertag', 'DE', 'Gesetzlicher Feiertag.', '{}'::text[]),
+  ('2027-04-01', 'Aprilscherz', 'aktionstag', null, 'Augenzwinkernder Fake-Post, danach Auflösung.', '{}'::text[]),
+  ('2027-04-07', 'Weltgesundheitstag', 'aktionstag', null, 'WHO-Aktionstag. Gesundheit im Team, gesunde Produkte.', '{}'::text[]),
+  ('2027-04-22', 'Tag der Erde', 'aktionstag', null, 'Earth Day. Nachhaltigkeit und Umweltschutz im eigenen Betrieb.', '{}'::text[]),
+  ('2027-04-23', 'Welttag des Buches', 'aktionstag', null, 'Lieblingsbücher des Teams, Lesetipps.', '{}'::text[]),
+  ('2027-04-26', 'Tag der Brezel', 'branche', null, 'National Pretzel Day. Brezel schlingen im Video, Brezel-Varianten.', array['baeckerei']::text[]),
+  ('2027-05-01', 'Tag der Arbeit', 'feiertag', 'DE', 'Gesetzlicher Feiertag. Team und Mitarbeitende zeigen.', '{}'::text[]),
+  ('2027-05-02', 'Weltlachtag', 'aktionstag', null, 'Am ersten Sonntag im Mai. Lustige Momente aus dem Alltag.', '{}'::text[]),
+  ('2027-05-04', 'Star Wars Day', 'aktionstag', null, '„May the 4th be with you“. Popkultur-Wortspiel für lockere Marken.', '{}'::text[]),
+  ('2027-05-05', 'Tag des Deutschen Brotes', 'branche', 'DE', 'Aktionstag des Deutschen Brotinstituts. Brotkultur, Sorten, Handwerk.', array['baeckerei']::text[]),
+  ('2027-05-06', 'Christi Himmelfahrt', 'feiertag', 'DE', 'Gesetzlicher Feiertag, zugleich Vatertag.', '{}'::text[]),
+  ('2027-05-06', 'Vatertag / Männertag', 'aktionstag', 'DE', 'Fällt auf Christi Himmelfahrt. Ausflüge, Bollerwagen, Geschenkideen.', '{}'::text[]),
+  ('2027-05-09', 'Muttertag', 'aktionstag', 'DE', 'Zweiter Sonntag im Mai. Danke sagen, Geschenkideen, Aktionen.', '{}'::text[]),
+  ('2027-05-15', 'Internationaler Tag der Familie', 'aktionstag', null, 'UN-Aktionstag. Familienbetrieb, Familien als Kund:innen.', '{}'::text[]),
+  ('2027-05-16', 'Pfingstsonntag', 'feiertag', 'DE', 'In Hessen gesetzlicher Feiertag.', '{}'::text[]),
+  ('2027-05-17', 'Pfingstmontag', 'feiertag', 'DE', 'Gesetzlicher Feiertag. Langes Wochenende, Ausflugswetter.', '{}'::text[]),
+  ('2027-05-27', 'Fronleichnam', 'feiertag', 'HE', 'Feiertag in Hessen (und weiteren Ländern), oft Brückentag am Freitag.', '{}'::text[]),
+  ('2027-06-05', 'Weltumwelttag', 'aktionstag', null, 'UN-Umwelttag. Nachhaltige Schritte im Betrieb zeigen.', '{}'::text[]),
+  ('2027-06-21', 'Sommeranfang', 'aktionstag', null, 'Längster Tag des Jahres. Sommerangebote, Draußen-Momente.', '{}'::text[]),
+  ('2027-06-30', 'Social Media Day', 'aktionstag', null, 'Welttag der sozialen Medien. Blick hinter die Kulissen eures Kanals, Dank an die Community.', '{}'::text[]),
+  ('2027-07-17', 'Welt-Emoji-Tag', 'aktionstag', null, 'World Emoji Day. Post nur aus Emojis, Community rät mit.', '{}'::text[]),
+  ('2027-07-30', 'Tag der Freundschaft', 'aktionstag', null, 'Internationaler Tag der Freundschaft (UN). Freund:innen markieren lassen.', '{}'::text[]),
+  ('2027-09-18', 'Oktoberfest-Anstich', 'aktionstag', 'BY', '„O’zapft is!“ in München. Wiesn-Stimmung, Tracht, Brezn.', '{}'::text[]),
+  ('2027-09-20', 'Weltkindertag', 'aktionstag', 'DE', 'Kinderrechte, Familienangebote, Aktionen für Kinder.', '{}'::text[]),
+  ('2027-09-23', 'Herbstanfang', 'aktionstag', null, 'Astronomischer Herbstbeginn. Saisonwechsel, Herbstprodukte, gemütliche Stimmung.', '{}'::text[]),
+  ('2027-10-01', 'Tag des Kaffees', 'branche', null, 'Internationaler Tag des Kaffees (International Coffee Day). Kaffeespezialitäten, Röstung, Kaffee-Aktion.', array['baeckerei', 'cafe']::text[]),
+  ('2027-10-01', 'Welttag des Lächelns', 'aktionstag', null, 'Am ersten Freitag im Oktober. Lächelnde Gesichter aus Team und Kundschaft.', '{}'::text[]),
+  ('2027-10-03', 'Erntedankfest', 'aktionstag', 'DE', 'Am ersten Sonntag im Oktober. Regionale Produkte, Erzeuger:innen vorstellen.', '{}'::text[]),
+  ('2027-10-03', 'Tag der Deutschen Einheit', 'feiertag', 'DE', 'Gesetzlicher Feiertag.', '{}'::text[]),
+  ('2027-10-05', 'Weltlehrertag', 'aktionstag', null, 'UN-Aktionstag. Danke an Lehrkräfte, Ausbilder:innen im Betrieb.', '{}'::text[]),
+  ('2027-10-16', 'Welternährungstag', 'aktionstag', null, 'UN-Aktionstag gegen Hunger. Lebensmittel retten, Spendenaktionen.', '{}'::text[]),
+  ('2027-10-16', 'Welttag des Brotes', 'branche', null, 'Weltbrottag. Brot als Grundnahrungsmittel, Sauerteig, Brot retten.', array['baeckerei', 'restaurant']::text[]),
+  ('2027-10-31', 'Ende der Sommerzeit', 'aktionstag', 'DE', 'Uhren eine Stunde zurück. Eine Stunde mehr Schlaf.', '{}'::text[]),
+  ('2027-10-31', 'Halloween', 'aktionstag', null, 'Gruselige Deko, Kostüme, Kürbis-Specials.', '{}'::text[]),
+  ('2027-11-01', 'Weltvegantag', 'aktionstag', null, 'World Vegan Day. Vegane Produkte und Rezepte zeigen.', '{}'::text[]),
+  ('2027-11-11', 'Sankt Martin', 'aktionstag', 'DE', 'Martinsumzüge, Laternen, Teilen. Weckmann/Martinsgans.', '{}'::text[]),
+  ('2027-11-11', 'Start der Karnevalssession', 'aktionstag', 'DE', '11.11. um 11:11 Uhr. Helau/Alaaf für Marken im Rheinland und in Hessen.', '{}'::text[]),
+  ('2027-11-26', 'Black Friday', 'aktionstag', null, 'Rabatt-Tag nach Thanksgiving. Angebote oder bewusst Gegenposition (Green Friday).', '{}'::text[]),
+  ('2027-11-27', 'Small Business Saturday', 'aktionstag', null, 'Tag für lokale, kleine Geschäfte. „Kauft lokal“-Botschaft.', '{}'::text[]),
+  ('2027-11-28', '1. Advent', 'aktionstag', 'DE', 'Start der Adventszeit. Adventskalender-Aktionen, Weihnachtsangebote.', '{}'::text[]),
+  ('2027-11-29', 'Cyber Monday', 'aktionstag', null, 'Online-Angebotstag nach Black Friday.', '{}'::text[]),
+  ('2027-12-05', '2. Advent', 'aktionstag', 'DE', 'Zweite Kerze. Adventsstimmung, Geschenktipps.', '{}'::text[]),
+  ('2027-12-06', 'Nikolaus', 'aktionstag', 'DE', 'Stiefel, kleine Überraschungen, Nikolaus-Aktion.', '{}'::text[]),
+  ('2027-12-12', '3. Advent', 'aktionstag', 'DE', 'Dritte Kerze. Last-Minute-Geschenkideen ankündigen.', '{}'::text[]),
+  ('2027-12-19', '4. Advent', 'aktionstag', 'DE', 'Letzter Advent. Öffnungszeiten über die Feiertage.', '{}'::text[]),
+  ('2027-12-22', 'Winteranfang', 'aktionstag', null, 'Kürzester Tag des Jahres. Gemütlichkeit, Lichter.', '{}'::text[]),
+  ('2027-12-24', 'Heiligabend', 'aktionstag', 'DE', 'Weihnachtsgrüße, Öffnungszeiten, Dank an die Kundschaft.', '{}'::text[]),
+  ('2027-12-25', '1. Weihnachtstag', 'feiertag', 'DE', 'Gesetzlicher Feiertag. Weihnachtsgrüße.', '{}'::text[]),
+  ('2027-12-26', '2. Weihnachtstag', 'feiertag', 'DE', 'Gesetzlicher Feiertag.', '{}'::text[]),
+  ('2027-12-31', 'Silvester', 'aktionstag', 'DE', 'Jahresrückblick, Dank, Ausblick aufs neue Jahr.', '{}'::text[])
+) as v (date, title, kind, region, note, industries)
+on conflict do nothing;

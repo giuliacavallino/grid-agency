@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { mutate, revalidate, useResource } from "@/lib/data";
 import { cn as clsx } from "@/lib/cn";
 import type { Autopilot, PostIdea, SocialPost } from "@/lib/marketing";
+import { isoDay } from "@/lib/marketing-days";
 import { Button, Empty, Spinner, useToast } from "@/components/ui";
 import { AkteHeader } from "@/components/akte/header";
 import { ideasUrl } from "@/components/akte/ideas";
@@ -31,6 +32,7 @@ import {
   weekday,
   type Channel,
 } from "./planner-parts";
+import { DayChips, daysByDate, DaysButton, useDays } from "./planner-days";
 import { URL_WORKSPACES, useCurrentWorkspace } from "./workspace";
 
 // Planung: Redaktionskalender der Kundenwelt. Oben Kanal-Filter und
@@ -68,6 +70,10 @@ export function Posts() {
     const weeks = Math.ceil((Math.round((startOfDay(last).getTime() - start.getTime()) / 86_400_000) + 1) / 7);
     return Array.from({ length: weeks * 7 }, (_, i) => addDays(start, i));
   }, [view, anchor]);
+
+  // Feiertage, Aktionstage und Kundentage im sichtbaren Zeitraum
+  const marketingDays = useDays(workspace?.id ?? null, days[0], days[days.length - 1]);
+  const dayMap = useMemo(() => daysByDate(marketingDays.data), [marketingDays.data]);
 
   const accountMap = useMemo(() => new Map((workspace?.accounts ?? []).map((a) => [a.id, a])), [workspace?.accounts]);
   const fromIdeas = useMemo(() => new Set((ideas.data ?? []).map((i) => i.post_id).filter((id): id is string => !!id)), [ideas.data]);
@@ -174,6 +180,10 @@ export function Posts() {
     },
   });
 
+  const chips = (day: Date, compact: boolean, align: "left" | "right") => (
+    <DayChips days={dayMap.get(isoDay(day))} workspaceId={workspace.id} accounts={accounts} onOpenPost={(post) => setEditing({ post })} compact={compact} align={align} />
+  );
+
   const card = (post: SocialPost, compact = false, className?: string) => (
     <PostCard key={post.id} post={post} accounts={accountMap} fromIdeas={fromIdeas} compact={compact} className={className} onOpen={() => setEditing({ post })} />
   );
@@ -221,6 +231,7 @@ export function Posts() {
               <button type="button" onClick={() => setAnchor(new Date())} className={clsx("h-9 rounded-full px-4 text-[13px] font-medium hover:text-snow", pill)}>
                 Heute
               </button>
+              <DaysButton workspaceId={workspace.id} onJump={setAnchor} />
               <Button variant="primary" size="sm" className="h-9 px-4" icon={<Plus className="h-4 w-4" />} onClick={() => setEditing({ post: null })}>
                 Eigener Post
               </Button>
@@ -247,7 +258,7 @@ export function Posts() {
             <>
               {isWeek ? (
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-7">
-                  {days.map((day) => {
+                  {days.map((day, index) => {
                     const key = dayKey(day);
                     const list = byDay.get(key) ?? [];
                     const isToday = sameDay(day, today);
@@ -282,6 +293,7 @@ export function Posts() {
                             </button>
                           )}
                         </header>
+                        {chips(day, false, index >= 4 ? "right" : "left")}
                         {list.map((post) => card(post))}
                         {!list.length && <div className="hidden flex-1 md:block" aria-hidden />}
                       </section>
@@ -298,7 +310,7 @@ export function Posts() {
                     ))}
                   </div>
                   <div className="grid auto-rows-[minmax(7rem,auto)] grid-cols-7 gap-2">
-                    {days.map((day) => {
+                    {days.map((day, index) => {
                       const key = dayKey(day);
                       const list = byDay.get(key) ?? [];
                       const isToday = sameDay(day, today);
@@ -334,6 +346,7 @@ export function Posts() {
                               </button>
                             )}
                           </header>
+                          {chips(day, true, index % 7 >= 4 ? "right" : "left")}
                           {list.map((post) => card(post, true))}
                         </section>
                       );
