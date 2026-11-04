@@ -38,7 +38,8 @@ type Counter = "leads" | "applications" | "invoices" | "proposals";
 /** color: farbiger Punkt statt Icon (Kunden in Aufgaben); group: Zwischenüberschrift davor */
 /** area: nur sichtbar, wer diesen Bereich darf (z. B. "admin" für Bank) */
 /** bottom: unten über dem Profil (z. B. Einstellungen) */
-export type NavItem = { href: string; label: string; icon?: LucideIcon; color?: string; counter?: Counter; group?: string; area?: string; bottom?: boolean };
+/** avatar: eigenes Bild statt Icon (z. B. rundes Kundenprofilbild) */
+export type NavItem = { href: string; label: string; icon?: LucideIcon; color?: string; avatar?: React.ReactNode; counter?: Counter; group?: string; area?: string; bottom?: boolean };
 
 export const SALES_NAV: NavItem[] = [
   { href: "/sales", label: "Pipeline", icon: Columns3, counter: "leads" },
@@ -116,13 +117,15 @@ function NavList({ nav, onNavigate }: { nav: NavItem[]; onNavigate?: () => void 
     <ul className="flex flex-col gap-1">
       {nav
         .filter((item) => !item.bottom && (!item.area || hasArea(me.data, item.area)))
-        .map(({ href, label, icon: Icon, color, counter, group }) => {
+        .map(({ href, label, icon: Icon, color, avatar, counter, group }) => {
           const active = isActive(pathname, href, root);
           return (
             <li key={href}>
               {group && <p className="px-3.5 pt-5 pb-2 text-[11.5px] font-semibold tracking-[0.12em] text-snow/45 uppercase">{group}</p>}
               <Link href={href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={itemClass(active)}>
-                {Icon ? (
+                {avatar ? (
+                  avatar
+                ) : Icon ? (
                   <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.8} />
                 ) : (
                   <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
