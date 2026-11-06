@@ -90,7 +90,7 @@ function Sidebar({ workspace, onNavigate }: { workspace: WorkspaceSummary; onNav
       title: "Content",
       items: [
         { path: "vorschlaege", label: "Vorschläge", icon: Sparkles, area: "marketing", count: counts.ideas, alert: counts.ideas > 0 },
-        { path: "planung", label: "Planung", icon: CalendarDays, area: "marketing" },
+        ...(workspace.planning === false ? [] : [{ path: "planung", label: "Planung", icon: CalendarDays, area: "marketing" } as Item]),
         { path: "ci", label: "Markenkit", icon: Palette, area: "marketing" },
       ],
     },

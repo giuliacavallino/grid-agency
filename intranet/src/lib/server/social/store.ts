@@ -80,6 +80,7 @@ const toWorkspace = ({ logo_path, settings, secondary_color, ...rest }: Workspac
   avatar_url: typeof settings?.avatar_path === "string" ? publicMediaUrl(settings.avatar_path) : null,
   sharepoint_url: typeof settings?.sharepoint_url === "string" ? settings.sharepoint_url : null,
   profiles: readProfiles(settings?.profiles),
+  planning: settings?.planning !== false,
 });
 
 /** Hinterlegte Profil-Links (settings.profiles); nur gültige Adressen */

@@ -22,6 +22,8 @@ export type Workspace = {
   sharepoint_url: string | null;
   /** Hinterlegte Profil-Links je Plattform (auch ohne Verbindung) */
   profiles: ProfileLinks;
+  /** Social-Media-Planung (Planer, Tage-Autopilot); aus z. B. bei reiner Google-Betreuung */
+  planning: boolean;
 };
 
 // ---------- Profile der Kanäle (Kachel im Cockpit) ----------

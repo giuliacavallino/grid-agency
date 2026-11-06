@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, Building2, CalendarHeart, Check, CircleDashed, Download, FolderOpen, KeyRound, Link2, Plug, Rocket, Save, Users } from "lucide-react";
+import { Bot, Building2, CalendarHeart, CalendarRange, Check, CircleDashed, Download, FolderOpen, KeyRound, Link2, Plug, Rocket, Save, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { mutate, revalidate, useResource } from "@/lib/data";
 import { cn as clsx } from "@/lib/cn";
@@ -25,6 +25,7 @@ const SECTIONS = [
     title: "Diese Akte",
     items: [
       { path: "", label: "Kanäle", icon: Link2 },
+      { path: "postingplan", label: "Postingplan", icon: CalendarRange },
       { path: "autopilot", label: "Autopilot", icon: Rocket },
       { path: "stammdaten", label: "Stammdaten", icon: Building2 },
     ],
