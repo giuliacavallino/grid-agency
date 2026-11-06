@@ -32,6 +32,7 @@ import {
   weekday,
   type Channel,
 } from "./planner-parts";
+import { FeedGrid } from "./feed-grid";
 import { PlanProgress } from "./plan-progress";
 import { DayChips, daysByDate, DaysButton, useDays } from "./planner-days";
 import { URL_WORKSPACES, useCurrentWorkspace } from "./workspace";
@@ -44,7 +45,7 @@ import { URL_WORKSPACES, useCurrentWorkspace } from "./workspace";
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const pill = "bg-surface shadow-[0_1px_2px_var(--shadow-color),0_2px_8px_var(--shadow-color)]";
 
-type View = "week" | "month";
+type View = "week" | "month" | "feed";
 type Editing = { post: SocialPost | null; date?: Date } | null;
 
 export function Posts() {
@@ -62,7 +63,7 @@ export function Posts() {
   const [approving, setApproving] = useState(false);
 
   const days = useMemo(() => {
-    if (view === "week") {
+    if (view !== "month") {
       const start = startOfWeek(anchor);
       return Array.from({ length: 7 }, (_, i) => addDays(start, i));
     }
@@ -121,7 +122,8 @@ export function Posts() {
   }
   const accounts = workspace.accounts.filter((a) => a.provider !== "canva");
   const today = new Date();
-  const isWeek = view === "week";
+  const isWeek = view !== "month";
+  const isFeed = view === "feed";
 
   const range = isWeek
     ? `${days[0].toLocaleDateString("de-DE", { day: "numeric", month: "short" })} – ${days[6].toLocaleDateString("de-DE", { day: "numeric", month: "short", year: "numeric" })}`
@@ -205,7 +207,7 @@ export function Posts() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className={clsx("flex items-center rounded-full p-1", pill)} role="group" aria-label="Ansicht">
-                {(["week", "month"] as View[]).map((v) => (
+                {(["week", "month", "feed"] as View[]).map((v) => (
                   <button
                     key={v}
                     type="button"
@@ -213,10 +215,11 @@ export function Posts() {
                     onClick={() => setView(v)}
                     className={clsx("h-7 rounded-full px-3.5 text-[13px] font-medium transition-colors", view === v ? "bg-snow text-sky" : "text-snow/60 hover:text-snow")}
                   >
-                    {v === "week" ? "Woche" : "Monat"}
+                    {v === "week" ? "Woche" : v === "month" ? "Monat" : "Feed"}
                   </button>
                 ))}
               </div>
+              {!isFeed && (
               <div className={clsx("flex h-9 items-center rounded-full", pill)} title={range}>
                 <button type="button" aria-label={isWeek ? "Vorige Woche" : "Voriger Monat"} onClick={() => shift(-1)} className="grid h-9 w-9 place-items-center rounded-full text-snow/60 hover:text-snow">
                   <ChevronLeft className="h-4 w-4" />
@@ -229,9 +232,12 @@ export function Posts() {
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
-              <button type="button" onClick={() => setAnchor(new Date())} className={clsx("h-9 rounded-full px-4 text-[13px] font-medium hover:text-snow", pill)}>
-                Heute
-              </button>
+              )}
+              {!isFeed && (
+                <button type="button" onClick={() => setAnchor(new Date())} className={clsx("h-9 rounded-full px-4 text-[13px] font-medium hover:text-snow", pill)}>
+                  Heute
+                </button>
+              )}
               <DaysButton workspaceId={workspace.id} onJump={setAnchor} />
               <Button variant="primary" size="sm" className="h-9 px-4" icon={<Plus className="h-4 w-4" />} onClick={() => setEditing({ post: null })}>
                 Eigener Post
@@ -239,7 +245,7 @@ export function Posts() {
             </div>
           </div>
 
-          <PlanProgress workspaceId={workspace.id} posts={posts.data ?? []} anchor={anchor} view={view} />
+          <PlanProgress workspaceId={workspace.id} posts={posts.data ?? []} anchor={isFeed ? new Date() : anchor} view={view === "month" ? "month" : "week"} />
 
           <AgentBar
             workspaceId={workspace.id}
@@ -257,6 +263,8 @@ export function Posts() {
             <div className="grid place-items-center py-24">
               <Spinner />
             </div>
+          ) : isFeed ? (
+            <FeedGrid workspace={workspace} posts={posts.data ?? []} onOpen={(post) => setEditing({ post })} />
           ) : (
             <>
               {isWeek ? (
