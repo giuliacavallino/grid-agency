@@ -6,13 +6,16 @@ import { SOURCES } from "@/lib/sales/types";
 import { withUser, type User } from "@/lib/server/auth";
 import { db, sb, visibleRows, type Row } from "@/lib/server/db";
 import { meetUrl } from "@/lib/server/meet";
-import { listWorkspaces } from "@/lib/server/social/store";
+import { listPosts, listWorkspaces } from "@/lib/server/social/store";
+import { getPostingPlan } from "@/lib/server/social/posting-plan";
+import { gaps, progress, QUOTA_KINDS, rulesFor, windowOf, type PlanWindow, type PostingPlan } from "@/lib/posting-plan";
+import type { SocialPost } from "@/lib/marketing";
 
 // Benachrichtigungen für die Glocke in der Kopfzeile: was gerade auf das
 // Konto wartet, aus allen Bereichen, die es sehen darf. Jede Quelle läuft
 // für sich; fällt eine aus, fehlt nur sie.
 
-export type NotificationKind = "lead" | "freigabe" | "agent" | "aufgabe" | "bewerbung" | "termin";
+export type NotificationKind = "lead" | "freigabe" | "agent" | "aufgabe" | "bewerbung" | "termin" | "postingplan";
 
 export type NotificationItem = {
   id: string;
@@ -192,6 +195,64 @@ function ideaItem(workspaceId: string, name: string, ideas: { id: string; create
   };
 }
 
+/** Postingplan: was in der Woche (ab Donnerstag auch nächste Woche) und im
+ * Monat noch einzuplanen ist, für die zuständige Person (ohne Zuständige:
+ * für Admins) */
+async function postingPlans(user: User): Promise<NotificationItem[]> {
+  const items: NotificationItem[] = [];
+  const { start } = berlinToday();
+  for (const workspace of await listWorkspaces()) {
+    const plan = await getPostingPlan(workspace.id);
+    if (!plan.rules.length) continue;
+    if (plan.owner ? plan.owner !== user.email.toLowerCase() : !user.admin) continue;
+    const posts = await listPosts({ workspace_id: workspace.id, limit: 500 });
+    const item = planItem(workspace.id, workspace.name, plan, posts, start);
+    if (item) items.push(item);
+  }
+  return items;
+}
+
+function planItem(workspaceId: string, name: string, plan: PostingPlan, posts: SocialPost[], today: number): NotificationItem | null {
+  const now = new Date(today + 12 * 3_600_000);
+  const week = windowOf("week", now);
+  const windows: PlanWindow[] = [week];
+  // Ab Donnerstag rückt die nächste Woche in den Blick
+  if ((now.getUTCDay() + 6) % 7 >= 3) windows.push(windowOf("week", new Date(now.getTime() + 7 * DAY)));
+  windows.push(windowOf("month", now));
+  const parts: string[] = [];
+  for (const window of windows) {
+    // Vor dem vollen Vertragsumfang nichts anmahnen
+    if (plan.start && window.to < plan.start) continue;
+    // Je Art zählt die strengste Regel (z. B. Wochenmenge und Rhythmus)
+    const byKind = new Map<keyof typeof QUOTA_KINDS, number>();
+    for (const p of rulesFor(plan, window.period)
+      .filter((rule) => !(window.period === "month" && rule.period === "days"))
+      .map((rule) => progress(rule, posts, window))) {
+      byKind.set(p.rule.kind, Math.max(byKind.get(p.rule.kind) ?? 0, p.missing));
+    }
+    const missing = [...byKind]
+      .filter(([, n]) => n > 0)
+      .map(([kind, n]) => `${n} ${n === 1 ? QUOTA_KINDS[kind].one : QUOTA_KINDS[kind].label}`);
+    if (missing.length) parts.push(`${window === windows[1] && window.period === "week" ? `nächste Woche (${window.label})` : window.label}: ${missing.join(", ")}`);
+  }
+  const holes = plan.rules.flatMap((rule) => gaps(rule, posts)).sort();
+  if (holes.length) {
+    const first = new Date(`${holes[0]}T12:00:00Z`).toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" });
+    parts.push(`Lücke im Rhythmus ab ${first}`);
+  }
+  if (!parts.length) return null;
+  return {
+    // Ändert sich der Stand, taucht der Hinweis wieder als neu auf
+    id: `plan-${workspaceId}-${week.from}-${parts.join("|").length}`,
+    kind: "postingplan",
+    title: name,
+    text: `Noch einplanen · ${parts.join(" · ")}`,
+    // Einmal am Tag (8 Uhr) als neu, nicht bei jedem Abruf
+    at: new Date(Math.min(today + 8 * 3_600_000, Date.now())).toISOString(),
+    href: `/akte/${workspaceId}/planung`,
+  };
+}
+
 type MeetingRow = {
   id: string;
   code: string;
@@ -293,6 +354,8 @@ export const GET = withUser(async (user) => {
   }
   if (can("marketing")) sources.push(["vorschlaege", demo?.ideen ?? postIdeas]);
   sources.push(["termine", demo?.termine ?? (() => meetings(user))]);
+  // Postingplan unabhängig vom Bereich Marketing: wer zuständig ist, wird erinnert
+  sources.push(["postingplan", () => postingPlans(user)]);
 
   const results = await Promise.all(
     sources.map(async ([name, load]) => {

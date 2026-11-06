@@ -32,6 +32,7 @@ import {
   weekday,
   type Channel,
 } from "./planner-parts";
+import { PlanProgress } from "./plan-progress";
 import { DayChips, daysByDate, DaysButton, useDays } from "./planner-days";
 import { URL_WORKSPACES, useCurrentWorkspace } from "./workspace";
 
@@ -237,6 +238,8 @@ export function Posts() {
               </Button>
             </div>
           </div>
+
+          <PlanProgress workspaceId={workspace.id} posts={posts.data ?? []} anchor={anchor} view={view} />
 
           <AgentBar
             workspaceId={workspace.id}

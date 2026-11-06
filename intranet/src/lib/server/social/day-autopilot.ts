@@ -292,6 +292,7 @@ export async function dayAutopilotTick(budgetMs = 200_000) {
   const results: (DayJobResult & { workspace: string })[] = [];
   const from = isoDay(new Date(Date.now() + 86_400_000));
   for (const workspace of await listWorkspaces()) {
+    if (workspace.planning === false) continue;
     const settings = await getDayAutopilot(workspace.id);
     if (!settings.enabled || (!settings.post && !settings.story)) continue;
     const to = isoDay(new Date(Date.now() + settings.lead_days * 86_400_000));
