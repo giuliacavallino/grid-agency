@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { clsx } from "clsx";
-import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, CalendarDays, Check, FileText, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { createRow, deleteRow, updateRow, useRows } from "@/lib/data";
 import { isOverdue, PROJECT_COLORS, type Task, type TaskProject, type TaskSection } from "@/lib/tasks";
 import { Badge, Button, Dialog, Empty, Field, IconButton, Input, MenuItem, Popover, Select, Spinner, useToast } from "@/components/ui";
 import { useTeamNames } from "@/components/access";
+import { useWorkspaces } from "@/components/marketing/workspace";
 import { PageBar } from "@/components/sales/shell";
 import { BriefingSheet } from "./briefing";
 import { KeepVisible, TaskSheet } from "./task";
@@ -33,6 +35,9 @@ export function ProjectView({ id }: { id: string }) {
   );
   const allTasks = useMemo(() => (taskRows.data ?? []).filter((t) => t.project_id === id), [taskRows.data, id]);
   const people = useTeamNames();
+  // Kundenakte dieses Kunden (nur mit Marketing-Zugang geladen) für „Posts planen“
+  const { data: workspaces } = useWorkspaces();
+  const akte = workspaces?.find((w) => w.project_id === id && w.planning !== false);
   // Hier abgehakte To-dos bleiben bis zum Verlassen der Seite sichtbar
   const [keep, setKeep] = useState<Set<string>>(() => new Set());
   const keepVisible = useCallback((taskId: string) => setKeep((set) => new Set(set).add(taskId)), []);
@@ -82,6 +87,14 @@ export function ProjectView({ id }: { id: string }) {
           <Button size="sm" className="h-9" icon={<FileText className="h-4 w-4" />} onClick={() => setBriefing(true)}>
             Briefing
           </Button>
+          {akte && (
+            <Link
+              href={`/akte/${akte.id}/planung`}
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-snow px-4 text-[13px] font-medium text-sky hover:bg-snow/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-snow"
+            >
+              <CalendarDays className="h-4 w-4" /> Posts planen
+            </Link>
+          )}
           <ProjectMenu project={project} onEdit={() => setProjectDialog(true)} onAddSection={() => setSectionDialog("new")} />
         </PageBar>
 
