@@ -39,7 +39,7 @@ export function ComposeWindow({ mailboxes }: { mailboxes: string[] }) {
         </div>
       ) : (
         <Compose
-          state={reply && source.data ? { mode: reply, source: source.data } : { mode: "new", to: params.get("to") ?? undefined }}
+          state={reply && source.data ? { mode: reply, source: source.data } : { mode: "new", to: params.get("to") ?? undefined, subject: params.get("subject") ?? undefined, body: params.get("body") ?? undefined }}
           mailbox={mailbox}
           fromOptions={mailboxes}
           onClose={close}

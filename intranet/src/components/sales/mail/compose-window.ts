@@ -8,7 +8,7 @@ import type { ReplyMode } from "./reading-pane";
 export const MAIL_CHANNEL = "intranet:mail";
 
 export type ComposeParams =
-  | { mode: "new"; from?: string; to?: string }
+  | { mode: "new"; from?: string; to?: string; subject?: string; body?: string }
   | { mode: ReplyMode; mailbox: string; id: string };
 
 export function composeUrl(params: ComposeParams) {

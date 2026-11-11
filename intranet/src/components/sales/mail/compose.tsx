@@ -12,10 +12,18 @@ import { Button, Spinner, useToast } from "@/components/ui";
 import { formatSize, isEmail, parseAddresses, recipientList, recipientName } from "./format";
 
 export type ComposeState =
-  | { mode: "new"; to?: string }
+  | { mode: "new"; to?: string; subject?: string; body?: string }
   | { mode: "reply" | "replyAll" | "forward"; source: Message };
 
 const PREFIX = { reply: "AW: ", replyAll: "AW: ", forward: "WG: " } as const;
+
+/** Vorbelegter Klartext (z. B. Absage aus der Pipeline) als Absätze */
+const textToHtml = (text?: string) =>
+  (text ?? "")
+    .split(/\n{2,}/)
+    .filter((p) => p.trim())
+    .map((p) => `<p>${p.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p><p><br></p>`)
+    .join("");
 const MAX_FILES = 20 * 1024 * 1024; // Graph nimmt über sendMail rund 25 MB (Base64)
 
 type FileItem = FileAttachment & { size: number };
@@ -56,7 +64,7 @@ export function Compose({
   const [cc, setCc] = useState("");
   const [bcc, setBcc] = useState("");
   const [showCc, setShowCc] = useState(false);
-  const [subject, setSubject] = useState(source ? `${PREFIX[state.mode as keyof typeof PREFIX]}${source.subject ?? ""}` : "");
+  const [subject, setSubject] = useState(source ? `${PREFIX[state.mode as keyof typeof PREFIX]}${source.subject ?? ""}` : state.mode === "new" ? (state.subject ?? "") : "");
   const [important, setImportant] = useState(false);
   const [readReceipt, setReadReceipt] = useState(false);
   const [signature, setSignature] = useState<"standard" | "none">("standard");
@@ -313,7 +321,7 @@ export function Compose({
           ))}
         </div>
 
-        <RichEditor ref={editor} placeholder="Text …" className="mt-3 min-h-[320px]" autoFocus={isNew && !!to} />
+        <RichEditor ref={editor} placeholder="Text …" initialHtml={state.mode === "new" ? textToHtml(state.body) : ""} className="mt-3 min-h-[320px]" autoFocus={isNew && !!to} />
 
         {signature === "standard" && (
           <div className="mt-3 px-1 text-[14px] text-snow/70">
