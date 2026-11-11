@@ -119,7 +119,7 @@ export function TopBar() {
             <span className="logo-rainbow transition-transform group-hover:scale-[1.08]">
               <Logo priority className="h-[26px] lg:h-[30px]" />
             </span>
-            <span className="-mt-1.5 pl-[3px] text-[9px] font-medium uppercase tracking-[0.32em] text-snow/70 lg:text-[10px]">
+            <span className="mt-1 pl-[3px] lg:mt-1.5 text-[9px] font-medium uppercase tracking-[0.32em] text-snow/70 lg:text-[10px]">
               Intranet
             </span>
           </Link>
