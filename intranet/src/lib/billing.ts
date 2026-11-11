@@ -48,6 +48,8 @@ export type BillingDocument = {
   finalized_at: string | null;
   sent_at: string | null;
   send_error: string | null;
+  /** Versendete Zahlungserinnerungen (aus dem Intranet) */
+  reminders?: { at: string; to: string; by?: string }[];
 };
 
 export type Recurring = {
@@ -283,6 +285,12 @@ export type BillingSettings = {
   closing: string;
   mail_subject: string;
   mail_body: string;
+  /** Zahlungserinnerung (Mail von buchhaltung@) */
+  reminder_subject: string;
+  reminder_body: string;
+  reminder_days: number;
+  /** Signatur unter Mails der Buchhaltung ({Signatur}) */
+  signature: string;
 };
 
 /** Stand der easybill-Rechnungen (Oktober 2026) */
@@ -311,6 +319,12 @@ export const DEFAULT_BILLING_SETTINGS: BillingSettings = {
   mail_subject: "{Belegart} {Nummer} – {Firma}",
   mail_body:
     "Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie unsere {Belegart} {Nummer} über {Betrag}. Bitte begleichen Sie den Betrag bis zum {Fällig}.\n\nMit freundlichen Grüßen\n{Firma}",
+  reminder_subject: "Zahlungserinnerung: Rechnung {Nummer} – {Firma}",
+  reminder_body:
+    "Sehr geehrte Damen und Herren,\n\nsicher ist es im Alltag untergegangen: Unsere Rechnung {Nummer} vom {Datum} über {Betrag} war am {Fällig} fällig. Bis heute konnten wir leider noch keinen Zahlungseingang feststellen.\n\nOffener Betrag: {Offen}\n\nWir bitten Sie, den Betrag bis zum {Frist} auf unser Konto zu überweisen:\n{Bank}\nIBAN: {IBAN}\nBIC: {BIC}\nVerwendungszweck: {Nummer}\n\nDie Rechnung finden Sie zur Sicherheit noch einmal im Anhang. Sollte sich Ihre Zahlung mit dieser Erinnerung überschnitten haben, betrachten Sie diese Nachricht bitte als gegenstandslos.\n\n{Signatur}",
+  reminder_days: 7,
+  signature:
+    "Mit freundlichen Grüßen\n\nSophia Conti\nBuchhaltung\n\nGRID AGENCY UG\nEichendorffstrasse 32 · 60320 Frankfurt am Main\nbuchhaltung@grid-agency.de · www.grid-agency.de",
 };
 
 /** Texte für Storno und Gutschrift (statt Einleitung und Schluss der Rechnung) */

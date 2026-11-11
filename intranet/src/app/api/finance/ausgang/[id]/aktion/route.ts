@@ -1,14 +1,14 @@
 import { withUser } from "@/lib/server/auth";
 import { getBilling } from "@/lib/server/billing";
 import { setSeriesStatus, takeOverSeries } from "@/lib/server/billing-series";
-import { BillingError, addPayment, cancel, correct, credit, ensurePdf, finalize, markSent, removePayment } from "@/lib/server/billing-write";
+import { BillingError, addPayment, cancel, correct, credit, ensurePdf, finalize, markReminded, markSent, removePayment } from "@/lib/server/billing-write";
 
 type Context = { params: Promise<{ id: string }> };
 
 export const maxDuration = 60;
 
 /** Aktionen an einem Beleg. Antwort: der (neue) Beleg, den die Oberfläche öffnet. */
-export const POST = withUser(async (_user, request, { params }: Context) => {
+export const POST = withUser(async (user, request, { params }: Context) => {
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   let open = id;
@@ -37,6 +37,9 @@ export const POST = withUser(async (_user, request, { params }: Context) => {
         break;
       case "versendet":
         await markSent(id, String(body.to ?? "").slice(0, 500));
+        break;
+      case "erinnert":
+        await markReminded(id, String(body.to ?? "").slice(0, 500), user.name || user.email);
         break;
       case "uebernehmen":
         await takeOverSeries(id);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleDollarSign, Signature, FilePen, FileText, Lock, Pause, Play, Send, Square, Trash2, Undo2, Workflow } from "lucide-react";
+import { BellRing, CircleDollarSign, Signature, FilePen, FileText, Lock, Pause, Play, Send, Square, Trash2, Undo2, Workflow } from "lucide-react";
 import { api } from "@/lib/api";
 import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
 import { revalidate } from "@/lib/data";
@@ -38,7 +38,7 @@ export async function openPdf(id: string) {
   }
 }
 
-type DialogName = "festschreiben" | "senden" | "mappe" | "zahlung" | "stornieren" | "korrigieren" | "loeschen" | "uebernehmen" | "beenden" | null;
+type DialogName = "festschreiben" | "senden" | "erinnern" | "mappe" | "zahlung" | "stornieren" | "korrigieren" | "loeschen" | "uebernehmen" | "beenden" | null;
 
 /** Knöpfe und Dialoge passend zum Zustand des Belegs */
 export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; onOpen: (id: string) => void; onEdit: (doc: BillingDetail) => void }) {
@@ -110,6 +110,17 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
         {finalized && !series && !offer && (
           <Button size="sm" variant={doc.sent_at ? "secondary" : "primary"} icon={<Send className="h-4 w-4" />} onClick={() => setDialog("senden")}>
             {doc.sent_at ? "Erneut senden" : "Senden"}
+          </Button>
+        )}
+        {payable && doc.kind === "rechnung" && ["offen", "teilbezahlt"].includes(doc.status) && (
+          <Button
+            size="sm"
+            variant={doc.due_date && doc.due_date < todayBerlin() ? "primary" : "secondary"}
+            icon={<BellRing className="h-4 w-4" />}
+            onClick={() => setDialog("erinnern")}
+            title={doc.reminders?.length ? `Zuletzt erinnert am ${new Date(doc.reminders.at(-1)!.at).toLocaleDateString("de-DE")}` : undefined}
+          >
+            Zahlungserinnerung{doc.reminders?.length ? ` (${doc.reminders.length + 1}.)` : ""}
           </Button>
         )}
         {payable && doc.status !== "bezahlt" && (
@@ -262,6 +273,7 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
         onConfirm={() => run("beenden", "Serie beendet")}
       />
       {dialog === "senden" && <SendDialog doc={doc} onClose={() => setDialog(null)} />}
+      {dialog === "erinnern" && <SendDialog doc={doc} reminder onClose={() => setDialog(null)} />}
       {dialog === "mappe" && <SignFolderDialog doc={doc} onClose={() => setDialog(null)} />}
       {dialog === "zahlung" && <PaymentDialog doc={doc} onClose={() => setDialog(null)} />}
     </>
@@ -312,8 +324,9 @@ function Confirm({
 
 const split = (value: string) => value.split(/[,;\s]+/).map((v) => v.trim()).filter(Boolean);
 
-/** Beleg als PDF von buchhaltung@ verschicken (im Browser über Graph) */
-function SendDialog({ doc, onClose }: { doc: BillingDetail; onClose: () => void }) {
+/** Beleg als PDF von buchhaltung@ verschicken (im Browser über Graph); mit
+ * reminder als Zahlungserinnerung zur offenen Rechnung */
+function SendDialog({ doc, reminder = false, onClose }: { doc: BillingDetail; reminder?: boolean; onClose: () => void }) {
   const toast = useToast();
   const [mail, setMail] = useState<{ to: string; cc: string; subject: string; body: string; attachment: FileAttachment } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -321,10 +334,10 @@ function SendDialog({ doc, onClose }: { doc: BillingDetail; onClose: () => void 
 
   // PDF, Empfänger, Betreff und Text vom Server
   useEffect(() => {
-    api<{ to: string | null; subject: string; body: string; attachment: FileAttachment }>(`${BILLING_URL}/${doc.id}/pdf?mail=1`)
+    api<{ to: string | null; subject: string; body: string; attachment: FileAttachment }>(`${BILLING_URL}/${doc.id}/pdf?mail=${reminder ? "erinnerung" : "1"}`)
       .then((m) => setMail({ to: m.to ?? "", cc: "", subject: m.subject, body: m.body, attachment: m.attachment }))
       .catch((e: Error) => setError(e.message));
-  }, [doc.id]);
+  }, [doc.id, reminder]);
 
   async function send() {
     if (!mail) return;
@@ -333,8 +346,8 @@ function SendDialog({ doc, onClose }: { doc: BillingDetail; onClose: () => void 
     setSending(true);
     try {
       await graphFor(FINANCE_MAILBOX).send({ to, cc: split(mail.cc), subject: mail.subject, body: mail.body }, [mail.attachment]);
-      await act(doc.id, "versendet", { to: to.join(", ") });
-      toast(`An ${to.join(", ")} gesendet`);
+      await act(doc.id, reminder ? "erinnert" : "versendet", { to: to.join(", ") });
+      toast(reminder ? `Zahlungserinnerung an ${to.join(", ")} gesendet` : `An ${to.join(", ")} gesendet`);
       onClose();
     } catch (e) {
       toast(graphErrorMessage(e), "error");
@@ -346,7 +359,7 @@ function SendDialog({ doc, onClose }: { doc: BillingDetail; onClose: () => void 
     <Dialog
       open
       onClose={onClose}
-      title={`${docLabel(doc)} senden`}
+      title={reminder ? `Zahlungserinnerung zu ${docLabel(doc)}` : `${docLabel(doc)} senden`}
       width="max-w-xl"
       footer={
         <>
@@ -366,6 +379,13 @@ function SendDialog({ doc, onClose }: { doc: BillingDetail; onClose: () => void 
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-[13px] text-snow/55">Von {mailboxLabel(FINANCE_MAILBOX)}</p>
+          {reminder && (
+            <p className="rounded-xl bg-snow/[0.05] px-3 py-2 text-[13px] text-snow/75">
+              Offen: <b>{money(doc.amount_gross - doc.paid_amount, doc.currency)}</b>
+              {doc.due_date && ` · fällig seit ${new Date(`${doc.due_date}T12:00:00`).toLocaleDateString("de-DE")}`}
+              {doc.reminders?.length ? ` · bereits ${doc.reminders.length}× erinnert, zuletzt am ${new Date(doc.reminders.at(-1)!.at).toLocaleDateString("de-DE")}` : " · noch nicht erinnert"}
+            </p>
+          )}
           <Field label="An">{(id) => <Input id={id} value={mail.to} onChange={(e) => setMail({ ...mail, to: e.target.value })} placeholder="kunde@firma.de" />}</Field>
           <Field label="Cc">{(id) => <Input id={id} value={mail.cc} onChange={(e) => setMail({ ...mail, cc: e.target.value })} />}</Field>
           <Field label="Betreff">{(id) => <Input id={id} value={mail.subject} onChange={(e) => setMail({ ...mail, subject: e.target.value })} />}</Field>
