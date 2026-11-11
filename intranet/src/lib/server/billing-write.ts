@@ -8,6 +8,7 @@ import {
   docLabel,
   fillText,
   lineNet,
+  money,
   plain,
   todayBerlin,
   type BillingAddress,
@@ -433,6 +434,50 @@ export async function mailDraft(doc: BillingDetail) {
     subject: fillText(settings.mail_subject, context, settings.company),
     body: fillText(body, context, settings.company),
   };
+}
+
+const dayDe = (value: string | null | undefined) =>
+  value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+
+/** Zahlungserinnerung zu einer offenen Rechnung: Empfänger, Betreff und Text
+ * (Vorlage aus Finance → Einstellungen, Signatur der Buchhaltung) */
+export async function reminderDraft(doc: BillingDetail) {
+  if (doc.kind !== "rechnung") throw new BillingError("Zahlungserinnerungen gibt es nur für Rechnungen");
+  if (!["offen", "teilbezahlt"].includes(doc.status)) throw new BillingError("Die Rechnung ist nicht offen");
+  const settings = await billingSettings();
+  const { company } = settings;
+  const open = Math.round((doc.amount_gross - doc.paid_amount) * 100) / 100;
+  const deadline = new Date(`${todayBerlin()}T12:00:00`);
+  deadline.setDate(deadline.getDate() + settings.reminder_days);
+  const values: Record<string, string> = {
+    Datum: dayDe(doc.document_date),
+    Offen: money(open, doc.currency),
+    Frist: dayDe(deadline.toISOString()),
+    Bank: company.bank,
+    IBAN: company.iban,
+    BIC: company.bic,
+    Signatur: settings.signature,
+  };
+  const extra = (text: string) => text.replace(/\{(\p{L}+)\}/gu, (match, key: string) => values[key] ?? match);
+  // Empfänger: an der Rechnung, sonst Rechnungs- bzw. Haupt-Mail des Kunden
+  let to = doc.recipient_email;
+  if (!to && doc.customer_id) {
+    const customer = check(await sb().from("customers").select("billing_email,email").eq("id", doc.customer_id).maybeSingle()) as { billing_email: string | null; email: string | null } | null;
+    to = customer?.billing_email || customer?.email || null;
+  }
+  return {
+    to,
+    subject: fillText(extra(settings.reminder_subject), doc, company),
+    body: fillText(extra(settings.reminder_body), doc, company),
+  };
+}
+
+/** Versendete Zahlungserinnerung am Beleg vermerken */
+export async function markReminded(id: string, to: string, by: string) {
+  guardDemo();
+  const row = check(await sb().from("billing_documents").select("reminders").eq("id", id).single()) as { reminders: { at: string; to: string; by?: string }[] | null };
+  const reminders = [...(row.reminders ?? []), { at: new Date().toISOString(), to, by }];
+  check(await sb().from("billing_documents").update({ reminders }).eq("id", id));
 }
 
 /** Versand ohne angemeldete Person (Serienrechnungen): braucht in Entra die

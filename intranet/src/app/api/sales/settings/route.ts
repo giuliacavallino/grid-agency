@@ -34,6 +34,13 @@ function cleanBilling(input: Partial<BillingSettings>): BillingSettings {
     closing: text(input.closing, DEFAULT_BILLING_SETTINGS.closing),
     mail_subject: text(input.mail_subject, DEFAULT_BILLING_SETTINGS.mail_subject),
     mail_body: text(input.mail_body, DEFAULT_BILLING_SETTINGS.mail_body),
+    reminder_subject: text(input.reminder_subject, DEFAULT_BILLING_SETTINGS.reminder_subject),
+    reminder_body: text(input.reminder_body, DEFAULT_BILLING_SETTINGS.reminder_body),
+    reminder_days: (() => {
+      const days = Math.round(Number(input.reminder_days));
+      return Number.isFinite(days) && days >= 1 && days <= 60 ? days : DEFAULT_BILLING_SETTINGS.reminder_days;
+    })(),
+    signature: text(input.signature, DEFAULT_BILLING_SETTINGS.signature),
   };
 }
 

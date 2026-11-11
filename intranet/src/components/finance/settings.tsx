@@ -144,6 +144,19 @@ function BillingForm({ initial }: { initial: BillingSettings }) {
         <Field label="Text der Mail" className="sm:col-span-2" hint="Platzhalter: {Belegart}, {Nummer}, {Betrag}, {Fällig}, {Firma}">
           {(id) => <Textarea id={id} value={form.mail_body} onChange={(e) => setForm({ ...form, mail_body: e.target.value })} className="min-h-32" />}
         </Field>
+        <p className="pt-3 text-[13px] font-semibold sm:col-span-2">Zahlungserinnerung</p>
+        <Field label="Betreff" className="sm:col-span-2" hint="Platzhalter: {Nummer}, {Firma}">
+          {(id) => <Input id={id} value={form.reminder_subject} onChange={(e) => setForm({ ...form, reminder_subject: e.target.value })} />}
+        </Field>
+        <Field label="Text" className="sm:col-span-2" hint="Platzhalter: {Nummer}, {Datum}, {Betrag}, {Offen}, {Fällig}, {Frist}, {Bank}, {IBAN}, {BIC}, {Signatur}, {Firma}">
+          {(id) => <Textarea id={id} value={form.reminder_body} onChange={(e) => setForm({ ...form, reminder_body: e.target.value })} className="min-h-48" />}
+        </Field>
+        <Field label="Neue Zahlungsfrist (Tage ab Erinnerung)" hint="Ergibt {Frist}">
+          {(id) => <Input id={id} inputMode="numeric" value={String(form.reminder_days)} onChange={(e) => setForm({ ...form, reminder_days: Number(e.target.value) || 0 })} />}
+        </Field>
+        <Field label="Signatur der Buchhaltung" className="sm:col-span-2" hint="Steht für {Signatur} unter den Mails von buchhaltung@">
+          {(id) => <Textarea id={id} value={form.signature} onChange={(e) => setForm({ ...form, signature: e.target.value })} className="min-h-32" />}
+        </Field>
       </div>
       <Button type="submit" variant="primary" className="mt-5" loading={busy} loadingText="Wird gespeichert …">
         Speichern

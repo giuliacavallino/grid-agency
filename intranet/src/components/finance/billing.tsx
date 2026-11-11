@@ -346,7 +346,11 @@ function DocumentList({ docs, loading, error, customers, show, create }: ListPro
                     const customer = d.customer_id ? customers?.get(d.customer_id) : undefined;
                     const linked = refs.get(d.id) ?? [];
                     const corrections = linked.filter((r) => ["storno", "storno_gutschrift", "gutschrift"].includes(r.kind));
-                    const reminders = linked.filter((r) => r.kind === "zahlungserinnerung" || r.kind === "mahnung");
+                    // Mahnbelege aus easybill plus im Intranet versendete Zahlungserinnerungen
+                    const reminders = [
+                      ...linked.filter((r) => r.kind === "zahlungserinnerung" || r.kind === "mahnung"),
+                      ...(d.reminders ?? []).map((r) => ({ kind: "zahlungserinnerung" as const, document_date: r.at.slice(0, 10) })),
+                    ];
                     const original = d.ref_document_id ? byId.get(d.ref_document_id) : undefined;
                     const late = isOverdue(d);
                     const cancelled = d.status === "storniert";

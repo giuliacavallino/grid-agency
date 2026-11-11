@@ -11,7 +11,7 @@ import { demoBilling, demoBillingDetail } from "./billing-demo";
 export const BUCKET = "billing";
 
 const LIST_COLUMNS =
-  "id,kind,number,status,title,customer_id,ref_document_id,document_date,due_date,currency,amount_net,amount_gross,paid_amount,paid_at,recurring,pdf_path,source,finalized_at,sent_at,send_error,customers(name,customer_number)";
+  "id,kind,number,status,title,customer_id,ref_document_id,document_date,due_date,currency,amount_net,amount_gross,paid_amount,paid_at,recurring,pdf_path,source,finalized_at,sent_at,send_error,reminders,customers(name,customer_number)";
 
 type ListRow = Omit<BillingDocument, "customer_name" | "has_pdf"> & {
   pdf_path: string | null;
