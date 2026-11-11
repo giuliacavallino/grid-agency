@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   closestCorners,
   DndContext,
@@ -18,9 +19,10 @@ import {
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { clsx } from "clsx";
-import { Archive, CalendarClock, Check, ChevronDown, LayoutGrid, Package, Plus, RotateCcw, Search, Table, type LucideIcon } from "lucide-react";
+import { Archive, CalendarClock, Check, ChevronDown, LayoutGrid, MailCheck, Package, PhoneCall, Plus, RotateCcw, Search, Table, type LucideIcon } from "lucide-react";
 import { useMe, useTeam } from "@/components/access";
 import { PersonAvatar } from "@/components/person";
+import { api } from "@/lib/api";
 import { revalidate, updateRow, useResource, useRows } from "@/lib/data";
 import { euro, formatDate } from "@/lib/format";
 import { accentFill, accentText } from "@/lib/theme";
@@ -399,7 +401,19 @@ export function Pipeline() {
   const [quick, setQuick] = useState<QuickView | null>(null);
   const [dragging, setDragging] = useState<Columns | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  // Geöffneter Lead steht in der URL (?lead=…), damit die Glocke ihn öffnet
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const openId = params.get("lead");
+  const setOpenId = (id: string | null) => router.replace(id ? `${pathname}?lead=${id}` : pathname, { scroll: false });
+  const [due, setDue] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [endOfToday] = useState(() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d.getTime();
+  });
   const [creating, setCreating] = useState(false);
   const [weekStart] = useState(() => startOfWeek().getTime());
 
@@ -428,7 +442,12 @@ export function Pipeline() {
     () => Object.fromEntries(QUICK_VIEWS.map((v) => [v.id, searched.filter(quickMatch[v.id]).length])) as Record<QuickView, number>,
     [searched, quickMatch]
   );
-  const visible = useMemo(() => (quick ? searched.filter(quickMatch[quick]) : searched), [searched, quick, quickMatch]);
+  const isDue = (lead: Lead) => lead.stage !== "gewonnen" && !!lead.next_step_at && new Date(lead.next_step_at).getTime() <= endOfToday;
+  const dueCount = searched.filter(isDue).length;
+  const visible = useMemo(() => {
+    const quickRows = quick ? searched.filter(quickMatch[quick]) : searched;
+    return due ? quickRows.filter((lead) => lead.stage !== "gewonnen" && !!lead.next_step_at && new Date(lead.next_step_at).getTime() <= endOfToday) : quickRows;
+  }, [searched, quick, quickMatch, due, endOfToday]);
 
   const base = useMemo(() => group(visible), [visible]);
   const columns = dragging ?? base;
@@ -504,6 +523,22 @@ export function Pipeline() {
     }
   }
 
+  async function syncOffers() {
+    setSyncing(true);
+    try {
+      const result = await api<{ mailboxes: Record<string, Record<string, number> | { error: string }> }>("/api/sales/sync/angebote", { method: "POST" });
+      const counts = Object.values(result.mailboxes);
+      const failed = counts.find((c): c is { error: string } => "error" in c);
+      const sum = (key: string) => counts.reduce((n, c) => n + ("error" in c ? 0 : (c[key] ?? 0)), 0);
+      if (failed) toast(failed.error, "error");
+      else toast(`${sum("angebot")} Angebote, ${sum("nachfassen")} Nachfass-Mails übernommen`);
+      revalidate("/api/sales/leads");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Abgleich fehlgeschlagen", "error");
+    }
+    setSyncing(false);
+  }
+
   const openLeads = leads?.filter((lead) => lead.stage !== "gewonnen") ?? [];
   const weighted = weightedValue(openLeads);
   const activeLead = activeId ? byId.get(activeId) : null;
@@ -518,6 +553,17 @@ export function Pipeline() {
         </p>
         <div className="ml-auto flex items-center gap-2">
           <Segmented label="Ansicht" value={view} onChange={setView} options={VIEWS} />
+          <Button
+            className="h-10 w-10 px-0 sm:w-auto sm:px-4"
+            icon={<MailCheck className="h-4 w-4" />}
+            loading={syncing}
+            loadingText="Mails werden gelesen …"
+            title="Gesendete Mails der letzten 14 Tage nach Angeboten durchsuchen (läuft sonst stündlich automatisch)"
+            aria-label="Angebote aus Mails übernehmen"
+            onClick={syncOffers}
+          >
+            <span className="hidden sm:inline">Angebote aus Mails</span>
+          </Button>
           <Button
             variant="primary"
             className="h-10 w-10 px-0 shadow-[0_4px_14px_var(--shadow-color)] sm:w-auto sm:px-4"
@@ -534,6 +580,10 @@ export function Pipeline() {
         <FilterBar filter={<SourceFilter value={source} onChange={setSource} />}>
           <SearchPill value={query} onChange={setQuery} label="Leads durchsuchen" className="w-56 shrink-0 lg:w-64" />
           <QuickViews value={quick} onChange={setQuick} counts={counts} />
+          <QuickChip active={due} onClick={() => setDue((v) => !v)} count={dueCount}>
+            <PhoneCall className="h-3.5 w-3.5" aria-hidden />
+            Nachfassen
+          </QuickChip>
         </FilterBar>
       )}
 

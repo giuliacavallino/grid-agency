@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Bell, Bot, Briefcase, CalendarRange, CircleCheck, ListChecks, LoaderCircle, UserPlus, Video, type LucideIcon } from "lucide-react";
+import { Bell, Bot, Briefcase, CalendarRange, CircleCheck, ListChecks, LoaderCircle, PhoneCall, UserPlus, Video, type LucideIcon } from "lucide-react";
 import type { NotificationItem, NotificationKind } from "@/app/api/benachrichtigungen/route";
 import { cn } from "@/lib/cn";
 import { useResource } from "@/lib/data";
@@ -19,6 +19,7 @@ const SEEN_KEY = "intranet:notifications-seen";
 
 const KINDS: Record<NotificationKind, { label: string; icon: LucideIcon; color: string }> = {
   lead: { label: "Lead", icon: UserPlus, color: "#3e9fd6" },
+  nachfassen: { label: "Nachfassen", icon: PhoneCall, color: "#e5484d" },
   freigabe: { label: "Freigabe", icon: CircleCheck, color: "#30a46c" },
   agent: { label: "Agent", icon: Bot, color: "#9085e9" },
   aufgabe: { label: "Aufgabe", icon: ListChecks, color: "#f5a524" },
@@ -93,7 +94,7 @@ function timeLabel(item: NotificationItem, now: number) {
     return new Date(at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
   }
   const days = dayDiff(at, now);
-  if (item.kind === "aufgabe" || days > 0) {
+  if (item.kind === "aufgabe" || item.kind === "nachfassen" || days > 0) {
     if (days <= 0) return "heute";
     if (days === 1) return "gestern";
     if (days < 7) return `vor ${days} Tagen`;

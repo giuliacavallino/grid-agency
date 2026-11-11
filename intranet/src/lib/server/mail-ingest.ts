@@ -6,6 +6,7 @@ import { readInvoice } from "./extract";
 import { classifyMail } from "./classify";
 import { db } from "./db";
 import { attachmentNames, moveToInvoiceFolder, type GraphMail } from "./graph-app";
+import { noteLeadReply } from "./offers";
 
 const isoDate = (value: string | null | undefined) => (value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null);
 const money = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : null);
@@ -54,6 +55,11 @@ export async function ingestMail(mail: GraphMail) {
   });
   // Parallel eingetroffene Benachrichtigung hat die Mail schon übernommen
   if (!logged) return result.classification;
+
+  // Antwort eines offenen Leads (z. B. auf ein Angebot): in der Pipeline vermerken
+  if (result.classification !== "rechnung" && result.classification !== "bewerbung") {
+    await noteLeadReply(mail).catch((error) => console.error("Lead-Antwort nicht vermerkt:", error));
+  }
 
   const origin = { source_ref: key, mailbox: mail.mailbox, graph_id: mail.id, received_at: mail.receivedDateTime };
   const raw = { conversation_id: mail.conversationId, reason: result.reason };
