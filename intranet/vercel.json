@@ -32,6 +32,7 @@
     { "path": "/api/cron/social?h=20", "schedule": "0 20 * * *" },
     { "path": "/api/cron/social?h=21", "schedule": "0 21 * * *" },
     { "path": "/api/cron/marketing", "schedule": "20 5-20 * * *" },
-    { "path": "/api/cron/tage", "schedule": "45 6-20 * * *" }
+    { "path": "/api/cron/tage", "schedule": "45 6-20 * * *" },
+    { "path": "/api/cron/angebote", "schedule": "10 6-20 * * *" }
   ]
 }

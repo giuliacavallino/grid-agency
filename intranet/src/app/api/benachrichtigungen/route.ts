@@ -15,7 +15,7 @@ import type { SocialPost } from "@/lib/marketing";
 // Konto wartet, aus allen Bereichen, die es sehen darf. Jede Quelle läuft
 // für sich; fällt eine aus, fehlt nur sie.
 
-export type NotificationKind = "lead" | "freigabe" | "agent" | "aufgabe" | "bewerbung" | "termin" | "postingplan";
+export type NotificationKind = "lead" | "nachfassen" | "freigabe" | "agent" | "aufgabe" | "bewerbung" | "termin" | "postingplan";
 
 export type NotificationItem = {
   id: string;
@@ -82,6 +82,32 @@ async function leads(): Promise<NotificationItem[]> {
       href: "/sales",
     };
   });
+}
+
+/** Fällige nächste Schritte offener Leads (Nachfassen, Call, Antwort): heute
+ * oder überfällig, für die zuständige Person bzw. alle, wenn niemand zuständig ist */
+async function followUps(user: User): Promise<NotificationItem[]> {
+  const { end } = berlinToday();
+  const me = user.email.toLowerCase();
+  const rows = (await db().list("leads", { status: "offen" })).filter((row) => {
+    const at = Date.parse(str(row.next_step_at));
+    const owner = str(row.owner).toLowerCase();
+    return row.stage !== "gewonnen" && Number.isFinite(at) && at < end && (!owner || owner === me);
+  });
+  return rows
+    .sort((a, b) => str(a.next_step_at).localeCompare(str(b.next_step_at)))
+    .slice(0, PER_SOURCE)
+    .map((row) => {
+      const late = Date.parse(str(row.next_step_at)) < berlinToday().start;
+      return {
+        id: `nachfassen-${row.id}-${str(row.next_step_at)}`,
+        kind: "nachfassen",
+        title: str(row.company) || str(row.name) || "Lead",
+        text: [str(row.next_step) || "Nachfassen", late ? "überfällig" : "heute"].join(" · "),
+        at: iso(row.next_step_at),
+        href: `/sales?lead=${row.id}`,
+      };
+    });
 }
 
 async function invoices(): Promise<NotificationItem[]> {
@@ -345,7 +371,7 @@ export const GET = withUser(async (user) => {
   const demo = DEMO ? demoSources() : null;
   const can = (area: string) => hasArea(user.member, area);
   const sources: [string, () => Promise<NotificationItem[]> | NotificationItem[]][] = [];
-  if (can("sales")) sources.push(["leads", leads]);
+  if (can("sales")) sources.push(["leads", leads], ["nachfassen", () => followUps(user)]);
   if (can("finance")) sources.push(["rechnungen", invoices]);
   if (can("personal")) sources.push(["bewerbungen", applications]);
   if (can("aufgaben")) {
