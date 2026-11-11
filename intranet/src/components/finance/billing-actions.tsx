@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BellRing, CircleDollarSign, Signature, FilePen, FileText, Lock, Pause, Play, Send, Square, Trash2, Undo2, Workflow } from "lucide-react";
+import { BellRing, CircleDollarSign, MapPin, Signature, FilePen, FileText, Lock, Pause, Play, Send, Square, Trash2, Undo2, Workflow } from "lucide-react";
 import { api } from "@/lib/api";
 import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
 import { revalidate } from "@/lib/data";
 import { graphErrorMessage, graphFor, type FileAttachment } from "@/lib/graph";
-import { KIND_LABEL, docLabel, money, todayBerlin, type BillingDetail } from "@/lib/billing";
+import { KIND_LABEL, docLabel, money, todayBerlin, type BillingAddress, type BillingDetail } from "@/lib/billing";
 import { Button, Dialog, Field, Input, Popover, MenuItem, Select, Textarea, useToast } from "@/components/ui";
 import { BILLING_URL } from "./billing-editor";
 import { SignFolderDialog } from "./sign-folder";
@@ -38,7 +38,7 @@ export async function openPdf(id: string) {
   }
 }
 
-type DialogName = "festschreiben" | "senden" | "erinnern" | "mappe" | "zahlung" | "stornieren" | "korrigieren" | "loeschen" | "uebernehmen" | "beenden" | null;
+type DialogName = "adresse" | "festschreiben" | "senden" | "erinnern" | "mappe" | "zahlung" | "stornieren" | "korrigieren" | "loeschen" | "uebernehmen" | "beenden" | null;
 
 /** Knöpfe und Dialoge passend zum Zustand des Belegs */
 export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; onOpen: (id: string) => void; onEdit: (doc: BillingDetail) => void }) {
@@ -147,6 +147,9 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
                     Gutschrift über einen Teilbetrag
                   </MenuItem>
                 )}
+                <MenuItem onClick={() => (close(), setDialog("adresse"))}>
+                  <MapPin className="h-4 w-4" /> Rechnungsadresse ändern (gleiche Nummer)
+                </MenuItem>
                 <MenuItem onClick={() => (close(), setDialog("stornieren"))}>Stornieren</MenuItem>
               </>
             )}
@@ -272,6 +275,7 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
         danger
         onConfirm={() => run("beenden", "Serie beendet")}
       />
+      {dialog === "adresse" && <AddressDialog doc={doc} onClose={() => setDialog(null)} onDone={() => setDialog("senden")} />}
       {dialog === "senden" && <SendDialog doc={doc} onClose={() => setDialog(null)} />}
       {dialog === "erinnern" && <SendDialog doc={doc} reminder onClose={() => setDialog(null)} />}
       {dialog === "mappe" && <SignFolderDialog doc={doc} onClose={() => setDialog(null)} />}
@@ -465,4 +469,68 @@ function PaymentDialog({ doc, onClose }: { doc: BillingDetail; onClose: () => vo
 /** Zahlung entfernen (nur im Intranet erfasste) */
 export async function removePayment(docId: string, paymentId: string) {
   await act(docId, "zahlung_loeschen", { payment_id: paymentId });
+}
+
+const ADDRESS_FIELDS: { key: keyof BillingAddress; label: string; wide?: boolean }[] = [
+  { key: "company_name", label: "Firma", wide: true },
+  { key: "first_name", label: "Vorname" },
+  { key: "last_name", label: "Nachname" },
+  { key: "suffix_1", label: "Zusatz", wide: true },
+  { key: "street", label: "Straße und Nr.", wide: true },
+  { key: "zip_code", label: "PLZ" },
+  { key: "city", label: "Ort" },
+];
+
+/** Rechnungsadresse berichtigen: Nummer, Datum und Beträge bleiben, das PDF
+ * wird neu erzeugt. Danach direkt erneut senden. */
+function AddressDialog({ doc, onClose, onDone }: { doc: BillingDetail; onClose: () => void; onDone: () => void }) {
+  const toast = useToast();
+  const [address, setAddress] = useState<BillingAddress>({ ...(doc.address ?? {}) });
+  const [customer, setCustomer] = useState(true);
+  const [saving, setSaving] = useState(false);
+  async function save() {
+    setSaving(true);
+    try {
+      await act(doc.id, "adresse", { address, customer });
+      toast(`Adresse geändert, PDF von ${docLabel(doc)} neu erzeugt`);
+      onDone();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Ändern fehlgeschlagen", "error");
+    }
+    setSaving(false);
+  }
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`Rechnungsadresse: ${docLabel(doc)}`}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Abbrechen
+          </Button>
+          <Button variant="primary" icon={<MapPin className="h-4 w-4" />} loading={saving} loadingText="PDF wird neu erzeugt …" onClick={save}>
+            Ändern und neu senden
+          </Button>
+        </>
+      }
+    >
+      <p className="mb-4 text-sm text-snow/60">Nummer, Datum und Beträge bleiben gleich. Das PDF wird mit der neuen Anschrift neu erzeugt, die Änderung wird protokolliert.</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {ADDRESS_FIELDS.map((field) => (
+          <div key={field.key} className={field.wide ? "sm:col-span-2" : undefined}>
+            <Field label={field.label}>
+              {(id) => <Input id={id} value={address[field.key] ?? ""} onChange={(e) => setAddress((a) => ({ ...a, [field.key]: e.target.value }))} />}
+            </Field>
+          </div>
+        ))}
+      </div>
+      {doc.customer_id && (
+        <label className="mt-4 flex cursor-pointer items-center gap-2.5 text-[13.5px] text-snow/80">
+          <input type="checkbox" checked={customer} onChange={(e) => setCustomer(e.target.checked)} className="h-4 w-4 accent-current" />
+          Neue Anschrift auch beim Kunden speichern (für künftige Rechnungen)
+        </label>
+      )}
+    </Dialog>
+  );
 }

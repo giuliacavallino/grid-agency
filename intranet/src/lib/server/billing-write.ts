@@ -218,6 +218,37 @@ export async function finalize(id: string) {
   return id;
 }
 
+/** Rechnungsadresse berichtigen (Umzug, falsche Anschrift): Nummer, Datum
+ * und Beträge bleiben, das PDF wird neu erzeugt und ersetzt das alte. Auf
+ * Wunsch bekommt auch der Kunde die neue Anschrift. */
+export async function changeAddress(id: string, input: BillingAddress, options: { customer: boolean; by: string }) {
+  guardDemo();
+  const doc = await getBilling(id);
+  if (!doc) throw new BillingError("Beleg nicht gefunden");
+  if (!doc.number) throw new BillingError("Entwürfe direkt im Editor ändern");
+  const text = (v: unknown) => (typeof v === "string" ? v.trim().slice(0, 200) : "");
+  const address: BillingAddress = { ...(doc.address ?? {}) };
+  for (const key of ["company_name", "first_name", "last_name", "suffix_1", "suffix_2", "street", "zip_code", "city", "country"] as const) {
+    if (key in input) address[key] = text(input[key]) || null;
+  }
+  if (!address.street || !address.zip_code || !address.city) throw new BillingError("Straße, PLZ und Ort angeben");
+  address.country = address.country || "DE";
+  const { error } = await sb().rpc("billing_change_address", { p_id: id, p_address: address, p_by: options.by });
+  if (error) throw new BillingError(error.message);
+
+  const fresh = await getBilling(id);
+  const pdf = await renderPdf(fresh!);
+  const path = `korrigiert/${doc.document_date?.slice(0, 4)}/${doc.kind}_${safe(doc.number)}_${todayBerlin()}.pdf`;
+  check(await sb().storage.from(BUCKET).upload(path, pdf, { contentType: "application/pdf", upsert: true }));
+  const replaced = await sb().rpc("billing_replace_pdf", { p_id: id, p_path: path });
+  if (replaced.error) throw new BillingError(replaced.error.message);
+
+  if (options.customer && doc.customer_id) {
+    check(await sb().from("customers").update({ street: address.street, zip: address.zip_code, city: address.city, country: address.country }).eq("id", doc.customer_id));
+  }
+  return id;
+}
+
 /** PDF nachholen, falls das Ablegen beim Festschreiben scheiterte */
 export async function ensurePdf(id: string) {
   const row = check(await sb().from("billing_documents").select("pdf_path,finalized_at,source").eq("id", id).maybeSingle()) as {
