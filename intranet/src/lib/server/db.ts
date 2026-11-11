@@ -116,6 +116,15 @@ export const TABLES = {
     filters: ["recording_id", "status"],
     order: { column: "position", ascending: true },
   },
+  // Netzwerk: Freelancer und Partner (Personal → Netzwerk)
+  partners: {
+    columns: [
+      "kind", "category", "name", "company", "email", "phone", "website", "instagram", "city", "focus",
+      "rate", "rate_unit", "rate_note", "rating", "status", "projects", "notes", "last_contact", "source", "lead_id",
+    ],
+    filters: ["kind", "category", "status"],
+    order: { column: "name", ascending: true },
+  },
 } as const;
 
 /** Bereiche, zu denen eine Tabelle gehört: Lesen und Schreiben darf, wer
@@ -139,6 +148,7 @@ const TABLE_AREAS: Record<keyof typeof TABLES, string[]> = {
   meetings: ["aufgaben", "sales"],
   meeting_recordings: ["aufgaben"],
   meeting_tasks: ["aufgaben"],
+  partners: ["personal", "sales", "marketing"],
 };
 
 export const canUseTable = (user: User, table: TableName) => TABLE_AREAS[table].some((area) => hasArea(user.member, area));

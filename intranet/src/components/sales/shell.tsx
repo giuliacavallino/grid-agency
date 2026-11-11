@@ -12,6 +12,7 @@ import {
   CalendarDays,
   ChevronLeft,
   Columns3,
+  Handshake,
   Inbox,
   Landmark,
   Lock,
@@ -65,6 +66,7 @@ export const FINANCE_NAV: NavItem[] = [
 export const PERSONAL_NAV: NavItem[] = [
   { href: "/personal", label: "Bewerber-Pipeline", icon: Columns3, counter: "applications", group: "Recruiting" },
   { href: "/personal/stellen", label: "Stellenanzeigen", icon: Briefcase },
+  { href: "/personal/netzwerk", label: "Freelancer & Partner", icon: Handshake, group: "Netzwerk" },
 ];
 
 export const MAIL_NAV: NavItem[] = [
