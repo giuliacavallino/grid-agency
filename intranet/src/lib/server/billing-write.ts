@@ -11,6 +11,7 @@ import {
   money,
   plain,
   todayBerlin,
+  servicePeriodOf,
   type BillingAddress,
   type BillingDetail,
   type DraftInput,
@@ -64,6 +65,14 @@ function itemRow(documentId: string, item: ItemInput, position: number) {
 }
 
 const ADDRESS_KEYS = ["company_name", "first_name", "last_name", "suffix_1", "suffix_2", "street", "zip_code", "city", "country"] as const;
+
+function servicePeriodRow(input: { kind: string; service_from?: string | null; service_to?: string | null; document_date?: string | null }) {
+  const from = isoDate(input.service_from);
+  const to = isoDate(input.service_to);
+  if (input.kind === "angebot" || input.kind === "serie") return { service_from: from, service_to: to };
+  const period = servicePeriodOf({ service_from: from, service_to: to, document_date: isoDate(input.document_date) });
+  return { service_from: period?.from ?? from, service_to: period?.to ?? to };
+}
 
 function cleanAddress(address: BillingAddress | null | undefined): BillingAddress {
   const out: BillingAddress = {};
@@ -148,8 +157,8 @@ export async function saveDraft(id: string | null, input: DraftInput): Promise<s
     recipient_email: input.recipient_email?.trim().toLowerCase() || null,
     document_date: input.kind === "serie" ? null : isoDate(input.document_date),
     payment_terms_days: terms,
-    service_from: isoDate(input.service_from),
-    service_to: isoDate(input.service_to),
+    // Rechnungen tragen immer einen Leistungszeitraum (Standard: Monat des Rechnungsdatums)
+    ...servicePeriodRow(input),
     title: input.title?.trim() || null,
     intro: input.intro ?? null,
     closing: input.closing ?? null,
@@ -238,7 +247,7 @@ export async function changeAddress(id: string, input: BillingAddress, options: 
 
   const fresh = await getBilling(id);
   const pdf = await renderPdf(fresh!);
-  const path = `korrigiert/${doc.document_date?.slice(0, 4)}/${doc.kind}_${safe(doc.number)}_${todayBerlin()}.pdf`;
+  const path = `korrigiert/${doc.document_date?.slice(0, 4)}/${doc.kind}_${safe(doc.number)}_${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")}.pdf`;
   check(await sb().storage.from(BUCKET).upload(path, pdf, { contentType: "application/pdf", upsert: true }));
   const replaced = await sb().rpc("billing_replace_pdf", { p_id: id, p_path: path });
   if (replaced.error) throw new BillingError(replaced.error.message);
@@ -246,6 +255,26 @@ export async function changeAddress(id: string, input: BillingAddress, options: 
   if (options.customer && doc.customer_id) {
     check(await sb().from("customers").update({ street: address.street, zip: address.zip_code, city: address.city, country: address.country }).eq("id", doc.customer_id));
   }
+  return id;
+}
+
+/** PDF eines festgeschriebenen Belegs im aktuellen Layout neu erzeugen
+ * (z. B. Leistungszeitraum statt Datum). Inhalt, Nummer und Beträge bleiben;
+ * das neue PDF ersetzt das alte, protokolliert in raw.pdf_regenerated. */
+export async function regeneratePdf(id: string, by: string) {
+  guardDemo();
+  const doc = await getBilling(id);
+  if (!doc?.number) throw new BillingError("Nur festgeschriebene Belege");
+  if (!doc.items.length) throw new BillingError("Beleg hat keine Positionen");
+  const pdf = await renderPdf(doc);
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+  const path = `korrigiert/${doc.document_date?.slice(0, 4)}/${doc.kind}_${safe(doc.number)}_${stamp}.pdf`;
+  check(await sb().storage.from(BUCKET).upload(path, pdf, { contentType: "application/pdf", upsert: true }));
+  const replaced = await sb().rpc("billing_replace_pdf", { p_id: id, p_path: path });
+  if (replaced.error) throw new BillingError(replaced.error.message);
+  const row = check(await sb().from("billing_documents").select("raw").eq("id", id).single()) as { raw: Record<string, unknown> | null };
+  const log = Array.isArray(row.raw?.pdf_regenerated) ? (row.raw.pdf_regenerated as unknown[]) : [];
+  check(await sb().from("billing_documents").update({ raw: { ...(row.raw ?? {}), pdf_regenerated: [...log, { at: new Date().toISOString(), by, path }] } }).eq("id", id));
   return id;
 }
 
