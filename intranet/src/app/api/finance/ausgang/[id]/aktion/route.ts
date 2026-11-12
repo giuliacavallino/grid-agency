@@ -1,7 +1,7 @@
 import { withUser } from "@/lib/server/auth";
 import { getBilling } from "@/lib/server/billing";
 import { setSeriesStatus, takeOverSeries } from "@/lib/server/billing-series";
-import { BillingError, addPayment, cancel, changeAddress, correct, credit, ensurePdf, finalize, markReminded, markSent, removePayment } from "@/lib/server/billing-write";
+import { BillingError, addPayment, cancel, changeAddress, regeneratePdf, correct, credit, ensurePdf, finalize, markReminded, markSent, removePayment } from "@/lib/server/billing-write";
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -16,6 +16,9 @@ export const POST = withUser(async (user, request, { params }: Context) => {
     switch (body.action) {
       case "festschreiben":
         await finalize(id);
+        break;
+      case "pdf_neu":
+        await regeneratePdf(id, user.name || user.email);
         break;
       case "adresse":
         await changeAddress(id, (body.address ?? {}) as never, { customer: body.customer !== false, by: user.name || user.email });

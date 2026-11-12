@@ -420,3 +420,31 @@ export function firstBillingDate(start: string) {
   const date = new Date(Date.UTC(y, m - 1 + (d > BILLING_DAY ? 1 : 0), BILLING_DAY));
   return date.toISOString().slice(0, 10);
 }
+
+// ---------- Leistungszeitraum ----------
+
+const monthBounds = (day: string) => {
+  const [y, m] = day.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { from: `${day.slice(0, 7)}-01`, to: `${day.slice(0, 7)}-${String(last).padStart(2, "0")}` };
+};
+
+/** Leistungszeitraum eines Belegs: gesetzter Zeitraum, sonst der Monat des
+ * Leistungs- bzw. Rechnungsdatums. Rechnungen zeigen immer einen Zeitraum. */
+export function servicePeriodOf(doc: { service_from: string | null; service_to: string | null; document_date: string | null }) {
+  const valid = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+  const from = valid(doc.service_from);
+  const to = valid(doc.service_to);
+  if (from && to && to > from) return { from, to };
+  const base = from ?? valid(doc.document_date);
+  return base ? monthBounds(base) : null;
+}
+
+/** „01.10. – 31.10.2026“ bzw. „15.09.2026 – 14.10.2026“ über den Jahreswechsel */
+export function periodText(period: { from: string; to: string }) {
+  const de = (v: string, year = true) => {
+    const [y, m, d] = v.split("-");
+    return year ? `${d}.${m}.${y}` : `${d}.${m}.`;
+  };
+  return `${de(period.from, period.from.slice(0, 4) !== period.to.slice(0, 4))} – ${de(period.to)}`;
+}

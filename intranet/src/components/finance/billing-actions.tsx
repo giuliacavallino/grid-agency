@@ -147,6 +147,9 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
                     Gutschrift über einen Teilbetrag
                   </MenuItem>
                 )}
+                <MenuItem onClick={() => (close(), run("pdf_neu", "PDF neu erzeugt (mit Leistungszeitraum)").then((next) => next && setDialog("senden")))}>
+                  <FileText className="h-4 w-4" /> PDF neu erzeugen (aktuelles Layout)
+                </MenuItem>
                 <MenuItem onClick={() => (close(), setDialog("adresse"))}>
                   <MapPin className="h-4 w-4" /> Rechnungsadresse ändern (gleiche Nummer)
                 </MenuItem>

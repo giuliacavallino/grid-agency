@@ -14,7 +14,9 @@ import {
   docLabel,
   isOverdue,
   money,
+  periodText,
   plain,
+  servicePeriodOf,
   rhythm,
   type BillingAddress,
   type BillingDetail,
@@ -705,10 +707,8 @@ function addressLines(address: BillingAddress | null) {
 
 function servicePeriod(doc: BillingDetail) {
   if (doc.service_text) return plain(doc.service_text);
-  if (!doc.service_from) return null;
-  return doc.service_to && doc.service_to !== doc.service_from
-    ? `${formatDate(doc.service_from)} – ${formatDate(doc.service_to)}`
-    : formatDate(doc.service_from);
+  const period = servicePeriodOf(doc);
+  return period ? periodText(period) : null;
 }
 
 const quantity = (value: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(value);
