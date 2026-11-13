@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   closestCorners,
   DndContext,
@@ -403,10 +403,10 @@ export function Pipeline() {
   const [activeId, setActiveId] = useState<string | null>(null);
   // Geöffneter Lead steht in der URL (?lead=…), damit die Glocke ihn öffnet
   const params = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const openId = params.get("lead");
-  const setOpenId = (id: string | null) => router.replace(id ? `${pathname}?lead=${id}` : pathname, { scroll: false });
+  // Ohne Server-Navigation (sofort, kein Ruckeln beim Öffnen und Schließen)
+  const setOpenId = (id: string | null) => window.history.replaceState(null, "", id ? `${pathname}?lead=${id}` : pathname);
   const [due, setDue] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [endOfToday] = useState(() => {
