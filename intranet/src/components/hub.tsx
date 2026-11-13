@@ -12,7 +12,7 @@ import { TeamsButton } from "./teams";
 import { usePhoto } from "./person";
 import { signOut, useAuth } from "@/lib/auth";
 import { BankReminder } from "./finance/bank-reminder";
-import { Logo } from "./logo";
+import { ProductMark } from "./logo";
 import { Button, Popover } from "./ui";
 import { KpiList, useKpis } from "./kpis";
 import { WorkspaceSwitcher, type WorkspaceSummary } from "./marketing/workspace";
@@ -115,13 +115,9 @@ export function TopBar() {
         <div className="glass pointer-events-auto relative flex h-13 items-center justify-between gap-4 rounded-full pr-2 pl-5 lg:h-[68px] lg:pr-3 lg:pl-7">
           <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 
-          <Link href="/" aria-label="Zur Übersicht" className="group relative flex flex-col items-start">
-            <span className="logo-rainbow transition-transform group-hover:scale-[1.08]">
-              <Logo priority className="h-[26px] lg:h-[30px]" />
-            </span>
-            <span className="mt-1 pl-[3px] lg:mt-1.5 text-[9px] font-medium uppercase tracking-[0.32em] text-snow/70 lg:text-[10px]">
-              Intranet
-            </span>
+          <Link href="/" aria-label="Zur Übersicht" className="group relative flex shrink-0 items-center">
+            <ProductMark product="Intranet" size="sm" rainbow priority className="lg:hidden" />
+            <ProductMark product="Intranet" rainbow priority className="hidden lg:inline-flex" />
           </Link>
 
           {/* Kundenakte öffnen (nur mit Marketing-Zugang); gewechselt wird nur hier */}
