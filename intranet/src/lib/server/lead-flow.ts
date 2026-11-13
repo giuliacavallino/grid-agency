@@ -3,7 +3,7 @@ import { after } from "next/server";
 import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { DEMO, SHARED_MAILBOX } from "@/lib/config";
+import { DEMO, DOMAIN, SHARED_MAILBOX } from "@/lib/config";
 import { BILLING_DAY, firstBillingDate, isMonthlyUnit, OFFER_TEXTS, todayBerlin, type ItemInput } from "@/lib/billing";
 import { billingNote, onceBillingDate, type ContractTerms } from "@/lib/contract";
 import { check, getBilling } from "./billing";
@@ -604,12 +604,14 @@ export async function markSpam(id: string, user: { email: string; name: string }
   const lead = await leadById(id);
   if (lead.customer_id || lead.stage === "gewonnen") throw new FlowError("Kunden können nicht als Spam gelöscht werden");
   const email = typeof lead.email === "string" ? lead.email.trim().toLowerCase() : "";
-  if (!DEMO && email) {
+  // Eigene Adressen (z. B. Test-Leads) nie sperren, nur den Lead löschen
+  const internal = email.endsWith(`@${DOMAIN}`);
+  if (!DEMO && email && !internal) {
     const sample = [lead.company, lead.name].filter(Boolean).join(" · ").slice(0, 200);
     await sb().from("spam_senders").upsert({ email, created_by: user.email, sample }, { onConflict: "email", ignoreDuplicates: true });
   }
   await db().remove("leads", id);
-  return { deleted: true, blocked: email || null };
+  return { deleted: true, blocked: email && !internal ? email : null };
 }
 
 

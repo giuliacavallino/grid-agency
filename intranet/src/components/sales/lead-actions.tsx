@@ -198,9 +198,9 @@ export function LostDialog({ open, lead, onClose, onDone }: { open: boolean; lea
   async function spam() {
     setBusy("spam");
     try {
-      await api(`/api/sales/pipeline/${lead.id}/spam`, { method: "POST" });
+      const result = await api<{ blocked: string | null }>(`/api/sales/pipeline/${lead.id}/spam`, { method: "POST" });
       revalidate("/api/sales/leads");
-      toast(lead.email ? `${label} gelöscht, ${lead.email} ist gesperrt` : `${label} gelöscht`);
+      toast(result.blocked ? `${label} gelöscht, ${result.blocked} ist gesperrt` : `${label} gelöscht`);
       onClose();
       onDone?.();
     } catch (error) {
