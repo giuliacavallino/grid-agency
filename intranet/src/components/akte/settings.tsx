@@ -26,6 +26,7 @@ const SECTIONS = [
     items: [
       { path: "", label: "Kanäle", icon: Link2 },
       { path: "postingplan", label: "Postingplan", icon: CalendarRange },
+      { path: "kundenzugang", label: "Kundenzugang", icon: KeyRound },
       { path: "autopilot", label: "Autopilot", icon: Rocket },
       { path: "stammdaten", label: "Stammdaten", icon: Building2 },
     ],
