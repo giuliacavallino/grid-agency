@@ -11,7 +11,7 @@ import type {
   VideoDeviceInfo,
   VideoStreamRenderer,
 } from "@azure/communication-calling";
-import { CalendarClock, Check, Copy, Mic, MicOff, MonitorUp, PhoneOff, Repeat, Users, Video, VideoOff } from "lucide-react";
+import { CalendarClock, Check, Copy, MessageSquare, Mic, MicOff, MonitorUp, PhoneOff, Repeat, SendHorizontal, Users, Video, VideoOff, X } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
 import { Avatar, Button, Input, Spinner } from "@/components/ui";
 import { MeetMark, MeetShell } from "./brand";
@@ -59,7 +59,7 @@ function StreamView({ stream, mirrored, fit }: { stream: LocalVideoStream | Remo
   return <div ref={ref} className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&>div]:h-full" />;
 }
 
-function ControlButton({ label, active = true, danger, onClick, children }: { label: string; active?: boolean; danger?: boolean; onClick: () => void; children: React.ReactNode }) {
+function ControlButton({ label, active = true, danger, badge, onClick, children }: { label: string; active?: boolean; danger?: boolean; badge?: number; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -69,10 +69,14 @@ function ControlButton({ label, active = true, danger, onClick, children }: { la
       title={label}
       className={clsx(
         "grid h-12 w-12 place-items-center rounded-full transition-[transform,background-color] duration-150 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-snow",
+        "relative",
         danger ? "bg-error text-sky hover:bg-error/85" : active ? "border border-snow/15 bg-snow/[0.08] text-snow hover:bg-snow/[0.16]" : "bg-snow text-sky hover:bg-snow/85"
       )}
     >
       {children}
+      {!!badge && (
+        <span className="absolute -top-1 -right-1 grid h-5 min-w-5 place-items-center rounded-full bg-error px-1 text-[11px] font-semibold text-white">{badge > 9 ? "9+" : badge}</span>
+      )}
     </button>
   );
 }
@@ -123,6 +127,103 @@ function EmptyRoom({ selfView }: { selfView: React.ReactNode }) {
   );
 }
 
+type ChatMessage = { id: string; created_at: string; name: string; text: string };
+
+/** Links in Chatnachrichten anklickbar machen */
+function Linkified({ text }: { text: string }) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        /^https?:\/\//.test(part) ? (
+          <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="break-all underline underline-offset-2">
+            {part}
+          </a>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
+/** Chat im Call: Nachrichten des laufenden Termins, Eingabe unten */
+function ChatPanel({ messages, me, onSend, onClose }: { messages: ChatMessage[]; me: string; onSend: (text: string) => Promise<boolean>; onClose: () => void }) {
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const list = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    list.current?.scrollTo({ top: list.current.scrollHeight });
+  }, [messages.length]);
+  async function send(event?: React.FormEvent) {
+    event?.preventDefault();
+    if (!text.trim() || sending) return;
+    setSending(true);
+    if (await onSend(text)) setText("");
+    setSending(false);
+  }
+  return (
+    <aside className="absolute inset-0 z-20 flex flex-col bg-sky md:static md:z-auto md:w-80 md:shrink-0 md:rounded-2xl md:border md:border-snow/10 md:bg-surface">
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-snow/10 px-4">
+        <p className="text-sm font-semibold">Chat</p>
+        <button type="button" onClick={onClose} aria-label="Chat schließen" className="grid h-8 w-8 place-items-center rounded-full text-snow/60 hover:bg-snow/[0.08] hover:text-snow">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div ref={list} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3" aria-live="polite">
+        {!messages.length && <p className="pt-6 text-center text-sm text-snow/50">Noch keine Nachrichten. Links, Notizen oder Fragen hier teilen.</p>}
+        {messages.map((m) => {
+          const mine = m.name === me;
+          return (
+            <div key={m.id} className={clsx("flex flex-col", mine && "items-end")}>
+              <p className="mb-0.5 text-[11px] text-snow/50">
+                {mine ? "Du" : m.name} · {time.format(new Date(m.created_at))}
+              </p>
+              <p className={clsx("max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words", mine ? "bg-snow text-sky" : "bg-snow/[0.08]")}>
+                <Linkified text={m.text} />
+              </p>
+            </div>
+          );
+        })}
+      </div>
+      <form onSubmit={send} className="flex shrink-0 items-end gap-2 border-t border-snow/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void send();
+            }
+          }}
+          rows={1}
+          maxLength={2000}
+          placeholder="Nachricht schreiben …"
+          aria-label="Nachricht"
+          className="max-h-32 min-h-10 flex-1 resize-none rounded-2xl border border-snow/15 bg-snow/[0.06] px-3 py-2 text-sm outline-none focus:border-snow/40"
+        />
+        <Button type="submit" variant="primary" className="h-10 w-10 shrink-0 px-0" aria-label="Senden" loading={sending} disabled={!text.trim()}>
+          {sending ? null : <SendHorizontal className="h-4 w-4" />}
+        </Button>
+      </form>
+    </aside>
+  );
+}
+
+/** Verständliche Hilfe, wenn das Teilen des Bildschirms scheitert */
+function shareError(error: unknown) {
+  const name = (error as { name?: string })?.name ?? "";
+  const message = String((error as { message?: string })?.message ?? "");
+  const mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform || navigator.userAgent);
+  if (name === "NotAllowedError" || /permission|denied|not allowed/i.test(message)) {
+    return mac
+      ? "Bildschirm teilen wurde blockiert. Am Mac: Systemeinstellungen → Datenschutz & Sicherheit → Bildschirm- & Systemaudioaufnahme → deinen Browser erlauben, Browser neu starten und erneut versuchen."
+      : "Bildschirm teilen wurde abgebrochen oder blockiert. Bitte erneut auf „Bildschirm teilen“ klicken und im Fenster einen Bildschirm, ein Fenster oder einen Tab auswählen.";
+  }
+  if (name === "NotFoundError" || name === "NotReadableError") return "Der Bildschirm konnte nicht aufgenommen werden. Bitte ein anderes Fenster oder den ganzen Bildschirm wählen.";
+  return "Bildschirm teilen hat nicht geklappt. Bitte Chrome, Edge, Firefox oder Safari in der aktuellen Version am Computer verwenden.";
+}
+
 export function MeetRoom({ code }: { code: string }) {
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +238,10 @@ export function MeetRoom({ code }: { code: string }) {
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [call, setCall] = useState<Call | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [seen, setSeen] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
   const [, bump] = useReducer((n: number) => n + 1, 0);
   const client = useRef<CallClient | null>(null);
   const agent = useRef<CallAgent | null>(null);
@@ -195,6 +300,57 @@ export function MeetRoom({ code }: { code: string }) {
     window.addEventListener("pagehide", hangUp);
     return () => window.removeEventListener("pagehide", hangUp);
   }, [call]);
+
+  // Chat: alle paar Sekunden neue Nachrichten holen, solange man im Call ist
+  const inCall = !!call;
+  useEffect(() => {
+    if (!inCall) return;
+    let stop = false;
+    let last: string | null = null;
+    async function poll() {
+      try {
+        const response = await fetch(`/api/meet/${code}/chat${last ? `?after=${encodeURIComponent(last)}` : ""}`, { cache: "no-store" });
+        if (response.ok) {
+          const fresh = (await response.json()) as ChatMessage[];
+          if (fresh.length && !stop) {
+            last = fresh[fresh.length - 1].created_at;
+            setMessages((old) => {
+              const known = new Set(old.map((m) => m.id));
+              return [...old, ...fresh.filter((m) => !known.has(m.id))];
+            });
+          }
+        }
+      } catch {
+        // nächster Versuch beim nächsten Takt
+      }
+      if (!stop) timer = window.setTimeout(poll, 3000);
+    }
+    let timer = window.setTimeout(poll, 0);
+    return () => {
+      stop = true;
+      window.clearTimeout(timer);
+    };
+  }, [inCall, code]);
+
+  // Hinweise (z. B. Bildschirm teilen) nach einer Weile ausblenden
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 12000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  async function sendMessage(text: string) {
+    try {
+      const response = await fetch(`/api/meet/${code}/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: name.trim(), text }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Nachricht nicht gesendet");
+      setMessages((old) => (old.some((m) => m.id === data.id) ? old : [...old, data as ChatMessage]));
+      return true;
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : "Nachricht nicht gesendet");
+      return false;
+    }
+  }
 
   function watch(next: Call) {
     const watchStream = (stream: RemoteVideoStream) => stream.on("isAvailableChanged", bump);
@@ -308,12 +464,26 @@ export function MeetRoom({ code }: { code: string }) {
     }
   }
 
+  const canShare = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia;
+
   async function toggleScreen() {
     if (!call) return;
-    await (call.isScreenSharingOn ? call.stopScreenSharing() : call.startScreenSharing()).catch((e) => console.error(e));
+    if (!canShare) {
+      setNotice("Bildschirm teilen geht nur am Computer im Browser (Chrome, Edge, Firefox oder Safari), nicht am Handy oder Tablet.");
+      return;
+    }
+    try {
+      if (call.isScreenSharingOn) await call.stopScreenSharing();
+      else {
+        setNotice(null);
+        await call.startScreenSharing();
+      }
+    } catch (e) {
+      console.error(e);
+      setNotice(shareError(e));
+    }
+    bump();
   }
-
-  const canShare = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia;
 
   if (gone) {
     return (
@@ -352,6 +522,11 @@ export function MeetRoom({ code }: { code: string }) {
     // Wartebereich nur für Gäste; wer den Call organisiert, ist direkt im Call
     const alone = people.length === 0 && !connecting;
     const waiting = alone && !isHost;
+    const unread = chatOpen ? 0 : messages.filter((m) => m.name !== name.trim()).length - seen;
+    const openChat = () => {
+      setChatOpen((open) => !open);
+      setSeen(messages.filter((m) => m.name !== name.trim()).length);
+    };
     const selfView = own ? (
       <StreamView key={own.source.id} stream={own} mirrored />
     ) : (
@@ -379,7 +554,23 @@ export function MeetRoom({ code }: { code: string }) {
           </span>
         </header>
 
-        <main className={clsx("relative min-h-0 flex-1 gap-3 overflow-hidden px-3 pb-3", screen ? "flex flex-col md:flex-row" : "grid grid-rows-[minmax(0,1fr)]")}>
+        {(notice || call.isScreenSharingOn) && (
+          <div className="mx-3 mb-2 flex items-start gap-3 rounded-2xl border border-snow/10 bg-surface px-4 py-2.5 text-sm" role="status">
+            <MonitorUp className="mt-0.5 h-4 w-4 shrink-0 text-snow/60" />
+            <p className="min-w-0 flex-1">{notice ?? "Du teilst deinen Bildschirm. Alle im Call sehen ihn."}</p>
+            {call.isScreenSharingOn && !notice ? (
+              <button type="button" onClick={toggleScreen} className="shrink-0 rounded-full bg-error px-3 py-1 text-xs font-semibold text-sky">
+                Teilen beenden
+              </button>
+            ) : (
+              <button type="button" onClick={() => setNotice(null)} aria-label="Hinweis schließen" className="shrink-0 text-snow/50 hover:text-snow">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+        <div className="relative flex min-h-0 flex-1 gap-3 pr-3 md:pr-3">
+        <main className={clsx("relative min-h-0 flex-1 gap-3 overflow-hidden pb-3 pl-3", screen ? "flex flex-col md:flex-row" : "grid grid-rows-[minmax(0,1fr)]")}>
           {screen && (
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-2xl bg-ink">
               <StreamView key={`screen-${screen.stream.id}`} stream={screen.stream} fit />
@@ -425,6 +616,12 @@ export function MeetRoom({ code }: { code: string }) {
             </div>
           )}
         </main>
+        {chatOpen && (
+          <div className="absolute inset-0 z-20 pb-3 md:static md:flex md:pb-3">
+            <ChatPanel messages={messages} me={name.trim()} onSend={sendMessage} onClose={openChat} />
+          </div>
+        )}
+        </div>
 
         <footer className="flex shrink-0 items-center justify-center gap-3 pt-1 pb-[max(1rem,env(safe-area-inset-bottom))]">
           <ControlButton label={call.isMuted ? "Mikrofon an" : "Stummschalten"} active={!call.isMuted} onClick={toggleMic}>
@@ -433,11 +630,12 @@ export function MeetRoom({ code }: { code: string }) {
           <ControlButton label={own ? "Kamera aus" : "Kamera an"} active={!!own} onClick={toggleCamera}>
             {own ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
           </ControlButton>
-          {canShare && (
-            <ControlButton label={call.isScreenSharingOn ? "Teilen beenden" : "Bildschirm teilen"} active={!call.isScreenSharingOn} onClick={toggleScreen}>
-              <MonitorUp className="h-5 w-5" />
-            </ControlButton>
-          )}
+          <ControlButton label={call.isScreenSharingOn ? "Teilen beenden" : "Bildschirm teilen"} active={!call.isScreenSharingOn} onClick={toggleScreen}>
+            <MonitorUp className="h-5 w-5" />
+          </ControlButton>
+          <ControlButton label={chatOpen ? "Chat schließen" : "Chat öffnen"} active={!chatOpen} badge={unread > 0 ? unread : undefined} onClick={openChat}>
+            <MessageSquare className="h-5 w-5" />
+          </ControlButton>
           <ControlButton label="Auflegen" danger onClick={leave}>
             <PhoneOff className="h-5 w-5" />
           </ControlButton>
