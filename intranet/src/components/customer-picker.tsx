@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, Check, ChevronDown, Search, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { DOMAIN } from "@/lib/config";
 import type { Customer } from "@/lib/sales/types";
 import { Popover } from "@/components/ui";
 
@@ -38,7 +39,8 @@ export function CustomerPicker({
   const selected = customers.find((c) => c.id === value);
 
   const suggestions = useMemo(() => {
-    const domains = new Set(emails.map(domainOf).filter((d) => d && !FREEMAIL.has(d)));
+    // Eigene Domain (Kolleg*innen im Termin) sagt nichts über den Kunden
+    const domains = new Set(emails.map(domainOf).filter((d) => d && d !== DOMAIN && !FREEMAIL.has(d)));
     const lower = text.toLowerCase();
     const scored = active
       .map((c) => {
