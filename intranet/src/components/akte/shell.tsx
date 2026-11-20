@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, CalendarDays, LayoutDashboard, ListChecks, Menu, Palette, Settings, Sparkles, Video, X, type LucideIcon } from "lucide-react";
+import { ArrowLeft, CalendarDays, LayoutDashboard, ListChecks, MapPin, Menu, Palette, Settings, Sparkles, Video, X, type LucideIcon } from "lucide-react";
 import { cn as clsx } from "@/lib/cn";
 import { useResource } from "@/lib/data";
 import { hasArea } from "@/lib/access";
@@ -93,6 +93,10 @@ function Sidebar({ workspace, onNavigate }: { workspace: WorkspaceSummary; onNav
         ...(workspace.planning === false ? [] : [{ path: "planung", label: "Planung", icon: CalendarDays, area: "marketing" } as Item]),
         { path: "ci", label: "Markenkit", icon: Palette, area: "marketing" },
       ],
+    },
+    {
+      title: "Google",
+      items: [{ path: "google", label: "Google-Profile", icon: MapPin, area: "marketing" }],
     },
   ];
   const isActive = (path: string) => (path ? pathname.startsWith(`${base}/${path}`) : pathname === base);
