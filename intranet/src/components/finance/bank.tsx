@@ -3,14 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { clsx } from "clsx";
-import { ArrowDownLeft, ArrowUpRight, Check, Landmark, Link2, RefreshCw, Search, Unlink, X } from "lucide-react";
+import { Check, Eye, EyeOff, Landmark, Link2, RefreshCw, Unlink, X } from "lucide-react";
 import { api } from "@/lib/api";
-import { isOpen, maskIban, suggestions, type BankAccount, type BankSync, type BankTransaction, type OpenItem } from "@/lib/bank";
+import { isOpen, suggestions, type BankAccount, type BankSync, type BankTransaction, type OpenItem } from "@/lib/bank";
 import { mutate, revalidate, useResource, useRows } from "@/lib/data";
-import { formatDate, formatDateTime, relativeTime } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import type { Invoice } from "@/lib/sales/types";
 import { Badge, Button, Dialog, Empty, Field, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
-import { PageBar } from "@/components/sales/shell";
+import { accentFill } from "@/lib/theme";
+import { Card, Page, PageHead, SearchPill, Segmented, pillButton, rowClass, tdClass, thClass } from "./kit";
 
 const STATUS = "/api/finance/bank";
 const OPEN_ITEMS = "/api/finance/bank/open-items";
@@ -72,11 +73,10 @@ export function Bank() {
     return sorted.filter((t) => {
       if (filter === "offen" && !isOpen(t)) return false;
       if (filter === "zugeordnet" && isOpen(t)) return false;
-      return !q || [t.counterparty, t.purpose, t.billing_number, t.note, String(t.amount)].some((v) => v?.toLowerCase().includes(q));
+      return !q || [t.counterparty, t.purpose, t.billing_number, t.note, String(t.amount), money(t.amount, t.currency)].some((v) => v?.toLowerCase().includes(q));
     });
   }, [sorted, filter, query]);
   const openCount = sorted.filter(isOpen).length;
-  const balance = active.reduce((sum, a) => sum + (a.balance ?? 0), 0);
 
   async function sync() {
     setSyncing(true);
@@ -100,113 +100,142 @@ export function Bank() {
   const syncTitle = status?.last ? `Zuletzt abgeglichen: ${formatDateTime(status.last.at)}` : "Noch nie abgeglichen";
 
   return (
-    <div className="flex h-full flex-col">
-      <PageBar
+    <Page>
+      <PageHead
         title="Bank"
         meta={
-          active.length > 0 && (
-            <>
-              Saldo {money(balance)} · {openCount} offen
-              {status?.last && <> · abgeglichen {relativeTime(status.last.at)}</>}
-            </>
+          active.length > 0 ? (
+            <span className="flex flex-col gap-1">
+              {active.map((account) => (
+                <AccountLine key={account.id} account={account} />
+              ))}
+            </span>
+          ) : (
+            "Firmenkonto über Enable Banking"
           )
         }
       >
-        <div className="relative min-w-0 flex-1 md:max-w-56">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-snow/40" />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Suchen" aria-label="Umsätze durchsuchen" className="h-9 w-full pl-9" />
-        </div>
-        <Select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} className="h-9 w-auto" aria-label="Filter">
-          <option value="offen">Offen</option>
-          <option value="zugeordnet">Zugeordnet</option>
-          <option value="alle">Alle</option>
-        </Select>
-        {active.length > 0 && (
-          <Button
-            size="sm"
-            className="h-9 px-2.5 sm:px-3"
-            icon={<RefreshCw className="h-4 w-4" />}
-            onClick={sync}
-            loading={syncing}
-            loadingText="Wird abgeglichen …"
-            disabled={!status?.configured}
-            title={syncTitle}
-            aria-label="Mit der Bank abgleichen"
-          >
-            <span className="hidden sm:inline">Abgleichen</span>
-          </Button>
-        )}
         <Button
-          variant={active.length ? "secondary" : "primary"}
-          size="sm"
-          className="h-9"
+          variant={active.length ? "ghost" : "primary"}
           icon={<Link2 className="h-4 w-4" />}
           onClick={() => setConnecting(true)}
           disabled={!status?.configured}
         >
-          <span className="sr-only sm:not-sr-only">{active.length ? "Neu verbinden" : "Konto verbinden"}</span>
+          {active.length ? "Neu verbinden" : "Konto verbinden"}
         </Button>
-      </PageBar>
+      </PageHead>
 
       {status && !status.configured && (
-        <p className="border-b border-snow/[0.08] bg-[#e7a33e]/10 px-5 py-2 text-[13px] text-snow/80">
+        <p className="rounded-2xl px-4 py-2.5 text-[13px] text-snow/80" style={{ background: accentFill("#e7a33e", 14) }}>
           Enable Banking ist noch nicht eingerichtet: <code>ENABLE_BANKING_APP_ID</code> und <code>ENABLE_BANKING_PRIVATE_KEY</code> in Vercel hinterlegen.
         </p>
       )}
       {open?.receivablesError && (
-        <p className="border-b border-snow/[0.08] bg-error/10 px-5 py-2 text-[13px] text-snow/80">
-          Offene Ausgangsrechnungen konnten nicht geladen werden: {open.receivablesError}
-        </p>
+        <p className="rounded-2xl bg-error/10 px-4 py-2.5 text-[13px] text-snow/80">Offene Ausgangsrechnungen konnten nicht geladen werden: {open.receivablesError}</p>
       )}
 
-      {active.length > 0 && (
-        <div className="flex shrink-0 gap-3 overflow-x-auto border-b border-snow/[0.08] px-4 py-3 md:px-5">
-          {active.map((account) => (
-            <AccountCard key={account.id} account={account} />
-          ))}
+      <div className="flex flex-wrap items-center gap-3">
+        <Segmented
+          label="Filter"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { id: "offen", label: "Zu tun", count: openCount },
+            { id: "zugeordnet", label: "Erledigt" },
+            { id: "alle", label: "Alle" },
+          ]}
+        />
+        <div className="ml-auto flex min-w-0 flex-wrap items-center gap-2">
+          <SearchPill value={query} onChange={setQuery} placeholder="Name, Zweck, Betrag …" label="Umsätze durchsuchen" className="w-full sm:w-72" />
+          {active.length > 0 && (
+            <Button
+              className={pillButton}
+              icon={<RefreshCw className="h-4 w-4" />}
+              onClick={sync}
+              loading={syncing}
+              loadingText="Wird abgerufen …"
+              disabled={!status?.configured}
+              title={syncTitle}
+            >
+              Jetzt abrufen
+            </Button>
+          )}
         </div>
-      )}
+      </div>
 
-      {error ? (
-        <Empty title="Umsätze konnten nicht geladen werden" text={error.message} />
-      ) : loading || !accounts ? (
-        <div className="grid flex-1 place-items-center">
-          <Spinner />
-        </div>
-      ) : active.length === 0 && sorted.length === 0 ? (
-        <Empty
-          icon={<Landmark className="h-8 w-8" />}
-          title="Noch kein Konto verbunden"
-          text="Verbinde das Commerzbank-Geschäftskonto. Die Bank fragt einmal Login und photoTAN ab, danach holt das Intranet Saldo und Umsätze täglich."
-          action={
-            status?.configured && (
-              <Button variant="primary" icon={<Link2 className="h-4 w-4" />} onClick={() => setConnecting(true)}>
-                Konto verbinden
-              </Button>
-            )
-          }
-        />
-      ) : visible.length === 0 ? (
-        <Empty
-          icon={<Check className="h-8 w-8" />}
-          title={filter === "offen" && !query ? "Alles zugeordnet" : "Keine Treffer"}
-        />
-      ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <ul>
-            {visible.map((t) => (
-              <TransactionRow
-                key={t.id}
-                tx={t}
-                stale={!accountIds.has(t.account_id)}
-                invoice={t.invoice_id ? invoiceById.get(t.invoice_id) : undefined}
-                suggestion={isOpen(t) ? suggestions(t, items).find((s) => s.amount)?.item : undefined}
-                onOpen={() => setOpenId(t.id)}
-              />
-            ))}
-          </ul>
-        </div>
-      )}
+      <Card className="overflow-hidden">
+        {error ? (
+          <Empty title="Umsätze konnten nicht geladen werden" text={error.message} />
+        ) : loading || !accounts ? (
+          <div className="grid h-60 place-items-center">
+            <Spinner />
+          </div>
+        ) : active.length === 0 && sorted.length === 0 ? (
+          <Empty
+            icon={<Landmark className="h-8 w-8" />}
+            title="Noch kein Konto verbunden"
+            text="Verbinde das Commerzbank-Geschäftskonto. Die Bank fragt einmal Login und photoTAN ab, danach holt das Intranet Saldo und Umsätze täglich."
+            action={
+              status?.configured && (
+                <Button variant="primary" icon={<Link2 className="h-4 w-4" />} onClick={() => setConnecting(true)}>
+                  Konto verbinden
+                </Button>
+              )
+            }
+          />
+        ) : visible.length === 0 ? (
+          <Empty icon={<Check className="h-8 w-8" />} title={filter === "offen" && !query ? "Alles zugeordnet" : "Keine Treffer"} />
+        ) : (
+          <>
+            <ul className="divide-y divide-snow/[0.06] md:hidden">
+              {visible.map((t) => (
+                <li key={t.id}>
+                  <button type="button" onClick={() => setOpenId(t.id)} className={clsx("flex w-full items-center gap-3 px-4 py-3.5 text-left", !accountIds.has(t.account_id) && "opacity-60")}>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-semibold">{t.counterparty ?? "Unbekannt"}</span>
+                      <span className="block truncate text-[12px] text-snow/50">{t.purpose ?? "–"}</span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className={clsx("block text-[13.5px] font-semibold tabular-nums", t.amount < 0 && "text-error")}>{money(t.amount, t.currency)}</span>
+                      <span className="block text-[12px] text-snow/45 tabular-nums">{formatDate(t.booking_date)}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto md:block">
+            <table className="w-full min-w-[720px] table-fixed text-[13.5px]">
+              <colgroup>
+                <col className="w-32" />
+                <col />
+                <col className="w-40" />
+                <col className="w-[30%]" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className={thClass}>Datum ↓</th>
+                  <th className={thClass}>Gegenpartei · Verwendungszweck</th>
+                  <th className={clsx(thClass, "text-right")}>Betrag</th>
+                  <th className={thClass}>Zuordnung</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((t) => (
+                  <TransactionRow
+                    key={t.id}
+                    tx={t}
+                    stale={!accountIds.has(t.account_id)}
+                    invoice={t.invoice_id ? invoiceById.get(t.invoice_id) : undefined}
+                    suggestion={isOpen(t) ? suggestions(t, items).find((s) => s.amount)?.item : undefined}
+                    onOpen={() => setOpenId(t.id)}
+                  />
+                ))}
+              </tbody>
+            </table>
+            </div>
+          </>
+        )}
+      </Card>
 
       <TransactionSheet
         tx={sorted.find((t) => t.id === openId)}
@@ -218,7 +247,7 @@ export function Bank() {
         onClose={() => setOpenId(null)}
       />
       <ConnectDialog open={connecting} onClose={() => setConnecting(false)} />
-    </div>
+    </Page>
   );
 }
 
@@ -229,13 +258,34 @@ function refresh() {
   revalidate(OPEN_ITEMS);
 }
 
-function AccountCard({ account }: { account: BankAccount }) {
+/** IBAN fast ganz verdeckt: DE•• •••• •••• 8000 */
+const hideIban = (iban: string | null) => (iban ? `${iban.slice(0, 2)}•• •••• •••• ${iban.replace(/\s/g, "").slice(-4)}` : null);
+
+/** „Di 03.11.26 · 10:04“ */
+function stamp(value: string) {
+  const d = new Date(value);
+  const day = d.toLocaleDateString("de-DE", { weekday: "short" }).replace(".", "");
+  const date = d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return `${day} ${date} · ${time}`;
+}
+
+/** Konto in einer Zeile: Bank · IBAN · Saldo (verdeckt, Auge zeigt ihn) · Stand */
+function AccountLine({ account }: { account: BankAccount }) {
   const toast = useToast();
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reveal, setReveal] = useState(false);
   const [now] = useState(() => Date.now());
   const days = account.valid_until ? Math.ceil((new Date(account.valid_until).getTime() - now) / 86_400_000) : null;
   const expiring = days !== null && days <= 14;
+  const warning = account.error
+    ? account.error
+    : days !== null && days < 0
+      ? "Freigabe abgelaufen – neu verbinden"
+      : expiring
+        ? `Freigabe endet in ${days} Tagen – neu verbinden`
+        : null;
 
   async function disconnect() {
     setBusy(true);
@@ -250,36 +300,47 @@ function AccountCard({ account }: { account: BankAccount }) {
     setBusy(false);
   }
 
+  const Eye_ = reveal ? EyeOff : Eye;
   return (
-    <div className="min-w-64 shrink-0 rounded-2xl border border-snow/10 bg-surface px-4 py-3">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] text-snow/55">
-            {account.aspsp} · {maskIban(account.iban)}
-          </p>
-          <p className="mt-0.5 text-xl font-medium tabular-nums">{money(account.balance, account.currency)}</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setConfirm(true)}
-          className="rounded-lg p-1 text-snow/40 hover:bg-snow/[0.08] hover:text-snow"
-          aria-label="Konto trennen"
-          title="Konto trennen"
-        >
-          <Unlink className="h-4 w-4" />
-        </button>
-      </div>
-      <p className={clsx("mt-1 text-[12px]", account.error || expiring ? "text-error" : "text-snow/45")}>
-        {account.error
-          ? account.error
-          : days !== null && days < 0
-            ? "Freigabe abgelaufen – neu verbinden"
-            : expiring
-              ? `Freigabe endet in ${days} Tagen – neu verbinden`
-              : account.balance_at
-                ? `Stand ${formatDateTime(account.balance_at)}`
-                : "Noch nicht abgeglichen"}
-      </p>
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px]">
+      <span className="font-medium text-snow/80">{account.aspsp}</span>
+      {hideIban(account.iban) && (
+        <>
+          <span aria-hidden>·</span>
+          <span className="tracking-wide tabular-nums">{hideIban(account.iban)}</span>
+        </>
+      )}
+      <span aria-hidden>·</span>
+      <span className={clsx("font-semibold text-snow tabular-nums transition-[filter]", !reveal && "blur-[5px] select-none")} aria-hidden={!reveal}>
+        {money(account.balance, account.currency)}
+      </span>
+      {!reveal && <span className="sr-only">Saldo verdeckt</span>}
+      <button
+        type="button"
+        onClick={() => setReveal((r) => !r)}
+        aria-label={reveal ? "Saldo verbergen" : "Saldo zeigen"}
+        aria-pressed={reveal}
+        title={reveal ? "Saldo verbergen" : "Saldo zeigen"}
+        className="-m-1 rounded-full p-1 text-snow/45 hover:bg-snow/[0.06] hover:text-snow"
+      >
+        <Eye_ className="h-4 w-4" />
+      </button>
+      {account.balance_at && (
+        <>
+          <span aria-hidden>·</span>
+          <span className="tabular-nums">{stamp(account.balance_at)}</span>
+        </>
+      )}
+      {warning && <span className="font-medium text-error">· {warning}</span>}
+      <button
+        type="button"
+        onClick={() => setConfirm(true)}
+        className="-m-1 rounded-full p-1 text-snow/35 hover:bg-snow/[0.06] hover:text-snow"
+        aria-label="Konto trennen"
+        title="Konto trennen"
+      >
+        <Unlink className="h-3.5 w-3.5" />
+      </button>
 
       <Dialog
         open={confirm}
@@ -300,7 +361,7 @@ function AccountCard({ account }: { account: BankAccount }) {
           Die Freigabe bei der Bank endet, es kommen keine neuen Umsätze mehr. Bisherige Umsätze und Zuordnungen bleiben erhalten.
         </p>
       </Dialog>
-    </div>
+    </span>
   );
 }
 
@@ -327,39 +388,27 @@ function TransactionRow({
 }) {
   const incoming = tx.amount > 0;
   return (
-    <li>
-      <button
-        type="button"
-        onClick={onOpen}
-        className={clsx(
-          "flex w-full items-center gap-3 border-b border-snow/[0.05] px-4 py-2.5 text-left outline-none hover:bg-snow/[0.04] focus-visible:bg-snow/[0.06] md:px-5",
-          stale && "opacity-60"
-        )}
-      >
-        <span className={clsx("grid h-8 w-8 shrink-0 place-items-center rounded-full", incoming ? "bg-success/15 text-success" : "bg-snow/[0.06] text-snow/60")}>
-          {incoming ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[14px] font-medium">{tx.counterparty ?? "Unbekannt"}</span>
-          <span className="block truncate text-[12px] text-snow/50">{tx.purpose ?? "–"}</span>
-        </span>
-        <span className="hidden min-w-0 max-w-64 shrink md:block">
-          {isOpen(tx) ? (
-            suggestion ? (
-              <span className="block truncate text-[12px] text-snow/55">Vorschlag: {[suggestion.name, suggestion.number].filter(Boolean).join(" · ")}</span>
-            ) : (
-              <span className="text-[12px] text-snow/35">Offen</span>
-            )
+    <tr onClick={onOpen} onKeyDown={(e) => e.key === "Enter" && onOpen()} tabIndex={0} className={clsx(rowClass, stale && "opacity-60")}>
+      <td className={clsx(tdClass, "whitespace-nowrap text-snow/70 tabular-nums")}>{formatDate(tx.booking_date)}</td>
+      <td className={clsx(tdClass, "min-w-0")}>
+        <span className="block truncate font-semibold">{tx.counterparty ?? "Unbekannt"}</span>
+        <span className="block truncate text-[12.5px] text-snow/50">{tx.purpose ?? "–"}</span>
+      </td>
+      <td className={clsx(tdClass, "text-right font-semibold whitespace-nowrap tabular-nums", !incoming && "text-error")}>{money(tx.amount, tx.currency)}</td>
+      <td className={clsx(tdClass, "min-w-0")}>
+        {isOpen(tx) ? (
+          suggestion ? (
+            <span className="block truncate text-[12.5px] text-snow/55">Vorschlag: {[suggestion.name, suggestion.number].filter(Boolean).join(" · ")}</span>
           ) : (
+            <span className="text-snow/30">–</span>
+          )
+        ) : (
+          <span className="block truncate">
             <MatchBadge tx={tx} invoice={invoice} />
-          )}
-        </span>
-        <span className="w-28 shrink-0 text-right">
-          <span className={clsx("block text-[14px] font-medium tabular-nums", incoming && "text-success")}>{money(tx.amount, tx.currency)}</span>
-          <span className="block text-[12px] text-snow/45">{formatDate(tx.booking_date, { day: "2-digit", month: "short" })}</span>
-        </span>
-      </button>
-    </li>
+          </span>
+        )}
+      </td>
+    </tr>
   );
 }
 

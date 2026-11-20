@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ArrowDownWideNarrow, ArrowRight, ArrowUpNarrowWide, Building2, ChevronDown, ChevronUp, ChevronsUpDown, Globe, Mail, Pencil, Phone, Plus, Search, Trash2 } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -124,10 +124,10 @@ export function Customers() {
 
   // Geöffneter Kunde steht in der URL (?id=…), damit Pipeline und Links ihn öffnen
   const params = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const openId = params.get("id");
-  const open = (id: string | null) => router.replace(id ? `${pathname}?id=${id}` : pathname, { scroll: false });
+  // Ohne Server-Navigation (sofort, kein Ruckeln beim Öffnen und Schließen)
+  const open = (id: string | null) => window.history.replaceState(null, "", id ? `${pathname}?id=${id}` : pathname);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();

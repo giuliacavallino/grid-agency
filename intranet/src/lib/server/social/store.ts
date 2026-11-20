@@ -1,7 +1,23 @@
 import "server-only";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { DEMO } from "@/lib/config";
-import { EMPTY_BRAND, type Brand, type MediaItem, type PostResult, type Provider, type SocialAccount, type SocialPost, type Workspace } from "@/lib/marketing";
+import {
+  EMPTY_BRAND,
+  PROFILE_PROVIDERS,
+  PROVIDERS,
+  profileUrl,
+  type Brand,
+  type MediaItem,
+  type PostProvider,
+  type PostResult,
+  type ProfileLinks,
+  type Provider,
+  type SocialAccount,
+  type PostFormat,
+  type ReviewNote,
+  type SocialPost,
+  type Workspace,
+} from "@/lib/marketing";
 import { sb } from "../db";
 import { decrypt, encrypt } from "../vault";
 import { publicMediaUrl } from "./media";
@@ -57,7 +73,7 @@ export const publicAccount = (a: AccountRow): SocialAccount => ({
 
 // ---------- Kundenwelten ----------
 
-type WorkspaceRow = Omit<Workspace, "logo_url" | "sharepoint_url" | "secondary_color"> & {
+type WorkspaceRow = Omit<Workspace, "logo_url" | "avatar_url" | "sharepoint_url" | "secondary_color" | "profiles"> & {
   secondary_color?: string | null;
   logo_path?: string | null;
   settings: Record<string, unknown>;
@@ -67,8 +83,42 @@ const toWorkspace = ({ logo_path, settings, secondary_color, ...rest }: Workspac
   ...rest,
   secondary_color: secondary_color ?? null,
   logo_url: logo_path ? publicMediaUrl(logo_path) : null,
+  avatar_url: typeof settings?.avatar_path === "string" ? publicMediaUrl(settings.avatar_path) : null,
   sharepoint_url: typeof settings?.sharepoint_url === "string" ? settings.sharepoint_url : null,
+  profiles: readProfiles(settings?.profiles),
+  planning: settings?.planning !== false,
 });
+
+/** Hinterlegte Profil-Links (settings.profiles); nur gültige Adressen */
+function readProfiles(value: unknown): ProfileLinks {
+  if (!value || typeof value !== "object") return {};
+  const out: ProfileLinks = {};
+  for (const provider of PROFILE_PROVIDERS) {
+    const raw = (value as Record<string, unknown>)[provider];
+    const url = typeof raw === "string" ? profileUrl(provider, raw) : null;
+    if (url) out[provider] = url;
+  }
+  return out;
+}
+
+/** Profil-Links ändern: Wert setzen (Link oder Name), leer/null entfernt ihn.
+ * Ungültige Eingaben werfen einen Fehler mit Hinweis. */
+export async function updateProfiles(id: string, input: Partial<Record<PostProvider, string | null>>): Promise<ProfileLinks> {
+  const next = readProfiles((await workspaceSettings(id)).profiles);
+  for (const provider of PROFILE_PROVIDERS) {
+    if (!(provider in input)) continue;
+    const raw = input[provider];
+    if (raw === null || raw === undefined || !String(raw).trim()) {
+      delete next[provider];
+      continue;
+    }
+    const url = profileUrl(provider, String(raw));
+    if (!url) throw new Error(`Kein gültiger ${PROVIDERS[provider].label}-Link oder Name`);
+    next[provider] = url;
+  }
+  await updateWorkspaceSettings(id, { profiles: next });
+  return next;
+}
 
 const COLUMNS = "id, name, kind, color, secondary_color, logo_path, project_id, customer_id, archived, settings";
 
@@ -137,6 +187,10 @@ export function cleanBrand(input: Partial<Brand>): Brand {
       .filter((l) => l && /^[0-9a-f-]{36}\/[a-z0-9-_]+\.(png|jpg|webp)$/i.test(l.path ?? ""))
       .slice(0, 12)
       .map((l) => ({ path: l.path, variant: text(l.variant, 60) || "Logo", notes: text(l.notes, 300) || undefined })),
+    assets: (Array.isArray(input.assets) ? input.assets : [])
+      .filter((a) => a && /^[0-9a-f-]{36}\/[a-z0-9-_]+\.(png|jpg|webp|gif)$/i.test(a.path ?? ""))
+      .slice(0, 60)
+      .map((a) => ({ path: a.path, kind: (["Foto", "Grafik", "Icon"].includes(a.kind) ? a.kind : "Foto") as Brand["assets"][number]["kind"], notes: text(a.notes, 300) || undefined })),
     tone: text(input.tone),
     audience: text(input.audience),
     imagery: text(input.imagery),
@@ -153,7 +207,7 @@ export async function getBrand(id: string): Promise<Brand> {
     ? (demo.workspaces.find((w) => w.id === id) as WorkspaceRow & { brand?: Brand })?.brand
     : ((check(await sb().from("workspaces").select("brand").eq("id", id).maybeSingle()) as { brand: Brand } | null)?.brand ?? undefined);
   const brand = { ...EMPTY_BRAND, ...(raw ?? {}) };
-  return { ...brand, logos: brand.logos.map((l) => ({ ...l, url: publicMediaUrl(l.path) })) };
+  return { ...brand, logos: brand.logos.map((l) => ({ ...l, url: publicMediaUrl(l.path) })), assets: (brand.assets ?? []).map((a) => ({ ...a, url: publicMediaUrl(a.path) })) };
 }
 
 /** CI-Welt speichern; Primär- und Sekundärfarbe färben auch die Kundenwelt im Hub */
@@ -359,6 +413,8 @@ export type PostInput = {
   scheduled_at?: string | null;
   status?: "draft" | "scheduled";
   created_by: string;
+  format?: PostFormat;
+  day_id?: string | null;
 };
 
 export async function insertPost(input: PostInput): Promise<SocialPost> {
@@ -370,6 +426,9 @@ export async function insertPost(input: PostInput): Promise<SocialPost> {
     scheduled_at: input.scheduled_at ?? null,
     status: input.status ?? "draft",
     created_by: input.created_by,
+    format: input.format ?? "feed",
+    day_id: input.day_id ?? null,
+    review: [] as ReviewNote[],
   };
   if (DEMO) {
     const now = new Date().toISOString();
@@ -432,4 +491,45 @@ export async function workspaceLogoPath(id: string): Promise<string | null> {
     ? demo.workspaces.find((w) => w.id === id)
     : (check(await sb().from("workspaces").select("logo_path").eq("id", id).maybeSingle()) as { logo_path: string | null } | null);
   return row?.logo_path ?? (await getBrand(id)).logos[0]?.path ?? null;
+}
+
+// ---------- Datei-Eingang (media_imports) ----------
+
+type ImportRow = { id: string; workspace_id: string; target: "logo" | "asset" | "avatar"; variant: string; filename: string; mime: string; data: string };
+
+/** Dateien aus media_imports in den Storage übernehmen: Logos ins Markenkit
+ * (Hauptlogo wird das Logo der Akte), Bildmaterial zu den Fotos & Grafiken,
+ * Profilbilder (target „avatar“) werden das runde Bild der Akte im Hub. */
+export async function processMediaImports() {
+  if (DEMO) return 0;
+  const { data, error } = await sb().from("media_imports").select("*").order("created_at").limit(20);
+  if (error || !data?.length) return 0;
+  const { storeMedia } = await import("./media");
+  let done = 0;
+  for (const row of data as ImportRow[]) {
+    try {
+      // bytea kommt als Hex ("\x89504e…")
+      const bytes = new Uint8Array(Buffer.from(String(row.data).replace(/^\\x/, ""), "hex"));
+      const item = await storeMedia(bytes, row.mime, row.target === "asset" ? row.variant.toLowerCase() : row.target);
+      if (row.target === "avatar") {
+        await updateWorkspaceSettings(row.workspace_id, { avatar_path: item.path });
+        await sb().from("media_imports").delete().eq("id", row.id);
+        done++;
+        continue;
+      }
+      const brand = await getBrand(row.workspace_id);
+      if (row.target === "logo") {
+        await updateBrand(row.workspace_id, { logos: [...brand.logos.filter((l) => l.variant !== row.variant || row.variant !== "Hauptlogo"), { path: item.path, variant: row.variant, notes: row.filename }] });
+        if (row.variant === "Hauptlogo") await updateWorkspace(row.workspace_id, { logo_path: item.path });
+      } else {
+        const kind = (["Foto", "Grafik", "Icon"].includes(row.variant) ? row.variant : "Foto") as Brand["assets"][number]["kind"];
+        await updateBrand(row.workspace_id, { assets: [...brand.assets, { path: item.path, kind, notes: row.filename }] });
+      }
+      await sb().from("media_imports").delete().eq("id", row.id);
+      done++;
+    } catch (error) {
+      console.error("Datei-Eingang", row.id, error);
+    }
+  }
+  return done;
 }

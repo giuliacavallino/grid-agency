@@ -1,4 +1,4 @@
-import { MeetError, roomId } from "@/lib/server/meet";
+import { MeetError, recordingRoom } from "@/lib/server/meet";
 import { startRecording } from "@/lib/server/meet-recording";
 
 // Startet die Tonaufnahme, sobald jemand im Call ist. Alle Beitretenden
@@ -14,7 +14,10 @@ export async function POST(request: Request, { params }: Context) {
   const serverCallId = String(body.serverCallId ?? "").slice(0, 500);
   if (!serverCallId) return Response.json({ error: "serverCallId fehlt" }, { status: 400 });
   try {
-    return Response.json(await startRecording(await roomId(code), serverCallId));
+    const room = await recordingRoom(code);
+    // Beim Anlegen „Aufzeichnen“ abgewählt: keine Aufnahme
+    if (!room.record) return Response.json({ recording: false });
+    return Response.json(await startRecording(room.id, serverCallId));
   } catch (error) {
     if (error instanceof MeetError) return Response.json({ error: error.message }, { status: error.status });
     console.error(error);

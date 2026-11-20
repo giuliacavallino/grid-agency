@@ -1,17 +1,25 @@
 import { withUser } from "@/lib/server/auth";
 import { billingPdfUrl, getBilling } from "@/lib/server/billing";
-import { BillingError, mailDraft, pdfAttachment, renderPdf } from "@/lib/server/billing-write";
+import { BillingError, mailDraft, pdfAttachment, reminderDraft, renderPdf } from "@/lib/server/billing-write";
 
 type Context = { params: Promise<{ id: string }> };
 
 export const maxDuration = 60;
 
 /** PDF eines Belegs: abgelegt als 10 Minuten gültiger Link ({ url }), Entwürfe
- * als Vorschau ({ data } base64). ?mail=1 liefert Anhang, Betreff und Text. */
+ * als Vorschau ({ data } base64). ?mail=1 liefert Anhang, Betreff und Text,
+ * ?mail=erinnerung dasselbe für eine Zahlungserinnerung. */
 export const GET = withUser(async (_user, request, { params }: Context) => {
   const { id } = await params;
   try {
-    if (new URL(request.url).searchParams.get("mail")) {
+    const mail = new URL(request.url).searchParams.get("mail");
+    if (mail === "erinnerung") {
+      // Zahlungserinnerung: Text aus der Vorlage, Rechnung als PDF im Anhang
+      const attachment = await pdfAttachment(id);
+      const draft = await reminderDraft(attachment.doc);
+      return Response.json({ ...draft, attachment: { name: attachment.name, contentType: attachment.contentType, contentBytes: attachment.contentBytes } });
+    }
+    if (mail) {
       const attachment = await pdfAttachment(id);
       const { subject, body } = await mailDraft(attachment.doc);
       return Response.json({

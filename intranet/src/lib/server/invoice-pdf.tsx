@@ -2,7 +2,7 @@ import "server-only";
 import path from "node:path";
 import { Document, Font, Image, Page, Path, StyleSheet, Svg, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import QRCode from "qrcode";
-import { KIND_LABEL, computeTotals, fillText, money, plain, type BillingDetail, type BillingSettings } from "@/lib/billing";
+import { KIND_LABEL, computeTotals, fillText, money, periodText, plain, servicePeriodOf, type BillingDetail, type BillingSettings } from "@/lib/billing";
 import { LOGO_PNG, LOGO_SNOW_PNG, MONOGRAM_PNG } from "./pdf-logo";
 
 // Rechnungspapier im Look von grid-agency.de: dunkler Kopf mit Geisterwort,
@@ -86,7 +86,6 @@ const s = StyleSheet.create({
 
 const dateDe = (value: string | null | undefined) =>
   value ? new Date(`${value}T12:00:00`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
-const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" });
 const qty = (value: number) => new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 }).format(value);
 
 const DOC_TITLE: Partial<Record<BillingDetail["kind"], string>> = { storno: "Stornorechnung", storno_gutschrift: "Storno Gutschrift" };
@@ -132,19 +131,17 @@ export function InvoicePage({ doc, settings, reference, qr, payment = "sepa", ex
   const to = recipient(doc);
   const positions = doc.items.filter((i) => i.kind === "position");
   const payable = doc.kind === "rechnung" && totals.gross > 0;
-  const service = doc.service_text
-    ? plain(doc.service_text)
-    : doc.service_from
-      ? doc.service_to && doc.service_to !== doc.service_from
-        ? `${shortDate(doc.service_from)} – ${dateDe(doc.service_to)}`
-        : dateDe(doc.service_from)
-      : "wie Rechnungsdatum";
+  const period = servicePeriodOf(doc);
+  const service = doc.service_text ? plain(doc.service_text) : period ? periodText(period) : "–";
+  // Lange Firmennamen kleiner setzen, damit sie in einer Zeile bleiben und
+  // nicht in Logo und Überschrift laufen
+  const headlineSize = Math.max(13, Math.min(21, Math.floor(330 / (Math.max(to.name.length, 1) * 0.56))));
   const meta: [string, string][] = [
     [`${KIND_LABEL[doc.kind]}snr.`, doc.number ?? "Entwurf"],
     ["Datum", dateDe(doc.document_date) || "–"],
     ...(doc.kind === "angebot"
       ? ([["Gültig bis", dateDe(doc.due_date) || "–"], ...(doc.service_from ? [["Leistungsbeginn", dateDe(doc.service_from)]] : [])] as [string, string][])
-      : ([["Leistung", service]] as [string, string][])),
+      : ([["Leistungszeitraum", service]] as [string, string][])),
     ...(reference ? ([["Bezug", `${reference.label} ${reference.number ?? ""}`.trim()]] as [string, string][]) : []),
     ...(doc.customer_number ? ([["Kundennr.", doc.customer_number]] as [string, string][]) : []),
   ];
@@ -170,9 +167,9 @@ export function InvoicePage({ doc, settings, reference, qr, payment = "sepa", ex
             </View>
           </View>
           <View style={s.bandBottom}>
-            <View style={{ maxWidth: 310 }}>
+            <View style={{ maxWidth: 340 }}>
               <Text style={s.eyebrow}>{title} für</Text>
-              <Text style={s.headline}>
+              <Text style={[s.headline, { fontSize: headlineSize }]}>
                 {to.name.replace(/\.$/, "")}
                 <Text style={{ color: DUNE }}>.</Text>
               </Text>

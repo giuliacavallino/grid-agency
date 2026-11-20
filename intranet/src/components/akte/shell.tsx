@@ -13,6 +13,7 @@ import { accentText } from "@/lib/theme";
 import { useMe } from "@/components/access";
 import { AccountMenu } from "@/components/hub";
 import { TeamsButton } from "@/components/teams";
+import { TopBar } from "@/components/topbar";
 import { Empty, Spinner } from "@/components/ui";
 import { AkteWorkspace, useWorkspaces, WorkspaceLogo, type WorkspaceSummary } from "@/components/marketing/workspace";
 
@@ -75,7 +76,6 @@ function Sidebar({ workspace, onNavigate }: { workspace: WorkspaceSummary; onNav
   const counts = useCounts(workspace);
   const base = akteUrl(workspace.id);
   const color = workspace.color;
-  const second = workspace.secondary_color ?? workspace.color;
 
   const groups: { title: string; items: Item[] }[] = [
     {
@@ -90,8 +90,8 @@ function Sidebar({ workspace, onNavigate }: { workspace: WorkspaceSummary; onNav
       title: "Content",
       items: [
         { path: "vorschlaege", label: "Vorschläge", icon: Sparkles, area: "marketing", count: counts.ideas, alert: counts.ideas > 0 },
-        { path: "planung", label: "Planung", icon: CalendarDays, area: "marketing" },
-        { path: "ci", label: "CI & Agent", icon: Palette, area: "marketing" },
+        ...(workspace.planning === false ? [] : [{ path: "planung", label: "Planung", icon: CalendarDays, area: "marketing" } as Item]),
+        { path: "ci", label: "Markenkit", icon: Palette, area: "marketing" },
       ],
     },
     {
@@ -107,22 +107,14 @@ function Sidebar({ workspace, onNavigate }: { workspace: WorkspaceSummary; onNav
 
   return (
     <div className="flex h-full flex-col">
-      <Link href="/" onClick={onNavigate} className="mb-4 flex h-8 items-center gap-2 px-3 text-[12.5px] text-snow/55 hover:text-snow">
-        <ArrowLeft className="h-3.5 w-3.5" /> Übersicht
+      <Link href="/" onClick={onNavigate} className="mb-4 inline-flex h-8 items-center gap-1 self-start rounded-full border border-snow/[0.1] bg-surface px-3 text-[13px] font-medium text-snow/75 shadow-[0_2px_8px_var(--shadow-color)] hover:text-snow">
+        <ArrowLeft className="h-3.5 w-3.5" /> Hub
       </Link>
 
-      {/* Kunde: Logo, Name, CI-Farben */}
-      <div className="relative mb-5 overflow-hidden rounded-2xl border border-snow/[0.08] bg-panel p-3.5">
-        <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: `linear-gradient(90deg, ${color}, ${second})` }} />
-        <span aria-hidden className="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full opacity-20 blur-2xl" style={{ background: color }} />
-        <div className="relative flex items-center gap-3">
-          {workspace.logo_url ? (
-            <WorkspaceLogo workspace={workspace} size={40} />
-          ) : (
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[15px] font-semibold text-white" style={{ background: color }}>
-              {workspace.name.slice(0, 2).toUpperCase()}
-            </span>
-          )}
+      {/* Kunde: rundes Profilbild wie bei Instagram, Ring im GRID-Verlauf */}
+      <div className="mb-5 rounded-2xl border border-snow/[0.08] bg-panel p-3.5">
+        <div className="group flex items-center gap-3">
+          <WorkspaceLogo workspace={workspace} size={46} box />
           <div className="min-w-0">
             <p className="truncate text-[15px] font-semibold">{workspace.name}</p>
             <p className="text-[11.5px] tracking-wide text-snow/50 uppercase">{workspace.kind === "agency" ? "Eigene Marke" : "Kundenakte"}</p>
@@ -182,17 +174,16 @@ export function AkteShell({ id, children }: { id: string; children: React.ReactN
         </aside>
 
         <div className="relative flex min-w-0 flex-1 flex-col">
-          {/* Farbkante in der CI: man sieht immer, für wen man gerade arbeitet */}
-          <div aria-hidden className="h-[3px] shrink-0" style={{ background: `linear-gradient(90deg, ${workspace.color}, ${workspace.secondary_color ?? workspace.color})` }} />
           <div className="flex h-12 shrink-0 items-center gap-2 border-b border-snow/[0.08] bg-sky px-2 md:hidden">
             <button type="button" onClick={() => setDrawer(true)} aria-label="Menü öffnen" className="grid h-9 w-9 place-items-center rounded-lg text-snow/80 hover:bg-snow/10">
               <Menu className="h-5 w-5" />
             </button>
-            <WorkspaceLogo workspace={workspace} size={22} />
+            <WorkspaceLogo workspace={workspace} size={28} box />
             <span className="flex-1 truncate text-[15px] font-medium">{workspace.name}</span>
             <TeamsButton className="h-9 w-9" />
             <AccountMenu />
           </div>
+          <TopBar className="hidden border-b border-snow/[0.06] md:flex" />
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
         </div>
 

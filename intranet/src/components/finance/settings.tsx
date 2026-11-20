@@ -8,27 +8,25 @@ import type { BillingSettings } from "@/lib/billing";
 import { DEFAULT_CONTRACT, contractFromText, contractToText, type ContractTemplate } from "@/lib/contract";
 import type { Settings } from "@/lib/sales/types";
 import { Button, Field, Input, Spinner, Textarea, useToast } from "@/components/ui";
-import { PageBar } from "@/components/sales/shell";
+import { Page, PageHead, cardClass } from "./kit";
 
 /** Einstellungen für Finance: DATEV-Upload-Adresse (Belegtransfer per Mail),
  * Firmendaten und Texte der Ausgangsrechnungen. */
 export function FinanceSettings() {
   const { data } = useResource<Settings>("/api/sales/settings");
   return (
-    <div className="flex h-full flex-col">
-      <PageBar title="Einstellungen" />
-      <div className="overflow-y-auto p-5">
-        {data ? (
-          <div className="flex flex-col gap-5">
-            <DatevForm key={`${data.datev.upload_address}|${data.datev.outgoing_address}`} initial={data.datev} />
-            <BillingForm initial={data.billing} />
-            <ContractForm initial={data.contract} signature={data.grid_signature} />
-          </div>
-        ) : (
-          <Spinner />
-        )}
-      </div>
-    </div>
+    <Page>
+      <PageHead title="Einstellungen" meta="DATEV-Versand, Firmendaten, Rechnungstexte und Vertrag" />
+      {data ? (
+        <div className="flex flex-col gap-5">
+          <DatevForm key={`${data.datev.upload_address}|${data.datev.outgoing_address}`} initial={data.datev} />
+          <BillingForm initial={data.billing} />
+          <ContractForm initial={data.contract} signature={data.grid_signature} />
+        </div>
+      ) : (
+        <Spinner />
+      )}
+    </Page>
   );
 }
 
@@ -56,7 +54,7 @@ function DatevForm({ initial }: { initial: Settings["datev"] }) {
   }
 
   return (
-    <form onSubmit={save} className="max-w-lg rounded-3xl border border-snow/10 bg-surface p-6">
+    <form onSubmit={save} className={`max-w-lg p-7 ${cardClass}`}>
       <h2 className="mb-1 text-lg font-medium">DATEV Upload-Mail</h2>
       <p className="mb-5 text-sm text-snow/60">
         Belege gehen von {FINANCE_MAILBOX} an diese Adressen. Sie stehen in DATEV Unternehmen online unter „Belegtransfer per E-Mail“, je eine für
@@ -117,7 +115,7 @@ function BillingForm({ initial }: { initial: BillingSettings }) {
   }
 
   return (
-    <form onSubmit={save} className="max-w-3xl rounded-3xl border border-snow/10 bg-surface p-6">
+    <form onSubmit={save} className={`max-w-3xl p-7 ${cardClass}`}>
       <h2 className="mb-1 text-lg font-medium">Ausgangsrechnungen</h2>
       <p className="mb-5 text-sm text-snow/60">
         Diese Angaben stehen auf jeder Rechnung (Pflichtangaben nach § 14 UStG) und im GiroCode. Änderungen gelten für neu festgeschriebene Belege; bereits
@@ -145,6 +143,19 @@ function BillingForm({ initial }: { initial: BillingSettings }) {
         </Field>
         <Field label="Text der Mail" className="sm:col-span-2" hint="Platzhalter: {Belegart}, {Nummer}, {Betrag}, {Fällig}, {Firma}">
           {(id) => <Textarea id={id} value={form.mail_body} onChange={(e) => setForm({ ...form, mail_body: e.target.value })} className="min-h-32" />}
+        </Field>
+        <p className="pt-3 text-[13px] font-semibold sm:col-span-2">Zahlungserinnerung</p>
+        <Field label="Betreff" className="sm:col-span-2" hint="Platzhalter: {Nummer}, {Firma}">
+          {(id) => <Input id={id} value={form.reminder_subject} onChange={(e) => setForm({ ...form, reminder_subject: e.target.value })} />}
+        </Field>
+        <Field label="Text" className="sm:col-span-2" hint="Platzhalter: {Nummer}, {Datum}, {Betrag}, {Offen}, {Fällig}, {Frist}, {Bank}, {IBAN}, {BIC}, {Signatur}, {Firma}">
+          {(id) => <Textarea id={id} value={form.reminder_body} onChange={(e) => setForm({ ...form, reminder_body: e.target.value })} className="min-h-48" />}
+        </Field>
+        <Field label="Neue Zahlungsfrist (Tage ab Erinnerung)" hint="Ergibt {Frist}">
+          {(id) => <Input id={id} inputMode="numeric" value={String(form.reminder_days)} onChange={(e) => setForm({ ...form, reminder_days: Number(e.target.value) || 0 })} />}
+        </Field>
+        <Field label="Signatur der Buchhaltung" className="sm:col-span-2" hint="Steht für {Signatur} unter den Mails von buchhaltung@">
+          {(id) => <Textarea id={id} value={form.signature} onChange={(e) => setForm({ ...form, signature: e.target.value })} className="min-h-32" />}
         </Field>
       </div>
       <Button type="submit" variant="primary" className="mt-5" loading={busy} loadingText="Wird gespeichert …">
@@ -179,7 +190,7 @@ function ContractForm({ initial, signature }: { initial: ContractTemplate; signa
         e.preventDefault();
         put({ contract: contractFromText(title, text) }, "vertrag", "Vertrag gespeichert");
       }}
-      className="max-w-3xl rounded-3xl border border-snow/10 bg-surface p-6"
+      className={`max-w-3xl p-7 ${cardClass}`}
     >
       <h2 className="mb-1 text-lg font-medium">Agenturvertrag</h2>
       <p className="mb-5 text-sm text-snow/60">

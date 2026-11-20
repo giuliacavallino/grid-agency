@@ -139,16 +139,77 @@ export async function listDesigns(query?: string, continuation?: string) {
   return { items: data.items.map(toDesign), continuation: data.continuation ?? null };
 }
 
-/** Ordner der Kundenwelt in Canva (wird beim ersten Mal angelegt) */
-async function workspaceFolder(workspaceId: string) {
+/** Demo: Bearbeiten-Adresse, damit die Oberfläche bedienbar ist */
+export const demoEditUrl = (id: string) => `https://www.canva.com/design/${encodeURIComponent(id)}/edit`;
+
+/** Ein Design mit frischen Adressen (edit_url gilt nur ca. 30 Tage und nur
+ * für das verbundene Canva-Konto) */
+export async function getDesign(id: string): Promise<CanvaDesign> {
+  if (DEMO) return { id, title: "Demo-Design", thumbnail: null, edit_url: demoEditUrl(id), view_url: null, updated_at: Date.now() / 1000, page_count: 1 };
+  const { design } = await canva<{ design: RawDesign }>(`/designs/${encodeURIComponent(id)}`);
+  return toDesign(design);
+}
+
+const normalizeName = (value: string) => value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+
+/** Wie gut passt ein Ordnername zum Kunden (0 = gar nicht) */
+function folderScore(folder: string, customer: string) {
+  const f = normalizeName(folder);
+  const c = normalizeName(customer);
+  if (!f || !c) return 0;
+  if (f === c) return 4;
+  if (f.includes(c)) return 3;
+  // „ASIA“ für „Asia De Saleh“, „Huck Bäckerei“ für „Huck“
+  const first = normalizeName(customer.split(/\s+/)[0] ?? "");
+  if (first.length >= 4 && (f === first || f.startsWith(first))) return 2;
+  return 0;
+}
+
+/** Vorhandenen Kundenordner in Canva suchen: Projekte und zwei Ebenen darunter
+ * (z. B. „Grid Agency › Kunden › Huck“). Liefert den bestpassenden Ordner. */
+export async function findCustomerFolder(customer: string): Promise<{ id: string; name: string; path: string } | null> {
+  if (DEMO) return null;
+  type Found = { id: string; name: string; path: string; score: number };
+  let best: Found | null = null;
+  let level: { id: string; path: string }[] = [{ id: "root", path: "" }];
+  let requests = 0;
+  for (let depth = 0; depth < 3 && level.length; depth++) {
+    const next: { id: string; path: string }[] = [];
+    for (const parent of level) {
+      if (requests++ > 30) break;
+      const items = await listFolderItems(parent.id, depth === 0 ? 5 : 2).catch(() => []);
+      for (const item of items) {
+        if (item.type !== "folder") continue;
+        const path = parent.path ? `${parent.path} › ${item.name}` : item.name;
+        const score = folderScore(item.name, customer);
+        if (score && (!best || score > best.score)) best = { id: item.id, name: item.name, path, score };
+        next.push({ id: item.id, path });
+      }
+    }
+    // Ein exakter Treffer reicht; sonst eine Ebene tiefer weitersuchen
+    if (best && best.score >= 4) break;
+    level = next.slice(0, 25);
+  }
+  return best ? { id: best.id, name: best.name, path: best.path } : null;
+}
+
+/** Ordner der Kundenwelt in Canva: vorhandenen Kundenordner nehmen, nur wenn
+ * es keinen gibt, einen neuen anlegen */
+export async function workspaceFolder(workspaceId: string) {
   const settings = await workspaceSettings(workspaceId);
   if (typeof settings.canva_folder_id === "string") return settings.canva_folder_id;
   const ws = await getWorkspace(workspaceId);
+  const name = ws?.name ?? "Kunde";
+  const found = await findCustomerFolder(name);
+  if (found) {
+    await updateWorkspaceSettings(workspaceId, { canva_folder_id: found.id, canva_folder_path: found.path });
+    return found.id;
+  }
   const { folder } = await canva<{ folder: { id: string } }>("/folders", {
     method: "POST",
-    body: JSON.stringify({ name: `GRID · ${ws?.name ?? "Kunde"}`.slice(0, 255), parent_folder_id: "root" }),
+    body: JSON.stringify({ name: name.slice(0, 255), parent_folder_id: "root" }),
   });
-  await updateWorkspaceSettings(workspaceId, { canva_folder_id: folder.id });
+  await updateWorkspaceSettings(workspaceId, { canva_folder_id: folder.id, canva_folder_path: name });
   return folder.id;
 }
 
@@ -190,9 +251,10 @@ export async function uploadAsset(bytes: Uint8Array, name: string) {
 export type ExportFormat = "png" | "jpg" | "mp4" | "pdf";
 
 /** Design exportieren und die Dateien im Intranet ablegen (für Posts) */
-export async function exportDesign(designId: string, format: ExportFormat = "png", options: { pages?: number[]; vertical?: boolean } = {}): Promise<MediaItem[]> {
+export async function exportDesign(designId: string, format: ExportFormat = "png", options: { pages?: number[]; vertical?: boolean; transparent?: boolean } = {}): Promise<MediaItem[]> {
   if (DEMO) return [];
   const formatBody: Record<string, unknown> = { type: format };
+  if (format === "png" && options.transparent) formatBody.transparent_background = true;
   if (format === "jpg") formatBody.quality = 95;
   if (format === "mp4") formatBody.quality = options.vertical === false ? "horizontal_1080p" : "vertical_1080p";
   if (options.pages?.length) formatBody.pages = options.pages;
@@ -206,4 +268,36 @@ export async function exportDesign(designId: string, format: ExportFormat = "png
     media.push(await storeFromUrl(url, `canva-${designId}-${index + 1}`, { canva_design_id: designId }));
   }
   return media;
+}
+
+export type FolderItem =
+  | { type: "folder"; id: string; name: string }
+  | { type: "design"; id: string; title: string; page_count: number | null; thumbnail: string | null }
+  | { type: "image"; id: string; name: string; thumbnail: string | null };
+
+type RawItem = {
+  type: string;
+  folder?: { id: string; name: string };
+  design?: RawDesign;
+  image?: { id: string; name: string; thumbnail?: { url: string } };
+};
+
+/** Inhalt eines Canva-Ordners („root“ = Projekte, „uploads“ = Uploads) */
+export async function listFolderItems(folderId: string, pages = 3): Promise<FolderItem[]> {
+  if (DEMO) return [];
+  const items: FolderItem[] = [];
+  let continuation: string | undefined;
+  for (let page = 0; page < pages; page++) {
+    const params = new URLSearchParams({ item_types: "design,folder,image" });
+    if (continuation) params.set("continuation", continuation);
+    const data = await canva<{ items: RawItem[]; continuation?: string }>(`/folders/${encodeURIComponent(folderId)}/items?${params}`);
+    for (const item of data.items) {
+      if (item.type === "folder" && item.folder) items.push({ type: "folder", id: item.folder.id, name: item.folder.name });
+      if (item.type === "design" && item.design) items.push({ type: "design", id: item.design.id, title: item.design.title || "Ohne Titel", page_count: item.design.page_count ?? null, thumbnail: item.design.thumbnail?.url ?? null });
+      if (item.type === "image" && item.image) items.push({ type: "image", id: item.image.id, name: item.image.name, thumbnail: item.image.thumbnail?.url ?? null });
+    }
+    continuation = data.continuation;
+    if (!continuation) break;
+  }
+  return items;
 }

@@ -39,15 +39,17 @@ export type GraphicInput = {
   name: string;
   color: string;
   secondary: string | null;
+  /** Textfarbe; sonst automatisch Hell/Dunkel zum Hintergrund */
+  ink?: string | null;
   logo: Uint8Array | null;
   font: string | null;
   visual: IdeaVisual;
 };
 
-export async function renderGraphic({ name, color, secondary, logo, font, visual }: GraphicInput) {
+export async function renderGraphic({ name, color, secondary, ink: textColor, logo, font, visual }: GraphicInput) {
   const { width, height } = SIZES[visual.format] ?? SIZES["4:5"];
   const background = /^#[0-9a-f]{6}$/i.test(color) ? color : "#141414";
-  const ink = textOn(background);
+  const ink = textColor && /^#[0-9a-f]{6}$/i.test(textColor) && textColor.toLowerCase() !== background.toLowerCase() ? textColor : textOn(background);
   const accent = secondary && /^#[0-9a-f]{6}$/i.test(secondary) && secondary.toLowerCase() !== background.toLowerCase() ? secondary : ink;
   const wide = width / height > 1.5;
   const unit = wide ? height / 628 : width / 1080;

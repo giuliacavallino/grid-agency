@@ -44,8 +44,7 @@ export function Workspaces() {
               const channels = ws.accounts.filter((a) => a.provider !== "canva");
               return (
                 <li key={ws.id} className="flex items-center gap-3 border-b border-snow/[0.06] px-4 py-3 last:border-0">
-                  <span aria-hidden className="h-9 w-1 shrink-0 rounded-full" style={{ background: `linear-gradient(${ws.color}, ${ws.secondary_color ?? ws.color})` }} />
-                  <WorkspaceLogo workspace={ws} size={32} />
+                  <WorkspaceLogo workspace={ws} size={40} box />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[15px] font-medium">
                       {ws.name} {ws.kind === "agency" && <span className="ml-1 text-[11px] tracking-wide text-snow/45 uppercase">Agentur</span>}

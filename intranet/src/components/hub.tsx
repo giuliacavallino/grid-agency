@@ -12,7 +12,7 @@ import { TeamsButton } from "./teams";
 import { usePhoto } from "./person";
 import { signOut, useAuth } from "@/lib/auth";
 import { BankReminder } from "./finance/bank-reminder";
-import { Logo } from "./logo";
+import { ProductMark } from "./logo";
 import { Button, Popover } from "./ui";
 import { KpiList, useKpis } from "./kpis";
 import { WorkspaceSwitcher, type WorkspaceSummary } from "./marketing/workspace";
@@ -115,13 +115,9 @@ export function TopBar() {
         <div className="glass pointer-events-auto relative flex h-13 items-center justify-between gap-4 rounded-full pr-2 pl-5 lg:h-[68px] lg:pr-3 lg:pl-7">
           <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 
-          <Link href="/" aria-label="Zur Übersicht" className="group relative flex flex-col items-start">
-            <span className="logo-rainbow transition-transform group-hover:scale-[1.08]">
-              <Logo priority className="h-[26px] lg:h-[30px]" />
-            </span>
-            <span className="-mt-1.5 pl-[3px] text-[9px] font-medium uppercase tracking-[0.32em] text-snow/70 lg:text-[10px]">
-              Intranet
-            </span>
+          <Link href="/" aria-label="Zur Übersicht" className="group relative flex shrink-0 items-center">
+            <ProductMark product="Intranet" size="sm" rainbow priority className="lg:hidden" />
+            <ProductMark product="Intranet" rainbow priority className="hidden lg:inline-flex" />
           </Link>
 
           {/* Kundenakte öffnen (nur mit Marketing-Zugang); gewechselt wird nur hier */}
@@ -240,11 +236,12 @@ export function Hub() {
 
   return (
     <HubFrame fit>
-      <div className="shrink-0">
+      {/* Bündig mit dem Inhalt der Kacheln (gleicher Innenabstand) */}
+      <div className="shrink-0 px-3.5 lg:px-[22px]">
         <p className="mb-1.5 h-4 text-[11px] font-medium uppercase tracking-[0.3em] text-snow/50">
           {now?.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" })}
         </p>
-          <h1 className="text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
+        <h1 className="text-[clamp(26px,min(6vw,5.5vh),44px)] leading-[1.1] font-medium tracking-tight">
           {now ? greeting(now.getHours()) : "Hallo"}, {firstName}
         </h1>
       </div>
@@ -280,7 +277,7 @@ export function Hub() {
                 area={area}
                 className="glass group relative flex h-full flex-col overflow-hidden rounded-3xl p-3.5 transition-[transform,border-color,box-shadow] duration-250 hover:-translate-y-[3px] hover:border-snow/30 hover:shadow-[inset_0_1px_0_var(--glass-shine),0_14px_40px_var(--shadow-strong)] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-snow lg:p-[22px]"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] border border-snow/12 bg-snow/10 transition-colors group-hover:bg-snow group-hover:text-sky lg:h-11 lg:w-11 lg:rounded-[14px]">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] border border-snow/12 bg-snow/10 transition-colors tile-glow lg:h-11 lg:w-11 lg:rounded-[14px]">
                   <Icon className="h-[19px] w-[19px] lg:h-[22px] lg:w-[22px]" strokeWidth={1.8} />
                 </span>
                 <ArrowUpRight className="absolute top-3.5 right-3.5 h-[18px] w-[18px] opacity-40 transition-[opacity,transform] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100 lg:top-[22px] lg:right-[22px]" />

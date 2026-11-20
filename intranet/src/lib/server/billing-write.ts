@@ -8,8 +8,10 @@ import {
   docLabel,
   fillText,
   lineNet,
+  money,
   plain,
   todayBerlin,
+  servicePeriodOf,
   type BillingAddress,
   type BillingDetail,
   type DraftInput,
@@ -63,6 +65,14 @@ function itemRow(documentId: string, item: ItemInput, position: number) {
 }
 
 const ADDRESS_KEYS = ["company_name", "first_name", "last_name", "suffix_1", "suffix_2", "street", "zip_code", "city", "country"] as const;
+
+function servicePeriodRow(input: { kind: string; service_from?: string | null; service_to?: string | null; document_date?: string | null }) {
+  const from = isoDate(input.service_from);
+  const to = isoDate(input.service_to);
+  if (input.kind === "angebot" || input.kind === "serie") return { service_from: from, service_to: to };
+  const period = servicePeriodOf({ service_from: from, service_to: to, document_date: isoDate(input.document_date) });
+  return { service_from: period?.from ?? from, service_to: period?.to ?? to };
+}
 
 function cleanAddress(address: BillingAddress | null | undefined): BillingAddress {
   const out: BillingAddress = {};
@@ -147,8 +157,8 @@ export async function saveDraft(id: string | null, input: DraftInput): Promise<s
     recipient_email: input.recipient_email?.trim().toLowerCase() || null,
     document_date: input.kind === "serie" ? null : isoDate(input.document_date),
     payment_terms_days: terms,
-    service_from: isoDate(input.service_from),
-    service_to: isoDate(input.service_to),
+    // Rechnungen tragen immer einen Leistungszeitraum (Standard: Monat des Rechnungsdatums)
+    ...servicePeriodRow(input),
     title: input.title?.trim() || null,
     intro: input.intro ?? null,
     closing: input.closing ?? null,
@@ -214,6 +224,57 @@ export async function finalize(id: string) {
   const { error } = await sb().rpc("billing_finalize", { p_id: id });
   if (error) throw new BillingError(error.message);
   await storePdf(id);
+  return id;
+}
+
+/** Rechnungsadresse berichtigen (Umzug, falsche Anschrift): Nummer, Datum
+ * und Beträge bleiben, das PDF wird neu erzeugt und ersetzt das alte. Auf
+ * Wunsch bekommt auch der Kunde die neue Anschrift. */
+export async function changeAddress(id: string, input: BillingAddress, options: { customer: boolean; by: string }) {
+  guardDemo();
+  const doc = await getBilling(id);
+  if (!doc) throw new BillingError("Beleg nicht gefunden");
+  if (!doc.number) throw new BillingError("Entwürfe direkt im Editor ändern");
+  const text = (v: unknown) => (typeof v === "string" ? v.trim().slice(0, 200) : "");
+  const address: BillingAddress = { ...(doc.address ?? {}) };
+  for (const key of ["company_name", "first_name", "last_name", "suffix_1", "suffix_2", "street", "zip_code", "city", "country"] as const) {
+    if (key in input) address[key] = text(input[key]) || null;
+  }
+  if (!address.street || !address.zip_code || !address.city) throw new BillingError("Straße, PLZ und Ort angeben");
+  address.country = address.country || "DE";
+  const { error } = await sb().rpc("billing_change_address", { p_id: id, p_address: address, p_by: options.by });
+  if (error) throw new BillingError(error.message);
+
+  const fresh = await getBilling(id);
+  const pdf = await renderPdf(fresh!);
+  const path = `korrigiert/${doc.document_date?.slice(0, 4)}/${doc.kind}_${safe(doc.number)}_${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")}.pdf`;
+  check(await sb().storage.from(BUCKET).upload(path, pdf, { contentType: "application/pdf", upsert: true }));
+  const replaced = await sb().rpc("billing_replace_pdf", { p_id: id, p_path: path });
+  if (replaced.error) throw new BillingError(replaced.error.message);
+
+  if (options.customer && doc.customer_id) {
+    check(await sb().from("customers").update({ street: address.street, zip: address.zip_code, city: address.city, country: address.country }).eq("id", doc.customer_id));
+  }
+  return id;
+}
+
+/** PDF eines festgeschriebenen Belegs im aktuellen Layout neu erzeugen
+ * (z. B. Leistungszeitraum statt Datum). Inhalt, Nummer und Beträge bleiben;
+ * das neue PDF ersetzt das alte, protokolliert in raw.pdf_regenerated. */
+export async function regeneratePdf(id: string, by: string) {
+  guardDemo();
+  const doc = await getBilling(id);
+  if (!doc?.number) throw new BillingError("Nur festgeschriebene Belege");
+  if (!doc.items.length) throw new BillingError("Beleg hat keine Positionen");
+  const pdf = await renderPdf(doc);
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+  const path = `korrigiert/${doc.document_date?.slice(0, 4)}/${doc.kind}_${safe(doc.number)}_${stamp}.pdf`;
+  check(await sb().storage.from(BUCKET).upload(path, pdf, { contentType: "application/pdf", upsert: true }));
+  const replaced = await sb().rpc("billing_replace_pdf", { p_id: id, p_path: path });
+  if (replaced.error) throw new BillingError(replaced.error.message);
+  const row = check(await sb().from("billing_documents").select("raw").eq("id", id).single()) as { raw: Record<string, unknown> | null };
+  const log = Array.isArray(row.raw?.pdf_regenerated) ? (row.raw.pdf_regenerated as unknown[]) : [];
+  check(await sb().from("billing_documents").update({ raw: { ...(row.raw ?? {}), pdf_regenerated: [...log, { at: new Date().toISOString(), by, path }] } }).eq("id", id));
   return id;
 }
 
@@ -433,6 +494,50 @@ export async function mailDraft(doc: BillingDetail) {
     subject: fillText(settings.mail_subject, context, settings.company),
     body: fillText(body, context, settings.company),
   };
+}
+
+const dayDe = (value: string | null | undefined) =>
+  value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+
+/** Zahlungserinnerung zu einer offenen Rechnung: Empfänger, Betreff und Text
+ * (Vorlage aus Finance → Einstellungen, Signatur der Buchhaltung) */
+export async function reminderDraft(doc: BillingDetail) {
+  if (doc.kind !== "rechnung") throw new BillingError("Zahlungserinnerungen gibt es nur für Rechnungen");
+  if (!["offen", "teilbezahlt"].includes(doc.status)) throw new BillingError("Die Rechnung ist nicht offen");
+  const settings = await billingSettings();
+  const { company } = settings;
+  const open = Math.round((doc.amount_gross - doc.paid_amount) * 100) / 100;
+  const deadline = new Date(`${todayBerlin()}T12:00:00`);
+  deadline.setDate(deadline.getDate() + settings.reminder_days);
+  const values: Record<string, string> = {
+    Datum: dayDe(doc.document_date),
+    Offen: money(open, doc.currency),
+    Frist: dayDe(deadline.toISOString()),
+    Bank: company.bank,
+    IBAN: company.iban,
+    BIC: company.bic,
+    Signatur: settings.signature,
+  };
+  const extra = (text: string) => text.replace(/\{(\p{L}+)\}/gu, (match, key: string) => values[key] ?? match);
+  // Empfänger: an der Rechnung, sonst Rechnungs- bzw. Haupt-Mail des Kunden
+  let to = doc.recipient_email;
+  if (!to && doc.customer_id) {
+    const customer = check(await sb().from("customers").select("billing_email,email").eq("id", doc.customer_id).maybeSingle()) as { billing_email: string | null; email: string | null } | null;
+    to = customer?.billing_email || customer?.email || null;
+  }
+  return {
+    to,
+    subject: fillText(extra(settings.reminder_subject), doc, company),
+    body: fillText(extra(settings.reminder_body), doc, company),
+  };
+}
+
+/** Versendete Zahlungserinnerung am Beleg vermerken */
+export async function markReminded(id: string, to: string, by: string) {
+  guardDemo();
+  const row = check(await sb().from("billing_documents").select("reminders").eq("id", id).single()) as { reminders: { at: string; to: string; by?: string }[] | null };
+  const reminders = [...(row.reminders ?? []), { at: new Date().toISOString(), to, by }];
+  check(await sb().from("billing_documents").update({ reminders }).eq("id", id));
 }
 
 /** Versand ohne angemeldete Person (Serienrechnungen): braucht in Entra die

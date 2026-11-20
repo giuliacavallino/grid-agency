@@ -251,4 +251,7 @@ export type JourFix = {
   mailbox: string | null;
   location: string | null;
   cancelled_at: string | null;
+  /** Eingeladene (ab dieser Version gespeichert; ältere Serien: null) */
+  attendees: string[] | null;
+  video: boolean;
 };

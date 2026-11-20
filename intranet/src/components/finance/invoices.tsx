@@ -15,7 +15,6 @@ import {
   Landmark,
   Maximize2,
   Plus,
-  Search,
   Send,
   Undo2,
   X,
@@ -35,9 +34,10 @@ import {
   type PaymentMethod,
   type Settings,
 } from "@/lib/sales/types";
+import { accentFill } from "@/lib/theme";
 import { Button, Dialog, Empty, Field, Input, Select, Sheet, Spinner, Textarea, useToast } from "@/components/ui";
 import { Attachments, MailBody } from "@/components/sales/mail/reading-pane";
-import { PageBar } from "@/components/sales/shell";
+import { Card, Chip, Page, SearchPill, Segmented, rowClass, tdClass, thClass } from "./kit";
 
 const money = (amount: number | null, currency = "EUR") =>
   amount === null ? "–" : new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(amount);
@@ -116,83 +116,67 @@ export function Invoices() {
   const open = visible.filter((i) => i.stage !== "datev" && i.stage !== "abgelehnt");
   const openSum = open.reduce((sum, i) => sum + (i.amount ?? 0), 0);
   const late = open.filter(overdue).length;
+  const datevAddress = settings?.datev.upload_address ?? "";
 
-  return (
-    <div className="flex h-full flex-col">
-      <PageBar
-        title="Eingangsrechnungen"
-        meta={
-          invoices && (
-            <>
-              {open.length} offen · {money(openSum)}
-              {late > 0 && <span className="text-error"> · {late} überfällig</span>}
-            </>
-          )
-        }
-      >
-        <div className="flex shrink-0 rounded-full bg-snow/[0.06] p-1" role="tablist" aria-label="Ansicht">
-          {(
-            [
-              ["freigabe", "Zur Freigabe"],
-              ["alle", "Alle Rechnungen"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={view === id}
-              onClick={() => setView(id)}
-              className={clsx(
-                "inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium transition-colors",
-                view === id ? "bg-snow text-sky" : "text-snow/65 hover:text-snow"
-              )}
-            >
-              {label}
-              {id === "freigabe" && invoices && (
-                <span className={clsx("rounded-full px-1.5 text-[11px] tabular-nums", view === id ? "bg-sky/15" : "bg-snow/10")}>
-                  {visible.filter((i) => i.stage === "neu").length}
-                </span>
-              )}
-            </button>
-          ))}
+  const toolbar = (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <Segmented
+          label="Ansicht"
+          value={view}
+          onChange={setView}
+          options={[
+            { id: "freigabe", label: "Zur Freigabe", count: invoices ? visible.filter((i) => i.stage === "neu").length : undefined },
+            { id: "alle", label: "Alle Rechnungen" },
+          ]}
+        />
+        {invoices && (
+          <p className="hidden text-[13px] text-snow/55 lg:block">
+            {open.length} offen · {money(openSum)}
+            {late > 0 && <span className="text-error"> · {late} überfällig</span>}
+          </p>
+        )}
+        <div className="ml-auto flex min-w-0 items-center gap-2">
+          <SearchPill value={query} onChange={setQuery} placeholder="Lieferant, Nummer …" label="Rechnungen durchsuchen" className="hidden w-60 md:block" />
+          <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)} aria-label="Rechnung erfassen">
+            <span className="hidden sm:inline">Rechnung erfassen</span>
+          </Button>
         </div>
-        <div className="relative hidden min-w-0 flex-1 md:block md:max-w-56">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-snow/40" />
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Suchen" aria-label="Rechnungen durchsuchen" className="h-9 w-full pl-9" />
-        </div>
-        <Button variant="primary" size="sm" className="h-9" icon={<Plus className="h-4 w-4" />} onClick={() => setCreating(true)} aria-label="Rechnung erfassen">
-          <span className="hidden md:inline">Rechnung erfassen</span>
-        </Button>
-      </PageBar>
-
-      {settings && !settings.datev.upload_address && (
-        <p className="border-b border-snow/[0.08] bg-[#e7a33e]/10 px-5 py-2 text-[13px] text-snow/80">
+      </div>
+      {settings && !datevAddress && (
+        <p className="rounded-2xl px-4 py-2.5 text-[13px] text-snow/80" style={{ background: accentFill("#e7a33e", 14) }}>
           Noch keine DATEV-Upload-Adresse hinterlegt.{" "}
-          <Link href="/finance/einstellungen" className="underline">
+          <Link href="/finance/einstellungen" className="font-medium underline">
             Jetzt eintragen
           </Link>
         </p>
       )}
+    </div>
+  );
 
+  return (
+    <div className="flex h-full flex-col bg-sky">
       {error ? (
-        <Empty title="Rechnungen konnten nicht geladen werden" text={error.message} />
+        <Page>
+          {toolbar}
+          <Card>
+            <Empty title="Rechnungen konnten nicht geladen werden" text={error.message} />
+          </Card>
+        </Page>
       ) : loading ? (
         <div className="grid flex-1 place-items-center">
           <Spinner />
         </div>
       ) : view === "freigabe" ? (
-        <ApprovalQueue
-          invoices={visible}
-          datevAddress={settings?.datev.upload_address ?? ""}
-          onDetails={setOpenId}
-          blocked={!!openId || creating}
-        />
+        <ApprovalQueue invoices={visible} datevAddress={datevAddress} onDetails={setOpenId} blocked={!!openId || creating} toolbar={toolbar} />
       ) : (
-        <InvoiceTable invoices={visible} onOpen={setOpenId} />
+        <Page>
+          {toolbar}
+          <InvoiceTable invoices={visible} onOpen={setOpenId} />
+        </Page>
       )}
 
-      <InvoiceSheet id={openId} invoices={invoices ?? []} datevAddress={settings?.datev.upload_address ?? ""} onClose={() => setOpenId(null)} />
+      <InvoiceSheet id={openId} invoices={invoices ?? []} datevAddress={datevAddress} onClose={() => setOpenId(null)} />
       <NewInvoiceDialog open={creating} onClose={() => setCreating(false)} onCreated={(id) => setOpenId(id)} />
     </div>
   );
@@ -206,12 +190,15 @@ function ApprovalQueue({
   datevAddress,
   onDetails,
   blocked,
+  toolbar,
 }: {
   invoices: Invoice[];
   datevAddress: string;
   onDetails: (id: string) => void;
   /** Sheet oder Dialog offen: Tastenkürzel aus */
   blocked: boolean;
+  /** Ansicht, Suche und „Rechnung erfassen“ über der Rechnung */
+  toolbar: React.ReactNode;
 }) {
   const toast = useToast();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -293,29 +280,24 @@ function ApprovalQueue({
 
   if (!queue.length) {
     return (
-      <Empty
-        icon={<CheckCheck className="h-8 w-8" />}
-        title="Alles freigegeben"
-        text="Neue Rechnungen an buchhaltung@ landen automatisch hier."
-      />
+      <Page>
+        {toolbar}
+        <Card>
+          <Empty icon={<CheckCheck className="h-8 w-8" />} title="Alles freigegeben" text="Neue Rechnungen an buchhaltung@ landen automatisch hier." />
+        </Card>
+      </Page>
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1">
-      <aside
-        className={clsx(
-          "w-full shrink-0 overflow-y-auto border-snow/[0.08] p-3 md:block md:w-80 md:border-r",
-          paneOpen && "hidden"
-        )}
-      >
-        <p className="px-2 pt-2 pb-3 text-[11px] font-semibold tracking-[0.12em] text-snow/50 uppercase">
-          {queue.length} zur Freigabe
-        </p>
-        <ul className="flex flex-col gap-1">
+    <div className="flex min-h-0 flex-1 gap-5 px-4 py-5 md:px-7 md:py-6">
+      <aside className={clsx("flex w-full shrink-0 flex-col md:flex md:w-80", paneOpen && "hidden")}>
+        <p className="px-1 pt-2.5 pb-3 text-[11.5px] font-semibold tracking-[0.12em] text-snow/50 uppercase">{queue.length} zur Freigabe</p>
+        <ul className="-mx-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
           {queue.map((invoice) => {
             const busy = sending.has(invoice.id);
             const active = !busy && invoice.id === selected?.id;
+            const late = overdue(invoice) && !busy;
             return (
               <li key={invoice.id}>
                 <button
@@ -328,22 +310,27 @@ function ApprovalQueue({
                     setPaneOpen(true);
                   }}
                   className={clsx(
-                    "flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors",
-                    active ? "border-snow/15 bg-snow/[0.08]" : "border-transparent hover:bg-snow/[0.05]",
+                    "flex w-full items-center gap-3 rounded-2xl border bg-surface px-3.5 py-3 text-left transition-[border-color,box-shadow]",
+                    active
+                      ? "border-snow/60 shadow-[0_8px_24px_var(--shadow-color)]"
+                      : "border-snow/[0.06] shadow-[0_2px_10px_var(--shadow-color)] hover:border-snow/20",
                     busy && "cursor-progress opacity-60"
                   )}
                 >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-snow/[0.06] text-snow/60">
+                  <span className={clsx("grid h-10 w-10 shrink-0 place-items-center rounded-xl", active ? "bg-snow text-sky" : "bg-snow/[0.06] text-snow/60")}>
                     {busy ? <Spinner className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-medium">{invoice.vendor}</span>
-                    <span className={clsx("block truncate text-[12px]", overdue(invoice) && !busy ? "text-error" : "text-snow/55")}>
-                      {busy
-                        ? "Wird an DATEV gesendet …"
-                        : [money(invoice.amount, invoice.currency), invoice.due_date && `fällig ${formatDate(invoice.due_date)}`]
-                            .filter(Boolean)
-                            .join(" · ")}
+                    <span className="block truncate text-[14px] font-semibold">{invoice.vendor}</span>
+                    <span className="block truncate text-[12.5px] text-snow/55">
+                      {busy ? (
+                        "Wird an DATEV gesendet …"
+                      ) : (
+                        <>
+                          {invoice.amount === null ? <span className="text-error">Betrag fehlt</span> : <span className="tabular-nums">{money(invoice.amount, invoice.currency)}</span>}
+                          {invoice.due_date && <span className={clsx(late && "text-error")}> · fällig {formatDate(invoice.due_date)}</span>}
+                        </>
+                      )}
                     </span>
                   </span>
                 </button>
@@ -353,18 +340,20 @@ function ApprovalQueue({
         </ul>
       </aside>
 
-      <section className={clsx("min-h-0 min-w-0 flex-1 overflow-y-auto", !paneOpen && "hidden md:block")}>
+      <section className={clsx("flex min-h-0 min-w-0 flex-1 flex-col gap-4", !paneOpen && "hidden md:flex")}>
+        <div className="hidden md:block">{toolbar}</div>
         {selected ? (
           <ApprovalPane
             key={selected.id}
             invoice={selected}
+            datevAddress={datevAddress}
             onApprove={() => approve(selected)}
             onReject={() => setRejecting(selected)}
             onDetails={() => onDetails(selected.id)}
             onBack={() => setPaneOpen(false)}
           />
         ) : (
-          <div className="grid h-full place-items-center">
+          <div className="grid flex-1 place-items-center">
             <Spinner />
           </div>
         )}
@@ -393,80 +382,108 @@ function ApprovalQueue({
   );
 }
 
+const methodLabel = (method: PaymentMethod | null) => PAYMENT_METHODS.find((m) => m.id === method)?.label ?? null;
+
+/** Kleine Kennzahl im Kopf der Rechnung: Bezeichnung versal, Wert darunter */
+function Fact({ label, children, tone }: { label: string; children: React.ReactNode; tone?: "error" }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[10.5px] font-semibold tracking-[0.12em] text-snow/45 uppercase">{label}</dt>
+      <dd className={clsx("mt-1 truncate text-[13.5px] tabular-nums", tone === "error" ? "font-medium text-error" : "text-snow/85")}>{children}</dd>
+    </div>
+  );
+}
+
 function ApprovalPane({
   invoice,
+  datevAddress,
   onApprove,
   onReject,
   onDetails,
   onBack,
 }: {
   invoice: Invoice;
+  datevAddress: string;
   onApprove: () => void;
   onReject: () => void;
   onDetails: () => void;
   onBack: () => void;
 }) {
   const late = overdue(invoice);
-  // Nur das Nötigste; alles Weitere unter „Details“
-  const facts: React.ReactNode[] = [
-    invoice.invoice_number && `Nr. ${invoice.invoice_number}`,
-    invoice.due_date && (
-      <span key="due" className={clsx(late && "text-error")}>
-        fällig {formatDate(invoice.due_date)}
-      </span>
-    ),
-    invoice.category,
-    invoice.paid && "bezahlt",
-  ].filter(Boolean);
+  const [note, setNote] = useState(false);
+  const withBeleg = !!invoice.mailbox && !!invoice.graph_id;
   return (
-    <div className="flex h-full flex-col gap-3 p-3 md:p-4">
-      <div className="shrink-0 rounded-3xl border border-snow/10 bg-surface px-5 py-4">
-        <button type="button" onClick={onBack} className="mb-2 inline-flex items-center gap-1.5 text-[13px] text-snow/60 md:hidden">
+    <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="shrink-0 px-5 pt-5 pb-4 md:px-7 md:pt-6">
+        <button type="button" onClick={onBack} className="mb-3 inline-flex items-center gap-1.5 text-[13px] text-snow/60 md:hidden">
           <ArrowLeft className="h-4 w-4" /> Liste
         </button>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline gap-3">
-              <h2 className="min-w-0 truncate text-lg font-medium">{invoice.vendor}</h2>
-              <span className="ml-auto shrink-0 text-lg font-semibold tabular-nums md:ml-0">{money(invoice.amount, invoice.currency)}</span>
-            </div>
-            <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] text-snow/55">
-              {facts.map((fact, i) => (
-                <span key={i} className="inline-flex items-center gap-1.5">
-                  {i > 0 && <span aria-hidden>·</span>}
-                  {fact}
-                </span>
-              ))}
-              {facts.length > 0 && <span aria-hidden>·</span>}
-              <button type="button" onClick={onDetails} className="inline-flex items-center gap-1 text-snow/70 underline-offset-2 hover:text-snow hover:underline">
-                Details
-              </button>
-            </p>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex min-w-0 flex-1 items-baseline gap-4">
+            <h2 className="min-w-0 truncate text-[22px] leading-tight font-semibold tracking-tight">{invoice.vendor}</h2>
+            <span className={clsx("ml-auto shrink-0 text-[26px] leading-none font-semibold tracking-tight tabular-nums", invoice.amount === null && "text-[15px] font-medium text-error")}>
+              {invoice.amount === null ? "Betrag fehlt" : money(invoice.amount, invoice.currency)}
+            </span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="danger" icon={<X className="h-4 w-4" />} onClick={onReject}>
+            <Button variant="danger" className="border-error/50 bg-surface" icon={<X className="h-4 w-4" />} onClick={onReject}>
               Zurückweisen
             </Button>
             <Button variant="primary" icon={<Check className="h-4 w-4" />} onClick={onApprove} aria-keyshortcuts="ArrowRight" title="Freigeben und an DATEV senden (Pfeil rechts)">
               Freigeben
             </Button>
-            <kbd className="hidden h-6 min-w-6 place-items-center rounded-md border border-snow/15 px-1 text-snow/45 lg:inline-grid" title="Pfeil rechts">
+            <kbd className="hidden h-6 min-w-6 place-items-center rounded-md border border-snow/15 px-1 text-snow/45 xl:inline-grid" title="Pfeil rechts">
               <ArrowRight className="h-3.5 w-3.5" />
             </kbd>
           </div>
         </div>
+
+        <dl className="mt-5 grid grid-cols-3 gap-x-6 gap-y-4 border-t border-snow/[0.06] pt-4 lg:grid-cols-6">
+          <Fact label="Nr.">{invoice.invoice_number ?? "–"}</Fact>
+          <Fact label="Datum">{formatDate(invoice.invoice_date)}</Fact>
+          <Fact label="Fällig" tone={late ? "error" : undefined}>
+            {formatDate(invoice.due_date)}
+          </Fact>
+          <Fact label="Zahlung">{methodLabel(invoice.payment_method) ?? "–"}</Fact>
+          <Fact label="Kategorie">{invoice.category ?? "–"}</Fact>
+          <Fact label="Stand">{invoice.paid ? "bezahlt" : late ? "überfällig" : "offen"}</Fact>
+        </dl>
+
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2.5">
+          {withBeleg && datevAddress ? (
+            <Chip tone="green" title={`Beleg geht an ${datevAddress}`}>
+              <Check className="h-3.5 w-3.5" /> An DATEV Unternehmen online
+            </Chip>
+          ) : withBeleg ? (
+            <Chip tone="red">DATEV-Adresse fehlt</Chip>
+          ) : (
+            <Chip title="Manuell erfasst: Freigeben markiert sie nur als freigegeben">Ohne Beleg · nur Freigabe</Chip>
+          )}
+          <PaidCheckbox invoice={invoice} />
+          <span className="ml-auto flex items-center gap-4 text-[13px]">
+            {invoice.notes && (
+              <button type="button" onClick={() => setNote((n) => !n)} aria-expanded={note} className="text-snow/65 underline underline-offset-[3px] hover:text-snow">
+                Hinweis
+              </button>
+            )}
+            <button type="button" onClick={onDetails} className="inline-flex items-center gap-1 font-medium text-snow/80 hover:text-snow">
+              Details <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        </div>
+        {note && invoice.notes && <p className="mt-3 rounded-2xl bg-snow/[0.04] px-4 py-3 text-[13px] whitespace-pre-line text-snow/75">{invoice.notes}</p>}
       </div>
 
       <BelegPreview key={invoice.id} invoice={invoice} />
-    </div>
+    </Card>
   );
 }
 
 /** „Schon bezahlt“ wird sofort gespeichert */
-function PaidCheckbox({ invoice }: { invoice: Invoice }) {
+function PaidCheckbox({ invoice, long }: { invoice: Invoice; long?: boolean }) {
   const toast = useToast();
   return (
-    <label className="inline-flex cursor-pointer items-center gap-2.5 text-[14px]">
+    <label className="inline-flex cursor-pointer items-center gap-2.5 text-[13.5px]">
       <input
         type="checkbox"
         checked={!!invoice.paid}
@@ -475,7 +492,10 @@ function PaidCheckbox({ invoice }: { invoice: Invoice }) {
         }
         className="h-4 w-4 accent-snow"
       />
-      Schon bezahlt <span className="text-snow/50">(Karte, PayPal; sonst über den Bank-Abgleich)</span>
+      <span>
+        Schon bezahlt{" "}
+        <span className="text-snow/50">{long ? "(Karte, PayPal; sonst über den Bank-Abgleich)" : "(Karte, PayPal, Vorkasse) – mit der Freigabe als bezahlt markieren"}</span>
+      </span>
     </label>
   );
 }
@@ -637,9 +657,14 @@ function BelegContent({ beleg, fit }: { beleg: Exclude<Beleg, { kind: "none" }>;
   );
 }
 
-/** Fläche für den Beleg: füllt die restliche Höhe ohne Scrollen */
+/** Fläche für den Beleg: füllt die restliche Höhe ohne Scrollen, der Beleg
+ * liegt mittig wie ein Blatt Papier */
 function Frame({ children }: { children: React.ReactNode }) {
-  return <div className="relative min-h-80 flex-1 overflow-hidden rounded-3xl border border-snow/10 bg-surface">{children}</div>;
+  return (
+    <div className="flex min-h-[420px] flex-1 border-t border-snow/[0.06] bg-snow/[0.035] px-4 py-4 md:px-8 md:py-6">
+      <div className="relative mx-auto w-full max-w-[880px] overflow-hidden rounded-xl bg-surface shadow-[0_8px_30px_var(--shadow-color)]">{children}</div>
+    </div>
+  );
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -678,118 +703,94 @@ function InvoiceTable({ invoices, onOpen }: { invoices: Invoice[]; onOpen: (id: 
   const sum = (pick: (i: Invoice) => number | null) => euro.reduce((total, i) => total + (pick(i) ?? 0), 0);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-2 px-4 py-3 md:px-5">
-        {FILTERS.map((f) => {
-          const count = invoices.filter(f.test).length;
-          return (
-            <button
-              key={f.id}
-              type="button"
-              aria-pressed={filter === f.id}
-              onClick={() => setFilter(f.id)}
-              className={clsx(
-                "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors",
-                filter === f.id ? "border-snow bg-snow text-sky" : "border-snow/10 text-snow/65 hover:text-snow"
-              )}
-            >
-              {f.label}
-              <span className="tabular-nums opacity-60">{count}</span>
-            </button>
-          );
-        })}
-      </div>
+    <>
+      <Segmented
+        label="Filter"
+        value={filter}
+        onChange={setFilter}
+        className="self-start"
+        options={FILTERS.map((f) => ({ id: f.id, label: f.label, count: invoices.filter(f.test).length, tone: f.id === "ueberfaellig" ? "error" : undefined }))}
+      />
 
-      {rows.length === 0 ? (
-        <Empty title="Keine Rechnungen" text="In dieser Ansicht gibt es gerade nichts." />
-      ) : (
-        <div className="min-h-0 flex-1 overflow-auto px-4 pb-4 md:px-5">
-          <table className="w-full min-w-[720px] border-separate border-spacing-0 text-[13px]">
-            <thead className="sticky top-0 z-10 bg-sky text-left text-[11px] font-semibold tracking-[0.08em] text-snow/45 uppercase">
-              <tr>
-                <th className="border-b border-snow/10 py-2.5 pr-3 font-semibold">Rechnungssteller</th>
-                <th className="border-b border-snow/10 px-3 py-2.5 font-semibold">Nr.</th>
-                <th className="border-b border-snow/10 px-3 py-2.5 font-semibold">Datum</th>
-                <th className="border-b border-snow/10 px-3 py-2.5 font-semibold">Fällig</th>
-                <th className="border-b border-snow/10 px-3 py-2.5 text-right font-semibold">Netto</th>
-                <th className="border-b border-snow/10 px-3 py-2.5 text-right font-semibold">USt</th>
-                <th className="border-b border-snow/10 px-3 py-2.5 text-right font-semibold">Brutto</th>
-                <th className="border-b border-snow/10 px-3 py-2.5 font-semibold">Zahlung</th>
-                <th className="border-b border-snow/10 py-2.5 pl-3 font-semibold">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((invoice) => {
-                const late = unpaidLate(invoice);
-                return (
-                  <tr
-                    key={invoice.id}
-                    onClick={() => onOpen(invoice.id)}
-                    className="cursor-pointer transition-colors hover:bg-snow/[0.04]"
-                  >
-                    <td className="max-w-64 border-b border-snow/[0.06] py-2.5 pr-3">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpen(invoice.id);
-                        }}
-                        className="block max-w-full truncate text-left font-medium hover:underline"
-                      >
-                        {invoice.vendor}
-                      </button>
-                      {(invoice.category || invoice.description) && (
-                        <span className="block truncate text-[12px] text-snow/50">{invoice.category ?? invoice.description}</span>
-                      )}
-                    </td>
-                    <td className="max-w-40 truncate border-b border-snow/[0.06] px-3 py-2.5 text-snow/75">{invoice.invoice_number ?? "–"}</td>
-                    <td className="border-b border-snow/[0.06] px-3 py-2.5 whitespace-nowrap text-snow/75">{formatDate(invoice.invoice_date)}</td>
-                    <td className={clsx("border-b border-snow/[0.06] px-3 py-2.5 whitespace-nowrap", late ? "font-medium text-error" : "text-snow/75")}>
-                      {formatDate(invoice.due_date)}
-                    </td>
-                    <td className="border-b border-snow/[0.06] px-3 py-2.5 text-right whitespace-nowrap tabular-nums text-snow/75">
-                      {money(invoice.net_amount, invoice.currency)}
-                    </td>
-                    <td className="border-b border-snow/[0.06] px-3 py-2.5 text-right whitespace-nowrap tabular-nums text-snow/75">
-                      {money(invoice.vat_amount, invoice.currency)}
-                    </td>
-                    <td className="border-b border-snow/[0.06] px-3 py-2.5 text-right font-medium whitespace-nowrap tabular-nums">
-                      {money(invoice.amount, invoice.currency)}
-                    </td>
-                    <td className="border-b border-snow/[0.06] px-3 py-2.5 whitespace-nowrap">
-                      {invoice.paid ? (
-                        <span className="inline-flex items-center gap-1.5 text-snow/80" title={invoice.bank_transaction_id ? "Über das Bankkonto zugeordnet" : "Von Hand als bezahlt markiert"}>
-                          {invoice.bank_transaction_id ? <Landmark className="h-3.5 w-3.5 text-snow/50" /> : <Check className="h-3.5 w-3.5 text-snow/50" />}
-                          bezahlt{invoice.paid_at && ` ${formatDate(invoice.paid_at, { day: "2-digit", month: "2-digit" })}`}
-                        </span>
-                      ) : (
-                        <span className={clsx("inline-flex items-center gap-1.5", late ? "font-medium text-error" : "text-snow/60")}>
-                          {late && <CalendarClock className="h-3.5 w-3.5" />}
-                          {late ? "überfällig" : "offen"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="border-b border-snow/[0.06] py-2.5 pl-3 whitespace-nowrap text-snow/60">{STAGE_LABEL[invoice.stage]}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr className="text-[12px] text-snow/55">
-                <td className="py-2.5 pr-3" colSpan={4}>
-                  {rows.length} Rechnungen
-                  {euro.length < rows.length && ` · Summe ohne ${rows.length - euro.length} in Fremdwährung`}
-                </td>
-                <td className="px-3 py-2.5 text-right tabular-nums">{money(sum((i) => i.net_amount))}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums">{money(sum((i) => i.vat_amount))}</td>
-                <td className="px-3 py-2.5 text-right font-medium text-snow tabular-nums">{money(sum((i) => i.amount))}</td>
-                <td colSpan={2} />
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      )}
-    </div>
+      <Card className="overflow-hidden">
+        {rows.length === 0 ? (
+          <Empty title="Keine Rechnungen" text="In dieser Ansicht gibt es gerade nichts." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[860px] text-[13.5px]">
+              <thead>
+                <tr>
+                  <th className={thClass}>Rechnungssteller</th>
+                  <th className={thClass}>Nr.</th>
+                  <th className={thClass}>Datum ↓</th>
+                  <th className={thClass}>Fällig</th>
+                  <th className={clsx(thClass, "text-right")}>Netto</th>
+                  <th className={clsx(thClass, "text-right")}>USt</th>
+                  <th className={clsx(thClass, "text-right")}>Brutto</th>
+                  <th className={thClass}>Zahlung</th>
+                  <th className={thClass}>Stand</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((invoice) => {
+                  const late = unpaidLate(invoice);
+                  return (
+                    <tr key={invoice.id} onClick={() => onOpen(invoice.id)} className={rowClass}>
+                      <td className={clsx(tdClass, "max-w-64")}>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onOpen(invoice.id);
+                          }}
+                          className="block max-w-full truncate text-left font-semibold hover:underline"
+                        >
+                          {invoice.vendor}
+                        </button>
+                        {(invoice.category || invoice.description) && <span className="block truncate text-[12px] text-snow/50">{invoice.category ?? invoice.description}</span>}
+                      </td>
+                      <td className={clsx(tdClass, "max-w-40 truncate text-snow/70")}>{invoice.invoice_number ?? "–"}</td>
+                      <td className={clsx(tdClass, "whitespace-nowrap text-snow/70 tabular-nums")}>{formatDate(invoice.invoice_date)}</td>
+                      <td className={clsx(tdClass, "whitespace-nowrap tabular-nums", late ? "font-medium text-error" : "text-snow/70")}>{formatDate(invoice.due_date)}</td>
+                      <td className={clsx(tdClass, "text-right whitespace-nowrap text-snow/70 tabular-nums")}>{money(invoice.net_amount, invoice.currency)}</td>
+                      <td className={clsx(tdClass, "text-right whitespace-nowrap text-snow/55 tabular-nums")}>{money(invoice.vat_amount, invoice.currency)}</td>
+                      <td className={clsx(tdClass, "text-right font-semibold whitespace-nowrap tabular-nums")}>{money(invoice.amount, invoice.currency)}</td>
+                      <td className={clsx(tdClass, "whitespace-nowrap")}>
+                        {invoice.paid ? (
+                          <Chip tone="green" title={invoice.bank_transaction_id ? "Über das Bankkonto zugeordnet" : "Von Hand als bezahlt markiert"}>
+                            {invoice.bank_transaction_id ? <Landmark className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                            bezahlt{invoice.paid_at && ` ${formatDate(invoice.paid_at, { day: "2-digit", month: "2-digit" })}`}
+                          </Chip>
+                        ) : late ? (
+                          <Chip tone="red">
+                            <CalendarClock className="h-3 w-3" /> überfällig
+                          </Chip>
+                        ) : (
+                          <Chip tone="lavender">offen</Chip>
+                        )}
+                      </td>
+                      <td className={clsx(tdClass, "whitespace-nowrap text-snow/60")}>{STAGE_LABEL[invoice.stage]}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-snow/[0.06] text-[12.5px] text-snow/55">
+                  <td className={tdClass} colSpan={4}>
+                    {rows.length} Rechnungen
+                    {euro.length < rows.length && ` · Summe ohne ${rows.length - euro.length} in Fremdwährung`}
+                  </td>
+                  <td className={clsx(tdClass, "text-right tabular-nums")}>{money(sum((i) => i.net_amount))}</td>
+                  <td className={clsx(tdClass, "text-right tabular-nums")}>{money(sum((i) => i.vat_amount))}</td>
+                  <td className={clsx(tdClass, "text-right font-semibold text-snow tabular-nums")}>{money(sum((i) => i.amount))}</td>
+                  <td className={tdClass} colSpan={2} />
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
+      </Card>
+    </>
   );
 }
 
@@ -1036,7 +1037,7 @@ function InvoiceDetail({ invoice, datevAddress, onClose }: { invoice: Invoice; d
           {(id) => <Input id={id} value={form.description} onChange={set("description")} />}
         </Field>
         <div className="col-span-2">
-          <PaidCheckbox invoice={invoice} />
+          <PaidCheckbox invoice={invoice} long />
         </div>
         <Field label="Notiz" className="col-span-2">
           {(id) => <Textarea id={id} rows={3} value={form.notes} onChange={set("notes")} />}

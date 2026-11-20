@@ -1,11 +1,19 @@
 import { after } from "next/server";
 import { db } from "@/lib/server/db";
 import { withMarketing } from "@/lib/server/social/auth";
+import { runRequestedCanvaScans } from "@/lib/server/social/canva-ci";
 import { workspaceFolder } from "@/lib/server/social/sharepoint";
-import { createWorkspace, listAccounts, listPosts, listWorkspaces, publicAccount } from "@/lib/server/social/store";
+import { createWorkspace, listAccounts, listPosts, listWorkspaces, processMediaImports, publicAccount } from "@/lib/server/social/store";
+
+// Canva-Suchen laufen nach der Antwort im Hintergrund weiter
+export const maxDuration = 300;
 
 /** Kundenwelten mit verbundenen Kanälen und Zahl der geplanten Posts */
 export const GET = withMarketing(async () => {
+  // Dateien aus dem Eingang übernehmen (z. B. von Claude eingetragene Logos)
+  await processMediaImports().catch((error) => console.error("Datei-Eingang", error));
+  // Angeforderte Canva-Suchen im Hintergrund (Logos und Unterlagen je Kunde)
+  after(() => runRequestedCanvaScans().catch((error) => console.error("Canva-Suche", error)));
   const [workspaces, accounts, scheduled] = await Promise.all([listWorkspaces(), listAccounts(), listPosts({ status: "scheduled", limit: 500 })]);
   return Response.json(
     workspaces.map((ws) => ({

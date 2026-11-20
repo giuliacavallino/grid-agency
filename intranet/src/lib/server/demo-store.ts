@@ -359,6 +359,10 @@ const tables: Record<string, Row[]> = {
   meetings,
   meeting_recordings: meetingRecordings,
   meeting_tasks: meetingTasks,
+  partners: [
+    { id: "demo-partner-1", created_at: ago(120), updated_at: ago(5), kind: "freelancer", category: "Videograf", name: "Jonas Weber", company: "Weber Film", email: "jonas@example.com", phone: null, website: null, instagram: "@weber.film", city: "Berlin", focus: "Reels und Food-Content, schneller Schnitt", rate: 650, rate_unit: "tag", rate_note: "inkl. Schnitt für 3 Reels", rating: 5, status: "aktiv", projects: "Content Days 480 Gradi (2026)", notes: null, last_contact: "2026-10-20", source: "manuell", lead_id: null },
+    { id: "demo-partner-2", created_at: ago(60), updated_at: ago(8), kind: "partner", category: "Catering", name: "Mia Sommer", company: "Sommer Catering", email: "hallo@example.com", phone: null, website: "https://example.com", instagram: null, city: "Berlin", focus: "Fingerfood und Event-Catering bis 200 Gäste", rate: null, rate_unit: null, rate_note: "nach Angebot", rating: 4, status: "aktiv", projects: null, notes: "Kooperation für Events angefragt", last_contact: "2026-11-02", source: "manuell", lead_id: null },
+  ],
 };
 const settings: Record<string, unknown> = {
   capacity: { team_hours_per_month: 480 },

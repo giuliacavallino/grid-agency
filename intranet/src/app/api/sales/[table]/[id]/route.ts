@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { removeInvoiceMail } from "@/lib/server/beleg";
 import { forbidden, withUser } from "@/lib/server/auth";
 import { removeApplicationFiles } from "@/lib/server/application-files";
 import { canUseTable, customerNumberTaken, db, isTable, mayTouch, pick, READ_ONLY } from "@/lib/server/db";
@@ -60,6 +62,10 @@ export const PATCH = withUser(async (user, request, { params }: Context) => {
   }
 
   const row = await store.update(table, id, patch);
+  // Erledigt (an DATEV oder abgelehnt): Mail in Outlook nach Buchhaltung → Rechnungseingang
+  if (table === "invoices" && (patch.stage === "datev" || patch.stage === "abgelehnt")) {
+    after(() => removeInvoiceMail(row).catch((error) => console.error("Rechnungsmail", id, error)));
+  }
   return Response.json(customer ? { ...row, _customer: customer } : row);
 });
 

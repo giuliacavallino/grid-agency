@@ -263,13 +263,23 @@ export async function suggestPosts(workspaceId: string, input: ResearchInput): P
 // ---------- Grafik und Post ----------
 
 /** Grafik in der CI der Kundenwelt rechnen */
-export async function ideaGraphic(workspaceId: string, visual: IdeaVisual) {
+export async function ideaGraphic(workspaceId: string, visual: IdeaVisual, colors: { background?: string; ink?: string; accent?: string } = {}) {
   const workspace = await getWorkspace(workspaceId);
   if (!workspace) throw new Error("Kundenwelt nicht gefunden");
   const [brand, logoPath] = await Promise.all([getBrand(workspaceId), workspaceLogoPath(workspaceId)]);
   const logo = logoPath ? await readMedia(logoPath) : null;
   const font = brand.fonts.find((f) => /head|über|titel|display/i.test(f.role))?.family ?? brand.fonts[0]?.family ?? null;
-  return renderGraphic({ name: workspace.name, color: workspace.color, secondary: workspace.secondary_color, logo: logo?.bytes ?? null, font, visual });
+  // Farben aus dem Markenkit (Hintergrund/Primär, Text, Akzent/Sekundär), sonst die der Kundenwelt
+  const role = (...roles: string[]) => roles.map((r) => brand.colors.find((c) => c.role === r)?.hex).find(Boolean);
+  return renderGraphic({
+    name: workspace.name,
+    color: colors.background ?? role("Primär", "Hintergrund") ?? workspace.color,
+    secondary: colors.accent ?? role("Akzent", "Sekundär") ?? workspace.secondary_color,
+    ink: colors.ink,
+    logo: logo?.bytes ?? null,
+    font,
+    visual,
+  });
 }
 
 // Termine rechnen in Berliner Zeit

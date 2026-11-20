@@ -3,7 +3,7 @@ import { after } from "next/server";
 import { createHash, randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { DEMO, SHARED_MAILBOX } from "@/lib/config";
+import { DEMO, DOMAIN, SHARED_MAILBOX } from "@/lib/config";
 import { BILLING_DAY, firstBillingDate, isMonthlyUnit, OFFER_TEXTS, todayBerlin, type ItemInput } from "@/lib/billing";
 import { billingNote, onceBillingDate, type ContractTerms } from "@/lib/contract";
 import { check, getBilling } from "./billing";
@@ -594,4 +594,47 @@ export async function startOnboarding(id: string, user: { email: string; name: s
   const updated = await db().update("leads", id, { onboarding_at: new Date().toISOString() });
   await note(id, "system", `Onboarding gestartet: ${done.join(", ")}`, user.name);
   return { lead: updated, done };
+}
+
+// ---------- Spam ----------
+
+/** Spam: Lead löschen und die Absenderadresse sperren, damit weitere
+ * Anfragen (Kontaktformular, Mail) keinen Lead mehr anlegen. */
+export async function markSpam(id: string, user: { email: string; name: string }) {
+  const lead = await leadById(id);
+  if (lead.customer_id || lead.stage === "gewonnen") throw new FlowError("Kunden können nicht als Spam gelöscht werden");
+  const email = typeof lead.email === "string" ? lead.email.trim().toLowerCase() : "";
+  // Eigene Adressen (z. B. Test-Leads) nie sperren, nur den Lead löschen
+  const internal = email.endsWith(`@${DOMAIN}`);
+  if (!DEMO && email && !internal) {
+    const sample = [lead.company, lead.name].filter(Boolean).join(" · ").slice(0, 200);
+    await sb().from("spam_senders").upsert({ email, created_by: user.email, sample }, { onConflict: "email", ignoreDuplicates: true });
+  }
+  await db().remove("leads", id);
+  return { deleted: true, blocked: email && !internal ? email : null };
+}
+
+
+// ---------- Partner statt Kunde ----------
+
+/** Lead ist ein möglicher Partner (z. B. Catering) statt Kunde: ins Netzwerk
+ * übernehmen und aus der Pipeline nehmen. */
+export async function leadToPartner(id: string) {
+  const lead = await leadById(id);
+  const text = `${lead.company ?? ""} ${lead.message ?? ""}`.toLowerCase();
+  const category = /catering/.test(text) ? "Catering" : /location|venue/.test(text) ? "Location" : /event/.test(text) ? "Event" : /food|restaurant|bäckerei|café|cafe/.test(text) ? "Food-Partner" : "Sonstiges";
+  const partner = await db().insert("partners", {
+    kind: "partner",
+    category,
+    name: lead.name,
+    company: lead.company ?? null,
+    email: lead.email ?? null,
+    phone: lead.phone ?? null,
+    notes: typeof lead.message === "string" ? lead.message.slice(0, 2000) : null,
+    last_contact: new Date().toISOString().slice(0, 10),
+    source: "pipeline",
+    lead_id: lead.id,
+  });
+  await db().update("leads", id, { status: "verloren", lost_reason: "Partner statt Kunde (Netzwerk)" });
+  return { partner };
 }

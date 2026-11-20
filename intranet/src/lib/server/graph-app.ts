@@ -120,6 +120,47 @@ export async function moveToInvoiceFolder(mailbox: string, id: string) {
   return moved.id;
 }
 
+/** Ablage für erledigte Rechnungen: Buchhaltung → Rechnungseingang */
+export const DONE_FOLDER = ["Buchhaltung", "Rechnungseingang"] as const;
+const doneFolders = new Map<string, string>();
+
+/** Ordnerpfad suchen und fehlende Ebenen anlegen; liefert die ID des letzten Ordners */
+async function folderPath(mailbox: string, names: readonly string[]) {
+  const key = `${mailbox}:${names.join("/")}`;
+  const known = doneFolders.get(key);
+  if (known) return known;
+  let parent: string | null = null;
+  for (const name of names) {
+    const base: string = parent ? `${mailboxPath(mailbox)}/mailFolders/${encodeURIComponent(parent)}/childFolders` : `${mailboxPath(mailbox)}/mailFolders`;
+    const filter = encodeURIComponent(`displayName eq '${name.replace(/'/g, "''")}'`);
+    const lookIn = async (path: string) => (await appGraph<{ value: { id: string }[] }>(`${path}?$filter=${filter}&$select=id`)).value[0]?.id ?? null;
+    // Oberste Ebene auch unter „Posteingang“ suchen (dort legen viele ihre Ordner an)
+    const find = async () => (await lookIn(base)) ?? (parent ? null : await lookIn(`${mailboxPath(mailbox)}/mailFolders/inbox/childFolders`));
+    let id = await find();
+    if (!id) {
+      try {
+        id = (await appGraph<{ id: string }>(base, { method: "POST", body: JSON.stringify({ displayName: name }) })).id;
+      } catch (error) {
+        id = await find();
+        if (!id) throw error;
+      }
+    }
+    parent = id;
+  }
+  doneFolders.set(key, parent!);
+  return parent!;
+}
+
+/** Erledigte Rechnungsmail nach „Buchhaltung → Rechnungseingang“ verschieben */
+export async function moveToDoneFolder(mailbox: string, id: string) {
+  const destinationId = await folderPath(mailbox, DONE_FOLDER);
+  const moved = await appGraph<{ id: string }>(`${mailboxPath(mailbox)}/messages/${encodeURIComponent(id)}/move`, {
+    method: "POST",
+    body: JSON.stringify({ destinationId }),
+  });
+  return moved.id;
+}
+
 /** Mails im Posteingang seit einem Zeitpunkt (für den täglichen Abgleich). */
 export async function listInboxSince(mailbox: string, since: Date) {
   const filter = encodeURIComponent(`receivedDateTime ge ${since.toISOString()}`);

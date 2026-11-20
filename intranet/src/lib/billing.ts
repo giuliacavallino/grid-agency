@@ -48,6 +48,8 @@ export type BillingDocument = {
   finalized_at: string | null;
   sent_at: string | null;
   send_error: string | null;
+  /** Versendete Zahlungserinnerungen (aus dem Intranet) */
+  reminders?: { at: string; to: string; by?: string }[];
 };
 
 export type Recurring = {
@@ -283,6 +285,12 @@ export type BillingSettings = {
   closing: string;
   mail_subject: string;
   mail_body: string;
+  /** Zahlungserinnerung (Mail von buchhaltung@) */
+  reminder_subject: string;
+  reminder_body: string;
+  reminder_days: number;
+  /** Signatur unter Mails der Buchhaltung ({Signatur}) */
+  signature: string;
 };
 
 /** Stand der easybill-Rechnungen (Oktober 2026) */
@@ -311,6 +319,12 @@ export const DEFAULT_BILLING_SETTINGS: BillingSettings = {
   mail_subject: "{Belegart} {Nummer} – {Firma}",
   mail_body:
     "Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie unsere {Belegart} {Nummer} über {Betrag}. Bitte begleichen Sie den Betrag bis zum {Fällig}.\n\nMit freundlichen Grüßen\n{Firma}",
+  reminder_subject: "Zahlungserinnerung: Rechnung {Nummer} – {Firma}",
+  reminder_body:
+    "Sehr geehrte Damen und Herren,\n\nsicher ist es im Alltag untergegangen: Unsere Rechnung {Nummer} vom {Datum} über {Betrag} war am {Fällig} fällig. Bis heute konnten wir leider noch keinen Zahlungseingang feststellen.\n\nOffener Betrag: {Offen}\n\nWir bitten Sie, den Betrag bis zum {Frist} auf unser Konto zu überweisen:\n{Bank}\nIBAN: {IBAN}\nBIC: {BIC}\nVerwendungszweck: {Nummer}\n\nDie Rechnung finden Sie zur Sicherheit noch einmal im Anhang. Sollte sich Ihre Zahlung mit dieser Erinnerung überschnitten haben, betrachten Sie diese Nachricht bitte als gegenstandslos.\n\n{Signatur}",
+  reminder_days: 7,
+  signature:
+    "Mit freundlichen Grüßen\n\nSophia Conti\nBuchhaltung\n\nGRID AGENCY UG\nEichendorffstrasse 32 · 60320 Frankfurt am Main\nbuchhaltung@grid-agency.de · www.grid-agency.de",
 };
 
 /** Texte für Storno und Gutschrift (statt Einleitung und Schluss der Rechnung) */
@@ -405,4 +419,32 @@ export function firstBillingDate(start: string) {
   const [y, m, d] = start.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1 + (d > BILLING_DAY ? 1 : 0), BILLING_DAY));
   return date.toISOString().slice(0, 10);
+}
+
+// ---------- Leistungszeitraum ----------
+
+const monthBounds = (day: string) => {
+  const [y, m] = day.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { from: `${day.slice(0, 7)}-01`, to: `${day.slice(0, 7)}-${String(last).padStart(2, "0")}` };
+};
+
+/** Leistungszeitraum eines Belegs: gesetzter Zeitraum, sonst der Monat des
+ * Leistungs- bzw. Rechnungsdatums. Rechnungen zeigen immer einen Zeitraum. */
+export function servicePeriodOf(doc: { service_from: string | null; service_to: string | null; document_date: string | null }) {
+  const valid = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+  const from = valid(doc.service_from);
+  const to = valid(doc.service_to);
+  if (from && to && to > from) return { from, to };
+  const base = from ?? valid(doc.document_date);
+  return base ? monthBounds(base) : null;
+}
+
+/** „01.10. – 31.10.2026“ bzw. „15.09.2026 – 14.10.2026“ über den Jahreswechsel */
+export function periodText(period: { from: string; to: string }) {
+  const de = (v: string, year = true) => {
+    const [y, m, d] = v.split("-");
+    return year ? `${d}.${m}.${y}` : `${d}.${m}.`;
+  };
+  return `${de(period.from, period.from.slice(0, 4) !== period.to.slice(0, 4))} – ${de(period.to)}`;
 }

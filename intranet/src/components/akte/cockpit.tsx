@@ -15,6 +15,7 @@ import { ProviderMark } from "@/components/marketing/common";
 import { PostEditor, postsUrl } from "@/components/marketing/post-editor";
 import { useCurrentWorkspace, type WorkspaceSummary } from "@/components/marketing/workspace";
 import { IdeaCard, IdeaComposer, ideasUrl } from "./ideas";
+import { ChannelTiles } from "./profile-sheet";
 import { akteUrl, AkteHeader } from "./shell";
 
 // Cockpit der Kundenakte: was heute zählt – Kennzahlen, To-dos (auch beim
@@ -279,19 +280,7 @@ export function Cockpit() {
               </Card>
 
               <Card title="Kanäle" icon={Link2} href={akteUrl(workspace.id, "einstellungen")} action="Verwalten">
-                {channels.length ? (
-                  <ul className="grid gap-2">
-                    {channels.map((a) => (
-                      <li key={a.id} className="flex items-center gap-2.5 text-[13px]">
-                        <ProviderMark provider={a.provider} />
-                        <span className="min-w-0 flex-1 truncate">{a.name}</span>
-                        <span className={clsx("h-2 w-2 rounded-full", a.status === "active" ? "bg-[#30a46c]" : "bg-error")} title={a.status === "active" ? "Verbunden" : a.error ?? "Fehler"} />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-[13px] text-snow/55">Noch kein Kanal verbunden. Posts bleiben Entwürfe, bis LinkedIn, Instagram, Facebook oder TikTok verbunden sind.</p>
-                )}
+                <ChannelTiles workspace={workspace} />
               </Card>
             </div>
           </div>

@@ -2,13 +2,12 @@
 
 import { useCallback, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Forward, Paperclip, Reply, ReplyAll, UserPlus } from "lucide-react";
+import { ArrowLeft, Download, Folder, Link2, Paperclip, UserPlus } from "lucide-react";
 import { graphFor, useAsync, type Attachment, type Message } from "@/lib/graph";
 import type { InboundMessage } from "@/lib/sales/types";
-import { Avatar, Button, IconButton, Spinner, useToast } from "@/components/ui";
-import { NewLeadDialog } from "../lead-sheet";
+import { IconButton, Spinner, useToast } from "@/components/ui";
 import { formatSize, fullTime, recipientList, recipientName } from "./format";
-import { ClassificationChip } from "./message-list";
+import { ClassificationChip, MailAvatar } from "./message-list";
 
 export type ReplyMode = "reply" | "replyAll" | "forward";
 
@@ -16,109 +15,79 @@ export function ReadingPane({
   mailbox,
   message,
   inbound,
-  onReply,
+  folderLabel,
+  mailboxName,
+  onLead,
   onBack,
 }: {
   mailbox: string;
   message: Message;
   inbound?: InboundMessage;
-  onReply: (mode: ReplyMode) => void;
+  /** Ordner, in dem die Mail liegt (Chip unter dem Kopf) */
+  folderLabel: string;
+  mailboxName: string;
+  onLead: () => void;
   onBack: () => void;
 }) {
   const { data: full, error } = useAsync(`message:${mailbox}:${message.id}`, () => graphFor(mailbox).message(message.id));
-  const [leadOpen, setLeadOpen] = useState(false);
   const sender = message.from?.emailAddress;
+  const linked = inbound?.lead_id || inbound?.application_id || inbound?.invoice_id;
+  const chip = "inline-flex h-9 items-center gap-1.5 rounded-full bg-snow/[0.07] px-3.5 text-[13px] font-medium text-snow/80 transition-colors hover:bg-snow/[0.12] hover:text-snow";
 
   return (
     <article className="flex h-full flex-col overflow-y-auto">
-      <div className="px-4 pt-3 md:px-6 md:pt-5">
+      <header className="border-b border-snow/[0.06] bg-sky/50 px-4 pt-4 pb-4 md:px-8 md:pt-6">
         <IconButton label="Zurück zur Liste" onClick={onBack} className="mb-2 md:hidden">
           <ArrowLeft className="h-5 w-5" />
         </IconButton>
-        <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
-          <h1 className="min-w-0 flex-1 text-xl leading-snug font-medium break-words">{message.subject || "(Kein Betreff)"}</h1>
-          <ClassificationChip inbound={inbound} />
-        </div>
+        <h1 className="text-[22px] leading-snug font-semibold tracking-tight break-words text-snow/90 md:text-[26px]">{message.subject || "(Kein Betreff)"}</h1>
 
         <div className="mt-4 flex items-start gap-3">
-          <Avatar name={recipientName(message.from)} className="h-10 w-10 text-sm" />
+          <MailAvatar name={recipientName(message.from)} size={46} />
           <div className="min-w-0 flex-1 text-[13px]">
-            <p className="text-[14px]">
-              <span className="font-medium">{recipientName(message.from)}</span>
-              {sender?.address && <span className="text-snow/50"> &lt;{sender.address}&gt;</span>}
-            </p>
-            {message.toRecipients.length > 0 && (
-              <p className="mt-0.5 text-snow/55">An: {recipientList(message.toRecipients)}</p>
-            )}
-            {message.ccRecipients.length > 0 && (
-              <p className="mt-0.5 text-snow/55">Cc: {recipientList(message.ccRecipients)}</p>
-            )}
+            <p className="truncate text-[15px] font-semibold">{recipientName(message.from)}</p>
+            {sender?.address && <p className="truncate text-snow/55">&lt;{sender.address}&gt;</p>}
+            {message.toRecipients.length > 0 && <p className="mt-0.5 text-snow/55">An: {recipientList(message.toRecipients)}</p>}
+            {message.ccRecipients.length > 0 && <p className="mt-0.5 text-snow/55">Cc: {recipientList(message.ccRecipients)}</p>}
           </div>
-          <time className="shrink-0 pt-0.5 text-[12px] text-snow/50" dateTime={message.receivedDateTime}>
+          <time className="shrink-0 pt-0.5 text-[12.5px] text-snow/50" dateTime={message.receivedDateTime}>
             {fullTime(message.receivedDateTime)}
           </time>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Button size="sm" icon={<Reply className="h-4 w-4" />} onClick={() => onReply("reply")}>
-            Antworten
-          </Button>
-          <Button size="sm" icon={<ReplyAll className="h-4 w-4" />} onClick={() => onReply("replyAll")}>
-            Allen antworten
-          </Button>
-          <Button size="sm" icon={<Forward className="h-4 w-4" />} onClick={() => onReply("forward")}>
-            Weiterleiten
-          </Button>
-          <span className="flex-1" />
-          {inbound?.lead_id || inbound?.application_id || inbound?.invoice_id ? (
-            <Link
-              href={inbound.lead_id ? "/sales" : inbound.application_id ? "/personal" : "/finance"}
-              className="inline-flex h-8 items-center gap-2 rounded-full border border-success/30 px-3 text-[13px] font-medium text-success hover:bg-success/10"
-            >
-              {inbound.lead_id ? "Lead in der Pipeline" : inbound.application_id ? "Bewerbung in Personal" : "Rechnung in Finance"}
+          {linked ? (
+            <Link href={inbound!.lead_id ? "/sales" : inbound!.application_id ? "/personal" : "/finance"} className={chip}>
+              <Link2 className="h-4 w-4" />
+              {inbound!.lead_id ? "Lead in der Pipeline" : inbound!.application_id ? "Bewerbung in Personal" : "Rechnung in Finance"}
             </Link>
           ) : (
-            <Button size="sm" variant="primary" icon={<UserPlus className="h-4 w-4" />} onClick={() => setLeadOpen(true)}>
-              Als Lead anlegen
-            </Button>
+            <button type="button" onClick={onLead} className={chip}>
+              <UserPlus className="h-4 w-4" /> Als Lead anlegen …
+            </button>
           )}
+          <span className={chip}>
+            <Folder className="h-4 w-4" /> {folderLabel} · {mailboxName}
+          </span>
+          <ClassificationChip inbound={inbound} />
         </div>
 
         {message.hasAttachments && <Attachments mailbox={mailbox} messageId={message.id} />}
-      </div>
+      </header>
 
-      <div className="flex-1 px-2 pt-4 pb-6 md:px-6">
+      <div className="flex-1 bg-white">
         {error ? (
-          <p className="px-2 text-sm text-error">Inhalt konnte nicht geladen werden.</p>
+          <p className="px-8 py-6 text-sm text-error">Inhalt konnte nicht geladen werden.</p>
         ) : full?.body ? (
-          <MailBody body={full.body} />
+          <MailBody body={full.body} flat />
         ) : (
           <div className="grid h-32 place-items-center">
             <Spinner />
           </div>
         )}
       </div>
-
-      <NewLeadDialog
-        open={leadOpen}
-        onClose={() => setLeadOpen(false)}
-        initial={{
-          name: sender?.name || sender?.address || "",
-          email: sender?.address ?? null,
-          source: "email",
-          source_ref: message.internetMessageId,
-          message: full?.body ? textOf(full.body) : message.bodyPreview,
-        }}
-      />
     </article>
   );
-}
-
-/** Text einer Mail für die Lead-Notiz (HTML ohne Tags, gekürzt). */
-function textOf(body: NonNullable<Message["body"]>) {
-  if (body.contentType === "text") return body.content.slice(0, 4000);
-  const doc = new DOMParser().parseFromString(body.content, "text/html");
-  return (doc.body.textContent ?? "").replace(/\n{3,}/g, "\n\n").trim().slice(0, 4000);
 }
 
 function escapeHtml(text: string) {
@@ -127,7 +96,7 @@ function escapeHtml(text: string) {
 
 /** Mail-HTML in einer Sandbox ohne Skripte, auf weißem Papier wie Outlook.
  * allow-same-origin nur, um die Höhe zu messen; Skripte bleiben gesperrt. */
-export function MailBody({ body }: { body: NonNullable<Message["body"]> }) {
+export function MailBody({ body, flat = false }: { body: NonNullable<Message["body"]>; /** ohne Rahmen, füllt den Lesebereich */ flat?: boolean }) {
   const [height, setHeight] = useState(200);
   const content =
     body.contentType === "html"
@@ -135,7 +104,7 @@ export function MailBody({ body }: { body: NonNullable<Message["body"]> }) {
       : `<div style="white-space:pre-wrap">${escapeHtml(body.content)}</div>`;
   const srcDoc = `<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>
     html{color-scheme:light}
-    body{margin:0;padding:20px 22px;background:#fff;color:#1f1d1b;font:14px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-wrap:anywhere}
+    body{margin:0;padding:${flat ? "28px 32px" : "20px 22px"};background:#fff;color:#1f1d1b;font:14px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;overflow-wrap:anywhere}
     img{max-width:100%;height:auto}
     table{max-width:100%}
     a{color:#0f6cbd}
@@ -151,7 +120,7 @@ export function MailBody({ body }: { body: NonNullable<Message["body"]> }) {
   }, []);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-snow/10 bg-white shadow-[0_8px_30px_var(--shadow-color)]">
+    <div className={flat ? "bg-white" : "overflow-hidden rounded-2xl border border-snow/10 bg-white shadow-[0_8px_30px_var(--shadow-color)]"}>
       <iframe
         title="Nachricht"
         sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
