@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, ListPlus, MapPin, Plus, Star, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { api } from "@/lib/api";
@@ -25,13 +26,22 @@ import { Button, Dialog, Empty, Field, IconButton, Input, Select, Sheet, Spinner
 import { useCurrentWorkspace } from "@/components/marketing/workspace";
 import { GoogleOverview, StatusBadge, ToneBadge } from "@/components/google/overview";
 import { AkteHeader } from "./header";
+import { Automations } from "./google-automations";
+import { WeeklyUpdate } from "./google-update";
 
 // Google-Betreuung in der Kundenakte: To-dos (wer muss was tun), Standorte
 // mit Status und Bewertungen, dazu die Kundenansicht genau so, wie sie im
 // Kundenportal erscheint. Interne Notizen und ausgeblendete To-dos sieht der
 // Kunde nicht.
 
-type Tab = "todos" | "standorte" | "kunde";
+type Tab = "todos" | "standorte" | "kunde" | "update" | "automationen";
+const TABS: [Tab, string][] = [
+  ["todos", "To-dos"],
+  ["standorte", "Standorte"],
+  ["kunde", "Kundenansicht"],
+  ["update", "Wochen-Update"],
+  ["automationen", "Automationen"],
+];
 type Editing = { kind: "location"; row: GoogleLocation | null } | { kind: "todo"; row: GoogleTodo | null };
 
 const urlOf = (id: string) => `/api/marketing/workspaces/${id}/google`;
@@ -53,7 +63,8 @@ export function AkteGoogle() {
   const key = workspace ? urlOf(workspace.id) : null;
   const board = useResource<GoogleBoard>(key);
   const toast = useToast();
-  const [tab, setTab] = useState<Tab>("todos");
+  const params = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => TABS.find(([t]) => t === params.get("tab"))?.[0] ?? "todos");
   const [editing, setEditing] = useState<Editing | null>(null);
   const [bulk, setBulk] = useState(false);
 
@@ -103,21 +114,15 @@ export function AkteGoogle() {
   return (
     <div className="flex h-full flex-col">
       <AkteHeader title="Google" meta={meta}>
-        <div role="tablist" aria-label="Ansicht" className="flex rounded-full border border-snow/12 p-0.5">
-          {(
-            [
-              ["todos", "To-dos"],
-              ["standorte", "Standorte"],
-              ["kunde", "Kundenansicht"],
-            ] as const
-          ).map(([value, label]) => (
+        <div role="tablist" aria-label="Ansicht" className="flex max-w-full overflow-x-auto rounded-full border border-snow/12 p-0.5 [scrollbar-width:none]">
+          {TABS.map(([value, label]) => (
             <button
               key={value}
               type="button"
               role="tab"
               aria-selected={tab === value}
               onClick={() => setTab(value)}
-              className={cn("h-8 rounded-full px-3 text-[13px]", tab === value ? "bg-snow/[0.12] font-medium text-snow" : "text-snow/60 hover:text-snow")}
+              className={cn("h-8 shrink-0 rounded-full px-3 text-[13px] whitespace-nowrap", tab === value ? "bg-snow/[0.12] font-medium text-snow" : "text-snow/60 hover:text-snow")}
             >
               {label}
             </button>
@@ -128,7 +133,7 @@ export function AkteGoogle() {
             Mehrere einfügen
           </Button>
         )}
-        {tab !== "kunde" && (
+        {(tab === "todos" || tab === "standorte") && (
           <Button size="sm" variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setEditing(tab === "standorte" ? { kind: "location", row: null } : { kind: "todo", row: null })}>
             {tab === "standorte" ? "Standort" : "To-do"}
           </Button>
@@ -149,6 +154,8 @@ export function AkteGoogle() {
             {data.locations.length || data.todos.length ? <GoogleOverview data={asPortal(data)} /> : <Empty title="Noch nichts angelegt" text="Lege Standorte und To-dos an, dann erscheinen sie hier und im Kundenportal." />}
           </div>
         )}
+        {tab === "update" && <WeeklyUpdate workspaceId={workspace.id} />}
+        {tab === "automationen" && <Automations workspaceId={workspace.id} />}
       </div>
 
       {editing?.kind === "location" && (

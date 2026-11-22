@@ -10,12 +10,13 @@ import { listPosts, listWorkspaces } from "@/lib/server/social/store";
 import { getPostingPlan } from "@/lib/server/social/posting-plan";
 import { gaps, progress, QUOTA_KINDS, rulesFor, windowOf, type PlanWindow, type PostingPlan } from "@/lib/posting-plan";
 import type { SocialPost } from "@/lib/marketing";
+import { listUpdates } from "@/lib/server/google";
 
 // Benachrichtigungen für die Glocke in der Kopfzeile: was gerade auf das
 // Konto wartet, aus allen Bereichen, die es sehen darf. Jede Quelle läuft
 // für sich; fällt eine aus, fehlt nur sie.
 
-export type NotificationKind = "lead" | "nachfassen" | "freigabe" | "agent" | "aufgabe" | "bewerbung" | "termin" | "postingplan";
+export type NotificationKind = "lead" | "nachfassen" | "freigabe" | "agent" | "aufgabe" | "bewerbung" | "termin" | "postingplan" | "google";
 
 export type NotificationItem = {
   id: string;
@@ -279,6 +280,29 @@ function planItem(workspaceId: string, name: string, plan: PostingPlan, posts: S
   };
 }
 
+/** Google-Wochen-Updates, die als Entwurf bereitliegen und diese Woche noch
+ * nicht gesendet wurden (Montags-Cron) */
+async function googleUpdates(): Promise<NotificationItem[]> {
+  const items: NotificationItem[] = [];
+  const since = Date.now() - 7 * DAY;
+  for (const workspace of await listWorkspaces()) {
+    if (workspace.kind !== "customer") continue;
+    const rows = await listUpdates(workspace.id);
+    const draft = rows.find((r) => r.status === "draft" && Date.parse(r.created_at) >= since);
+    if (!draft) continue;
+    if (rows.some((r) => r.status === "sent" && Date.parse(r.sent_at ?? r.created_at) >= Date.parse(draft.created_at))) continue;
+    items.push({
+      id: `google-update-${draft.id}`,
+      kind: "google",
+      title: workspace.name,
+      text: `Google-Update liegt als Entwurf in Outlook bereit · ${draft.subject}`,
+      at: draft.created_at,
+      href: `/akte/${workspace.id}/google?tab=update`,
+    });
+  }
+  return items;
+}
+
 type MeetingRow = {
   id: string;
   code: string;
@@ -378,7 +402,7 @@ export const GET = withUser(async (user) => {
     sources.push(["agent", demo?.agent ?? (() => agentTasks(user))]);
     sources.push(["aufgaben", demo?.aufgaben ?? (() => myTasks(user))]);
   }
-  if (can("marketing")) sources.push(["vorschlaege", demo?.ideen ?? postIdeas]);
+  if (can("marketing")) sources.push(["vorschlaege", demo?.ideen ?? postIdeas], ["google", googleUpdates]);
   sources.push(["termine", demo?.termine ?? (() => meetings(user))]);
   // Postingplan unabhängig vom Bereich Marketing: wer zuständig ist, wird erinnert
   sources.push(["postingplan", () => postingPlans(user)]);

@@ -262,3 +262,23 @@ API (auch für den Agenten):
 - `GET /api/marketing/workspaces/<id>/google`
 - `POST /api/marketing/workspaces/<id>/google` mit `{ kind: "location" | "todo", ... }`
 - `PATCH|DELETE /api/marketing/workspaces/<id>/google/<item>?kind=location|todo`
+
+### Wochen-Update an den Kunden
+
+Reiter **Wochen-Update** unter Google-Profile:
+
+- Der Vorschlag entsteht aus dem Google-Stand der Akte, im Stil der bisherigen Update-Mails. Abschnitte: Anrede, „Gute Nachrichten“ (seit dem letzten gesendeten Update erledigt), „Was wir noch von euch brauchen“ (Kunde, offen), „Was bei uns läuft“ (GRID/Google, offen), optional „Bewertungen“ je Standort.
+- Es fließen nur sichtbare To-dos ein, interne Notizen nie.
+- Betreff und Text lassen sich bearbeiten. **Als Entwurf in Outlook speichern** legt den Entwurf im eingestellten Postfach ab. **Senden** schickt nach Rückfrage direkt (im Browser über Graph, mit den Rechten der angemeldeten Person).
+- Rechts stehen Empfänger, Cc, Anrede, Postfach und die Schalter für Montags-Entwurf und Bewertungen (`workspaces.settings.google.update`).
+- Jeder Entwurf und Versand landet in `google_updates`.
+- Montags um 5:30 UTC (`/api/cron/google`, braucht `CRON_SECRET` und die App-Berechtigung Mail.ReadWrite) legt das Intranet für jede Akte mit Montags-Entwurf das Update als Outlook-Entwurf an, höchstens einmal pro Woche. Die Glocke zeigt es an, bis es gesendet ist.
+
+### Automationen (Make)
+
+Reiter **Automationen** unter Google-Profile:
+
+- Zeigt die Make-Szenarien der Akte (`workspaces.settings.google.make_scenarios`) mit Status, Zeitplan, nächstem Lauf und den letzten 10 Ausführungen samt Fehlern.
+- **Jetzt ausführen**, **Pausieren** und **Aktivieren** gehen nur für zugeordnete Szenarien.
+- Braucht `MAKE_API_TOKEN` (Make → Profil → API-Zugang, Scopes `scenarios:read`, `scenarios:write`, `scenarios:run`). Optional `MAKE_API_URL`, Standard `https://eu1.make.com/api/v2`.
+- API: `GET|POST /api/marketing/workspaces/<id>/google/automations` mit `{ scenario, action: "run" | "start" | "stop" }`.

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { Bell, Bot, Briefcase, CalendarRange, CircleCheck, ListChecks, LoaderCircle, PhoneCall, UserPlus, Video, type LucideIcon } from "lucide-react";
+import { Bell, Bot, Briefcase, CalendarRange, CircleCheck, ListChecks, LoaderCircle, MapPin, PhoneCall, UserPlus, Video, type LucideIcon } from "lucide-react";
 import type { NotificationItem, NotificationKind } from "@/app/api/benachrichtigungen/route";
 import { cn } from "@/lib/cn";
 import { useResource } from "@/lib/data";
@@ -26,6 +26,7 @@ const KINDS: Record<NotificationKind, { label: string; icon: LucideIcon; color: 
   bewerbung: { label: "Bewerbung", icon: Briefcase, color: "#f06ba5" },
   termin: { label: "Termin", icon: Video, color: "#6366f1" },
   postingplan: { label: "Postingplan", icon: CalendarRange, color: "#d9822b" },
+  google: { label: "Google", icon: MapPin, color: "#4285f4" },
 };
 
 // ---------- Gesehen-Zeitpunkt (localStorage) ----------
