@@ -154,6 +154,13 @@ function BillingForm({ initial }: { initial: BillingSettings }) {
         <Field label="Neue Zahlungsfrist (Tage ab Erinnerung)" hint="Ergibt {Frist}">
           {(id) => <Input id={id} inputMode="numeric" value={String(form.reminder_days)} onChange={(e) => setForm({ ...form, reminder_days: Number(e.target.value) || 0 })} />}
         </Field>
+        <p className="pt-3 text-[13px] font-semibold sm:col-span-2">Mahnung (ab der 2. Erinnerung)</p>
+        <Field label="Betreff" className="sm:col-span-2" hint="Platzhalter: {Stufe} (z. B. „2. Mahnung“), {Nummer}, {Firma}">
+          {(id) => <Input id={id} value={form.dunning_subject} onChange={(e) => setForm({ ...form, dunning_subject: e.target.value })} />}
+        </Field>
+        <Field label="Text" className="sm:col-span-2" hint="Wie oben, zusätzlich {Stufe} und {Erinnert} (Datum der letzten Erinnerung)">
+          {(id) => <Textarea id={id} value={form.dunning_body} onChange={(e) => setForm({ ...form, dunning_body: e.target.value })} className="min-h-48" />}
+        </Field>
         <Field label="Signatur der Buchhaltung" className="sm:col-span-2" hint="Steht für {Signatur} unter den Mails von buchhaltung@">
           {(id) => <Textarea id={id} value={form.signature} onChange={(e) => setForm({ ...form, signature: e.target.value })} className="min-h-32" />}
         </Field>

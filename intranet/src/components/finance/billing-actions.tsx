@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BellRing, CircleDollarSign, MapPin, Signature, FilePen, FileText, Lock, Pause, Play, Send, Square, Trash2, Undo2, Workflow } from "lucide-react";
+import { BellRing, CircleDollarSign, MapPin, Save, Signature, FilePen, FileText, Lock, Pause, Play, Send, Square, Trash2, Undo2, Workflow } from "lucide-react";
 import { api } from "@/lib/api";
 import { FINANCE_MAILBOX, mailboxLabel } from "@/lib/config";
 import { revalidate } from "@/lib/data";
 import { graphErrorMessage, graphFor, type FileAttachment } from "@/lib/graph";
-import { KIND_LABEL, docLabel, money, todayBerlin, type BillingAddress, type BillingDetail } from "@/lib/billing";
+import { KIND_LABEL, docLabel, dunningLabel, dunningLevel, money, todayBerlin, type BillingAddress, type BillingDetail } from "@/lib/billing";
 import { Button, Dialog, Field, Input, Popover, MenuItem, Select, Textarea, useToast } from "@/components/ui";
 import { BILLING_URL } from "./billing-editor";
 import { SignFolderDialog } from "./sign-folder";
@@ -120,7 +120,7 @@ export function DocumentActions({ doc, onOpen, onEdit }: { doc: BillingDetail; o
             onClick={() => setDialog("erinnern")}
             title={doc.reminders?.length ? `Zuletzt erinnert am ${new Date(doc.reminders.at(-1)!.at).toLocaleDateString("de-DE")}` : undefined}
           >
-            Zahlungserinnerung{doc.reminders?.length ? ` (${doc.reminders.length + 1}.)` : ""}
+            {dunningLabel(dunningLevel(doc))}
           </Button>
         )}
         {payable && doc.status !== "bezahlt" && (
@@ -337,7 +337,8 @@ function SendDialog({ doc, reminder = false, onClose }: { doc: BillingDetail; re
   const toast = useToast();
   const [mail, setMail] = useState<{ to: string; cc: string; subject: string; body: string; attachment: FileAttachment } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [sending, setSending] = useState(false);
+  const [sending, setSending] = useState<"send" | "draft" | null>(null);
+  const label = reminder ? dunningLabel(dunningLevel(doc)) : null;
 
   // PDF, Empfänger, Betreff und Text vom Server
   useEffect(() => {
@@ -350,30 +351,47 @@ function SendDialog({ doc, reminder = false, onClose }: { doc: BillingDetail; re
     if (!mail) return;
     const to = split(mail.to);
     if (!to.length) return toast("Bitte eine Empfänger-Adresse eintragen", "error");
-    setSending(true);
+    setSending("send");
     try {
       await graphFor(FINANCE_MAILBOX).send({ to, cc: split(mail.cc), subject: mail.subject, body: mail.body }, [mail.attachment]);
       await act(doc.id, reminder ? "erinnert" : "versendet", { to: to.join(", ") });
-      toast(reminder ? `Zahlungserinnerung an ${to.join(", ")} gesendet` : `An ${to.join(", ")} gesendet`);
+      toast(label ? `${label} an ${to.join(", ")} gesendet` : `An ${to.join(", ")} gesendet`);
       onClose();
     } catch (e) {
       toast(graphErrorMessage(e), "error");
     }
-    setSending(false);
+    setSending(null);
+  }
+
+  /** Mit PDF in den Entwürfen von buchhaltung@ ablegen, z. B. zum Gegenlesen in Outlook */
+  async function saveDraft() {
+    if (!mail) return;
+    setSending("draft");
+    try {
+      await graphFor(FINANCE_MAILBOX).saveDraft({ to: split(mail.to), cc: split(mail.cc), subject: mail.subject, body: mail.body }, [mail.attachment]);
+      toast(`Entwurf in ${mailboxLabel(FINANCE_MAILBOX)} gespeichert${reminder ? ". Aus Outlook gesendet wird die Stufe hier nicht mitgezählt." : ""}`);
+      onClose();
+    } catch (e) {
+      toast(graphErrorMessage(e), "error");
+    }
+    setSending(null);
   }
 
   return (
     <Dialog
       open
       onClose={onClose}
-      title={reminder ? `Zahlungserinnerung zu ${docLabel(doc)}` : `${docLabel(doc)} senden`}
+      title={label ? `${label} zu ${docLabel(doc)}` : `${docLabel(doc)} senden`}
       width="max-w-xl"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
             Später
           </Button>
-          <Button variant="primary" icon={<Send className="h-4 w-4" />} loading={sending} loadingText="Wird gesendet …" disabled={!mail} onClick={send}>
+          <Button icon={<Save className="h-4 w-4" />} loading={sending === "draft"} loadingText="Wird gespeichert …" disabled={!mail || sending !== null} onClick={saveDraft}>
+            Als Entwurf speichern
+          </Button>
+          <Button variant="primary" icon={<Send className="h-4 w-4" />} loading={sending === "send"} loadingText="Wird gesendet …" disabled={!mail || sending !== null} onClick={send}>
             Senden
           </Button>
         </>
