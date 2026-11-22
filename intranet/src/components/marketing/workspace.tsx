@@ -176,7 +176,7 @@ export function WorkspaceSwitcher({ className, compact = false, onPick }: { clas
       )}
     >
       {(close) => (
-        <div className="w-64 p-1.5">
+        <div className="w-64 max-w-full p-1.5">
           {[...agency, ...customers].map((w, index) => (
             <div key={w.id}>
               {index === agency.length && customers.length > 0 && (
