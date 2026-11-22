@@ -19,8 +19,9 @@ export async function submitContactForm(
   const company = String(formData.get("company") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
   const budget = String(formData.get("budget") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
 
-  if (!name || !email || !message) {
+  if (!name || !email || !phone || !message) {
     return { status: "error", message: "Bitte fülle alle Pflichtfelder aus." };
   }
 
@@ -29,11 +30,16 @@ export async function submitContactForm(
     return { status: "error", message: "Bitte gib eine gültige E-Mail-Adresse ein." };
   }
 
+  // Mindestens 6 Ziffern, sonst nur Leerzeichen, +, -, /, Klammern.
+  if (!/^\+?[0-9 ()/-]{6,30}$/.test(phone) || phone.replace(/\D/g, "").length < 6) {
+    return { status: "error", message: "Bitte gib eine gültige Handynummer ein." };
+  }
+
   // Das Intranet prüft das Captcha und legt die Anfrage als Lead an.
   try {
     await intranet("/api/public/kontakt", {
       method: "POST",
-      body: JSON.stringify({ name, email, company, budget, message, altcha: String(formData.get("altcha") ?? "") }),
+      body: JSON.stringify({ name, email, phone, company, budget, message, altcha: String(formData.get("altcha") ?? "") }),
     });
   } catch (error) {
     return {

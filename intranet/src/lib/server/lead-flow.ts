@@ -188,17 +188,20 @@ export async function bookWithLink(input: BookingInput) {
 }
 
 /** Kontaktformular der Website (mit Captcha); der Datenbank-Trigger legt den Lead an */
-export async function contact(input: { name: string; email: string; company: string; budget: string; message: string; altcha: string }) {
+export async function contact(input: { name: string; email: string; phone: string; company: string; budget: string; message: string; altcha: string }) {
   await verifyAltcha(input.altcha);
   const name = input.name.trim().slice(0, 120);
   const email = input.email.trim().slice(0, 200);
+  // Pflicht prüft die Website (Schritt 2 des Formulars); hier optional, damit
+  // ältere Website-Stände beim Deploy nicht scheitern.
+  const phone = input.phone.trim().slice(0, 40);
   const message = input.message.trim().slice(0, 6000);
   if (!name || !EMAIL.test(email) || !message) throw new FlowError("Bitte fülle alle Pflichtfelder aus.");
   if (DEMO) return;
   check(
     await sb()
       .from("contact_submissions")
-      .insert({ name, email, company: input.company.trim().slice(0, 160) || null, message, budget: input.budget.trim().slice(0, 40) || null })
+      .insert({ name, email, phone: phone || null, company: input.company.trim().slice(0, 160) || null, message, budget: input.budget.trim().slice(0, 40) || null })
   );
 }
 
