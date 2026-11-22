@@ -6,6 +6,8 @@ import {
   KIND_LABEL,
   computeTotals,
   docLabel,
+  dunningLabel,
+  dunningLevel,
   fillText,
   lineNet,
   money,
@@ -499,8 +501,9 @@ export async function mailDraft(doc: BillingDetail) {
 const dayDe = (value: string | null | undefined) =>
   value ? new Date(`${value.slice(0, 10)}T12:00:00`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
 
-/** Zahlungserinnerung zu einer offenen Rechnung: Empfänger, Betreff und Text
- * (Vorlage aus Finance → Einstellungen, Signatur der Buchhaltung) */
+/** Zahlungserinnerung bzw. ab der zweiten Erinnerung Mahnung zu einer offenen
+ * Rechnung: Empfänger, Betreff und Text (Vorlagen aus Finance → Einstellungen,
+ * Signatur der Buchhaltung) */
 export async function reminderDraft(doc: BillingDetail) {
   if (doc.kind !== "rechnung") throw new BillingError("Zahlungserinnerungen gibt es nur für Rechnungen");
   if (!["offen", "teilbezahlt"].includes(doc.status)) throw new BillingError("Die Rechnung ist nicht offen");
@@ -509,7 +512,10 @@ export async function reminderDraft(doc: BillingDetail) {
   const open = Math.round((doc.amount_gross - doc.paid_amount) * 100) / 100;
   const deadline = new Date(`${todayBerlin()}T12:00:00`);
   deadline.setDate(deadline.getDate() + settings.reminder_days);
+  const level = dunningLevel(doc);
   const values: Record<string, string> = {
+    Stufe: dunningLabel(level),
+    Erinnert: dayDe(doc.reminders?.at(-1)?.at),
     Datum: dayDe(doc.document_date),
     Offen: money(open, doc.currency),
     Frist: dayDe(deadline.toISOString()),
@@ -525,10 +531,12 @@ export async function reminderDraft(doc: BillingDetail) {
     const customer = check(await sb().from("customers").select("billing_email,email").eq("id", doc.customer_id).maybeSingle()) as { billing_email: string | null; email: string | null } | null;
     to = customer?.billing_email || customer?.email || null;
   }
+  const dunning = level > 1;
   return {
     to,
-    subject: fillText(extra(settings.reminder_subject), doc, company),
-    body: fillText(extra(settings.reminder_body), doc, company),
+    level,
+    subject: fillText(extra(dunning ? settings.dunning_subject : settings.reminder_subject), doc, company),
+    body: fillText(extra(dunning ? settings.dunning_body : settings.reminder_body), doc, company),
   };
 }
 

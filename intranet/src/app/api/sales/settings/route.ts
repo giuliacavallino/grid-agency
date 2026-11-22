@@ -40,6 +40,8 @@ function cleanBilling(input: Partial<BillingSettings>): BillingSettings {
       const days = Math.round(Number(input.reminder_days));
       return Number.isFinite(days) && days >= 1 && days <= 60 ? days : DEFAULT_BILLING_SETTINGS.reminder_days;
     })(),
+    dunning_subject: text(input.dunning_subject, DEFAULT_BILLING_SETTINGS.dunning_subject),
+    dunning_body: text(input.dunning_body, DEFAULT_BILLING_SETTINGS.dunning_body),
     signature: text(input.signature, DEFAULT_BILLING_SETTINGS.signature),
   };
 }
