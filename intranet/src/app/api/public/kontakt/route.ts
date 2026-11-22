@@ -10,6 +10,7 @@ export async function POST(request: Request) {
     await contact({
       name: text(body.name),
       email: text(body.email),
+      phone: text(body.phone),
       company: text(body.company),
       budget: text(body.budget),
       message: text(body.message),

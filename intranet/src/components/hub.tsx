@@ -12,7 +12,7 @@ import { TeamsButton } from "./teams";
 import { usePhoto } from "./person";
 import { signOut, useAuth } from "@/lib/auth";
 import { BankReminder } from "./finance/bank-reminder";
-import { ProductMark } from "./logo";
+import { Logo, ProductMark } from "./logo";
 import { Button, Popover } from "./ui";
 import { KpiList, useKpis } from "./kpis";
 import { WorkspaceSwitcher, type WorkspaceSummary } from "./marketing/workspace";
@@ -112,11 +112,15 @@ export function TopBar() {
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-40 pt-[calc(env(safe-area-inset-top)+12px)] lg:pt-6">
       <div className="mx-auto w-full max-w-frame-lg px-5">
-        <div className="glass pointer-events-auto relative flex h-13 items-center justify-between gap-4 rounded-full pr-2 pl-5 lg:h-[68px] lg:pr-3 lg:pl-7">
+        <div className="glass pointer-events-auto relative flex h-13 items-center justify-between gap-3 rounded-full pr-2 pl-5 sm:gap-4 lg:h-[68px] lg:pr-3 lg:pl-7">
           <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-snow/40 to-transparent" />
 
           <Link href="/" aria-label="Zur Übersicht" className="group relative flex shrink-0 items-center">
-            <ProductMark product="Intranet" size="sm" rainbow priority className="lg:hidden" />
+            {/* Handy: nur das Logo, sonst passen Konto und Menü nicht in die Leiste */}
+            <span className="logo-rainbow sm:hidden">
+              <Logo className="h-5" priority />
+            </span>
+            <ProductMark product="Intranet" size="sm" rainbow priority className="hidden sm:inline-flex lg:hidden" />
             <ProductMark product="Intranet" rainbow priority className="hidden lg:inline-flex" />
           </Link>
 

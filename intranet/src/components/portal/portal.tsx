@@ -8,10 +8,11 @@ import type { PortalPost, PortalQuota, PortalView } from "@/lib/portal";
 import { isoWeekOf } from "@/lib/posting-plan";
 import { ProductMark } from "@/components/logo";
 import { ProviderMark } from "@/components/marketing/common";
+import { GoogleOverview } from "@/components/google/overview";
 import { Button, Input, Spinner } from "@/components/ui";
 
-// Kundenportal: Login per Link, danach Postingplan-Fortschritt und alle
-// eingeplanten Posts der Kundenwelt (nur lesen).
+// Kundenportal: Login per Link, danach Postingplan-Fortschritt, alle
+// eingeplanten Posts und der Google-Stand der Kundenwelt (nur lesen).
 
 type State = { kind: "loading" } | { kind: "login"; error?: string } | { kind: "error"; message: string } | { kind: "ready"; view: PortalView };
 
@@ -125,12 +126,19 @@ const weekKey = (iso: string) => {
   return `${year}-${String(week).padStart(2, "0")}`;
 };
 
+type Section = "social" | "google";
+
 function Dashboard({ view, onWorkspace }: { view: PortalView; onWorkspace: (id: string) => void }) {
   const [busy, setBusy] = useState(false);
+  const [picked, setPicked] = useState<Section | null>(null);
   const [now] = useState(() => Date.now());
   const { workspace } = view;
   const upcoming = view.posts.filter((p) => Date.parse(p.at) >= now - 3_600_000 || p.status !== "online");
   const past = view.posts.filter((p) => !upcoming.includes(p)).reverse();
+  // Bereiche: Social Media (wenn geplant wird) und Google (wenn wir Profile betreuen)
+  const sections: Section[] = [...(workspace.planning ? (["social"] as const) : []), ...(view.google ? (["google"] as const) : [])];
+  const section: Section = picked && sections.includes(picked) ? picked : (sections[0] ?? "social");
+  const eyebrow = sections.length > 1 ? "Marketing" : section === "google" ? "Google-Profile" : "Social Media";
 
   async function logout() {
     setBusy(true);
@@ -172,13 +180,32 @@ function Dashboard({ view, onWorkspace }: { view: PortalView; onWorkspace: (id: 
         <section className="flex items-center gap-4 pt-8 pb-6">
           <WorkspaceAvatar name={workspace.name} color={workspace.color} url={workspace.avatar_url ?? workspace.logo_url} />
           <div className="min-w-0">
-            <p className="text-[12px] tracking-[0.2em] text-snow/45 uppercase">Social Media mit GRID</p>
+            <p className="text-[12px] tracking-[0.2em] text-snow/45 uppercase">{eyebrow} mit GRID</p>
             <h1 className="truncate text-[26px] font-medium tracking-tight md:text-[32px]">{workspace.name}</h1>
           </div>
         </section>
 
-        {!workspace.planning ? (
-          <Note text="Für diese Kundenwelt planen wir aktuell keine Social-Media-Posts (z. B. reine Google-Betreuung)." />
+        {sections.length > 1 && (
+          <div role="tablist" aria-label="Bereich" className="mb-6 inline-flex rounded-full border border-snow/12 bg-surface p-1">
+            {sections.map((key) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={section === key}
+                onClick={() => setPicked(key)}
+                className={cn("h-9 rounded-full px-4 text-[14px]", section === key ? "bg-snow/[0.12] font-medium text-snow" : "text-snow/60 hover:text-snow")}
+              >
+                {key === "social" ? "Social Media" : "Google"}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {section === "google" && view.google ? (
+          <GoogleOverview data={view.google} />
+        ) : !workspace.planning ? (
+          <Note text="Für diese Kundenwelt planen wir aktuell keine Social-Media-Posts." />
         ) : (
           <>
             {view.plan && <PlanCards plan={view.plan} />}

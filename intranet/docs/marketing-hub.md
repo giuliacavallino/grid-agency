@@ -270,3 +270,19 @@ POST /api/marketing/outreach                   { workspace_id, kind, recipient, 
 Eigene Dateien: `POST /api/marketing/media` mit `{ url }` oder als Datei bis 4 MB. Größere Dateien über `POST /api/marketing/media/upload-url`, dann per PUT an die gelieferte Adresse.
 
 Alle Endpunkte stehen auch in Marketing → Agent & API.
+
+## Google-Profile
+
+In jeder Kundenakte gibt es unter **Google → Google-Profile** den Stand der Google-Betreuung (Tabellen `google_locations`, `google_todos`):
+
+- **To-dos:** gruppiert nach Zuständigkeit (Kunde, GRID, Google), mit Status (offen, in Arbeit, wartet, erledigt), Fälligkeit, Standort, Notiz für den Kunden und interner Notiz. Das Auge schaltet, ob ein To-do im Kundenportal erscheint.
+- **Standorte:** ein Profil je Zeile mit Status (wird angelegt, Zugriff fehlt, Nachweis fehlt, Verifizierung, in Prüfung, live, gesperrt, archiviert), Bewertung, Anzahl, Zuwachs seit Betreuungsstart und offenen Punkten. „Mehrere einfügen“ legt Standorte aus einer Liste an (Name; Marke; Adresse, auch direkt aus Excel).
+- **Kundenansicht:** genau das, was der Kunde im Kundenportal sieht.
+
+Im Kundenportal (`/portal`) erscheint ein Reiter **Google**, sobald die Akte Standorte oder To-dos hat. Der Kunde sieht Kennzahlen (Standorte live, Ø Bewertung gewichtet nach Anzahl, neue Bewertungen seit Start, offene Punkte bei ihm), „Das brauchen wir von dir“, „Daran arbeiten wir“, alle Standorte mit Filter und Suche und was in den letzten 60 Tagen erledigt wurde. Interne Notizen, ausgeblendete To-dos und archivierte Standorte sieht er nicht.
+
+API (auch für den Agenten):
+
+- `GET /api/marketing/workspaces/<id>/google`
+- `POST /api/marketing/workspaces/<id>/google` mit `{ kind: "location" | "todo", ... }`
+- `PATCH|DELETE /api/marketing/workspaces/<id>/google/<item>?kind=location|todo`

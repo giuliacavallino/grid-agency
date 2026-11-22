@@ -98,8 +98,8 @@ export default function DatenschutzPage() {
           <LegalHeading id="kontaktformular">4. Kontaktformular, E-Book, E-Mail und Telefon</LegalHeading>
           <p>
             Wenn du uns über das Kontaktformular schreibst, verarbeiten wir
-            die Angaben, die du machst (Name, E-Mail-Adresse, optional
-            Unternehmen und Budget sowie deine Nachricht), um deine Anfrage zu
+            die Angaben, die du machst (Name, E-Mail-Adresse, Handynummer,
+            optional Unternehmen und Budget sowie deine Nachricht), um deine Anfrage zu
             beantworten. Die Daten werden über unseren Server an unseren
             Datenbank-Dienstleister Supabase Inc. übermittelt und dort gespeichert. Mit Supabase besteht
             ein Vertrag zur Auftragsverarbeitung; für Übermittlungen in

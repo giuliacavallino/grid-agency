@@ -73,6 +73,20 @@ body {
   color: var(--foreground);
 }
 
+/* Saubere Zeilenumbrüche, vor allem mobil: Überschriften gleichmäßig
+   verteilt (kein einzelnes Wort allein in einer Zeile), Fließtext ohne
+   Waisenwort am Ende. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p,
+li,
+blockquote {
+  text-wrap: pretty;
+}
+
 ::selection {
   background: var(--color-pop);
   color: var(--color-snow);
@@ -521,6 +535,17 @@ body {
   & > * {
     flex: 0 0 auto;
     scroll-snap-align: start;
+  }
+
+  /* Mobil kein Live-Blur in der Wisch-Reihe: viele Glaskarten mit
+     backdrop-filter nebeneinander lassen Safari beim Scrollen ruckeln und
+     hängen. Stattdessen deckendes Glas, optisch fast gleich. */
+  @media (max-width: 49.99rem) {
+    & .glass {
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      background: linear-gradient(160deg, rgb(52 48 50 / 0.92), rgb(30 28 28 / 0.92) 45%, rgb(36 33 35 / 0.92));
+    }
   }
 }
 

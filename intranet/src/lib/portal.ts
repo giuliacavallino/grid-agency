@@ -1,7 +1,9 @@
+import type { PortalGoogle } from "@/lib/google";
 import type { PostFormat, Provider } from "@/lib/marketing";
 
 // Kundenportal (/portal): Kund*innen sehen ihre Kundenwelt nur lesend –
-// Fortschritt laut Postingplan („2 von 4 Beiträgen“) und eingeplante Posts.
+// Fortschritt laut Postingplan („2 von 4 Beiträgen“), eingeplante Posts und
+// den Stand der Google-Betreuung (Standorte, Bewertungen, offene Punkte).
 
 export const PORTAL_COOKIE = "grid_portal";
 /** Gültigkeit des Anmeldelinks und der Sitzung */
@@ -52,4 +54,6 @@ export type PortalView = {
   workspace: PortalWorkspace & { planning: boolean };
   plan: { start: string | null; windows: PortalWindow[]; platforms: Provider[] } | null;
   posts: PortalPost[];
+  /** null, wenn wir für die Kundenwelt keine Google-Profile betreuen */
+  google: PortalGoogle | null;
 };

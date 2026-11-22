@@ -6,6 +6,7 @@ import { LOGIN_MINUTES, PORTAL_COOKIE, SESSION_DAYS, type PortalPost, type Porta
 import { PERIOD_LABELS, progress, QUOTA_KINDS, ruleText, rulesFor, windowOf } from "@/lib/posting-plan";
 import { check } from "./billing";
 import { sb } from "./db";
+import { portalGoogle } from "./google";
 import { sendAppMail } from "./graph-app";
 import { brandedMail, senderFor } from "./mail-template";
 import { getPostingPlan } from "./social/posting-plan";
@@ -150,7 +151,12 @@ export async function portalView(email: string, workspaceId: string | null, orig
   if (!workspace) return null;
   const summary = (w: (typeof workspaces)[number]) => ({ id: w.id, name: w.name, color: w.color, avatar_url: w.avatar_url, logo_url: w.logo_url });
 
-  const [posts, plan, accounts] = await Promise.all([listPosts({ workspace_id: workspace.id, limit: 500 }), getPostingPlan(workspace.id), listAccounts(workspace.id)]);
+  const [posts, plan, accounts, google] = await Promise.all([
+    listPosts({ workspace_id: workspace.id, limit: 500 }),
+    getPostingPlan(workspace.id),
+    listAccounts(workspace.id),
+    portalGoogle(workspace.id),
+  ]);
   const providerOf = new Map(accounts.map((a) => [a.id, a.provider as Provider]));
 
   // Zeitraum: zwei Wochen zurück bis acht Wochen voraus
@@ -215,5 +221,6 @@ export async function portalView(email: string, workspaceId: string | null, orig
     workspace: { ...summary(workspace), planning: workspace.planning },
     plan: windows.length ? { start: plan.start, windows, platforms: plan.platforms } : null,
     posts: visible,
+    google,
   };
 }

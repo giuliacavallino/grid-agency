@@ -499,8 +499,27 @@ export function Popover({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setOpen(false), []);
   useEscape(close, open);
+  // Im Bildschirm halten: auf dem Handy sitzt der Auslöser oft nah am Rand,
+  // dann wird das Menü seitlich verschoben statt abgeschnitten.
+  useLayoutEffect(() => {
+    const el = panel.current;
+    if (!open || !el) return;
+    const fit = () => {
+      el.style.translate = "0px";
+      const rect = el.getBoundingClientRect();
+      const gap = 8;
+      const right = rect.right - (window.innerWidth - gap);
+      const left = gap - rect.left;
+      const shift = right > 0 ? -Math.min(right, rect.left - gap) : left > 0 ? left : 0;
+      el.style.translate = `${shift}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     const onClick = (event: MouseEvent) => {
@@ -516,8 +535,9 @@ export function Popover({
       {trigger({ open, toggle: () => setOpen((o) => !o) })}
       {open && (
         <div
+          ref={panel}
           className={clsx(
-            "glass-solid animate-pop absolute z-40 min-w-52 rounded-2xl p-1.5",
+            "glass-solid animate-pop absolute z-40 max-w-[calc(100vw-16px)] min-w-52 rounded-2xl p-1.5",
             side === "bottom" ? "top-full mt-2" : "bottom-full mb-2",
             align === "right" ? "right-0" : "left-0",
             className

@@ -19,8 +19,8 @@ export function Team() {
 
       <div className="mt-12 grid grid-cols-1 gap-4 lg:mt-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <article className="reveal glass overflow-hidden rounded-[1.75rem]">
-          <div className="relative aspect-[4/3] lg:aspect-[5/4]">
-            <Image src="/team/giulia.jpg" alt={team.name} fill sizes="(min-width: 800px) 40vw, 100vw" className="object-cover" />
+          <div className="relative aspect-[4/5] sm:aspect-[4/3] lg:aspect-[5/4]">
+            <Image src="/team/giulia.jpg" alt={team.name} fill sizes="(min-width: 800px) 40vw, 100vw" className="object-cover object-[50%_15%]" />
             <div className="absolute inset-0 bg-gradient-to-t from-sky via-sky/20 to-transparent" />
             <div className="absolute bottom-5 left-6 right-6">
               <p className="flex items-center gap-1.5 text-2xl font-semibold tracking-tight text-snow">

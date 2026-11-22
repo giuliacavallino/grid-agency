@@ -25,8 +25,8 @@ export function Projects() {
       />
       <div className="snap-row mt-12 lg:mt-16 lg:grid lg:grid-cols-3 lg:overflow-visible lg:px-0 lg:mx-0">
         {featured.map((client, i) => (
-          <div key={client.name} className="reveal w-[84%] max-w-[22rem] sm:w-[46%] lg:w-auto lg:max-w-none" style={{ "--d": `${(i % 3) * 80}ms` } as React.CSSProperties}>
-            <ProjektCard client={client} />
+          <div key={client.name} className="reveal w-[80%] max-w-[20rem] sm:w-[46%] sm:max-w-[22rem] lg:w-auto lg:max-w-none" style={{ "--d": `${(i % 3) * 80}ms` } as React.CSSProperties}>
+            <ProjektCard client={client} compact />
           </div>
         ))}
       </div>
