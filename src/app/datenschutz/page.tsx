@@ -5,6 +5,9 @@ import { ConsentSettings } from "@/components/app/ConsentSettings";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | GRID Agency",
+  alternates: { canonical: "/datenschutz" },
+  description:
+    "Datenschutzerklärung der GRID Agency: welche Daten wir auf grid-agency.de verarbeiten, wofür und welche Rechte du hast.",
 };
 
 export default function DatenschutzPage() {

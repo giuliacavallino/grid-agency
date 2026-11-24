@@ -4,6 +4,9 @@ import { LegalArticle, LegalHeading } from "@/components/app/LegalArticle";
 
 export const metadata: Metadata = {
   title: "Impressum | GRID Agency",
+  alternates: { canonical: "/impressum" },
+  description:
+    "Impressum der GRID Agency UG (haftungsbeschränkt), Social-Media-Agentur mit Sitz in Frankfurt am Main und Standort in Berlin.",
 };
 
 export default function ImpressumPage() {

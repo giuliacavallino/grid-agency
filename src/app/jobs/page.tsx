@@ -6,6 +6,7 @@ import { searchedJobs } from "@/lib/jobs";
 
 export const metadata: Metadata = {
   title: "Jobs | GRID Agency",
+  alternates: { canonical: "/jobs" },
   description:
     "Offene Stellen bei GRID Agency in Berlin und Frankfurt: Social Media Manager, Video Content Creator, Werkstudent:in und Praktikum im Social Media Marketing.",
 };

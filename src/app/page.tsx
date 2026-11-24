@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { AppShell } from "@/components/app/AppShell";
 import { Hero } from "@/components/home/Hero";
 import { LogoMarquee } from "@/components/home/LogoMarquee";
@@ -14,6 +15,8 @@ import { nextEvent } from "@/lib/events";
 // Das nächste Event in der News-Pille des Heros; neue Events erscheinen nach
 // spätestens einer Minute.
 export const revalidate = 60;
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   return (

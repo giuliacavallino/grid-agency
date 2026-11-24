@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { RevealObserver } from "@/components/ui/RevealObserver";
 import { BookingDialog } from "@/components/app/BookingDialog";
+import { JsonLd } from "@/components/JsonLd";
+import { siteJsonLd } from "@/lib/seo";
 
 const readex = localFont({
   src: "./fonts/ReadexPro-Variable.ttf",
@@ -39,6 +41,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
       </head>
       <body className="flex min-h-full flex-col bg-sky font-sans text-snow">
+        <JsonLd data={siteJsonLd()} />
         <div aria-hidden className="ambient" />
         {children}
         <RevealObserver />
