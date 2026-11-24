@@ -140,8 +140,8 @@ const SCHEMA = {
   },
 };
 
-async function evaluate(context: string, phrases: Phrase[]): Promise<{ summary: string; tasks: Proposal[] }> {
-  const transcript = phrases.map((p) => `[${p.speaker ? `Sprecher ${p.speaker}` : "?"}] ${p.text}`).join("\n");
+/** Azure OpenAI mit festem JSON-Schema */
+async function chatJson<T>(system: string, user: string, name: string, schema: object, temperature = 0.2): Promise<T> {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT!.replace(/\/$/, "");
   const response = await fetch(
     `${endpoint}/openai/deployments/${process.env.AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=${process.env.AZURE_OPENAI_API_VERSION ?? "2024-10-21"}`,
@@ -150,17 +150,23 @@ async function evaluate(context: string, phrases: Phrase[]): Promise<{ summary: 
       headers: { "api-key": process.env.AZURE_OPENAI_API_KEY!, "Content-Type": "application/json" },
       body: JSON.stringify({
         messages: [
-          { role: "system", content: SYSTEM },
-          { role: "user", content: `${context}\n\nTranskript:\n${transcript}` },
+          { role: "system", content: system },
+          { role: "user", content: user },
         ],
-        temperature: 0.2,
-        response_format: { type: "json_schema", json_schema: { name: "call_auswertung", strict: true, schema: SCHEMA } },
+        temperature,
+        response_format: { type: "json_schema", json_schema: { name, strict: true, schema } },
       }),
     }
   );
   if (!response.ok) throw new Error(`Azure OpenAI antwortet mit ${response.status}: ${(await response.text()).slice(0, 300)}`);
   const result = (await response.json()) as { choices: { message: { content: string } }[] };
-  const parsed = JSON.parse(result.choices[0].message.content) as { summary: string; tasks: Proposal[] };
+  return JSON.parse(result.choices[0].message.content) as T;
+}
+
+const transcriptText = (phrases: Phrase[]) => phrases.map((p) => `[${p.speaker ? `Sprecher ${p.speaker}` : "?"}] ${p.text}`).join("\n");
+
+async function evaluate(context: string, phrases: Phrase[]): Promise<{ summary: string; tasks: Proposal[] }> {
+  const parsed = await chatJson<{ summary: string; tasks: Proposal[] }>(SYSTEM, `${context}\n\nTranskript:\n${transcriptText(phrases)}`, "call_auswertung", SCHEMA);
   return {
     summary: parsed.summary,
     tasks: parsed.tasks.map((t) => ({ ...t, due_on: t.due_on && /^\d{4}-\d{2}-\d{2}$/.test(t.due_on) ? t.due_on : null })),
@@ -169,6 +175,63 @@ async function evaluate(context: string, phrases: Phrase[]): Promise<{ summary: 
 
 const dateDe = (iso: string) =>
   new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
+
+/** Titel, Datum und Teilnehmende für die Auswertung. Jour fixe: ein Raum
+ * für die ganze Serie, jeder Termin ist ein eigener Anruf. Das Datum kommt
+ * deshalb aus der Aufnahme, nicht aus dem Raum. */
+function callContext(meeting: Record<string, unknown>, recording: Record<string, unknown>) {
+  const names = ((meeting.participants as { name: string }[] | null) ?? []).map((p) => p.name);
+  const series = !!meeting.recurrence;
+  const callDate = dateDe(String(series ? recording.created_at : meeting.starts_at));
+  return [
+    series ? `Call: ${meeting.title} (Jour fixe vom ${callDate})` : `Call: ${meeting.title}`,
+    `Datum: ${callDate}`,
+    `Teilnehmende: ${[...new Set([meeting.host_name, ...names].filter(Boolean))].join(", ") || "unbekannt"}`,
+  ].join("\n");
+}
+
+const FOLLOW_UP_SYSTEM = `Du schreibst für die Social-Media-Agentur GRID AGENCY die Follow-up-Mail an den Kunden nach einem Call (meist Jour fixe).
+Deutsch, freundlich, klar, ohne Floskeln. Anrede wie im Call: Duzt man sich im Transkript, dann du, sonst Sie; im Zweifel du mit Vornamen. Ist der Vorname der Kundin bzw. des Kunden nicht sicher, „Hallo zusammen,“.
+Aufbau (reiner Text, keine Markdown-Sternchen, Listen mit „– “):
+1. Anrede und ein Satz Dank für den Call.
+2. „Kurz zusammengefasst:“ mit den wichtigsten Punkten und Entscheidungen (3 bis 6 Punkte).
+3. „Das übernehmen wir:“ mit den Aufgaben von GRID, jeweils mit Termin, wenn einer genannt ist.
+4. „Von euch bzw. Ihnen brauchen wir:“ mit den Aufgaben des Kunden (passend zur Anrede), nur wenn es welche gibt.
+5. Nächster Termin, wenn bekannt (bei Jour fixe: nächste Woche zur gewohnten Zeit).
+6. Ein kurzer Schlusssatz (z. B. dass man sich bei Fragen gern meldet). Keine Grußformel und kein Name: die Signatur hängt das Mailprogramm an.
+subject: kurz, z. B. „Zusammenfassung Jour fixe vom 24.11.“
+Erfinde nichts, was nicht im Call oder in den Aufgaben steht. Interne Themen (Preise anderer Kunden, Kritik am Kunden, Interna) gehören nicht in die Mail.`;
+
+const FOLLOW_UP_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["subject", "body"],
+  properties: { subject: { type: "string" }, body: { type: "string" } },
+};
+
+export type FollowUp = { subject: string; body: string; created_at: string };
+
+/** Follow-up-Mail an den Kunden aus Zusammenfassung, Aufgaben und Transkript
+ * schreiben und an der Aufnahme speichern */
+export async function writeFollowUp(recordingId: string): Promise<FollowUp> {
+  const recording = await db().get("meeting_recordings", recordingId);
+  if (!recording?.summary) throw new Error("Der Call ist noch nicht ausgewertet");
+  const meeting = (await db().get("meetings", String(recording.meeting_id)))!;
+  const { data } = await sb().from("meeting_tasks").select("title,notes,owner,due_on,status").eq("recording_id", recordingId).order("position");
+  const tasks = ((data ?? []) as (Proposal & { status: string })[]).filter((t) => t.status !== "verworfen");
+  const phrases = ((recording.transcript as { phrases?: Phrase[] } | null)?.phrases ?? []) as Phrase[];
+  const input = [
+    callContext(meeting, recording),
+    `\nZusammenfassung:\n${recording.summary}`,
+    `\nAufgaben:\n${tasks.map((t) => `– [${t.owner === "kunde" ? "Kunde" : "GRID"}] ${t.title}${t.due_on ? ` (bis ${t.due_on})` : ""}${t.notes ? `: ${t.notes}` : ""}`).join("\n") || "keine"}`,
+    // Das Transkript nur für Anrede und Details, gekürzt
+    phrases.length ? `\nTranskript (Auszug):\n${transcriptText(phrases).slice(0, 60_000)}` : "",
+  ].join("\n");
+  const mail = await chatJson<{ subject: string; body: string }>(FOLLOW_UP_SYSTEM, input, "follow_up_mail", FOLLOW_UP_SCHEMA, 0.4);
+  const followUp: FollowUp = { subject: mail.subject.trim(), body: mail.body.trim(), created_at: new Date().toISOString() };
+  await db().update("meeting_recordings", recordingId, { follow_up: followUp });
+  return followUp;
+}
 
 /** Passendes Kundenprojekt in Aufgaben (über Kunde oder Lead des Raums) */
 async function projectFor(meeting: Record<string, unknown>) {
@@ -198,16 +261,7 @@ export async function processRecording(recordingId: string) {
     }
 
     const meeting = (await db().get("meetings", String(recording.meeting_id)))!;
-    const names = ((meeting.participants as { name: string }[] | null) ?? []).map((p) => p.name);
-    // Jour fixe: ein Raum für die ganze Serie, jeder Termin ist ein eigener
-    // Anruf. Das Datum kommt deshalb aus der Aufnahme, nicht aus dem Raum.
-    const series = !!meeting.recurrence;
-    const callDate = dateDe(String(series ? recording.created_at : meeting.starts_at));
-    const context = [
-      series ? `Call: ${meeting.title} (Jour fixe vom ${callDate})` : `Call: ${meeting.title}`,
-      `Datum: ${callDate}`,
-      `Teilnehmende: ${[...new Set([meeting.host_name, ...names].filter(Boolean))].join(", ") || "unbekannt"}`,
-    ].join("\n");
+    const context = callContext(meeting, recording);
     const result = phrases.length ? await evaluate(context, phrases) : { summary: "Im Call wurde nichts gesagt, das sich transkribieren ließ.", tasks: [] };
 
     const project = await projectFor(meeting);
@@ -226,6 +280,8 @@ export async function processRecording(recordingId: string) {
       summary: result.summary,
       processed_at: new Date().toISOString(),
     });
+    // Follow-up-Mail gleich mitschreiben; scheitert sie, bleibt die Auswertung
+    await writeFollowUp(recordingId).catch((e) => console.error(e));
     if (meeting.lead_id) {
       await db().insert("lead_activities", {
         lead_id: meeting.lead_id,
