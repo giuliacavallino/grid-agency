@@ -17,6 +17,7 @@ import { Avatar, Button, Input, Spinner } from "@/components/ui";
 import { MeetMark, MeetShell } from "./brand";
 import { CallDone } from "./done";
 import { WaitingStage } from "./waiting";
+import { CallRecorder } from "./recorder";
 
 // Video-Call unter meet.grid-agency.de/<code> mit Azure Communication
 // Services: Vorschau mit Kamera und Mikro, Name eintragen, beitreten. Das
@@ -57,6 +58,25 @@ function StreamView({ stream, mirrored, fit }: { stream: LocalVideoStream | Remo
     };
   }, [stream, mirrored, fit]);
   return <div ref={ref} className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&>div]:h-full" />;
+}
+
+/** Dauer des Calls (ab dem eigenen Beitritt), läuft jede Sekunde mit */
+function CallTimer({ since }: { since: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const total = Math.max(0, Math.floor((now - since) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = String(total % 60).padStart(2, "0");
+  const text = h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
+  return (
+    <span className="text-xs font-medium text-snow/70 tabular-nums" title="Dauer des Calls" aria-label={`Dauer ${text}`}>
+      {text}
+    </span>
+  );
 }
 
 function ControlButton({ label, active = true, danger, badge, onClick, children }: { label: string; active?: boolean; danger?: boolean; badge?: number; onClick: () => void; children: React.ReactNode }) {
@@ -228,6 +248,7 @@ export function MeetRoom({ code }: { code: string }) {
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("lobby");
+  const [connectedAt, setConnectedAt] = useState<number | null>(null);
   const [ended, setEnded] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
   const [name, setName] = useState("");
@@ -247,6 +268,15 @@ export function MeetRoom({ code }: { code: string }) {
   const agent = useRef<CallAgent | null>(null);
   const cameraInfo = useRef<VideoDeviceInfo | null>(null);
   const leaving = useRef(false);
+  const audio = useRef<AudioContext | null>(null);
+  const recorder = useRef<CallRecorder | null>(null);
+
+  // Tab zu: Aufnahme für andere im Call freigeben
+  useEffect(() => {
+    const release = () => recorder.current?.release();
+    window.addEventListener("pagehide", release);
+    return () => window.removeEventListener("pagehide", release);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/meet/${code}`, { cache: "no-store" })
@@ -376,14 +406,12 @@ export function MeetRoom({ code }: { code: string }) {
     let recordingAsked = false;
     next.on("stateChanged", () => {
       // Aufnahme starten, sobald der Anruf steht (der Server startet sie nur einmal)
-      if (next.state === "Connected" && view?.recording && !recordingAsked) {
+      if (next.state === "Connected") setConnectedAt((at) => at ?? Date.now());
+      // Aufnahme im Browser: einer im Call nimmt auf, die anderen übernehmen bei Bedarf
+      if (next.state === "Connected" && view?.recording && !recordingAsked && audio.current) {
         recordingAsked = true;
-        next.info
-          .getServerCallId()
-          .then((serverCallId) =>
-            fetch(`/api/meet/${code}/aufnahme`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serverCallId }) })
-          )
-          .catch((e) => console.error(e));
+        recorder.current = new CallRecorder(code, next, audio.current);
+        recorder.current.start().catch((e) => console.error(e));
       }
       if (next.state === "Disconnected") void finish(next.callEndReason?.code ? "Die Verbindung wurde getrennt." : null);
       bump();
@@ -393,6 +421,10 @@ export function MeetRoom({ code }: { code: string }) {
   async function finish(reason: string | null) {
     if (leaving.current && reason) reason = null;
     leaving.current = false;
+    setConnectedAt(null);
+    // Verbindung weg: Aufnahme freigeben (sonst schließt der Server sie später ab)
+    void recorder.current?.stop(false);
+    recorder.current = null;
     agent.current?.dispose().catch(() => {});
     agent.current = null;
     setCall(null);
@@ -405,6 +437,13 @@ export function MeetRoom({ code }: { code: string }) {
   async function join() {
     setJoinError(null);
     setPhase("joining");
+    // Im Klick anlegen, sonst bleibt der Ton in Safari stumm
+    try {
+      audio.current ??= new AudioContext();
+      void audio.current.resume().catch(() => {});
+    } catch {
+      // ohne Web Audio keine Aufnahme, der Call geht trotzdem
+    }
     try {
       const response = await fetch(`/api/meet/${code}`, {
         method: "POST",
@@ -444,6 +483,10 @@ export function MeetRoom({ code }: { code: string }) {
   async function leave() {
     if (!call) return;
     leaving.current = true;
+    // Letzte Person im Call schließt die Aufnahme ab, die Auswertung startet
+    const lastInCall = !call.remoteParticipants.some((p) => p.state !== "Disconnected");
+    void recorder.current?.stop(lastInCall);
+    recorder.current = null;
     await call.hangUp().catch(() => {});
   }
 
@@ -549,6 +592,7 @@ export function MeetRoom({ code }: { code: string }) {
               Aufnahme
             </span>
           )}
+          {connectedAt && !connecting && <CallTimer since={connectedAt} />}
           <span className="inline-flex items-center gap-1.5 text-xs text-snow/60">
             <Users className="h-3.5 w-3.5" /> {people.length + 1}
           </span>

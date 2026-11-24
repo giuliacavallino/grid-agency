@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, Bot, Check, ChevronDown, FileText, RotateCcw, Video, X } from "lucide-react";
+import { AlertTriangle, Bot, Check, ChevronDown, Copy, FileText, Mail, PenLine, RotateCcw, Video, X } from "lucide-react";
+import { DOMAIN } from "@/lib/config";
+import { graphErrorMessage, graphFor } from "@/lib/graph";
+import { useMe } from "@/components/access";
+import { signatureHtml, textToHtml } from "@/components/sales/mail/signature";
 import { cn as clsx } from "@/lib/cn";
 import { api } from "@/lib/api";
 import { revalidate, useRows } from "@/lib/data";
@@ -13,7 +17,15 @@ import { PageBar } from "@/components/sales/shell";
 // Zusammenfassung, Transkript und vorgeschlagene Aufgaben. Ein Klick
 // übernimmt einen Vorschlag als To-do ins Kundenprojekt.
 
-type Meeting = { id: string; title: string; starts_at: string; host_name: string | null; participants: { name: string }[] | null };
+type Meeting = {
+  id: string;
+  title: string;
+  starts_at: string;
+  host_name: string | null;
+  participants: { name: string }[] | null;
+  recurrence: { attendees?: string[] } | null;
+};
+type FollowUp = { subject: string; body: string; created_at: string };
 type Recording = {
   id: string;
   created_at: string;
@@ -24,6 +36,7 @@ type Recording = {
   chunks: unknown[] | null;
   transcript: { phrases?: { speaker: number | null; offset_ms: number; text: string }[] } | null;
   summary: string | null;
+  follow_up: FollowUp | null;
 };
 type Proposal = {
   id: string;
@@ -108,6 +121,76 @@ function ProposalRow({ proposal, projects, fixed }: { proposal: Proposal; projec
   );
 }
 
+/** Follow-up-Mail an den Kunden: legt sie als Entwurf (mit Signatur) im
+ * eigenen Outlook an, an die Kunden-Adressen aus der Einladung. Gesendet wird
+ * erst nach dem Gegenlesen aus Outlook. */
+function FollowUpBox({ recording, meeting }: { recording: Recording; meeting?: Meeting }) {
+  const toast = useToast();
+  const me = useMe();
+  const [busy, setBusy] = useState<"write" | "draft" | null>(null);
+  const [open, setOpen] = useState(false);
+  const followUp = recording.follow_up;
+  const to = (meeting?.recurrence?.attendees ?? []).filter((a) => !a.toLowerCase().endsWith(`@${DOMAIN}`));
+
+  async function draft() {
+    if (!followUp || !me.data) return;
+    setBusy("draft");
+    try {
+      const mailbox = me.data.email;
+      await graphFor(mailbox).saveDraft({ to, cc: [], subject: followUp.subject, body: `${textToHtml(followUp.body)}${signatureHtml(me.data.name || mailbox, mailbox)}`, html: true });
+      toast(`Entwurf in deinem Outlook unter „Entwürfe“ angelegt${to.length ? ` (an ${to.join(", ")})` : ", Empfänger bitte ergänzen"}`);
+    } catch (e) {
+      toast(graphErrorMessage(e), "error");
+    }
+    setBusy(null);
+  }
+
+  async function write() {
+    setBusy("write");
+    try {
+      await api<FollowUp>(`/api/aufgaben/aufnahmen/${recording.id}/follow-up`, { method: "POST" });
+      revalidate("/api/sales/meeting_recordings");
+      setOpen(true);
+      toast("Follow-up-Mail geschrieben");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Hat nicht geklappt", "error");
+    }
+    setBusy(null);
+  }
+
+  if (!followUp) {
+    return (
+      <div className="mt-4">
+        <Button size="sm" icon={<PenLine className="h-4 w-4" />} onClick={write} loading={busy === "write"} loadingText="Wird geschrieben …">
+          Follow-up-Mail schreiben
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-4 rounded-2xl border border-snow/10 bg-surface p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Mail className="h-4 w-4 text-snow/60" />
+        <button type="button" onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 truncate text-left text-sm font-medium hover:text-snow" aria-expanded={open}>
+          Follow-up: {followUp.subject}
+        </button>
+        <Button size="sm" variant="primary" icon={<Mail className="h-4 w-4" />} onClick={draft} loading={busy === "draft"} loadingText="Wird angelegt …" disabled={!me.data || busy !== null}>
+          Entwurf in Outlook
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={<Copy className="h-4 w-4" />}
+          aria-label="Text kopieren"
+          onClick={() => navigator.clipboard.writeText(`${followUp.subject}\n\n${followUp.body}`).then(() => toast("Kopiert"))}
+        />
+        <Button size="sm" variant="ghost" icon={<RotateCcw className="h-4 w-4" />} onClick={write} loading={busy === "write"} loadingText="…" disabled={busy !== null} aria-label="Neu schreiben" title="Neu schreiben (z. B. nach übernommenen Aufgaben)" />
+      </div>
+      {open && <p className="mt-3 text-sm whitespace-pre-line text-snow/75">{followUp.body}</p>}
+    </div>
+  );
+}
+
 function RecordingCard({ recording, meeting, proposals, projects, fixed }: { recording: Recording; meeting?: Meeting; proposals: Proposal[]; projects: TaskProject[]; fixed?: string }) {
   const toast = useToast();
   const [retrying, setRetrying] = useState(false);
@@ -162,6 +245,7 @@ function RecordingCard({ recording, meeting, proposals, projects, fixed }: { rec
       )}
 
       {recording.summary && <p className="mt-4 text-[15px] leading-relaxed text-snow/80">{recording.summary}</p>}
+      {recording.status === "fertig" && recording.summary && <FollowUpBox recording={recording} meeting={meeting} />}
 
       {proposals.length > 0 && (
         <ul className="mt-4 flex flex-col gap-2">
