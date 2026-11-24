@@ -17,6 +17,7 @@ import { Avatar, Button, Input, Spinner } from "@/components/ui";
 import { MeetMark, MeetShell } from "./brand";
 import { CallDone } from "./done";
 import { WaitingStage } from "./waiting";
+import { CallRecorder } from "./recorder";
 
 // Video-Call unter meet.grid-agency.de/<code> mit Azure Communication
 // Services: Vorschau mit Kamera und Mikro, Name eintragen, beitreten. Das
@@ -267,6 +268,15 @@ export function MeetRoom({ code }: { code: string }) {
   const agent = useRef<CallAgent | null>(null);
   const cameraInfo = useRef<VideoDeviceInfo | null>(null);
   const leaving = useRef(false);
+  const audio = useRef<AudioContext | null>(null);
+  const recorder = useRef<CallRecorder | null>(null);
+
+  // Tab zu: Aufnahme für andere im Call freigeben
+  useEffect(() => {
+    const release = () => recorder.current?.release();
+    window.addEventListener("pagehide", release);
+    return () => window.removeEventListener("pagehide", release);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/meet/${code}`, { cache: "no-store" })
@@ -397,14 +407,11 @@ export function MeetRoom({ code }: { code: string }) {
     next.on("stateChanged", () => {
       // Aufnahme starten, sobald der Anruf steht (der Server startet sie nur einmal)
       if (next.state === "Connected") setConnectedAt((at) => at ?? Date.now());
-      if (next.state === "Connected" && view?.recording && !recordingAsked) {
+      // Aufnahme im Browser: einer im Call nimmt auf, die anderen übernehmen bei Bedarf
+      if (next.state === "Connected" && view?.recording && !recordingAsked && audio.current) {
         recordingAsked = true;
-        next.info
-          .getServerCallId()
-          .then((serverCallId) =>
-            fetch(`/api/meet/${code}/aufnahme`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ serverCallId }) })
-          )
-          .catch((e) => console.error(e));
+        recorder.current = new CallRecorder(code, next, audio.current);
+        recorder.current.start().catch((e) => console.error(e));
       }
       if (next.state === "Disconnected") void finish(next.callEndReason?.code ? "Die Verbindung wurde getrennt." : null);
       bump();
@@ -415,6 +422,9 @@ export function MeetRoom({ code }: { code: string }) {
     if (leaving.current && reason) reason = null;
     leaving.current = false;
     setConnectedAt(null);
+    // Verbindung weg: Aufnahme freigeben (sonst schließt der Server sie später ab)
+    void recorder.current?.stop(false);
+    recorder.current = null;
     agent.current?.dispose().catch(() => {});
     agent.current = null;
     setCall(null);
@@ -427,6 +437,13 @@ export function MeetRoom({ code }: { code: string }) {
   async function join() {
     setJoinError(null);
     setPhase("joining");
+    // Im Klick anlegen, sonst bleibt der Ton in Safari stumm
+    try {
+      audio.current ??= new AudioContext();
+      void audio.current.resume().catch(() => {});
+    } catch {
+      // ohne Web Audio keine Aufnahme, der Call geht trotzdem
+    }
     try {
       const response = await fetch(`/api/meet/${code}`, {
         method: "POST",
@@ -466,6 +483,10 @@ export function MeetRoom({ code }: { code: string }) {
   async function leave() {
     if (!call) return;
     leaving.current = true;
+    // Letzte Person im Call schließt die Aufnahme ab, die Auswertung startet
+    const lastInCall = !call.remoteParticipants.some((p) => p.state !== "Disconnected");
+    void recorder.current?.stop(lastInCall);
+    recorder.current = null;
     await call.hangUp().catch(() => {});
   }
 

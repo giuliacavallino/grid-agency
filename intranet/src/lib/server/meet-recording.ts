@@ -4,14 +4,18 @@ import { db, sb } from "./db";
 import { meetEnabled } from "./meet";
 
 // Aufnahme und Auswertung der Calls unter meet.grid-agency.de:
-// 1. Sobald jemand im Call ist, startet der Server die Tonaufnahme (ACS Call
-//    Recording, mp3, gemischt) für die serverCallId.
-// 2. Ist die Datei fertig, schickt Azure Event Grid „RecordingFileStatus-
-//    Updated“ an /api/webhooks/acs. Wir laden die Datei, transkribieren sie
-//    mit Azure AI Speech (Fast Transcription, Sprechererkennung) und löschen
-//    sie danach bei Azure.
-// 3. Azure OpenAI fasst zusammen und schlägt Aufgaben vor; die landen in
-//    Aufgaben → Aus Calls zur Freigabe.
+// 1. Sobald der Call steht, übernimmt ein Browser im Call die Aufnahme
+//    (claimRecorder): Er mischt eigenes Mikro und alle anderen und lädt den
+//    Ton alle 30 Sekunden hoch (storePart, Bucket meet-audio). Verlässt er
+//    den Call, übernimmt ein anderer Browser.
+// 2. Endet der Call (letzte Person geht) oder kommt 5 Minuten nichts mehr
+//    (Cron /api/cron/aufnahmen), werden die Teile zusammengesetzt und mit
+//    Azure AI Speech (Fast Transcription, Sprechererkennung) transkribiert;
+//    danach wird der Ton gelöscht.
+// 3. Azure OpenAI fasst zusammen und schlägt Aufgaben vor; die landen im
+//    Kundenprojekt unter Aufgaben → Aus Calls, dazu die Follow-up-Mail.
+// Früher lief die Aufnahme über ACS Call Recording + Event Grid; der Weg
+// (startRecording/recordingReady) bleibt für alte Aufnahmen bestehen.
 
 /** Aufnahme läuft nur, wenn auch Transkript und Auswertung eingerichtet sind */
 export const recordingEnabled = () =>
@@ -78,6 +82,145 @@ export async function recordingReady(event: { subject?: string; data?: Record<st
   return (data?.id as string | undefined) ?? null;
 }
 
+// ---------- Aufnahme im Browser ----------
+
+const BUCKET = "meet-audio";
+/** Ohne neuen Teil so lange gilt der aufnehmende Browser als weg */
+const TAKEOVER_MS = 90_000;
+/** Ohne neuen Teil so lange gilt der Call als beendet (Cron) */
+export const STALE_MS = 5 * 60_000;
+const MAX_PARTS = 600; // 5 Stunden à 30 Sekunden
+const MAX_PART_BYTES = 4 * 1024 * 1024;
+const SEGMENT = /^[a-z0-9-]{6,40}$/;
+
+export class RecordingError extends Error {
+  constructor(message: string, public status = 400) {
+    super(message);
+  }
+}
+
+type BrowserRecording = { id: string; meeting_id: string; status: string; recorder: string | null; parts: number; last_chunk_at: string | null; source: string };
+
+/** Ein Browser bewirbt sich als Aufnehmender. Zusage, wenn niemand aufnimmt
+ * oder der bisherige seit TAKEOVER_MS nichts mehr geschickt hat. */
+export async function claimRecorder(meetingId: string, serverCallId: string, segment: string) {
+  if (!recordingEnabled()) return { recording: false as const };
+  if (!SEGMENT.test(segment)) throw new RecordingError("Ungültige Sitzung");
+  const select = () => sb().from("meeting_recordings").select("id,meeting_id,status,recorder,parts,last_chunk_at,source").eq("server_call_id", serverCallId).maybeSingle();
+  let row = (await select()).data as BrowserRecording | null;
+  if (!row) {
+    const { data } = await sb()
+      .from("meeting_recordings")
+      .upsert(
+        { meeting_id: meetingId, server_call_id: serverCallId, source: "browser", status: "laeuft", recorder: segment, chunks: [], last_chunk_at: new Date().toISOString() },
+        { onConflict: "server_call_id", ignoreDuplicates: true }
+      )
+      .select("id")
+      .maybeSingle();
+    if (data) return { recording: true as const, id: data.id as string, recorder: true };
+    row = (await select()).data as BrowserRecording | null;
+    if (!row) throw new RecordingError("Aufnahme nicht angelegt", 500);
+  }
+  if (row.meeting_id !== meetingId) throw new RecordingError("Falscher Raum", 403);
+  if (row.status !== "laeuft") return { recording: true as const, id: row.id, recorder: false };
+  if (row.recorder === segment) return { recording: true as const, id: row.id, recorder: true };
+  const free = !row.recorder || !row.last_chunk_at || Date.now() - Date.parse(row.last_chunk_at) > TAKEOVER_MS;
+  if (!free) return { recording: true as const, id: row.id, recorder: false };
+  // Übernehmen, nur wenn sich zwischendurch nichts geändert hat
+  let update = sb().from("meeting_recordings").update({ recorder: segment, source: "browser", chunks: [], last_chunk_at: new Date().toISOString() }).eq("id", row.id).eq("status", "laeuft");
+  update = row.recorder ? update.eq("recorder", row.recorder) : update.is("recorder", null);
+  const { data } = await update.select("id").maybeSingle();
+  return { recording: true as const, id: row.id, recorder: !!data };
+}
+
+async function browserRow(id: string, meetingId: string) {
+  const { data } = await sb().from("meeting_recordings").select("id,meeting_id,status,recorder,parts,last_chunk_at,source").eq("id", id).maybeSingle();
+  const row = data as BrowserRecording | null;
+  if (!row || row.meeting_id !== meetingId) throw new RecordingError("Aufnahme nicht gefunden", 404);
+  return row;
+}
+
+/** Ein Teil (30 Sekunden) vom aufnehmenden Browser */
+export async function storePart(id: string, meetingId: string, segment: string, index: number, audio: Buffer, contentType: string) {
+  const row = await browserRow(id, meetingId);
+  if (row.status !== "laeuft") throw new RecordingError("Aufnahme ist beendet", 409);
+  if (row.recorder !== segment) throw new RecordingError("Ein anderer Browser nimmt auf", 409);
+  if (!Number.isInteger(index) || index < 0 || index >= MAX_PARTS) throw new RecordingError("Ungültiger Teil");
+  if (!audio.length || audio.length > MAX_PART_BYTES) throw new RecordingError("Teil zu groß");
+  const type = contentType.startsWith("audio/mp4") ? "audio/mp4" : "audio/webm";
+  const { error } = await sb()
+    .storage.from(BUCKET)
+    .upload(`${id}/${segment}/${String(index).padStart(5, "0")}.${type === "audio/mp4" ? "m4a" : "webm"}`, audio, { contentType: type, upsert: true });
+  if (error) throw new RecordingError(`Speichern fehlgeschlagen: ${error.message}`, 500);
+  await sb().from("meeting_recordings").update({ parts: row.parts + 1, last_chunk_at: new Date().toISOString() }).eq("id", id);
+}
+
+/** Aufnehmender Browser verlässt den Call: frei für andere, oder (als
+ * Letzte*r im Call) Aufnahme abschließen. Liefert die ID zum Auswerten. */
+export async function releaseRecorder(id: string, meetingId: string, segment: string, end: boolean) {
+  const row = await browserRow(id, meetingId);
+  if (row.status !== "laeuft" || row.recorder !== segment) return null;
+  if (!end) {
+    await sb().from("meeting_recordings").update({ recorder: null }).eq("id", id).eq("recorder", segment);
+    return null;
+  }
+  return startProcessing(id);
+}
+
+/** Aufnahme zur Auswertung sperren (nur einmal) */
+async function startProcessing(id: string) {
+  const { data } = await sb().from("meeting_recordings").update({ status: "verarbeitung", recorder: null }).eq("id", id).eq("status", "laeuft").select("id,parts").maybeSingle();
+  if (!data) return null;
+  if (!data.parts) {
+    await db().update("meeting_recordings", id, { status: "fehler", error: "Es kam kein Ton an (Mikrofon-Freigabe im Browser?)." });
+    return null;
+  }
+  return id;
+}
+
+/** Cron: Browser-Aufnahmen, zu denen seit STALE_MS nichts mehr kam (Tab
+ * geschlossen, Verbindung weg), abschließen */
+export async function staleRecordings() {
+  const { data } = await sb()
+    .from("meeting_recordings")
+    .select("id")
+    .eq("source", "browser")
+    .eq("status", "laeuft")
+    .lt("last_chunk_at", new Date(Date.now() - STALE_MS).toISOString())
+    .limit(3);
+  const ids: string[] = [];
+  for (const row of (data ?? []) as { id: string }[]) {
+    const id = await startProcessing(row.id);
+    if (id) ids.push(id);
+  }
+  return ids;
+}
+
+/** Teile je Segment in Reihenfolge, zusammengesetzt zu einer Datei je Segment */
+async function browserAudio(id: string) {
+  const storage = sb().storage.from(BUCKET);
+  const { data: segments, error } = await storage.list(id, { limit: 100, sortBy: { column: "name", order: "asc" } });
+  if (error) throw new Error(error.message);
+  const files: { audio: Buffer; type: string; name: string }[] = [];
+  const paths: string[] = [];
+  for (const segment of segments ?? []) {
+    const { data: parts } = await storage.list(`${id}/${segment.name}`, { limit: 1000, sortBy: { column: "name", order: "asc" } });
+    const buffers: Buffer[] = [];
+    let mp4 = false;
+    for (const part of parts ?? []) {
+      const path = `${id}/${segment.name}/${part.name}`;
+      const { data: blob, error: downloadError } = await storage.download(path);
+      if (downloadError || !blob) throw new Error(`Teil ${path} fehlt: ${downloadError?.message ?? ""}`);
+      buffers.push(Buffer.from(await blob.arrayBuffer()));
+      paths.push(path);
+      mp4 ||= part.name.endsWith(".m4a");
+    }
+    if (buffers.length) files.push({ audio: Buffer.concat(buffers), type: mp4 ? "audio/mp4" : "audio/webm", name: mp4 ? "call.m4a" : "call.webm" });
+  }
+  // Segmente sind Ordner: Startzeit vorne im Namen, daher schon sortiert
+  return { files, remove: () => (paths.length ? storage.remove(paths) : Promise.resolve()) };
+}
+
 async function download(location: string) {
   const stream = await automation().getCallRecording().downloadStreaming(location);
   const parts: Buffer[] = [];
@@ -85,10 +228,10 @@ async function download(location: string) {
   return Buffer.concat(parts);
 }
 
-async function transcribe(audio: Buffer): Promise<{ phrases: Phrase[]; duration_ms: number }> {
+async function transcribe(audio: Buffer, file = { type: "audio/mpeg", name: "call.mp3" }): Promise<{ phrases: Phrase[]; duration_ms: number }> {
   const base = process.env.AZURE_SPEECH_ENDPOINT?.replace(/\/$/, "") ?? `https://${process.env.AZURE_SPEECH_REGION}.api.cognitive.microsoft.com`;
   const form = new FormData();
-  form.append("audio", new Blob([new Uint8Array(audio)], { type: "audio/mpeg" }), "call.mp3");
+  form.append("audio", new Blob([new Uint8Array(audio)], { type: file.type }), file.name);
   form.append("definition", JSON.stringify({ locales: ["de-DE"], diarization: { enabled: true, maxSpeakers: 6 }, profanityFilterMode: "None" }));
   const response = await fetch(`${base}/speechtotext/transcriptions:transcribe?api-version=2024-11-15`, {
     method: "POST",
@@ -247,17 +390,27 @@ export async function processRecording(recordingId: string) {
   const recording = await db().get("meeting_recordings", recordingId);
   if (!recording) return;
   try {
-    const chunks = (recording.chunks as Chunk[] | null) ?? [];
     const phrases: Phrase[] = [];
     let offset = 0;
-    for (const chunk of chunks) {
-      const part = await transcribe(await download(chunk.contentLocation));
-      phrases.push(...part.phrases.map((p) => ({ ...p, offset_ms: p.offset_ms + offset })));
-      offset += part.duration_ms;
-    }
-    // Tonaufnahme nicht aufheben, nur das Transkript
-    for (const chunk of chunks) {
-      if (chunk.deleteLocation) await automation().getCallRecording().delete(chunk.deleteLocation).catch((e) => console.error(e));
+    if (recording.source === "browser") {
+      const { files, remove } = await browserAudio(recordingId);
+      for (const file of files) {
+        const part = await transcribe(file.audio, { type: file.type, name: file.name });
+        phrases.push(...part.phrases.map((p) => ({ ...p, offset_ms: p.offset_ms + offset })));
+        offset += part.duration_ms;
+      }
+      // Tonaufnahme nicht aufheben, nur das Transkript
+      await remove();
+    } else {
+      const chunks = (recording.chunks as Chunk[] | null) ?? [];
+      for (const chunk of chunks) {
+        const part = await transcribe(await download(chunk.contentLocation));
+        phrases.push(...part.phrases.map((p) => ({ ...p, offset_ms: p.offset_ms + offset })));
+        offset += part.duration_ms;
+      }
+      for (const chunk of chunks) {
+        if (chunk.deleteLocation) await automation().getCallRecording().delete(chunk.deleteLocation).catch((e) => console.error(e));
+      }
     }
 
     const meeting = (await db().get("meetings", String(recording.meeting_id)))!;
@@ -267,14 +420,31 @@ export async function processRecording(recordingId: string) {
     const project = await projectFor(meeting);
     const now = Date.now() / 1000;
     if (result.tasks.length) {
-      const { error } = await sb()
+      // Mit Kundenprojekt direkt als To-dos übernehmen, sonst zur Auswahl
+      // unter Aufgaben → Aus Calls
+      const decided = project ? { status: "uebernommen", decided_by: "Automatisch aus dem Call", decided_at: new Date().toISOString() } : {};
+      const { data: inserted, error } = await sb()
         .from("meeting_tasks")
-        .insert(result.tasks.map((t, i) => ({ recording_id: recordingId, ...t, project_id: project, position: now + i })));
+        .insert(result.tasks.map((t, i) => ({ recording_id: recordingId, ...t, project_id: project, position: now + i, ...decided })))
+        .select("id,title,notes,owner,due_on");
       if (error) throw new Error(error.message);
+      if (project) {
+        for (const proposal of (inserted ?? []) as (Proposal & { id: string })[]) {
+          const task = await db().insert("tasks", {
+            project_id: project,
+            title: (proposal.owner === "kunde" ? `Kunde: ${proposal.title}` : proposal.title).slice(0, 200),
+            notes: proposal.notes || null,
+            due_on: proposal.due_on,
+            meeting_task_id: proposal.id,
+          });
+          await db().update("meeting_tasks", proposal.id, { task_id: task.id });
+        }
+      }
     }
     await db().update("meeting_recordings", recordingId, {
       status: "fertig",
       error: null,
+      duration_ms: recording.duration_ms ?? (offset || null),
       transcript: { phrases },
       chunks: null,
       summary: result.summary,
