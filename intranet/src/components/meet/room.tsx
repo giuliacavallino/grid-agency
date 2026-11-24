@@ -59,6 +59,25 @@ function StreamView({ stream, mirrored, fit }: { stream: LocalVideoStream | Remo
   return <div ref={ref} className="absolute inset-0 [&_video]:h-full [&_video]:w-full [&>div]:h-full" />;
 }
 
+/** Dauer des Calls (ab dem eigenen Beitritt), läuft jede Sekunde mit */
+function CallTimer({ since }: { since: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const total = Math.max(0, Math.floor((now - since) / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = String(total % 60).padStart(2, "0");
+  const text = h ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
+  return (
+    <span className="text-xs font-medium text-snow/70 tabular-nums" title="Dauer des Calls" aria-label={`Dauer ${text}`}>
+      {text}
+    </span>
+  );
+}
+
 function ControlButton({ label, active = true, danger, badge, onClick, children }: { label: string; active?: boolean; danger?: boolean; badge?: number; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -228,6 +247,7 @@ export function MeetRoom({ code }: { code: string }) {
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("lobby");
+  const [connectedAt, setConnectedAt] = useState<number | null>(null);
   const [ended, setEnded] = useState<string | null>(null);
   const [gone, setGone] = useState(false);
   const [name, setName] = useState("");
@@ -376,6 +396,7 @@ export function MeetRoom({ code }: { code: string }) {
     let recordingAsked = false;
     next.on("stateChanged", () => {
       // Aufnahme starten, sobald der Anruf steht (der Server startet sie nur einmal)
+      if (next.state === "Connected") setConnectedAt((at) => at ?? Date.now());
       if (next.state === "Connected" && view?.recording && !recordingAsked) {
         recordingAsked = true;
         next.info
@@ -393,6 +414,7 @@ export function MeetRoom({ code }: { code: string }) {
   async function finish(reason: string | null) {
     if (leaving.current && reason) reason = null;
     leaving.current = false;
+    setConnectedAt(null);
     agent.current?.dispose().catch(() => {});
     agent.current = null;
     setCall(null);
@@ -549,6 +571,7 @@ export function MeetRoom({ code }: { code: string }) {
               Aufnahme
             </span>
           )}
+          {connectedAt && !connecting && <CallTimer since={connectedAt} />}
           <span className="inline-flex items-center gap-1.5 text-xs text-snow/60">
             <Users className="h-3.5 w-3.5" /> {people.length + 1}
           </span>
