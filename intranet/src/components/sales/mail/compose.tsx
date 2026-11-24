@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { signatureHtml, textToHtml } from "./signature";
 import { CircleAlert, MailCheck, Paperclip, Save, Send, Trash2, Video, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -17,24 +18,12 @@ export type ComposeState =
 
 const PREFIX = { reply: "AW: ", replyAll: "AW: ", forward: "WG: " } as const;
 
-/** Vorbelegter Klartext (z. B. Absage aus der Pipeline) als Absätze */
-const textToHtml = (text?: string) =>
-  (text ?? "")
-    .split(/\n{2,}/)
-    .filter((p) => p.trim())
-    .map((p) => `<p>${p.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p><p><br></p>`)
-    .join("");
 const MAX_FILES = 20 * 1024 * 1024; // Graph nimmt über sendMail rund 25 MB (Base64)
 
 type FileItem = FileAttachment & { size: number };
 
-const escape = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /** Signatur im Stil der Agentur: Gruß, Name, Firma */
-function signatureHtml(name: string, mailbox: string) {
-  return `<p style="margin:16px 0 0">Beste Grüße<br><strong>${escape(name)}</strong><br>GRID AGENCY · <a href="https://grid-agency.de">grid-agency.de</a><br><span style="color:#6b665f">${escape(mailbox)}</span></p>`;
-}
-
 /** Verfassen wie in Outlook, im eigenen Fenster: neue Mail, Antwort oder
  * Weiterleitung. Antworten hängen die Originalnachricht automatisch an. */
 export function Compose({
