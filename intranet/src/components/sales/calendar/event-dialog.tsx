@@ -10,6 +10,7 @@ import { useCan } from "@/components/access";
 import { RichEditor, type RichEditorHandle } from "@/components/rich-editor";
 import { Button, Dialog, useToast } from "@/components/ui";
 import { isEmail, parseAddresses } from "../mail/format";
+import { AddressField } from "./address-field";
 import { JourFixForm, Switch } from "../jourfix";
 import { addDays, toInput } from "./dates";
 
@@ -149,7 +150,14 @@ function EventForm({
   const label = "pt-3 text-[13px] font-medium text-snow/60";
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3">
+    <form
+      onSubmit={submit}
+      // Enter in einem Feld verschickt keine Einladung; nur der Button
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target instanceof HTMLInputElement) e.preventDefault();
+      }}
+      className="flex flex-col gap-3"
+    >
       <p className="-mt-2 text-[13px] text-snow/55">
         Im Kalender von {calendar?.mailbox ?? "–"}; Microsoft schickt die Einladung.
       </p>
@@ -162,12 +170,12 @@ function EventForm({
         <label htmlFor="ev-required" className={label}>
           Teilnehmer
         </label>
-        <input id="ev-required" value={required} onChange={(e) => setRequired(e.target.value)} placeholder="name@firma.de, …" className={input} />
+        <AddressField id="ev-required" value={required} onChange={setRequired} placeholder="name@firma.de – Enter für weitere" />
 
         <label htmlFor="ev-optional" className={label}>
           Optional
         </label>
-        <input id="ev-optional" value={optional} onChange={(e) => setOptional(e.target.value)} className={input} />
+        <AddressField id="ev-optional" value={optional} onChange={setOptional} />
 
         <span className={label}>Wann</span>
         <div className="flex flex-wrap items-center gap-2">

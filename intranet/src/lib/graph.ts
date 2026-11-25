@@ -140,6 +140,8 @@ export interface GraphApi {
   events(calendar: Calendar, start: Date, end: Date): Promise<CalEvent[]>;
   createEvent(calendarId: string, input: NewEvent): Promise<void>;
   deleteEvent(id: string): Promise<void>;
+  /** Als Organisator absagen: Eingeladene bekommen eine Absage (mit Text), der Termin verschwindet */
+  cancelEvent(id: string, comment: string): Promise<void>;
 }
 
 // ---------- Fehler ----------
@@ -391,6 +393,9 @@ function realGraph(mailbox: string): GraphApi {
 
     async deleteEvent(id) {
       await cal(`/events/${id}`, { method: "DELETE" });
+    },
+    async cancelEvent(id, comment) {
+      await cal(`/events/${id}/cancel`, { method: "POST", body: JSON.stringify({ comment }) });
     },
   };
 }

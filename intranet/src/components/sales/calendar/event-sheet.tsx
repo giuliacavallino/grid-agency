@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CalendarDays, Clock, ExternalLink, MapPin, Pencil, Repeat, Trash2, Users, Video } from "lucide-react";
 import { graphFor, type CalEvent, type Calendar } from "@/lib/graph";
 import { useCan } from "@/components/access";
-import { Button, Dialog, Sheet, useToast } from "@/components/ui";
+import { Button, Dialog, Sheet, Textarea, useToast } from "@/components/ui";
 import { JourFixEditDialog, useJourFixFor } from "../jourfix";
 import { addDays, sameDay, time } from "./dates";
 
@@ -43,14 +43,22 @@ export function EventSheet({
   // Jour fixe (Serie mit festem Meet-Link) lassen sich hier bearbeiten
   const jourFix = useJourFixFor(event, useCan("sales"));
   const [busy, setBusy] = useState(false);
+  const [comment, setComment] = useState("Leider muss ich den Termin absagen. Die Einladung ging versehentlich raus.");
   const toast = useToast();
+  // Eingeladene außer dem eigenen Kalender: dann als Absage schicken
+  const invited = (event?.attendees ?? []).filter((a) => a.address && a.address.toLowerCase() !== calendar?.mailbox.toLowerCase());
 
   async function remove() {
     if (!event || !calendar) return;
     setBusy(true);
     try {
-      await graphFor(calendar.mailbox).deleteEvent(event.id);
-      toast("Termin gelöscht");
+      if (invited.length) {
+        await graphFor(calendar.mailbox).cancelEvent(event.id, comment.trim());
+        toast(`Abgesagt, ${invited.map((a) => a.name || a.address).join(", ")} ${invited.length === 1 ? "bekommt" : "bekommen"} die Absage`);
+      } else {
+        await graphFor(calendar.mailbox).deleteEvent(event.id);
+        toast("Termin gelöscht");
+      }
       setConfirm(false);
       onDeleted();
     } catch {
@@ -133,7 +141,7 @@ export function EventSheet({
             )}
             {calendar?.canEdit && (
               <Button variant="ghost" className="text-error" icon={<Trash2 className="h-4 w-4" />} onClick={() => setConfirm(true)}>
-                Löschen
+                {event.attendees.some((a) => a.address && a.address.toLowerCase() !== calendar.mailbox.toLowerCase()) ? "Absagen" : "Löschen"}
               </Button>
             )}
           </div>
@@ -153,21 +161,29 @@ export function EventSheet({
       <Dialog
         open={confirm}
         onClose={() => setConfirm(false)}
-        title="Termin löschen?"
+        title={invited.length ? "Termin absagen?" : "Termin löschen?"}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirm(false)}>
               Abbrechen
             </Button>
-            <Button variant="danger" loading={busy} loadingText="Wird gelöscht …" onClick={remove}>
-              Löschen
+            <Button variant="danger" loading={busy} loadingText={invited.length ? "Absage wird gesendet …" : "Wird gelöscht …"} onClick={remove}>
+              {invited.length ? "Absage senden" : "Löschen"}
             </Button>
           </>
         }
       >
-        <p className="text-sm text-snow/60">
-          „{event?.subject}“ wird aus dem Kalender {calendar?.mailbox} entfernt. Eingeladene Personen bekommen keine Absage.
-        </p>
+        {invited.length ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-snow/60">
+              „{event?.subject}“ wird aus dem Kalender {calendar?.mailbox} entfernt. {invited.map((a) => a.name || a.address).join(", ")}{" "}
+              {invited.length === 1 ? "bekommt" : "bekommen"} eine Absage mit dieser Nachricht:
+            </p>
+            <Textarea value={comment} onChange={(e) => setComment(e.target.value)} aria-label="Nachricht zur Absage" className="min-h-24" />
+          </div>
+        ) : (
+          <p className="text-sm text-snow/60">„{event?.subject}“ wird aus dem Kalender {calendar?.mailbox} entfernt.</p>
+        )}
       </Dialog>
     </Sheet>
   );
