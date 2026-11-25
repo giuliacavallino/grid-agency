@@ -117,8 +117,11 @@ export function TopBar() {
 
           <Link href="/" aria-label="Zur Übersicht" className="group relative flex shrink-0 items-center">
             {/* Handy: nur das Logo, sonst passen Konto und Menü nicht in die Leiste */}
-            <span className="logo-rainbow sm:hidden">
-              <Logo className="h-5" priority />
+            {/* Eigene Hülle: .logo-rainbow setzt display und würde sm:hidden überschreiben */}
+            <span className="sm:hidden">
+              <span className="logo-rainbow">
+                <Logo className="h-5" priority />
+              </span>
             </span>
             <ProductMark product="Intranet" size="sm" rainbow priority className="hidden sm:inline-flex lg:hidden" />
             <ProductMark product="Intranet" rainbow priority className="hidden lg:inline-flex" />
