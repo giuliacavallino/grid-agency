@@ -10,6 +10,7 @@ import { useCan } from "@/components/access";
 import { RichEditor, type RichEditorHandle } from "@/components/rich-editor";
 import { Button, Dialog, useToast } from "@/components/ui";
 import { isEmail, parseAddresses } from "../mail/format";
+import { AddressField } from "./address-field";
 import { JourFixForm, Switch } from "../jourfix";
 import { addDays, toInput } from "./dates";
 
@@ -169,12 +170,12 @@ function EventForm({
         <label htmlFor="ev-required" className={label}>
           Teilnehmer
         </label>
-        <input id="ev-required" value={required} onChange={(e) => setRequired(e.target.value)} placeholder="name@firma.de, …" className={input} />
+        <AddressField id="ev-required" value={required} onChange={setRequired} placeholder="name@firma.de – Enter für weitere" />
 
         <label htmlFor="ev-optional" className={label}>
           Optional
         </label>
-        <input id="ev-optional" value={optional} onChange={(e) => setOptional(e.target.value)} className={input} />
+        <AddressField id="ev-optional" value={optional} onChange={setOptional} />
 
         <span className={label}>Wann</span>
         <div className="flex flex-wrap items-center gap-2">
