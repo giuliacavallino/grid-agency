@@ -490,5 +490,11 @@ export function demoGraphFor(mailbox: string): GraphApi {
       const index = calendarEvents.findIndex((e) => e.id === id);
       if (index >= 0) calendarEvents.splice(index, 1);
     },
+
+    async cancelEvent(id) {
+      await wait(400);
+      const index = calendarEvents.findIndex((e) => e.id === id);
+      if (index >= 0) calendarEvents.splice(index, 1);
+    },
   };
 }

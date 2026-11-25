@@ -149,7 +149,14 @@ function EventForm({
   const label = "pt-3 text-[13px] font-medium text-snow/60";
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3">
+    <form
+      onSubmit={submit}
+      // Enter in einem Feld verschickt keine Einladung; nur der Button
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target instanceof HTMLInputElement) e.preventDefault();
+      }}
+      className="flex flex-col gap-3"
+    >
       <p className="-mt-2 text-[13px] text-snow/55">
         Im Kalender von {calendar?.mailbox ?? "–"}; Microsoft schickt die Einladung.
       </p>
