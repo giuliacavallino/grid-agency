@@ -137,6 +137,20 @@ export async function roomId(code: string) {
   return (await room(code)).id;
 }
 
+/** Einzeltermin verschoben: Zeit des Raums anpassen (Serien nicht) */
+export async function moveRoom(code: string, start: number, minutes: number, title?: string) {
+  const data = await room(code);
+  if (data.recurrence) return;
+  await sb()
+    .from("meetings")
+    .update({
+      starts_at: new Date(start).toISOString(),
+      ends_at: new Date(start + minutes * 60_000).toISOString(),
+      ...(title ? { title: title.slice(0, 200) } : {}),
+    })
+    .eq("id", data.id);
+}
+
 /** Raum für die Aufnahme: ID und ob aufgezeichnet werden darf */
 export async function recordingRoom(code: string) {
   const data = await room(code);

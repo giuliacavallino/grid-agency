@@ -140,6 +140,8 @@ export interface GraphApi {
   events(calendar: Calendar, start: Date, end: Date): Promise<CalEvent[]>;
   createEvent(calendarId: string, input: NewEvent): Promise<void>;
   deleteEvent(id: string): Promise<void>;
+  /** Termin ändern (Titel, Zeit); als Organisator gehen Aktualisierungen an alle Eingeladenen */
+  updateEvent(id: string, patch: { subject?: string; start: Date; end: Date }): Promise<void>;
   /** Als Organisator absagen: Eingeladene bekommen eine Absage (mit Text), der Termin verschwindet */
   cancelEvent(id: string, comment: string): Promise<void>;
 }
@@ -393,6 +395,16 @@ function realGraph(mailbox: string): GraphApi {
 
     async deleteEvent(id) {
       await cal(`/events/${id}`, { method: "DELETE" });
+    },
+    async updateEvent(id, patch) {
+      await cal(`/events/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          ...(patch.subject ? { subject: patch.subject } : {}),
+          start: { dateTime: localString(patch.start), timeZone: "Europe/Berlin" },
+          end: { dateTime: localString(patch.end), timeZone: "Europe/Berlin" },
+        }),
+      });
     },
     async cancelEvent(id, comment) {
       await cal(`/events/${id}/cancel`, { method: "POST", body: JSON.stringify({ comment }) });

@@ -491,6 +491,12 @@ export function demoGraphFor(mailbox: string): GraphApi {
       if (index >= 0) calendarEvents.splice(index, 1);
     },
 
+    async updateEvent(id, patch) {
+      await wait(400);
+      const event = calendarEvents.find((e) => e.id === id);
+      if (event) Object.assign(event, { start: patch.start, end: patch.end, ...(patch.subject ? { subject: patch.subject } : {}) });
+    },
+
     async cancelEvent(id) {
       await wait(400);
       const index = calendarEvents.findIndex((e) => e.id === id);
