@@ -34,6 +34,7 @@
     { "path": "/api/cron/marketing", "schedule": "20 5-20 * * *" },
     { "path": "/api/cron/tage", "schedule": "45 6-20 * * *" },
     { "path": "/api/cron/angebote", "schedule": "10 6-20 * * *" },
+    { "path": "/api/cron/google", "schedule": "30 5 * * 1" },
     { "path": "/api/cron/aufnahmen", "schedule": "*/5 * * * *" }
   ]
 }

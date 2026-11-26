@@ -1,6 +1,8 @@
 import "server-only";
 import { DEMO } from "@/lib/config";
 import {
+  buildUpdate,
+  cleanGoogleSettings,
   LOCATION_FIELDS,
   LOCATION_STATUS,
   TODO_FIELDS,
@@ -8,11 +10,16 @@ import {
   TODO_STATUS,
   type GoogleBoard,
   type GoogleLocation,
+  type GoogleSettings,
+  type GoogleUpdateRow,
+  type GoogleUpdateSettings,
   type GoogleTodo,
   type PortalGoogle,
 } from "@/lib/google";
 import { check } from "./billing";
 import { sb } from "./db";
+import { appGraph, mailboxPath } from "./graph-app";
+import { listWorkspaces, updateWorkspaceSettings, workspaceSettings } from "./social/store";
 
 // Google-Betreuung je Kundenakte (Tabellen google_locations, google_todos).
 
@@ -215,4 +222,84 @@ export async function deleteItem(workspaceId: string, kind: Kind, id: string) {
   }
   check(await sb().from(TABLE[kind]).delete().eq("workspace_id", workspaceId).eq("id", id));
   return getBoard(workspaceId);
+}
+
+// ---------- Einstellungen, Wochen-Update, Montags-Entwurf ----------
+
+const demoUpdates: GoogleUpdateRow[] = [];
+
+export async function getGoogleSettings(workspaceId: string): Promise<GoogleSettings> {
+  const settings = cleanGoogleSettings((await workspaceSettings(workspaceId)).google);
+  if (DEMO && !settings.make_scenarios.length) {
+    return {
+      make_scenarios: [1],
+      update: { ...settings.update, to: settings.update.to.length ? settings.update.to : ["kunde@beispiel.de"], greeting: settings.update.to.length ? settings.update.greeting : "Hallo Anna, hallo Ben,", mailbox: settings.update.mailbox || "vorschau@grid-agency.de", reviews: true },
+    };
+  }
+  return settings;
+}
+
+export async function saveUpdateSettings(workspaceId: string, input: Partial<GoogleUpdateSettings>) {
+  const current = cleanGoogleSettings((await workspaceSettings(workspaceId)).google);
+  const next = cleanGoogleSettings({ ...current, update: { ...current.update, ...input } });
+  await updateWorkspaceSettings(workspaceId, { google: next });
+  return next;
+}
+
+export async function listUpdates(workspaceId: string): Promise<GoogleUpdateRow[]> {
+  if (DEMO) return demoUpdates.filter((u) => u.workspace_id === workspaceId).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return check(await sb().from("google_updates").select("*").eq("workspace_id", workspaceId).order("created_at", { ascending: false }).limit(20)) as GoogleUpdateRow[];
+}
+
+export async function logUpdate(workspaceId: string, row: { status: "draft" | "sent"; subject: string; to: string[]; cc: string[]; html: string; mailbox: string | null; sent_by: string }) {
+  const values = { ...row, workspace_id: workspaceId, sent_at: row.status === "sent" ? now() : null };
+  if (DEMO) {
+    demoUpdates.push({ id: `demo-u${++seq}`, created_at: now(), ...values });
+    return listUpdates(workspaceId);
+  }
+  check(await sb().from("google_updates").insert(values));
+  return listUpdates(workspaceId);
+}
+
+const lastSent = (rows: GoogleUpdateRow[]) => rows.find((r) => r.status === "sent")?.sent_at ?? null;
+
+/** Vorschlag für das Update dieser Woche */
+export async function draftUpdate(workspaceId: string, date = new Date()) {
+  const [board, settings, history] = await Promise.all([getBoard(workspaceId), getGoogleSettings(workspaceId), listUpdates(workspaceId)]);
+  return { settings: settings.update, history, ...buildUpdate(board, settings.update, lastSent(history), date) };
+}
+
+/** Montags-Cron: für jede Akte mit auto_draft einen Outlook-Entwurf im
+ * eingestellten Postfach anlegen (App-Berechtigung Mail.ReadWrite), einmal
+ * je Woche. Gesendet wird nichts. */
+export async function createWeeklyDrafts(date = new Date()) {
+  const results: { workspace: string; status: "draft" | "skipped" | "error"; detail?: string }[] = [];
+  const weekStart = new Date(date);
+  weekStart.setUTCDate(weekStart.getUTCDate() - ((weekStart.getUTCDay() + 6) % 7));
+  weekStart.setUTCHours(0, 0, 0, 0);
+  for (const workspace of await listWorkspaces()) {
+    if (workspace.kind !== "customer") continue;
+    const settings = await getGoogleSettings(workspace.id);
+    if (!settings.update.auto_draft) continue;
+    try {
+      if (!settings.update.mailbox || !settings.update.to.length) throw new GoogleError("Postfach oder Empfänger fehlen");
+      const draft = await draftUpdate(workspace.id, date);
+      if (draft.history.some((u) => Date.parse(u.created_at) >= weekStart.getTime())) {
+        results.push({ workspace: workspace.name, status: "skipped", detail: "Diese Woche schon angelegt" });
+        continue;
+      }
+      if (!DEMO) {
+        const recipients = (list: string[]) => list.map((address) => ({ emailAddress: { address } }));
+        await appGraph(`${mailboxPath(settings.update.mailbox)}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ subject: draft.subject, body: { contentType: "HTML", content: draft.html }, toRecipients: recipients(settings.update.to), ccRecipients: recipients(settings.update.cc) }),
+        });
+      }
+      await logUpdate(workspace.id, { status: "draft", subject: draft.subject, to: settings.update.to, cc: settings.update.cc, html: draft.html, mailbox: settings.update.mailbox, sent_by: "cron" });
+      results.push({ workspace: workspace.name, status: "draft" });
+    } catch (error) {
+      results.push({ workspace: workspace.name, status: "error", detail: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  return results;
 }
