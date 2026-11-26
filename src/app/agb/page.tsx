@@ -4,6 +4,7 @@ import { LegalArticle, LegalHeading } from "@/components/app/LegalArticle";
 
 export const metadata: Metadata = {
   title: "AGB | GRID Agency",
+  alternates: { canonical: "/agb" },
   description:
     "Allgemeine Geschäftsbedingungen der GRID Agency UG (haftungsbeschränkt) für Social-Media-, Content- und Event-Leistungen.",
 };

@@ -5,6 +5,9 @@ import { LegalArticle, LegalHeading } from "@/components/app/LegalArticle";
 
 export const metadata: Metadata = {
   title: "Datenlöschung | GRID Agency",
+  alternates: { canonical: "/datenloeschung" },
+  description:
+    "So lässt du deine Daten bei GRID Agency löschen, etwa nach einer Anfrage, Bewerbung oder E-Book-Bestellung.",
 };
 
 export default function DatenloeschungPage() {

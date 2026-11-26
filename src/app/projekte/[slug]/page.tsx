@@ -10,6 +10,8 @@ import { ContactLink } from "@/components/ui/ContactLink";
 import { clients, clientSlug } from "@/lib/content";
 import { nextEvent } from "@/lib/events";
 import { imageSize, logoWidth } from "@/lib/media";
+import { JsonLd } from "@/components/JsonLd";
+import { abs, breadcrumbJsonLd, SITE_URL } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -20,9 +22,23 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const client = clients.find((c) => clientSlug(c.name) === slug);
+  if (!client) return { title: "Projekt | GRID Agency" };
+  const path = `/projekte/${slug}`;
+  const description = client.intro ?? `${client.name}: Social Media mit GRID Agency.`;
+  const image = client.heroImage ?? client.gallery?.[0];
   return {
-    title: client ? `${client.name} · Projekt | GRID Agency` : "Projekt | GRID Agency",
-    description: client?.intro,
+    title: `${client.name} · Projekt | GRID Agency`,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      title: `${client.name} · Projekt | GRID Agency`,
+      description,
+      url: path,
+      siteName: "GRID Agency",
+      locale: "de_DE",
+      type: "article",
+      ...(image ? { images: [image] } : {}),
+    },
   };
 }
 
@@ -49,6 +65,27 @@ export default async function ClientPage({ params }: { params: Promise<{ slug: s
 
   return (
     <PageShell>
+      <JsonLd data={breadcrumbJsonLd([
+        { name: "Start", path: "/" },
+        { name: "Projekte", path: "/projekte" },
+        { name: client.name, path: `/projekte/${slug}` },
+      ])} />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        name: `${client.name}: Social Media mit GRID Agency`,
+        url: `${SITE_URL}/projekte/${slug}`,
+        description: client.caseStudy ?? client.intro,
+        keywords: tags.join(", "),
+        inLanguage: "de-DE",
+        creator: { "@id": `${SITE_URL}/#organization` },
+        about: {
+          "@type": "Brand",
+          name: client.name,
+          ...(client.instagram ? { sameAs: `https://www.instagram.com/${client.instagram}/` } : {}),
+        },
+        ...(client.heroImage ?? client.gallery?.[0] ? { image: abs((client.heroImage ?? client.gallery?.[0])!) } : {}),
+      }} />
       <Link href="/projekte" className="rise inline-flex items-center gap-1.5 text-sm font-light text-snow/60 hover:text-snow">
         <ArrowLeft className="h-4 w-4" strokeWidth={2} />
         Alle Projekte
